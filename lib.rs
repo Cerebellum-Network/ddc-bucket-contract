@@ -75,6 +75,14 @@ mod ddc_bucket_contract {
         }
 
         #[ink(message)]
+        pub fn get_bucket_owner_id(&self, bucket_id: BucketId) -> Result<AccountId> {
+            let bucket = self.buckets.get(bucket_id)
+                .ok_or(Error::BucketDoesNotExist)?;
+
+            Ok(bucket.owner_id)
+        }
+
+        #[ink(message)]
         pub fn get_estimated_rent_end_ms(&self, bucket_id: BucketId, provider_id: AccountId) -> Result<u64> {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(Error::BucketDoesNotExist)?;
