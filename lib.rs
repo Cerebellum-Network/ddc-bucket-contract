@@ -38,6 +38,14 @@ mod ddc_bucket_contract {
         rent_start_ms: u64,
     }
 
+    #[derive(Clone, PartialEq, Encode, Decode)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct BucketStatus {
+        provider_id: AccountId,
+        estimated_rent_end_ms: u64,
+        writer_ids: Vec<AccountId>,
+    }
+
     impl DdcBucketContract {
         #[ink(constructor)]
         pub fn new() -> Self {
@@ -75,23 +83,17 @@ mod ddc_bucket_contract {
         }
 
         #[ink(message)]
-        pub fn get_bucket_owner_id(&self, bucket_id: BucketId) -> Result<AccountId> {
+        pub fn get_bucket_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(Error::BucketDoesNotExist)?;
 
-            Ok(bucket.owner_id)
-        }
+            let status = BucketStatus{
+                provider_id: bucket.provider_id,
+                estimated_rent_end_ms: Self::estimate_rent_end_ms(bucket),
+                writer_ids: vec![bucket.owner_id],
+            };
 
-        #[ink(message)]
-        pub fn get_estimated_rent_end_ms(&self, bucket_id: BucketId, provider_id: AccountId) -> Result<u64> {
-            let bucket = self.buckets.get(bucket_id)
-                .ok_or(Error::BucketDoesNotExist)?;
-
-            if bucket.provider_id != provider_id {
-                return Err(Error::UnauthorizedProvider);
-            }
-
-            Ok(Self::estimate_rent_end_ms(bucket))
+            Ok(status)
         }
 
         pub fn estimate_rent_end_ms(bucket: &Bucket) -> u64 {
