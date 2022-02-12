@@ -5,7 +5,6 @@ use ink_lang as ink;
 #[ink::contract]
 mod cluster {
     use ink_storage::{
-        collections::HashMap,
         collections::Stash,
         traits::{PackedLayout, SpreadLayout},
     };

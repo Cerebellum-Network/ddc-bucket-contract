@@ -23,22 +23,22 @@ mod payments {
         }
 
         #[ink(message)]
-        pub fn withdraw(&mut self, amount: Balance) -> Result<()> {
+        pub fn withdraw(&mut self, _amount: Balance) -> Result<()> {
             Ok(())
         }
 
         #[ink(message)]
-        pub fn increase_flow(&mut self, from: AccountId, to: AccountId, flow: Balance) -> Result<()> {
+        pub fn increase_flow(&mut self, _from: AccountId, _to: AccountId, _flow: Balance) -> Result<()> {
             Ok(())
         }
 
         #[ink(message)]
-        pub fn decrease_flow(&mut self, from: AccountId, to: AccountId, flow: Balance) -> Result<()> {
+        pub fn decrease_flow(&mut self, _from: AccountId, _to: AccountId, _flow: Balance) -> Result<()> {
             Ok(())
         }
 
         #[ink(message)]
-        pub fn get_flow_end_date(&mut self, from: AccountId, to: AccountId) -> Result<Time> {
+        pub fn get_flow_end_date(&mut self, _from: AccountId, _to: AccountId) -> Result<Time> {
             Ok(0)
         }
     }
