@@ -164,6 +164,12 @@ mod ddc_bucket_contract {
 
     pub type Result<T> = core::result::Result<T, Error>;
 
+    impl From<Error> for ink_env::Error {
+        fn from(_: Error) -> Self {
+            ink_env::Error::Unknown
+        }
+    }
+
     pub const MS_PER_MONTH: u128 = 31 * 24 * 3600 * 1000;
 }
 

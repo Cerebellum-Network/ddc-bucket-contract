@@ -12,18 +12,18 @@ fn cluster_works() {
     // As Cluster Owner.
     let mut cluster = Cluster::default();
 
-    cluster.set_price(PRICE).unwrap();
-    cluster.set_location(LOCATION.to_string()).unwrap();
+    cluster.set_price(PRICE)?;
+    cluster.set_location(LOCATION.to_string())?;
 
     // As App Developer.
-    let price = cluster.get_price().unwrap();
+    let price = cluster.get_price()?;
     assert_eq!(price, PRICE);
 
-    let res_id1 = cluster.create_resource().unwrap();
-    let res_id2 = cluster.create_resource().unwrap();
+    let res_id1 = cluster.create_resource()?;
+    let res_id2 = cluster.create_resource()?;
     assert_ne!(res_id1, res_id2);
 
     // As App.
-    let resource_location = cluster.get_location().unwrap();
+    let resource_location = cluster.get_location()?;
     assert_eq!(resource_location, LOCATION);
 }
