@@ -4,7 +4,6 @@ use ink_lang as ink;
 /// Imports all the definitions from the outer scope so we can use them here.
 use super::cluster::*;
 
-/// We test if the default constructor does its job.
 #[ink::test]
 fn cluster_works() {
     const PRICE: u128 = 10;
