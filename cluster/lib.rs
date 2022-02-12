@@ -10,6 +10,8 @@ mod cluster {
     };
     use scale::{Decode, Encode};
 
+    use payments::PaymentsRef;
+
     pub type ResourceId = u32;
 
     #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
@@ -21,16 +23,18 @@ mod cluster {
         price: Balance,
         location: String,
         resources: Stash<Resource>,
+        payments: PaymentsRef,
     }
 
     impl Cluster {
         // ---- Owner Interface ----
         #[ink(constructor)]
-        pub fn default() -> Self {
+        pub fn new(payments: PaymentsRef) -> Self {
             Self {
                 price: 0,
                 location: "".to_string(),
                 resources: Default::default(),
+                payments,
             }
         }
 
@@ -46,7 +50,7 @@ mod cluster {
             Ok(())
         }
 
-        // ---- Market Interface ----
+        // ---- Registry Interface ----
 
         #[ink(message)]
         pub fn get_price(&self) -> Result<Balance> { Ok(self.price) }
@@ -56,6 +60,12 @@ mod cluster {
             let resource = Resource {};
             let resource_id = self.resources.put(resource);
             Ok(resource_id)
+        }
+
+        // ---- Node Interface ----
+        #[ink(message)]
+        pub fn is_accepted(&self, _resource_id: ResourceId) -> Result<bool> {
+            Ok(true)
         }
 
         // ---- App Interface ----

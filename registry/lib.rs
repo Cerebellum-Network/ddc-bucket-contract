@@ -16,7 +16,8 @@ mod registry {
         }
 
         #[ink(message)]
-        pub fn get(&self) -> Result<()> { Ok(()) }
+        pub fn register_cluster(&self) -> Result<()> { Ok(()) }
+
     }
 
     // ---- Utils ----

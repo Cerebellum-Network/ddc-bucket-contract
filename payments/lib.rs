@@ -2,19 +2,38 @@
 
 use ink_lang as ink;
 
+pub use self::payments::{
+    Payments,
+    PaymentsRef,
+};
+
 #[ink::contract]
 mod payments {
+    use ink_storage::{
+        collections::Stash,
+        traits::{PackedLayout, SpreadLayout},
+    };
     use scale::{Decode, Encode};
 
-    pub type Time = u64;
+    pub type TabId = u32;
+
+    #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Tab {}
+
+    #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct TabStatus {}
 
     #[ink(storage)]
-    pub struct Payments {}
+    pub struct Payments {
+        tabs: Stash<Tab>,
+    }
 
     impl Payments {
         #[ink(constructor)]
         pub fn default() -> Self {
-            Self {}
+            Self { tabs: Default::default() }
         }
 
         #[ink(message)]
@@ -28,18 +47,25 @@ mod payments {
         }
 
         #[ink(message)]
-        pub fn increase_flow(&mut self, _from: AccountId, _to: AccountId, _flow: Balance) -> Result<()> {
+        pub fn create_tab(&mut self, _to: AccountId) -> Result<TabId> {
+            let tab = Tab {};
+            let tab_id = self.tabs.put(tab);
+            Ok(tab_id)
+        }
+
+        #[ink(message)]
+        pub fn increase_flow(&mut self, _from: AccountId, _into: TabId, _flow: Balance) -> Result<()> {
             Ok(())
         }
 
         #[ink(message)]
-        pub fn decrease_flow(&mut self, _from: AccountId, _to: AccountId, _flow: Balance) -> Result<()> {
+        pub fn decrease_flow(&mut self, _from: AccountId, _into: TabId, _flow: Balance) -> Result<()> {
             Ok(())
         }
 
         #[ink(message)]
-        pub fn get_flow_end_date(&mut self, _from: AccountId, _to: AccountId) -> Result<Time> {
-            Ok(0)
+        pub fn get_tab_status(&mut self, _tab_id: TabId) -> Result<TabStatus> {
+            Ok(TabStatus {})
         }
     }
 

@@ -10,10 +10,14 @@ fn payments_works() {
 
     let mut payments = Payments::default();
 
+    let tab_id1 = payments.create_tab(accounts.bob)?;
+    let tab_id2 = payments.create_tab(accounts.bob)?;
+    assert_ne!(tab_id1, tab_id2);
+
     payments.deposit()?;
 
-    payments.increase_flow(accounts.alice, accounts.bob, 3)?;
-    payments.decrease_flow(accounts.alice, accounts.bob, 1)?;
+    payments.increase_flow(accounts.alice, tab_id1.clone(), 3)?;
+    payments.decrease_flow(accounts.alice, tab_id1, 1)?;
 
     payments.withdraw(1)?;
 }
