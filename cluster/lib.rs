@@ -11,28 +11,67 @@ mod cluster {
     };
     use scale::{Decode, Encode};
 
-    /// Defines the storage of your contract.
-                /// Add new fields to the below struct in order
-                /// to add new static storage fields to your contract.
+    pub type ResourceId = u32;
+
+    #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Resource {}
+
     #[ink(storage)]
-    pub struct Cluster {}
+    pub struct Cluster {
+        price: Balance,
+        location: String,
+        resources: Stash<Resource>,
+    }
 
     impl Cluster {
+        // ---- Owner Interface ----
         #[ink(constructor)]
         pub fn default() -> Self {
-            Self {}
+            Self {
+                price: 0,
+                location: "".to_string(),
+                resources: Default::default(),
+            }
         }
 
         #[ink(message)]
-        pub fn get(&self) -> Result<()> {
+        pub fn set_location(&mut self, location: String) -> Result<()> {
+            self.location = location;
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn set_price(&mut self, price: Balance) -> Result<()> {
+            self.price = price;
+            Ok(())
+        }
+
+        // ---- Market Interface ----
+
+        #[ink(message)]
+        pub fn get_price(&self) -> Result<Balance> { Ok(self.price) }
+
+        #[ink(message)]
+        pub fn create_resource(&mut self) -> Result<ResourceId> {
+            let resource = Resource {};
+            let resource_id = self.resources.put(resource);
+            Ok(resource_id)
+        }
+
+        // ---- App Interface ----
+        #[ink(message)]
+        pub fn get_location(&self) -> Result<String> {
+            Ok(self.location.clone())
         }
     }
 
     // ---- Utils ----
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
-    pub enum Error {}
+    pub enum Error {
+        ResourceDoesNotExist,
+    }
 
     pub type Result<T> = core::result::Result<T, Error>;
 }
