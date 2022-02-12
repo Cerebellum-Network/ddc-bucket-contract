@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(proc_macro_hygiene)] // for tests in a separate file
 
 use ink_lang as ink;
 

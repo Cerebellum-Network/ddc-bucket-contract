@@ -1,4 +1,5 @@
 use ink_lang as ink;
+use ink_prelude::string::*;
 
 use super::cluster::*;
 

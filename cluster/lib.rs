@@ -1,9 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(proc_macro_hygiene)] // for tests in a separate file
 
 use ink_lang as ink;
 
 #[ink::contract]
 mod cluster {
+    use ink_prelude::string::{String, ToString};
     use ink_storage::{
         collections::Stash,
         traits::{PackedLayout, SpreadLayout},
