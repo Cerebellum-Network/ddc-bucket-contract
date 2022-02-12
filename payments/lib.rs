@@ -26,6 +26,7 @@ mod payments {
     pub struct TabStatus {}
 
     #[ink(storage)]
+    #[cfg_attr(feature = "ink-as-dependency", derive(Debug))]
     pub struct Payments {
         tabs: Stash<Tab>,
     }

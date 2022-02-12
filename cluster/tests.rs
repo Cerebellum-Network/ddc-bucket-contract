@@ -1,4 +1,3 @@
-use ink_env::AccountId;
 use ink_lang as ink;
 
 use super::cluster::*;
@@ -8,13 +7,13 @@ fn cluster_works() {
     const PRICE: u128 = 10;
     const LOCATION: &str = "https://somewhere/{RESOURCE_ID}";
 
-    use ink_env::call::FromAccountId;
-    //let pa = ink_env::test::get_current_contract_account_id::<ink_env::DefaultEnvironment>().expect("Cannot get contract id");
-    let payments = payments::PaymentsRef::from_account_id(AccountId::default());
-
+    //use ink_env::call::FromAccountId;
+    //let payments = payments::PaymentsRef::from_account_id(AccountId::default());
+    let payments = payments::Payments::default();
 
     // As Cluster Owner.
-    let mut cluster = Cluster::new(payments);
+    let mut cluster = Cluster::new();
+    cluster.test_set_payments(payments);
 
     cluster.set_price(PRICE)?;
     cluster.set_location(LOCATION.to_string())?;

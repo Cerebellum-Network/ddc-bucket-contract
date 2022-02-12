@@ -10,7 +10,7 @@ mod cluster {
     };
     use scale::{Decode, Encode};
 
-    use payments::PaymentsRef;
+    use payments::Payments;
 
     pub type ResourceId = u32;
 
@@ -23,19 +23,25 @@ mod cluster {
         price: Balance,
         location: String,
         resources: Stash<Resource>,
-        payments: PaymentsRef,
+
+        // TODO: replace by a PaymentsRef based on an account ID.
+        payments: Option<Payments>,
     }
 
     impl Cluster {
         // ---- Owner Interface ----
         #[ink(constructor)]
-        pub fn new(payments: PaymentsRef) -> Self {
+        pub fn new() -> Self {
             Self {
                 price: 0,
                 location: "".to_string(),
                 resources: Default::default(),
-                payments,
+                payments: None,
             }
+        }
+
+        pub fn test_set_payments(&mut self, payments: Payments) {
+            self.payments = Some(payments);
         }
 
         #[ink(message)]
