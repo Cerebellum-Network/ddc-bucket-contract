@@ -7,13 +7,8 @@ fn cluster_works() {
     const PRICE: u128 = 10;
     const LOCATION: &str = "https://somewhere/{RESOURCE_ID}";
 
-    //use ink_env::call::FromAccountId;
-    //let payments = payments::PaymentsRef::from_account_id(AccountId::default());
-    let payments = payments::Payments::default();
-
     // As Cluster Owner.
-    let mut cluster = Cluster::new();
-    cluster.test_set_payments(payments);
+    let mut cluster = Cluster::default();
 
     cluster.set_price(PRICE)?;
     cluster.set_location(LOCATION.to_string())?;

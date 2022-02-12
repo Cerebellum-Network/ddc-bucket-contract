@@ -15,8 +15,6 @@ ink_lang = { version = "3.0.0-rc7", default-features = false }
 scale = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"], optional = true }
 
-payments = { path = "../payments", default-features = false, features = ["ink-as-dependency"] }
-
 [lib]
 name = "cluster"
 path = "lib.rs"
@@ -36,7 +34,5 @@ std = [
     "ink_primitives/std",
     "scale/std",
     "scale-info/std",
-
-    "payments/std",
 ]
 ink-as-dependency = []
