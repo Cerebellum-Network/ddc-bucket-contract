@@ -87,7 +87,7 @@ mod ddc_bucket_contract {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(Error::BucketDoesNotExist)?;
 
-            let status = BucketStatus{
+            let status = BucketStatus {
                 provider_id: bucket.provider_id,
                 estimated_rent_end_ms: Self::estimate_rent_end_ms(bucket),
                 writer_ids: vec![bucket.owner_id],
@@ -165,23 +165,7 @@ mod ddc_bucket_contract {
     pub type Result<T> = core::result::Result<T, Error>;
 
     pub const MS_PER_MONTH: u128 = 31 * 24 * 3600 * 1000;
-
-
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
-    #[cfg(test)]
-    mod tests {
-        /// Imports `ink_lang` so we can use `#[ink::test]`.
-        use ink_lang as ink;
-
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn new_works() {
-            let _ddc_bucket_contract = DdcBucketContract::new();
-        }
-    }
 }
+
+#[cfg(test)]
+mod tests;

@@ -8,3 +8,7 @@
     # Install binaryen in a version >= 99
     #apt-get install binaryen
     #brew install binaryen
+
+# Test
+
+    cargo test --workspace

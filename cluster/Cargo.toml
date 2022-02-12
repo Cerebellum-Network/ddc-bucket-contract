@@ -1,5 +1,5 @@
 [package]
-name = "ddc_bucket_contract"
+name = "cluster"
 version = "2.0.0"
 authors = ["Aurélien Nicolas <aurel@cere.io>"]
 edition = "2021"
@@ -16,16 +16,12 @@ scale = { package = "parity-scale-codec", version = "2.1", default-features = fa
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"], optional = true }
 
 [lib]
-name = "ddc_bucket_contract"
+name = "cluster"
 path = "lib.rs"
 crate-type = [
 	# Used for normal contract Wasm blobs.
 	"cdylib",
 ]
-
-# Needed until https://github.com/paritytech/ink/issues/364 is resolved.
-[profile.release]
-overflow-checks = false
 
 [features]
 default = ["std"]
@@ -38,8 +34,3 @@ std = [
     "scale-info/std",
 ]
 ink-as-dependency = []
-
-[workspace]
-members = [
-    "cluster",
-]
