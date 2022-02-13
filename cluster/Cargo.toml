@@ -7,22 +7,22 @@ resolver = "2"
 
 [dependencies]
 scale = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"], optional = true }
+scale-info = { version = "0.6.0", default-features = false, features = ["derive"], optional = true }
 
-ink_primitives = { version = "=3.0.0-rc7", default-features = false }
-ink_metadata = { version = "=3.0.0-rc7", default-features = false, features = ["derive"], optional = true }
-ink_env = { version = "=3.0.0-rc7", default-features = false }
-ink_storage = { version = "=3.0.0-rc7", default-features = false }
-ink_lang = { version = "=3.0.0-rc7", default-features = false }
-ink_prelude = { version = "=3.0.0-rc7", default-features = false }
+ink_primitives = { version = "=3.0.0-rc4", default-features = false }
+ink_metadata = { version = "=3.0.0-rc4", default-features = false, features = ["derive"], optional = true }
+ink_env = { version = "=3.0.0-rc4", default-features = false }
+ink_storage = { version = "=3.0.0-rc4", default-features = false }
+ink_lang = { version = "=3.0.0-rc4", default-features = false }
+ink_prelude = { version = "=3.0.0-rc4", default-features = false }
 
 # Transitive dependencies necessary to fix the version.
-ink_allocator = { version = "=3.0.0-rc7", default-features = false, optional = true }
-ink_lang_codegen = { version = "=3.0.0-rc7", default-features = false, optional = true }
-ink_storage_derive = { version = "=3.0.0-rc7", default-features = false, optional = true }
-ink_lang_ir = { version = "=3.0.0-rc7", default-features = false, optional = true }
-ink_lang_macro = { version = "=3.0.0-rc7", default-features = false, optional = true }
-ink_eth_compatibility = { version = "=3.0.0-rc7", default-features = false, optional = true }
+ink_allocator = { version = "=3.0.0-rc4", default-features = false, optional = true }
+ink_lang_codegen = { version = "=3.0.0-rc4", default-features = false, optional = true }
+ink_storage_derive = { version = "=3.0.0-rc4", default-features = false, optional = true }
+ink_lang_ir = { version = "=3.0.0-rc4", default-features = false, optional = true }
+ink_lang_macro = { version = "=3.0.0-rc4", default-features = false, optional = true }
+#ink_eth_compatibility = { version = "=3.0.0-rc4", default-features = false, optional = true }
 
 
 [lib]
@@ -55,6 +55,6 @@ std = [
     #"ink_storage_derive/std",
     "ink_lang_ir/std",
     "ink_lang_macro/std",
-    "ink_eth_compatibility/std",
+    #"ink_eth_compatibility/std",
 ]
 ink-as-dependency = []
