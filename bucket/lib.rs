@@ -4,7 +4,7 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod ddc_bucket {
+pub mod ddc_bucket {
     use core::cmp::min;
 
     use ink_prelude::vec;
@@ -15,6 +15,30 @@ mod ddc_bucket {
         traits::{PackedLayout, SpreadLayout},
     };
     use scale::{Decode, Encode};
+
+    #[ink(event)]
+    pub struct CreateBucket {
+        bucket_id: BucketId,
+    }
+
+    #[ink(event)]
+    pub struct TopupBucket {
+        bucket_id: BucketId,
+        value: Balance,
+    }
+
+    #[ink(event)]
+    pub struct ProviderSetInfo {
+        provider_id: AccountId,
+        rent_per_month: Balance,
+    }
+
+    #[ink(event)]
+    pub struct ProviderWithdraw {
+        provider_id: AccountId,
+        bucket_id: BucketId,
+        value: Balance,
+    }
 
     #[ink(storage)]
     pub struct DdcBucket {
@@ -69,6 +93,8 @@ mod ddc_bucket {
                 rent_start_ms: now_ms,
             };
             let bucket_id = self.buckets.put(bucket);
+
+            Self::env().emit_event(CreateBucket { bucket_id });
             Ok(bucket_id)
         }
 
@@ -80,6 +106,7 @@ mod ddc_bucket {
                 None => Err(Error::BucketDoesNotExist),
                 Some(bucket) => {
                     bucket.deposit += value;
+                    Self::env().emit_event(TopupBucket { bucket_id, value });
                     Ok(())
                 }
             }
@@ -120,6 +147,8 @@ mod ddc_bucket {
             self.providers.insert(provider_id, Provider {
                 rent_per_month,
             });
+
+            Self::env().emit_event(ProviderSetInfo { provider_id, rent_per_month });
             Ok(())
         }
 
@@ -144,6 +173,7 @@ mod ddc_bucket {
 
             Self::transfer(provider_id, to_withdraw)?;
 
+            Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: to_withdraw });
             Ok(())
         }
 
@@ -174,7 +204,9 @@ mod ddc_bucket {
     }
 
     pub const MS_PER_MONTH: u128 = 31 * 24 * 3600 * 1000;
-}
 
-#[cfg(test)]
-mod tests;
+    #[cfg(test)]
+    mod tests;
+    #[cfg(test)]
+    mod test_utils;
+}

@@ -31,6 +31,7 @@ async function main() {
         provider: wsProvider,
         types: cereTypes,
     });
+    log("runtimeChain:", api.runtimeChain.toString());
 
     const keyring = new Keyring({type: 'sr25519'});
     const account = keyring.addFromUri(SEED);
