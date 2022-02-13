@@ -7,6 +7,8 @@ use ink_lang as ink;
 mod ddc_bucket_contract {
     use core::cmp::min;
 
+    use ink_prelude::vec;
+    use ink_prelude::vec::Vec;
     use ink_storage::{
         collections::HashMap,
         collections::Stash,

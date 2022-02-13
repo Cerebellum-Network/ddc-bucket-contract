@@ -61,5 +61,5 @@ ink-as-dependency = []
 [workspace]
 members = [
     "cluster",
-    # "payments",
+    "payments",
 ]

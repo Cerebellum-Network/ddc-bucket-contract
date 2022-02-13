@@ -3,11 +3,6 @@
 
 use ink_lang as ink;
 
-pub use self::payments::{
-    Payments,
-    PaymentsRef,
-};
-
 #[ink::contract]
 mod payments {
     use ink_storage::{
