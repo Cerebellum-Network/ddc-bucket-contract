@@ -1,6 +1,6 @@
 [package]
 name = "cluster"
-version = "2.0.0"
+version = "0.1.0"
 authors = ["Aurélien Nicolas <aurel@cere.io>"]
 edition = "2021"
 resolver = "2"
