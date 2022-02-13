@@ -4,7 +4,7 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod ddc_bucket_contract {
+mod ddc_bucket {
     use core::cmp::min;
 
     use ink_prelude::vec;
@@ -17,7 +17,7 @@ mod ddc_bucket_contract {
     use scale::{Decode, Encode};
 
     #[ink(storage)]
-    pub struct DdcBucketContract {
+    pub struct DdcBucket {
         providers: HashMap<AccountId, Provider>,
         buckets: Stash<Bucket>,
     }
@@ -49,7 +49,7 @@ mod ddc_bucket_contract {
         writer_ids: Vec<AccountId>,
     }
 
-    impl DdcBucketContract {
+    impl DdcBucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self { providers: HashMap::new(), buckets: Stash::new() }

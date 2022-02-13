@@ -4,7 +4,7 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod cluster {
+mod ddc_cluster {
     use ink_prelude::string::{String, ToString};
     use ink_storage::{
         collections::Stash,
@@ -24,13 +24,13 @@ mod cluster {
     pub struct Resource {}
 
     #[ink(storage)]
-    pub struct Cluster {
+    pub struct DdcCluster {
         price: Balance,
         location: String,
         resources: Stash<Resource>,
     }
 
-    impl Cluster {
+    impl DdcCluster {
         // ---- Owner Interface ----
         #[ink(constructor)]
         pub fn default() -> Self {

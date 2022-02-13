@@ -9,8 +9,8 @@ const log = console.log;
 let CODE_HASH = "0xf47dee0051665a329f8c8d8188a9fed9dc8d466cdaa90da838a3f8de8c649200";
 let CONTRACT_ADDRESS = "5GzdTS9oT4kn1VpGSKF1NTvM11zJtzxGDRry695eFKTVHfPL";
 
-const WASM = "../target/ink/cluster/cluster.wasm";
-const ABI = "../target/ink/cluster/metadata.json";
+const WASM = "../target/ink/ddc_cluster/ddc_cluster.wasm";
+const ABI = "../target/ink/ddc_cluster/metadata.json";
 const CONSTRUCTOR = "default";
 
 const SEED = "//Alice";

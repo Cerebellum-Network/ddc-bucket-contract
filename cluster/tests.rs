@@ -1,7 +1,7 @@
 use ink_lang as ink;
 use ink_prelude::string::*;
 
-use super::cluster::*;
+use super::ddc_cluster::*;
 
 #[ink::test]
 fn cluster_works() {
@@ -9,7 +9,7 @@ fn cluster_works() {
     const LOCATION: &str = "https://somewhere/{RESOURCE_ID}";
 
     // As Cluster Owner.
-    let mut cluster = Cluster::default();
+    let mut cluster = DdcCluster::default();
 
     cluster.set_price(PRICE)?;
     cluster.set_location(LOCATION.to_string())?;

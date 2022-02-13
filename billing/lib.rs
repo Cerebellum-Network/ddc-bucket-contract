@@ -4,7 +4,7 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod payments {
+mod ddc_billing {
     use ink_storage::{
         collections::Stash,
         traits::{PackedLayout, SpreadLayout},
@@ -22,11 +22,11 @@ mod payments {
     pub struct TabStatus {}
 
     #[ink(storage)]
-    pub struct Payments {
+    pub struct DdcBilling {
         tabs: Stash<Tab>,
     }
 
-    impl Payments {
+    impl DdcBilling {
         #[ink(constructor)]
         pub fn default() -> Self {
             Self { tabs: Default::default() }
