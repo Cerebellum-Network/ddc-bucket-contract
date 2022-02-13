@@ -12,13 +12,13 @@ const CANVAS = "wss://rococo-canvas-rpc.polkadot.io";
 const WASM = "../target/ink/cluster/cluster.wasm";
 const ABI = "../target/ink/cluster/metadata.json";
 const CONSTRUCTOR = "default";
-let CODE_HASH = "0x4a59e9026e8b303d4943be62b9a6414956d0b7debdeb19282f0f4231b52ae4a0";
-let CONTRACT_ADDRESS = "5GhChJ6TuNmWM9XkSftUoWcKr6xoV76jQcUgQwX1ULjcfSn4";
+let CODE_HASH = "0xf47dee0051665a329f8c8d8188a9fed9dc8d466cdaa90da838a3f8de8c649200";
+let CONTRACT_ADDRESS = "5FiTtZN2ZmF2HqK7iLiPwVnxEtedNWX87ZUJFS6QhtvzqeY2";
 
 const SEED = "//Alice";
 
-const CERE = 10000000000n;
-const MGAS = 1000000n;
+const CERE = 10_000_000_000n;
+const MGAS = 1_000_000n;
 
 async function main() {
     const wsProvider = new WsProvider(DEVNET);
@@ -29,10 +29,10 @@ async function main() {
 
     const keyring = new Keyring({type: 'sr25519'});
     const account = keyring.addFromUri(SEED);
-    log("ACCOUNT", account.address);
+    log("From account", account.address);
 
     const abi = JSON.parse(await fs.readFile(ABI));
-    //log("ABI", abi);
+    log("ABI", abi.contract.name, abi.contract.version);
 
     const wasm = await fs.readFile(WASM);
     log("WASM", wasm.length, "bytes");
@@ -47,9 +47,9 @@ async function main() {
             // or the raw JSON data (after doing a JSON.parse). The wasm is either a hex
             // string (0x prefixed), an Uint8Array or a Node.js Buffer object
             const code = new CodePromise(api, abi, wasm);
-            const ctor = code.tx[CONSTRUCTOR]({});
+            const tx = code.tx[CONSTRUCTOR]({});
 
-            const unsub = await ctor.signAndSend(account, (result) => {
+            const unsub = await tx.signAndSend(account, (result) => {
                 if (result.status.isInBlock || result.status.isFinalized) {
                     unsub();
                     resolve(result.blueprint);
@@ -68,7 +68,7 @@ async function main() {
 
         const txOptions = {
             value: 10n * CERE,
-            gasLimit: 100000n * MGAS,
+            gasLimit: 100_000n * MGAS,
         };
 
         const contract = await new Promise(async (resolve, reject) => {
@@ -77,16 +77,16 @@ async function main() {
             // We pass the constructor (named `new` in the actual Abi),
             // the endowment, gasLimit (weight) as well as any constructor params
             // (in this case `new (initValue: i32)` is the constructor)
-            const unsub = await blueprint.tx
-                [CONSTRUCTOR](txOptions)
-                .signAndSend(account, (result) => {
-                    if (result.status.isInBlock || result.status.isFinalized) {
-                        unsub();
-                        resolve(result.contract);
-                    }
-                });
+            const tx = blueprint.tx[CONSTRUCTOR](txOptions);
+
+            const unsub = await tx.signAndSend(account, (result) => {
+                if (result.status.isInBlock || result.status.isFinalized) {
+                    unsub();
+                    resolve(result.contract);
+                }
+            });
         });
-        const CONTRACT_ADDRESS = contract.address.toString();
+        CONTRACT_ADDRESS = contract.address.toString();
         log("Instantiated contract", CONTRACT_ADDRESS);
     } else {
         log("Using existing contract", CONTRACT_ADDRESS);
@@ -100,40 +100,41 @@ async function main() {
 
     const txOptions = {
         value: 0n * CERE,
-        gasLimit: 100000n * MGAS,
+        gasLimit: -1, //100_000n * MGAS,
     };
 
     // Write
     {
+        const tx = contract.tx
+            .setLocation(txOptions, "https://abc");
+
         const result = await new Promise(async (resolve, reject) => {
-            const unsub = await contract.tx
-                .setPrice(txOptions, 11n * CERE)
-                .signAndSend(account, (result) => {
-                    if (result.status.isInBlock || result.status.isFinalized) {
-                        unsub();
-                        resolve(result);
-                    }
-                });
+            const unsub = await tx.signAndSend(account, (result) => {
+                if (result.status.isInBlock || result.status.isFinalized) {
+                    unsub();
+                    resolve(result);
+                }
+            });
         });
-        log("WRITE RESULT", JSON.stringify(result, null, 4));
+
+        const events = result.contractEvents || [];
+        log("TX in block", result.status.asInBlock.toString());
+        log("EVENTS", JSON.stringify(events, null, 4));
     }
 
     // Read (no params at the end, for the `get` message)
     {
-        const {gasConsumed, result, output} = await contract.query.getPrice(account.address, txOptions);
+        const {gasConsumed, result, output} = await contract.query
+            .getLocation(account.address, txOptions);
 
-        // The actual result from RPC as `ContractExecResult`
-        log("GET RESULT", result.toHuman());
-
-        // gas consumed
-        log("GAS CONSUMED", gasConsumed.toHuman());
-
-        // check if the call was successful
         if (result.isOk) {
             log('OUTPUT', output.toHuman());
         } else {
             console.error('ERROR', result.asErr);
         }
+
+        //log("GET RESULT", result.toHuman());
+        //log("GAS CONSUMED", gasConsumed.toHuman());
     }
 }
 

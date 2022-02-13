@@ -12,6 +12,11 @@ mod cluster {
     };
     use scale::{Decode, Encode};
 
+    #[ink(event)]
+    pub struct SetLocation {
+        location: String,
+    }
+
     pub type ResourceId = u32;
 
     #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
@@ -38,7 +43,8 @@ mod cluster {
 
         #[ink(message)]
         pub fn set_location(&mut self, location: String) -> Result<()> {
-            self.location = location;
+            self.location = location.clone();
+            Self::env().emit_event(SetLocation { location });
             Ok(())
         }
 
