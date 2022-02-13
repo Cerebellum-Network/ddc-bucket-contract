@@ -6,22 +6,27 @@ const cereTypes = require("./cere_custom_types.json");
 
 const log = console.log;
 
-const DEVNET = "wss://rpc.devnet.cere.network:9945";
-const CANVAS = "wss://rococo-canvas-rpc.polkadot.io";
+let CODE_HASH = "0xf47dee0051665a329f8c8d8188a9fed9dc8d466cdaa90da838a3f8de8c649200";
+let CONTRACT_ADDRESS = "5GzdTS9oT4kn1VpGSKF1NTvM11zJtzxGDRry695eFKTVHfPL";
 
 const WASM = "../target/ink/cluster/cluster.wasm";
 const ABI = "../target/ink/cluster/metadata.json";
 const CONSTRUCTOR = "default";
-let CODE_HASH = "0xf47dee0051665a329f8c8d8188a9fed9dc8d466cdaa90da838a3f8de8c649200";
-let CONTRACT_ADDRESS = "5FiTtZN2ZmF2HqK7iLiPwVnxEtedNWX87ZUJFS6QhtvzqeY2";
 
 const SEED = "//Alice";
+const RPC = "wss://rpc.devnet.cere.network:9945";
+//const RPC = "wss://rococo-canvas-rpc.polkadot.io"; // Canvas
+
+const showExplorerTx = (blockHash) => {
+    log(`https://explorer.cere.network/?rpc=${RPC}#/explorer/query/${blockHash}`);
+}
 
 const CERE = 10_000_000_000n;
 const MGAS = 1_000_000n;
 
+
 async function main() {
-    const wsProvider = new WsProvider(DEVNET);
+    const wsProvider = new WsProvider(RPC);
     const api = await ApiPromise.create({
         provider: wsProvider,
         types: cereTypes,
@@ -53,6 +58,7 @@ async function main() {
                 if (result.status.isInBlock || result.status.isFinalized) {
                     unsub();
                     resolve(result.blueprint);
+                    showExplorerTx(result.status.asInBlock.toString());
                 }
             });
         });
@@ -83,6 +89,7 @@ async function main() {
                 if (result.status.isInBlock || result.status.isFinalized) {
                     unsub();
                     resolve(result.contract);
+                    showExplorerTx(result.status.asInBlock.toString());
                 }
             });
         });
@@ -105,6 +112,7 @@ async function main() {
 
     // Write
     {
+        log("\nSending a transaction…");
         const tx = contract.tx
             .setLocation(txOptions, "https://abc");
 
@@ -113,17 +121,18 @@ async function main() {
                 if (result.status.isInBlock || result.status.isFinalized) {
                     unsub();
                     resolve(result);
+                    showExplorerTx(result.status.asInBlock.toString());
                 }
             });
         });
 
         const events = result.contractEvents || [];
-        log("TX in block", result.status.asInBlock.toString());
         log("EVENTS", JSON.stringify(events, null, 4));
     }
 
     // Read (no params at the end, for the `get` message)
     {
+        log("\nReading…");
         const {gasConsumed, result, output} = await contract.query
             .getLocation(account.address, txOptions);
 
