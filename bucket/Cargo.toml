@@ -1,5 +1,5 @@
 [package]
-name = "cluster"
+name = "ddc_bucket_contract"
 version = "0.1.0"
 authors = ["Aurélien Nicolas <aurel@cere.io>"]
 edition = "2021"
@@ -25,7 +25,7 @@ ink_lang_macro = { version = "=3.0.0-rc4", default-features = false, optional = 
 
 
 [lib]
-name = "cluster"
+name = "ddc_bucket_contract"
 path = "lib.rs"
 crate-type = [
     # Used for normal contract Wasm blobs.

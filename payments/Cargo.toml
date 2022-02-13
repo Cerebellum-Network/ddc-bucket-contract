@@ -3,7 +3,6 @@ name = "payments"
 version = "0.1.0"
 authors = ["Aurélien Nicolas <aurel@cere.io>"]
 edition = "2021"
-resolver = "2"
 
 [dependencies]
 scale = { package = "parity-scale-codec", version = "2.1", default-features = false, features = ["derive"] }
