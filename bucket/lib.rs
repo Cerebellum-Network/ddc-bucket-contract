@@ -90,7 +90,7 @@ pub mod ddc_bucket {
 
         // ---- As Consumer ----
         #[ink(message)]
-        pub fn create_bucket(&mut self, provider_id: AccountId) -> Result<BucketId> {
+        pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
             let value = self.env().transferred_balance();
 
             let now_ms = Self::env().block_timestamp();
@@ -110,7 +110,7 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn topup_bucket(&mut self, bucket_id: BucketId) -> Result<()> {
+        pub fn bucket_topup(&mut self, bucket_id: BucketId) -> Result<()> {
             let value = self.env().transferred_balance();
 
             match self.buckets.get_mut(bucket_id) {
@@ -124,7 +124,7 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn get_bucket_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(Error::BucketDoesNotExist)?;
 
@@ -137,13 +137,13 @@ pub mod ddc_bucket {
             Ok(status)
         }
 
-        pub fn estimate_rent_end_ms(bucket: &Bucket) -> u64 {
+        fn estimate_rent_end_ms(bucket: &Bucket) -> u64 {
             let paid_duration_ms = bucket.deposit * MS_PER_MONTH / bucket.rent_per_month;
             let end_ms = bucket.rent_start_ms + paid_duration_ms as u64;
             end_ms
         }
 
-        pub fn get_provider_rent(&self, provider_id: AccountId) -> Result<Balance> {
+        fn get_provider_rent(&self, provider_id: AccountId) -> Result<Balance> {
             let provider = self.providers.get(&provider_id)
                 .ok_or(Error::ProviderDoesNotExist)?;
             Ok(provider.rent_per_month)

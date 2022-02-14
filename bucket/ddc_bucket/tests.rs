@@ -18,7 +18,7 @@ fn ddc_bucket_works() {
 
     // Provider setup.
     let rent_per_month: Balance = 10 * CURRENCY;
-    let location = "https://ddc.cere.network";
+    let location = "https://ddc.cere.network/bucket/{BUCKET_ID}";
     ddc_bucket.provider_set_info(rent_per_month, location.to_string())?;
 
     // Consumer discovers the Provider.
@@ -27,12 +27,12 @@ fn ddc_bucket_works() {
 
     // Consumer setup.
     push_caller_value(consumer_id, 100 * CURRENCY);
-    let bucket_id = ddc_bucket.create_bucket(provider_id)?;
-    ddc_bucket.topup_bucket(bucket_id)?;
+    let bucket_id = ddc_bucket.bucket_create(provider_id)?;
+    ddc_bucket.bucket_topup(bucket_id)?;
     pop_caller();
 
     // Provider checks the status of the bucket.
-    let status = ddc_bucket.get_bucket_status(bucket_id)?;
+    let status = ddc_bucket.bucket_get_status(bucket_id)?;
     println!("GET {:?}", status);
 
     // Provider withdraws in the future.
@@ -40,6 +40,7 @@ fn ddc_bucket_works() {
     ddc_bucket.provider_withdraw(bucket_id)?;
 
     let evs = get_events(5);
+    println!();
     print_events(&evs);
     assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if ev.rent_per_month == rent_per_month));
     assert!(matches!(&evs[1], Event::CreateBucket(ev) if ev.bucket_id == 0));
