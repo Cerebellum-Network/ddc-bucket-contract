@@ -17,23 +17,27 @@ pub mod ddc_bucket {
     use scale::{Decode, Encode};
 
     #[ink(event)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct CreateBucket {
         bucket_id: BucketId,
     }
 
     #[ink(event)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct TopupBucket {
         bucket_id: BucketId,
         value: Balance,
     }
 
     #[ink(event)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct ProviderSetInfo {
         provider_id: AccountId,
         rent_per_month: Balance,
     }
 
     #[ink(event)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct ProviderWithdraw {
         provider_id: AccountId,
         bucket_id: BucketId,
@@ -83,10 +87,12 @@ pub mod ddc_bucket {
         // ---- As Consumer ----
         #[ink(message)]
         pub fn create_bucket(&mut self, provider_id: AccountId) -> Result<BucketId> {
+            let value = self.env().transferred_balance();
+
             let now_ms = Self::env().block_timestamp();
             let bucket = Bucket {
                 owner_id: self.env().caller(),
-                deposit: self.env().transferred_balance(),
+                deposit: value,
 
                 provider_id,
                 rent_per_month: self.get_provider_rent(provider_id)?,
@@ -95,6 +101,7 @@ pub mod ddc_bucket {
             let bucket_id = self.buckets.put(bucket);
 
             Self::env().emit_event(CreateBucket { bucket_id });
+            Self::env().emit_event(TopupBucket { bucket_id, value });
             Ok(bucket_id)
         }
 
@@ -179,7 +186,7 @@ pub mod ddc_bucket {
 
         fn transfer(destination: AccountId, amount: Balance) -> Result<()> {
             match Self::env().transfer(destination, amount) {
-                Err(_e) => Err(Error::TransferFailed),
+                Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
                 Ok(_v) => Ok(()),
             }
         }

@@ -1,3 +1,5 @@
+#![allow(unused_variables, dead_code)]
+
 pub use ink_env::{
     AccountId, call,
     DefaultEnvironment,
@@ -7,6 +9,8 @@ pub use ink_env::{
 use scale::Decode;
 
 use super::*;
+
+pub const CURRENCY: Balance = 10_000_000_000;
 
 pub fn get_accounts() -> DefaultAccounts<DefaultEnvironment> {
     // The default account is "alice"
