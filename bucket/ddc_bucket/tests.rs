@@ -16,7 +16,8 @@ fn ddc_bucket_works() {
 
     // Provider setup.
     let rent_per_month: Balance = 10 * CURRENCY;
-    ddc_bucket.provider_set_info(rent_per_month)?;
+    let location = "https://ddc.cere.network";
+    ddc_bucket.provider_set_info(rent_per_month, location.to_string())?;
 
     // Consumer setup.
     push_caller_value(accounts.bob, 100 * CURRENCY);

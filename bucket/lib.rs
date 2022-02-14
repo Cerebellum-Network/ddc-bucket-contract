@@ -7,14 +7,57 @@ use ink_lang as ink;
 pub mod ddc_bucket {
     use core::cmp::min;
 
-    use ink_prelude::vec;
-    use ink_prelude::vec::Vec;
+    use ink_prelude::{
+        string::{String, ToString},
+        vec, vec::Vec};
     use ink_storage::{
         collections::HashMap,
         collections::Stash,
         traits::{PackedLayout, SpreadLayout},
     };
     use scale::{Decode, Encode};
+
+    #[ink(storage)]
+    pub struct DdcBucket {
+        providers: HashMap<AccountId, Provider>,
+        buckets: Stash<Bucket>,
+    }
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Provider {
+        rent_per_month: Balance,
+        location: String,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct ProviderSetInfo {
+        provider_id: AccountId,
+        rent_per_month: Balance,
+        location: String,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct ProviderWithdraw {
+        provider_id: AccountId,
+        bucket_id: BucketId,
+        value: Balance,
+    }
+
+    pub type BucketId = u32;
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Bucket {
+        owner_id: AccountId,
+        deposit: Balance,
+
+        provider_id: AccountId,
+        rent_per_month: Balance,
+        rent_start_ms: u64,
+    }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -27,46 +70,6 @@ pub mod ddc_bucket {
     pub struct TopupBucket {
         bucket_id: BucketId,
         value: Balance,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct ProviderSetInfo {
-        provider_id: AccountId,
-        rent_per_month: Balance,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct ProviderWithdraw {
-        provider_id: AccountId,
-        bucket_id: BucketId,
-        value: Balance,
-    }
-
-    #[ink(storage)]
-    pub struct DdcBucket {
-        providers: HashMap<AccountId, Provider>,
-        buckets: Stash<Bucket>,
-    }
-
-    #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Provider {
-        rent_per_month: Balance,
-    }
-
-    pub type BucketId = u32;
-
-    #[derive(Copy, Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Bucket {
-        owner_id: AccountId,
-        deposit: Balance,
-
-        provider_id: AccountId,
-        rent_per_month: Balance,
-        rent_start_ms: u64,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
@@ -149,13 +152,14 @@ pub mod ddc_bucket {
         // ---- As Provider ----
 
         #[ink(message)]
-        pub fn provider_set_info(&mut self, rent_per_month: Balance) -> Result<()> {
+        pub fn provider_set_info(&mut self, rent_per_month: Balance, location: String) -> Result<()> {
             let provider_id = self.env().caller();
             self.providers.insert(provider_id, Provider {
                 rent_per_month,
+                location: location.clone(),
             });
 
-            Self::env().emit_event(ProviderSetInfo { provider_id, rent_per_month });
+            Self::env().emit_event(ProviderSetInfo { provider_id, rent_per_month, location });
             Ok(())
         }
 
