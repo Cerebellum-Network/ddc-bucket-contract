@@ -33,7 +33,7 @@ mod ddc_cluster {
     impl DdcCluster {
         // ---- Owner Interface ----
         #[ink(constructor)]
-        pub fn default() -> Self {
+        pub fn new() -> Self {
             Self {
                 price: 0,
                 location: "".to_string(),

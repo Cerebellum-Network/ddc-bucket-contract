@@ -9,7 +9,7 @@ fn cluster_works() {
     const LOCATION: &str = "https://somewhere/{RESOURCE_ID}";
 
     // As Cluster Owner.
-    let mut cluster = DdcCluster::default();
+    let mut cluster = DdcCluster::new();
 
     cluster.set_price(PRICE)?;
     cluster.set_location(LOCATION.to_string())?;

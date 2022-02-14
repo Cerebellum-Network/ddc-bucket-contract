@@ -28,7 +28,7 @@ mod ddc_billing {
 
     impl DdcBilling {
         #[ink(constructor)]
-        pub fn default() -> Self {
+        pub fn new() -> Self {
             Self { tabs: Default::default() }
         }
 

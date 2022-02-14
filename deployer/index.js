@@ -6,12 +6,12 @@ const cereTypes = require("./cere_custom_types.json");
 
 const log = console.log;
 
-let CODE_HASH = "0xf47dee0051665a329f8c8d8188a9fed9dc8d466cdaa90da838a3f8de8c649200";
-let CONTRACT_ADDRESS = "5GzdTS9oT4kn1VpGSKF1NTvM11zJtzxGDRry695eFKTVHfPL";
+let CODE_HASH = "0xd7b513d798721f09f608068952eac05fb882790b49dcf7970f2eab6417eb57d8";
+let CONTRACT_ADDRESS = "5FAKopbXL47wUdEp2s5sdBCg3vxFqg295M326bvbe84Zmd6N";
 
-const WASM = "../target/ink/ddc_cluster/ddc_cluster.wasm";
-const ABI = "../target/ink/ddc_cluster/metadata.json";
-const CONSTRUCTOR = "default";
+const WASM = "../target/ink/ddc_bucket/ddc_bucket.wasm";
+const ABI = "../target/ink/ddc_bucket/metadata.json";
+const CONSTRUCTOR = "new";
 
 const SEED = "//Alice";
 const RPC = "wss://rpc.devnet.cere.network:9945";
@@ -115,7 +115,7 @@ async function main() {
     {
         log("\nSending a transaction…");
         const tx = contract.tx
-            .setLocation(txOptions, "https://abc");
+            .providerSetInfo(txOptions, 10n * CERE, "https://ddc.dev.cere.network/bucket/{BUCKET_ID}");
 
         const result = await new Promise(async (resolve, reject) => {
             const unsub = await tx.signAndSend(account, (result) => {
@@ -134,17 +134,14 @@ async function main() {
     // Read (no params at the end, for the `get` message)
     {
         log("\nReading…");
-        const {gasConsumed, result, output} = await contract.query
-            .getLocation(account.address, txOptions);
+        const {result, output} = await contract.query
+            .providerGetInfo(account.address, txOptions, account.address);
 
         if (result.isOk) {
             log('OUTPUT', output.toHuman());
         } else {
             console.error('ERROR', result.asErr);
         }
-
-        //log("GET RESULT", result.toHuman());
-        //log("GAS CONSUMED", gasConsumed.toHuman());
     }
 }
 
