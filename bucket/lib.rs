@@ -8,8 +8,9 @@ pub mod ddc_bucket {
     use core::cmp::min;
 
     use ink_prelude::{
-        string::{String, ToString},
-        vec, vec::Vec};
+        string::String,
+        vec, vec::Vec,
+    };
     use ink_storage::{
         collections::HashMap,
         collections::Stash,
@@ -161,6 +162,13 @@ pub mod ddc_bucket {
 
             Self::env().emit_event(ProviderSetInfo { provider_id, rent_per_month, location });
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn provider_get_info(&self, provider_id: AccountId) -> Result<Provider> {
+            self.providers.get(&provider_id)
+                .cloned()
+                .ok_or(Error::ProviderDoesNotExist)
         }
 
         #[ink(message)]

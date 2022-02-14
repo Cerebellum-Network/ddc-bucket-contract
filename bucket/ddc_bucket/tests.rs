@@ -9,7 +9,9 @@ type Event = <DdcBucket as ink::BaseEvent>::Type;
 #[ink::test]
 fn ddc_bucket_works() {
     let accounts = get_accounts();
-    push_caller(accounts.alice);
+    let provider_id = accounts.alice;
+    let consumer_id = accounts.bob;
+    push_caller(provider_id);
 
     let mut ddc_bucket = DdcBucket::new();
     set_balance(contract_id(), 1000); // For contract subsistence.
@@ -19,9 +21,13 @@ fn ddc_bucket_works() {
     let location = "https://ddc.cere.network";
     ddc_bucket.provider_set_info(rent_per_month, location.to_string())?;
 
+    // Consumer discovers the Provider.
+    let provider = ddc_bucket.provider_get_info(provider_id)?;
+    println!("GET {:?}", provider);
+
     // Consumer setup.
-    push_caller_value(accounts.bob, 100 * CURRENCY);
-    let bucket_id = ddc_bucket.create_bucket(accounts.alice)?;
+    push_caller_value(consumer_id, 100 * CURRENCY);
+    let bucket_id = ddc_bucket.create_bucket(provider_id)?;
     ddc_bucket.topup_bucket(bucket_id)?;
     pop_caller();
 
