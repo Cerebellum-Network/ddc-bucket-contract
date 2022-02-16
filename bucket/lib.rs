@@ -32,7 +32,7 @@ pub mod ddc_bucket {
     }
 
     #[ink(event)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ProviderSetInfo {
         provider_id: AccountId,
         rent_per_month: Balance,
@@ -40,7 +40,7 @@ pub mod ddc_bucket {
     }
 
     #[ink(event)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ProviderWithdraw {
         provider_id: AccountId,
         bucket_id: BucketId,
@@ -61,13 +61,13 @@ pub mod ddc_bucket {
     }
 
     #[ink(event)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct CreateBucket {
         bucket_id: BucketId,
     }
 
     #[ink(event)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct TopupBucket {
         bucket_id: BucketId,
         value: Balance,

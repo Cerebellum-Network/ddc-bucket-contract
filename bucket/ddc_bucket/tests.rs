@@ -21,35 +21,50 @@ fn ddc_bucket_works() {
     let location = "https://ddc.cere.network/bucket/{BUCKET_ID}";
     ddc_bucket.provider_set_info(rent_per_month, location.to_string())?;
 
-    // Consumer discovers the Provider.
-    let provider = ddc_bucket.provider_get_info(provider_id)?;
-    println!("GET {:?}", provider);
-
     // Consumer setup.
     push_caller_value(consumer_id, 100 * CURRENCY);
-    let bucket_id = ddc_bucket.bucket_create(provider_id)?;
-    ddc_bucket.bucket_topup(bucket_id)?;
+    let bucket_id = {
+        // Consumer discovers the Provider.
+        let provider = ddc_bucket.provider_get_info(provider_id)?;
+        assert_eq!(provider, Provider {
+            rent_per_month,
+            location: location.to_string(),
+        });
+
+        // Create a bucket, including some value.
+        let bucket_id = ddc_bucket.bucket_create(provider_id)?;
+        // Add more value into the bucket.
+        ddc_bucket.bucket_topup(bucket_id)?;
+        bucket_id
+    };
     pop_caller();
 
     // Provider checks the status of the bucket.
     let status = ddc_bucket.bucket_get_status(bucket_id)?;
-    println!("GET {:?}", status);
+    assert_eq!(status, BucketStatus {
+        provider_id,
+        estimated_rent_end_ms: 53568000000,
+        writer_ids: vec![consumer_id],
+    });
 
     // Provider withdraws in the future.
     advance_block::<DefaultEnvironment>().unwrap();
     ddc_bucket.provider_withdraw(bucket_id)?;
 
     let evs = get_events(5);
-    println!();
-    print_events(&evs);
-    assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if ev.rent_per_month == rent_per_month));
-    assert!(matches!(&evs[1], Event::CreateBucket(ev) if ev.bucket_id == 0));
-    assert!(matches!(&evs[2], Event::TopupBucket(ev) if ev.value == 100 * CURRENCY));
-    assert!(matches!(&evs[3], Event::TopupBucket(ev) if ev.value == 100 * CURRENCY));
-    assert!(matches!(&evs[4], Event::ProviderWithdraw(ev) if ev.value == 186));
+    assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if *ev ==
+        ProviderSetInfo { provider_id, rent_per_month, location: location.to_string() }));
+    assert!(matches!(&evs[1], Event::CreateBucket(ev) if *ev ==
+        CreateBucket { bucket_id }));
+    assert!(matches!(&evs[2], Event::TopupBucket(ev) if *ev ==
+        TopupBucket { bucket_id, value: 100 * CURRENCY }));
+    assert!(matches!(&evs[3], Event::TopupBucket(ev) if *ev ==
+        TopupBucket { bucket_id, value: 100 * CURRENCY }));
+    assert!(matches!(&evs[4], Event::ProviderWithdraw(ev) if *ev ==
+        ProviderWithdraw { provider_id, bucket_id, value: 186 }));
 }
 
-fn print_events(events: &[Event]) {
+fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ProviderSetInfo(ev) => println!("EVENT {:?}", ev),
