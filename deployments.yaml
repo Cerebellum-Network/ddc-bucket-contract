@@ -1,0 +1,6 @@
+
+- name: ddc_bucket
+  version: 0.1.0
+  chain_name: Cere Devnet
+  contract_address: "5FAKopbXL47wUdEp2s5sdBCg3vxFqg295M326bvbe84Zmd6N"
+  code_hash: "0xd7b513d798721f09f608068952eac05fb882790b49dcf7970f2eab6417eb57d8"

@@ -1,3 +1,9 @@
+# Deployments
+
+See known deployments in [deployments.yaml](deployments.yaml).
+
+To deploy, see the sub-project [deployer/](deployer/).
+
 # Setup
     
     rustup install nightly-2021-12-05
@@ -11,4 +17,8 @@
 
 # Test
 
-    cargo test --workspace
+    # Fast test
+    cargo test
+
+    # Long test
+    ./build-all.sh
