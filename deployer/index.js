@@ -43,27 +43,34 @@ async function main() {
     const wasm = await fs.readFile(WASM);
     log("WASM", wasm.length, "bytes");
 
+
+    async function sendTx(account, tx) {
+        const result = await new Promise(async (resolve, reject) => {
+            const unsub = await tx.signAndSend(account, (result) => {
+                if (result.status.isInBlock || result.status.isFinalized) {
+                    unsub();
+                    resolve(result);
+                }
+            });
+        });
+        showExplorerTx(result.status.asInBlock.toString());
+        return result;
+    }
+
+
     // Upload code if necessary.
     if (!CODE_HASH) {
         log("Deploying the code…");
 
-        // Deploy the WASM, retrieve a Blueprint
-        const blueprint = await new Promise(async (resolve, reject) => {
-            // Construct our Code helper. The abi is an Abi object, an unparsed JSON string
-            // or the raw JSON data (after doing a JSON.parse). The wasm is either a hex
-            // string (0x prefixed), an Uint8Array or a Node.js Buffer object
-            const code = new CodePromise(api, abi, wasm);
-            const tx = code.tx[CONSTRUCTOR]({});
+        // Construct our Code helper. The abi is an Abi object, an unparsed JSON string
+        // or the raw JSON data (after doing a JSON.parse). The wasm is either a hex
+        // string (0x prefixed), an Uint8Array or a Node.js Buffer object
+        const code = new CodePromise(api, abi, wasm);
+        const tx = code.tx[CONSTRUCTOR]({});
 
-            const unsub = await tx.signAndSend(account, (result) => {
-                if (result.status.isInBlock || result.status.isFinalized) {
-                    unsub();
-                    resolve(result.blueprint);
-                    showExplorerTx(result.status.asInBlock.toString());
-                }
-            });
-        });
-        CODE_HASH = blueprint.codeHash.toString();
+        // Deploy the WASM, retrieve a Blueprint
+        const result = await sendTx(account, tx);
+        CODE_HASH = result.blueprint.codeHash.toString();
         log("Deployed code", CODE_HASH);
     } else {
         log("Using existing code", CODE_HASH);
@@ -78,23 +85,15 @@ async function main() {
             gasLimit: 100_000n * MGAS,
         };
 
-        const contract = await new Promise(async (resolve, reject) => {
-            const blueprint = new BlueprintPromise(api, abi, CODE_HASH);
+        // We pass the constructor (named `new` in the actual Abi),
+        // the endowment, gasLimit (weight) as well as any constructor params
+        // (in this case `new (initValue: i32)` is the constructor)
+        const blueprint = new BlueprintPromise(api, abi, CODE_HASH);
+        const tx = blueprint.tx[CONSTRUCTOR](txOptions);
 
-            // We pass the constructor (named `new` in the actual Abi),
-            // the endowment, gasLimit (weight) as well as any constructor params
-            // (in this case `new (initValue: i32)` is the constructor)
-            const tx = blueprint.tx[CONSTRUCTOR](txOptions);
-
-            const unsub = await tx.signAndSend(account, (result) => {
-                if (result.status.isInBlock || result.status.isFinalized) {
-                    unsub();
-                    resolve(result.contract);
-                    showExplorerTx(result.status.asInBlock.toString());
-                }
-            });
-        });
-        CONTRACT_ADDRESS = contract.address.toString();
+        // Instantiate the contract and retrieve its address.
+        const result = await sendTx(account, tx);
+        CONTRACT_ADDRESS = result.contract.address.toString();
         log("Instantiated contract", CONTRACT_ADDRESS);
     } else {
         log("Using existing contract", CONTRACT_ADDRESS);
@@ -117,16 +116,7 @@ async function main() {
         const tx = contract.tx
             .providerSetInfo(txOptions, 10n * CERE, "https://ddc.dev.cere.network/bucket/{BUCKET_ID}");
 
-        const result = await new Promise(async (resolve, reject) => {
-            const unsub = await tx.signAndSend(account, (result) => {
-                if (result.status.isInBlock || result.status.isFinalized) {
-                    unsub();
-                    resolve(result);
-                    showExplorerTx(result.status.asInBlock.toString());
-                }
-            });
-        });
-
+        const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log("EVENTS", JSON.stringify(events, null, 4));
     }
