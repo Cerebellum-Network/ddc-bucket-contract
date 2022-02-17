@@ -247,8 +247,7 @@ pub mod ddc_bucket {
     struct BillingFlow {
         from: AccountId,
         to: AccountId,
-        rate: Balance,
-        last_settle_ms: u64,
+        accu: Accumulator,
     }
 
     #[ink(impl)]
@@ -283,12 +282,11 @@ pub mod ddc_bucket {
         }
 
         pub fn billing_start_flow(&mut self, from: AccountId, to: AccountId, rate: Balance) -> FlowId {
-            let now_ms = self.env().block_timestamp();
+            let start_ms = self.env().block_timestamp();
             let flow = BillingFlow {
                 from,
                 to,
-                rate,
-                last_settle_ms: now_ms,
+                accu: Accumulator { rate, start_ms },
             };
             let flow_id = self.billing_flows.put(flow);
             flow_id
@@ -298,8 +296,7 @@ pub mod ddc_bucket {
             let flow = self.billing_flows.get(flow_id)
                 .ok_or(FlowDoesNotExist)?;
             let flow_deposit = 0; // TODO.
-            let paid_duration_ms = flow_deposit * MS_PER_MONTH / flow.rate;
-            let end_ms = flow.last_settle_ms + paid_duration_ms as u64;
+            let end_ms = flow.accu.time_of_value(flow_deposit);
             Ok(end_ms)
         }
 
@@ -309,10 +306,8 @@ pub mod ddc_bucket {
                     .ok_or(FlowDoesNotExist)?;
 
                 let now_ms = Self::env().block_timestamp();
-                let period_ms = (now_ms - flow.last_settle_ms) as u128;
-                let value_flowed = flow.rate * period_ms / MS_PER_MONTH;
+                let value_flowed = flow.accu.take_value_at_time(now_ms);
 
-                flow.last_settle_ms = now_ms;
                 (flow.from, flow.to, value_flowed)
             };
 
@@ -328,6 +323,33 @@ pub mod ddc_bucket {
             Ok(value_to_send)
         }
     }
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Accumulator {
+        rate: Balance,
+        start_ms: u64,
+    }
+
+    impl Accumulator {
+        pub fn value_at_time(&self, time_ms: u64) -> Balance {
+            assert!(time_ms >= self.start_ms);
+            let period_ms = (time_ms - self.start_ms) as u128;
+            period_ms * self.rate / MS_PER_MONTH
+        }
+
+        pub fn time_of_value(&self, value: Balance) -> u64 {
+            let duration_ms = value * MS_PER_MONTH / self.rate;
+            self.start_ms + duration_ms as u64
+        }
+
+        pub fn take_value_at_time(&mut self, now_ms: u64) -> Balance {
+            let value = self.value_at_time(now_ms);
+            self.start_ms = now_ms;
+            value
+        }
+    }
+
     // ---- End Billing ----
 
 
