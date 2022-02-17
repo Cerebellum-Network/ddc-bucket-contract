@@ -54,12 +54,12 @@ fn ddc_bucket_works() {
     let evs = get_events(5);
     assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if *ev ==
         ProviderSetInfo { provider_id, rent_per_month, location: location.to_string() }));
-    assert!(matches!(&evs[1], Event::CreateBucket(ev) if *ev ==
-        CreateBucket { bucket_id }));
-    assert!(matches!(&evs[2], Event::TopupBucket(ev) if *ev ==
-        TopupBucket { bucket_id, value: 100 * CURRENCY }));
-    assert!(matches!(&evs[3], Event::TopupBucket(ev) if *ev ==
-        TopupBucket { bucket_id, value: 100 * CURRENCY }));
+    assert!(matches!(&evs[1], Event::BucketCreated(ev) if *ev ==
+        BucketCreated { bucket_id }));
+    assert!(matches!(&evs[2], Event::BucketTopup(ev) if *ev ==
+        BucketTopup { bucket_id, value: 100 * CURRENCY }));
+    assert!(matches!(&evs[3], Event::BucketTopup(ev) if *ev ==
+        BucketTopup { bucket_id, value: 100 * CURRENCY }));
     assert!(matches!(&evs[4], Event::ProviderWithdraw(ev) if *ev ==
         ProviderWithdraw { provider_id, bucket_id, value: 186 }));
 }
@@ -68,8 +68,8 @@ fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ProviderSetInfo(ev) => println!("EVENT {:?}", ev),
-            Event::CreateBucket(ev) => println!("EVENT {:?}", ev),
-            Event::TopupBucket(ev) => println!("EVENT {:?}", ev),
+            Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
+            Event::BucketTopup(ev) => println!("EVENT {:?}", ev),
             Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
         }
     }

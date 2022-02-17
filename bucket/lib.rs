@@ -24,29 +24,22 @@ pub mod ddc_bucket {
         buckets: Stash<Bucket>,
     }
 
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Provider {
-        rent_per_month: Balance,
-        location: String,
+    impl DdcBucket {
+        #[ink(constructor)]
+        pub fn new() -> Self {
+            Self { providers: HashMap::new(), buckets: Stash::new() }
+        }
+
+        fn transfer(destination: AccountId, amount: Balance) -> Result<()> {
+            match Self::env().transfer(destination, amount) {
+                Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
+                Ok(_v) => Ok(()),
+            }
+        }
     }
 
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderSetInfo {
-        provider_id: AccountId,
-        rent_per_month: Balance,
-        location: String,
-    }
 
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderWithdraw {
-        provider_id: AccountId,
-        bucket_id: BucketId,
-        value: Balance,
-    }
-
+    // ---- Bucket ----
     pub type BucketId = u32;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
@@ -62,13 +55,13 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct CreateBucket {
+    pub struct BucketCreated {
         bucket_id: BucketId,
     }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct TopupBucket {
+    pub struct BucketTopup {
         bucket_id: BucketId,
         value: Balance,
     }
@@ -82,13 +75,6 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(constructor)]
-        pub fn new() -> Self {
-            Self { providers: HashMap::new(), buckets: Stash::new() }
-        }
-
-
-        // ---- As Consumer ----
         #[ink(message)]
         pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
             let value = self.env().transferred_balance();
@@ -104,8 +90,8 @@ pub mod ddc_bucket {
             };
             let bucket_id = self.buckets.put(bucket);
 
-            Self::env().emit_event(CreateBucket { bucket_id });
-            Self::env().emit_event(TopupBucket { bucket_id, value });
+            Self::env().emit_event(BucketCreated { bucket_id });
+            Self::env().emit_event(BucketTopup { bucket_id, value });
             Ok(bucket_id)
         }
 
@@ -117,7 +103,7 @@ pub mod ddc_bucket {
                 None => Err(Error::BucketDoesNotExist),
                 Some(bucket) => {
                     bucket.deposit += value;
-                    Self::env().emit_event(TopupBucket { bucket_id, value });
+                    Self::env().emit_event(BucketTopup { bucket_id, value });
                     Ok(())
                 }
             }
@@ -148,10 +134,35 @@ pub mod ddc_bucket {
                 .ok_or(Error::ProviderDoesNotExist)?;
             Ok(provider.rent_per_month)
         }
+    }
+    // ---- End Bucket ----
 
 
-        // ---- As Provider ----
+    // ---- Provider ----
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Provider {
+        rent_per_month: Balance,
+        location: String,
+    }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ProviderSetInfo {
+        provider_id: AccountId,
+        rent_per_month: Balance,
+        location: String,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ProviderWithdraw {
+        provider_id: AccountId,
+        bucket_id: BucketId,
+        value: Balance,
+    }
+
+    impl DdcBucket {
         #[ink(message)]
         pub fn provider_set_info(&mut self, rent_per_month: Balance, location: String) -> Result<()> {
             let provider_id = self.env().caller();
@@ -195,14 +206,9 @@ pub mod ddc_bucket {
             Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: to_withdraw });
             Ok(())
         }
-
-        fn transfer(destination: AccountId, amount: Balance) -> Result<()> {
-            match Self::env().transfer(destination, amount) {
-                Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
-                Ok(_v) => Ok(()),
-            }
-        }
     }
+    // ---- End Provider ----
+
 
     // ---- Utils ----
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
@@ -224,6 +230,7 @@ pub mod ddc_bucket {
 
     pub const MS_PER_MONTH: u128 = 31 * 24 * 3600 * 1000;
 
+    // ---- End Utils ----
     #[cfg(test)]
     mod tests;
     #[cfg(test)]
