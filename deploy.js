@@ -18,8 +18,8 @@ const CONTRACT_NAME = "ddc_bucket";
 const REUSE_CODE_HASH = "0xd7b513d798721f09f608068952eac05fb882790b49dcf7970f2eab6417eb57d8";
 const REUSE_CONTRACT_ADDRESS = "5FAKopbXL47wUdEp2s5sdBCg3vxFqg295M326bvbe84Zmd6N";
 
-const WASM = `../target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
-const ABI = `../target/ink/${CONTRACT_NAME}/metadata.json`;
+const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
+const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
 const CONSTRUCTOR = "new";
 
 const SEED = "//Alice";
