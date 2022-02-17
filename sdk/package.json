@@ -1,5 +1,5 @@
 {
-  "name": "ddc-contracts-sdk",
+  "name": "@cere/ddc-contracts-sdk",
   "version": "0.1.0",
   "main": "src/index.js",
   "license": "MIT",
