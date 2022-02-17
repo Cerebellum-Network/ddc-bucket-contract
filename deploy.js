@@ -12,6 +12,7 @@ const {
 } = require("./sdk");
 
 const fs = require("fs/promises");
+const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
@@ -89,29 +90,33 @@ async function main() {
         gasLimit: -1, //100_000n * MGAS,
     };
 
-    // Write
+    // Test data.
+    const rent_per_month = 10n * CERE;
+    const location = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
     {
         log("Sending a transaction…");
         const tx = contract.tx
-            .providerSetInfo(txOptions, 10n * CERE, "https://ddc.dev.cere.network/bucket/{BUCKET_ID}");
+            .providerSetInfo(txOptions, rent_per_month, location);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
     }
-
-    // Read (no params at the end, for the `get` message)
     {
         log("\nReading…");
         const {result, output} = await contract.query
             .providerGetInfo(account.address, txOptions, account.address);
 
-        if (result.isOk) {
-            log('OUTPUT', output.toHuman());
-        } else {
-            console.error('ERROR', result.asErr);
-        }
+        if (!result.isOk) assert.fail(result.asErr);
+
+        log('OUTPUT', output.toHuman());
+        assert.deepEqual(output.toJSON(), {
+            "ok": {
+                rent_per_month,
+                location,
+            },
+        });
     }
 }
 
