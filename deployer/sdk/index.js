@@ -1,3 +1,5 @@
+require("./deployments").init();
+
 // Old-school reexport.
 Object.assign(module.exports, require("./constants.js"));
 Object.assign(module.exports, require("./abiRegistry.js"));

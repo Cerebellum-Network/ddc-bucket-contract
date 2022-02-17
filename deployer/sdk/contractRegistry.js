@@ -4,15 +4,15 @@ const {getABI} = require("./abiRegistry.js");
 
 const ADDRESSES = {};
 
-function registerContract(environment, name, address) {
-    ADDRESSES[`${environment}/${name}`] = address;
+function registerContract(name, environment, address) {
+    ADDRESSES[`${name}@${environment}`] = address;
 }
 
-function getContract(environment, name, api) {
+function getContract(name, environment, api) {
     const abi = getABI(name);
     if (!abi) return null;
 
-    const address = ADDRESSES[`${environment}/${name}`];
+    const address = ADDRESSES[`${name}@${environment}`];
     if (!address) return null;
 
     return new ContractPromise(api, abi, address);

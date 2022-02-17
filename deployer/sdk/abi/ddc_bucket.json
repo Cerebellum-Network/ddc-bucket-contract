@@ -1,0 +1,922 @@
+{
+  "metadataVersion": "0.1.0",
+  "source": {
+    "hash": "0xf0937b2ca82eeaf5ce73050910ad093d10ac0e537dc441f6ef7e85547644dd1b",
+    "language": "ink! 3.0.0-rc4",
+    "compiler": "rustc 1.59.0-nightly"
+  },
+  "contract": {
+    "name": "ddc_bucket",
+    "version": "0.1.0",
+    "authors": [
+      "Aurélien Nicolas <aurel@cere.network>"
+    ]
+  },
+  "spec": {
+    "constructors": [
+      {
+        "args": [],
+        "docs": [],
+        "name": [
+          "new"
+        ],
+        "selector": "0x9bae9d5e"
+      }
+    ],
+    "docs": [],
+    "events": [
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "provider_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "rent_per_month",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 10
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "location",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 11
+            }
+          }
+        ],
+        "docs": [],
+        "name": "ProviderSetInfo"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "provider_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "value",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "docs": [],
+        "name": "ProviderWithdraw"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          }
+        ],
+        "docs": [],
+        "name": "CreateBucket"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "value",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "docs": [],
+        "name": "TopupBucket"
+      }
+    ],
+    "messages": [
+      {
+        "args": [
+          {
+            "name": "provider_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 4
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "bucket_create"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 15
+        },
+        "selector": "0x0aeb2379"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "bucket_topup"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 17
+        },
+        "selector": "0x883109ef"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "bucket_get_status"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 19
+        },
+        "selector": "0xcef55af6"
+      },
+      {
+        "args": [
+          {
+            "name": "rent_per_month",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 10
+            }
+          },
+          {
+            "name": "location",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 11
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "provider_set_info"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 17
+        },
+        "selector": "0x53741e35"
+      },
+      {
+        "args": [
+          {
+            "name": "provider_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 4
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "provider_get_info"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 22
+        },
+        "selector": "0x4ded1e34"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "provider_withdraw"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 17
+        },
+        "selector": "0x6d5d546a"
+      }
+    ]
+  },
+  "storage": {
+    "struct": {
+      "fields": [
+        {
+          "layout": {
+            "struct": {
+              "fields": [
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                              "ty": 1
+                            }
+                          },
+                          "name": "header"
+                        },
+                        {
+                          "layout": {
+                            "struct": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "cell": {
+                                      "key": "0x0100000000000000000000000000000000000000000000000000000000000000",
+                                      "ty": 2
+                                    }
+                                  },
+                                  "name": "len"
+                                },
+                                {
+                                  "layout": {
+                                    "array": {
+                                      "cellsPerElem": 1,
+                                      "layout": {
+                                        "cell": {
+                                          "key": "0x0100000001000000000000000000000000000000000000000000000000000000",
+                                          "ty": 3
+                                        }
+                                      },
+                                      "len": 4294967295,
+                                      "offset": "0x0200000000000000000000000000000000000000000000000000000000000000"
+                                    }
+                                  },
+                                  "name": "elems"
+                                }
+                              ]
+                            }
+                          },
+                          "name": "entries"
+                        }
+                      ]
+                    }
+                  },
+                  "name": "keys"
+                },
+                {
+                  "layout": {
+                    "hash": {
+                      "layout": {
+                        "cell": {
+                          "key": "0x0200000001000000000000000000000000000000000000000000000000000000",
+                          "ty": 8
+                        }
+                      },
+                      "offset": "0x0100000001000000000000000000000000000000000000000000000000000000",
+                      "strategy": {
+                        "hasher": "Blake2x256",
+                        "postfix": "",
+                        "prefix": "0x696e6b20686173686d6170"
+                      }
+                    }
+                  },
+                  "name": "values"
+                }
+              ]
+            }
+          },
+          "name": "providers"
+        },
+        {
+          "layout": {
+            "struct": {
+              "fields": [
+                {
+                  "layout": {
+                    "cell": {
+                      "key": "0x0200000001000000000000000000000000000000000000000000000000000000",
+                      "ty": 1
+                    }
+                  },
+                  "name": "header"
+                },
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0300000001000000000000000000000000000000000000000000000000000000",
+                              "ty": 2
+                            }
+                          },
+                          "name": "len"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "cellsPerElem": 1,
+                              "layout": {
+                                "cell": {
+                                  "key": "0x0300000002000000000000000000000000000000000000000000000000000000",
+                                  "ty": 12
+                                }
+                              },
+                              "len": 4294967295,
+                              "offset": "0x0400000001000000000000000000000000000000000000000000000000000000"
+                            }
+                          },
+                          "name": "elems"
+                        }
+                      ]
+                    }
+                  },
+                  "name": "entries"
+                }
+              ]
+            }
+          },
+          "name": "buckets"
+        }
+      ]
+    }
+  },
+  "types": [
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "last_vacant",
+              "type": 2,
+              "typeName": "Index"
+            },
+            {
+              "name": "len",
+              "type": 2,
+              "typeName": "u32"
+            },
+            {
+              "name": "len_entries",
+              "type": 2,
+              "typeName": "u32"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ink_storage",
+        "collections",
+        "stash",
+        "Header"
+      ]
+    },
+    {
+      "def": {
+        "primitive": "u32"
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 7,
+                  "typeName": "VacantEntry"
+                }
+              ],
+              "name": "Vacant"
+            },
+            {
+              "fields": [
+                {
+                  "type": 4,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Occupied"
+            }
+          ]
+        }
+      },
+      "params": [
+        4
+      ],
+      "path": [
+        "ink_storage",
+        "collections",
+        "stash",
+        "Entry"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "type": 5,
+              "typeName": "[u8; 32]"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ink_env",
+        "types",
+        "AccountId"
+      ]
+    },
+    {
+      "def": {
+        "array": {
+          "len": 32,
+          "type": 6
+        }
+      }
+    },
+    {
+      "def": {
+        "primitive": "u8"
+      }
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "next",
+              "type": 2,
+              "typeName": "Index"
+            },
+            {
+              "name": "prev",
+              "type": 2,
+              "typeName": "Index"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ink_storage",
+        "collections",
+        "stash",
+        "VacantEntry"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "value",
+              "type": 9,
+              "typeName": "V"
+            },
+            {
+              "name": "key_index",
+              "type": 2,
+              "typeName": "KeyIndex"
+            }
+          ]
+        }
+      },
+      "params": [
+        9
+      ],
+      "path": [
+        "ink_storage",
+        "collections",
+        "hashmap",
+        "ValueEntry"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "rent_per_month",
+              "type": 10,
+              "typeName": "Balance"
+            },
+            {
+              "name": "location",
+              "type": 11,
+              "typeName": "String"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "Provider"
+      ]
+    },
+    {
+      "def": {
+        "primitive": "u128"
+      }
+    },
+    {
+      "def": {
+        "primitive": "str"
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 7,
+                  "typeName": "VacantEntry"
+                }
+              ],
+              "name": "Vacant"
+            },
+            {
+              "fields": [
+                {
+                  "type": 13,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Occupied"
+            }
+          ]
+        }
+      },
+      "params": [
+        13
+      ],
+      "path": [
+        "ink_storage",
+        "collections",
+        "stash",
+        "Entry"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "owner_id",
+              "type": 4,
+              "typeName": "AccountId"
+            },
+            {
+              "name": "deposit",
+              "type": 10,
+              "typeName": "Balance"
+            },
+            {
+              "name": "provider_id",
+              "type": 4,
+              "typeName": "AccountId"
+            },
+            {
+              "name": "rent_per_month",
+              "type": 10,
+              "typeName": "Balance"
+            },
+            {
+              "name": "rent_start_ms",
+              "type": 14,
+              "typeName": "u64"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "Bucket"
+      ]
+    },
+    {
+      "def": {
+        "primitive": "u64"
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 2,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 16,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        2,
+        16
+      ],
+      "path": [
+        "Result"
+      ]
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "discriminant": 0,
+              "name": "BucketDoesNotExist"
+            },
+            {
+              "discriminant": 1,
+              "name": "ProviderDoesNotExist"
+            },
+            {
+              "discriminant": 2,
+              "name": "UnauthorizedProvider"
+            },
+            {
+              "discriminant": 3,
+              "name": "TransferFailed"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "Error"
+      ]
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 18,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 16,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        18,
+        16
+      ],
+      "path": [
+        "Result"
+      ]
+    },
+    {
+      "def": {
+        "tuple": []
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 20,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 16,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        20,
+        16
+      ],
+      "path": [
+        "Result"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "provider_id",
+              "type": 4,
+              "typeName": "AccountId"
+            },
+            {
+              "name": "estimated_rent_end_ms",
+              "type": 14,
+              "typeName": "u64"
+            },
+            {
+              "name": "writer_ids",
+              "type": 21,
+              "typeName": "Vec<AccountId>"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "BucketStatus"
+      ]
+    },
+    {
+      "def": {
+        "sequence": {
+          "type": 4
+        }
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 9,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 16,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        9,
+        16
+      ],
+      "path": [
+        "Result"
+      ]
+    }
+  ]
+}

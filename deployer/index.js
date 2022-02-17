@@ -60,7 +60,7 @@ async function main() {
     // Instantiate a new contract if necessary.
     if (REUSE_CONTRACT_ADDRESS) {
         log("Using existing contract", REUSE_CONTRACT_ADDRESS);
-        registerContract(chainName, CONTRACT_NAME, REUSE_CONTRACT_ADDRESS);
+        registerContract(CONTRACT_NAME, chainName, REUSE_CONTRACT_ADDRESS);
     } else {
         log("Instantiating a contract…");
 
@@ -78,11 +78,11 @@ async function main() {
         log(getExplorerUrl(result));
         log("Instantiated a new contract. Write this in the script:");
         log(`    const REUSE_CONTRACT_ADDRESS = "${new_contract_address}";`);
-        registerContract(chainName, CONTRACT_NAME, new_contract_address);
+        registerContract(CONTRACT_NAME, chainName, new_contract_address);
     }
     log();
 
-    const contract = getContract(chainName, CONTRACT_NAME, api);
+    const contract = getContract(CONTRACT_NAME, chainName, api);
 
     const txOptions = {
         value: 0n * CERE,
