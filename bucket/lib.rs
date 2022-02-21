@@ -298,9 +298,10 @@ pub mod ddc_bucket {
         pub fn billing_get_flow_end(&self, flow_id: FlowId) -> Result<u64> {
             let flow = self.billing_flows.get(flow_id)
                 .ok_or(FlowDoesNotExist)?;
-            let flow_deposit = self.billing_balance(flow.from);
-            let end_ms = flow.cash_flow.time_of_value(flow_deposit);
-            Ok(end_ms)
+            let account = self.billing_accounts.get(&flow.from)
+                .ok_or(AccountDoesNotExist)?;
+
+            Ok(account.get_flow_end())
         }
 
         pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Balance> {
@@ -384,6 +385,10 @@ pub mod ddc_bucket {
             let debt = Debt(self.out_flows.take_value_then_add_rate(debt_flow));
             self.take(debt)
         }
+
+        pub fn get_flow_end(&self) -> u64 {
+            self.out_flows.time_of_value(self.deposit.0)
+        }
     }
 
     type FlowId = u32;
@@ -426,6 +431,7 @@ pub mod ddc_bucket {
         }
 
         pub fn time_of_value(&self, value: Balance) -> u64 {
+            if self.rate == 0 { return u64::MAX; }
             let duration_ms = value * MS_PER_MONTH / self.rate;
             self.start_ms + duration_ms as u64
         }
@@ -465,6 +471,7 @@ pub mod ddc_bucket {
         BucketDoesNotExist,
         ProviderDoesNotExist,
         FlowDoesNotExist,
+        AccountDoesNotExist,
         UnauthorizedProvider,
         UnauthorizedOwner,
         TransferFailed,

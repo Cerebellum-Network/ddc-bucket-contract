@@ -21,27 +21,22 @@ fn ddc_bucket_works() {
     let location = "https://ddc.cere.network/bucket/{BUCKET_ID}";
     ddc_bucket.provider_set_info(rent_per_month, location.to_string())?;
 
-    // Consumer setup.
-    let bucket_id = {
-        // Consumer discovers the Provider.
-        let provider = ddc_bucket.provider_get_info(provider_id)?;
-        assert_eq!(provider, Provider {
-            rent_per_month,
-            location: location.to_string(),
-        });
+    // Consumer discovers the Provider.
+    let provider = ddc_bucket.provider_get_info(provider_id)?;
+    assert_eq!(provider, Provider {
+        rent_per_month,
+        location: location.to_string(),
+    });
 
-        // Create a bucket, including some value.
-        push_caller_value(consumer_id, 10 * CURRENCY);
-        let bucket_id = ddc_bucket.bucket_create(provider_id)?;
-        pop_caller();
+    // Create a bucket, including some value.
+    push_caller_value(consumer_id, 10 * CURRENCY);
+    let bucket_id = ddc_bucket.bucket_create(provider_id)?;
+    pop_caller();
 
-        // Add more value into the bucket.
-        push_caller_value(consumer_id, 100 * CURRENCY);
-        ddc_bucket.bucket_topup(bucket_id)?;
-        pop_caller();
-
-        bucket_id
-    };
+    // Add more value into the bucket.
+    push_caller_value(consumer_id, 100 * CURRENCY);
+    ddc_bucket.bucket_topup(bucket_id)?;
+    pop_caller();
 
     // Provider checks the status of the bucket.
     let status = ddc_bucket.bucket_get_status(bucket_id)?;
@@ -51,20 +46,55 @@ fn ddc_bucket_works() {
         writer_ids: vec![consumer_id],
     });
 
+    // Create another bucket, making the consumer pay a more expensive rate.
+    push_caller_value(consumer_id, 10 * CURRENCY);
+    let bucket_id2 = ddc_bucket.bucket_create(provider_id)?;
+    assert_ne!(bucket_id, bucket_id2);
+    pop_caller();
+
+    // The end time of the first bucket is earlier because the deposit is being depleted faster.
+    let status1 = ddc_bucket.bucket_get_status(bucket_id)?;
+    assert_eq!(status1, BucketStatus {
+        provider_id,
+        estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
+        writer_ids: vec![consumer_id],
+    });
+
+    // The end time of the second bucket is the same because it is paid from the same account.
+    let status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
+    assert_eq!(status2, BucketStatus {
+        provider_id,
+        estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
+        writer_ids: vec![consumer_id],
+    });
+
     // Provider withdraws in the future.
     advance_block::<DefaultEnvironment>().unwrap();
     ddc_bucket.provider_withdraw(bucket_id)?;
 
-    let evs = get_events(5);
+    let evs = get_events(7);
+    // Provider setup.
     assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if *ev ==
         ProviderSetInfo { provider_id, rent_per_month, location: location.to_string() }));
+
+    // Create bucket 1 with an initial topup.
     assert!(matches!(&evs[1], Event::BucketCreated(ev) if *ev ==
         BucketCreated { bucket_id }));
     assert!(matches!(&evs[2], Event::BucketTopup(ev) if *ev ==
         BucketTopup { bucket_id, value: 10 * CURRENCY }));
+
+    // Topup bucket 1.
     assert!(matches!(&evs[3], Event::BucketTopup(ev) if *ev ==
         BucketTopup { bucket_id, value: 100 * CURRENCY }));
-    assert!(matches!(&evs[4], Event::ProviderWithdraw(ev) if *ev ==
+
+    // Create bucket 2 with an initial topup.
+    assert!(matches!(&evs[4], Event::BucketCreated(ev) if *ev ==
+        BucketCreated { bucket_id: bucket_id2 }));
+    assert!(matches!(&evs[5], Event::BucketTopup(ev) if *ev ==
+        BucketTopup { bucket_id: bucket_id2, value: 10 * CURRENCY }));
+
+    // Provider withdrawaw.
+    assert!(matches!(&evs[6], Event::ProviderWithdraw(ev) if *ev ==
         ProviderWithdraw { provider_id, bucket_id, value: 186 }));
 }
 
