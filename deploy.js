@@ -9,6 +9,7 @@ const {
     getContract,
     CERE,
     MGAS,
+    ddcBucket,
 } = require("./sdk");
 
 const fs = require("fs/promises");
@@ -89,12 +90,20 @@ async function main() {
         value: 0n * CERE,
         gasLimit: -1, //100_000n * MGAS,
     };
+    const txOptionsPay = {
+        value: 1n * CERE,
+        gasLimit: -1, //100_000n * MGAS,
+    };
 
     // Test data.
+    const providerId = account.address;
+    const ownerId = account.address;
+    const anyAccountId = account.address;
     const rent_per_month = 10n * CERE;
     const location = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
+
     {
-        log("Sending a transaction…");
+        log("Setup a provider…");
         const tx = contract.tx
             .providerSetInfo(txOptions, rent_per_month, location);
 
@@ -104,9 +113,9 @@ async function main() {
         log("EVENTS", JSON.stringify(events, null, 4));
     }
     {
-        log("\nReading…");
+        log("\nRead provider info…");
         const {result, output} = await contract.query
-            .providerGetInfo(account.address, txOptions, account.address);
+            .providerGetInfo(anyAccountId, txOptions, providerId);
 
         if (!result.isOk) assert.fail(result.asErr);
 
@@ -118,6 +127,45 @@ async function main() {
             },
         });
     }
+
+    let bucketId;
+    {
+        log("Create a bucket…");
+        const tx = contract.tx
+            .bucketCreate(txOptionsPay, providerId);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        bucketId = ddcBucket.findCreatedBucketId(events);
+        log("New bucketId", bucketId);
+    }
+    {
+        log("Topup the bucket…");
+        const tx = contract.tx
+            .bucketTopup(txOptionsPay, bucketId);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+    }
+    {
+        log("\nRead bucket status…");
+        let {result, output} = await contract.query
+            .bucketGetStatus(anyAccountId, txOptions, bucketId);
+
+        if (!result.isOk) assert.fail(result.asErr);
+        output = output.toJSON();
+        log('OUTPUT', output);
+
+        assert.equal(output.ok.provider_id, providerId);
+        assert(output.ok.estimated_rent_end_ms > 0);
+        assert.deepEqual(output.ok.writer_ids, [ownerId]);
+    }
+
+    process.exit(0);
 }
 
 main().then(log, log);
