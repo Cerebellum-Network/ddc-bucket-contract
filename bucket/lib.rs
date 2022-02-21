@@ -56,12 +56,14 @@ pub mod ddc_bucket {
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct BucketCreated {
+        #[ink(topic)]
         bucket_id: BucketId,
     }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct BucketTopup {
+        #[ink(topic)]
         bucket_id: BucketId,
         value: Balance,
     }
@@ -76,6 +78,7 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
+        #[ink(payable)]
         pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
             let value = self.env().transferred_balance();
 
@@ -96,6 +99,7 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        #[ink(payable)]
         pub fn bucket_topup(&mut self, bucket_id: BucketId) -> Result<()> {
             let value = self.env().transferred_balance();
 
@@ -149,6 +153,7 @@ pub mod ddc_bucket {
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ProviderSetInfo {
+        #[ink(topic)]
         provider_id: AccountId,
         rent_per_month: Balance,
         location: String,
@@ -157,7 +162,9 @@ pub mod ddc_bucket {
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ProviderWithdraw {
+        #[ink(topic)]
         provider_id: AccountId,
+        #[ink(topic)]
         bucket_id: BucketId,
         value: Balance,
     }
