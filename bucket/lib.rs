@@ -37,13 +37,6 @@ pub mod ddc_bucket {
                 billing_flows: Stash::new(),
             }
         }
-
-        fn transfer(destination: AccountId, amount: Balance) -> Result<()> {
-            match Self::env().transfer(destination, amount) {
-                Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
-                Ok(_v) => Ok(()),
-            }
-        }
     }
 
 
@@ -106,15 +99,17 @@ pub mod ddc_bucket {
         #[ink(message)]
         #[ink(payable)]
         pub fn bucket_topup(&mut self, bucket_id: BucketId) -> Result<()> {
-            let caller = self.env().caller();
-            let value = self.env().transferred_balance();
-            self.billing_fund(caller, value);
+            // Receive the value.
+            let caller = Self::env().caller();
+            let cash = Self::receive_cash();
+            Self::env().emit_event(BucketTopup { bucket_id, value: cash.0 });
+            self.billing_put(caller, cash);
 
+            // Validate the bucket.
             match self.buckets.get_mut(bucket_id) {
                 None => Err(Error::BucketDoesNotExist),
                 Some(bucket) => {
                     if caller != bucket.owner_id { return Err(UnauthorizedOwner); }
-                    Self::env().emit_event(BucketTopup { bucket_id, value });
                     Ok(())
                 }
             }
@@ -203,11 +198,13 @@ pub mod ddc_bucket {
                 bucket.flow_id
             };
 
-            let value_flowed = self.billing_settle_flow(flow_id)?;
-            self.billing_take(provider_id, value_flowed)?;
-            Self::transfer(provider_id, value_flowed)?;
+            let flowed_amount = self.billing_settle_flow(flow_id)?;
 
-            Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: value_flowed });
+            let (debt, cash) = Self::borrow_debt_cash(flowed_amount);
+            self.billing_take_net(provider_id, debt)?;
+            Self::send_cash(provider_id, cash)?;
+
+            Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: flowed_amount });
             Ok(())
         }
     }
@@ -215,65 +212,62 @@ pub mod ddc_bucket {
 
 
     // ---- Billing ----
-    type FlowId = u32;
-
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    struct BillingAccount {
-        balance: Balance,
-    }
-
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    struct BillingFlow {
-        from: AccountId,
-        to: AccountId,
-        accu: Accumulator,
-    }
 
     #[ink(impl)]
     impl DdcBucket {
-        pub fn billing_fund(&mut self, to: AccountId, received_value: Balance) {
+        pub fn billing_put(&mut self, to: AccountId, cash: Cash) {
             match self.billing_accounts.entry(to) {
                 Vacant(e) => {
-                    e.insert(BillingAccount {
-                        balance: received_value,
-                    });
+                    let start_ms = Self::env().block_timestamp();
+                    let mut account = BillingAccount::new(start_ms);
+                    account.put(cash);
+                    e.insert(account);
                 }
                 Occupied(mut e) => {
                     let account = e.get_mut();
-                    account.balance += received_value;
+                    account.put(cash);
                 }
             };
         }
 
-        pub fn billing_take(&mut self, from: AccountId, value: Balance) -> Result<()> {
+        pub fn billing_take(&mut self, from: AccountId, debt: Debt) -> Result<()> {
             let account = self.billing_accounts.get_mut(&from)
                 .ok_or(InsufficientBalance)?;
-            let balance = account.balance;
-            if balance < value { return Err(InsufficientBalance); }
-            account.balance = balance - value;
+
+            account.take(debt)?;
             Ok(())
         }
 
-        pub fn billing_take_all(&mut self, from: AccountId) -> Result<Balance> {
+        pub fn billing_take_net(&mut self, from: AccountId, debt: Debt) -> Result<()> {
             let account = self.billing_accounts.get_mut(&from)
                 .ok_or(InsufficientBalance)?;
-            let value_to_send = account.balance;
-            account.balance = 0;
-            Ok(value_to_send)
+
+            let time_ms = Self::env().block_timestamp();
+            account.take_net(time_ms, debt)?;
+            Ok(())
+        }
+
+        pub fn billing_get_net(&self, from: AccountId) -> Balance {
+            match self.billing_accounts.get(&from) {
+                None => 0,
+                Some(account) => {
+                    let time_ms = Self::env().block_timestamp();
+                    account.get_net(time_ms)
+                }
+            }
         }
 
         pub fn billing_balance(&self, account_id: AccountId) -> Balance {
             match self.billing_accounts.get(&account_id) {
                 None => 0,
-                Some(account) => account.balance,
+                Some(account) => account.deposit.0,
             }
         }
 
-        pub fn billing_transfer(&mut self, from: AccountId, to: AccountId, value: Balance) -> Result<()> {
-            self.billing_take(from, value)?;
-            self.billing_fund(to, value);
+        pub fn billing_transfer(&mut self, from: AccountId, to: AccountId, amount: Balance) -> Result<()> {
+            let (debt, cash) = Self::borrow_debt_cash(amount);
+            self.billing_take_net(from, debt)?;
+            self.billing_put(to, cash);
             Ok(())
         }
 
@@ -282,7 +276,7 @@ pub mod ddc_bucket {
             let flow = BillingFlow {
                 from,
                 to,
-                accu: Accumulator { rate, start_ms },
+                accu: Accumulator::new(start_ms, rate),
             };
             let flow_id = self.billing_flows.put(flow);
             flow_id
@@ -297,18 +291,98 @@ pub mod ddc_bucket {
         }
 
         pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Balance> {
-            let (from, to, value_flowed) = {
+            let now_ms = Self::env().block_timestamp();
+
+            let (flowed_amount, (from, debt), (to, cash)) = {
                 let flow = self.billing_flows.get_mut(flow_id)
                     .ok_or(FlowDoesNotExist)?;
-
-                let now_ms = Self::env().block_timestamp();
-                let value_flowed = flow.accu.take_value_at_time(now_ms);
-
-                (flow.from, flow.to, value_flowed)
+                flow.execute(now_ms)
             };
 
-            self.billing_transfer(from, to, value_flowed)?;
-            Ok(value_flowed)
+            self.billing_take(from, debt)?;
+            self.billing_put(to, cash);
+
+            Ok(flowed_amount)
+        }
+
+        pub fn receive_cash() -> Cash {
+            Cash(Self::env().transferred_balance())
+        }
+
+        pub fn send_cash(destination: AccountId, cash: Cash) -> Result<()> {
+            match Self::env().transfer(destination, cash.0) {
+                Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
+                Ok(_v) => Ok(()),
+            }
+        }
+
+        pub fn borrow_debt_cash(amount: Balance) -> (Debt, Cash) {
+            (Debt(amount), Cash(amount))
+        }
+    }
+
+    #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    struct BillingAccount {
+        deposit: Cash,
+        out_flows: Accumulator,
+    }
+
+    impl BillingAccount {
+        pub fn new(start_ms: u64) -> BillingAccount {
+            BillingAccount {
+                deposit: Cash(0),
+                out_flows: Accumulator::new(start_ms, 0),
+            }
+        }
+
+        pub fn put(&mut self, cash: Cash) {
+            self.deposit.0 += cash.0;
+        }
+
+        pub fn take(&mut self, debt: Debt) -> Result<()> {
+            if self.deposit.0 >= debt.0 {
+                self.deposit.0 -= debt.0;
+                Ok(())
+            } else {
+                Err(InsufficientBalance)
+            }
+        }
+
+        pub fn take_net(&mut self, time_ms: u64, debt: Debt) -> Result<()> {
+            if self.get_net(time_ms) >= debt.0 {
+                self.deposit.0 -= debt.0;
+                Ok(())
+            } else {
+                Err(InsufficientBalance)
+            }
+        }
+
+        pub fn get_net(&self, time_ms: u64) -> Balance {
+            let consumed = self.out_flows.value_at_time(time_ms);
+            if self.deposit.0 >= consumed {
+                self.deposit.0 - consumed
+            } else {
+                0
+            }
+        }
+    }
+
+    type FlowId = u32;
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    struct BillingFlow {
+        from: AccountId,
+        to: AccountId,
+        accu: Accumulator,
+    }
+
+    impl BillingFlow {
+        pub fn execute(&mut self, now_ms: u64) -> (Balance, (AccountId, Debt), (AccountId, Cash)) {
+            let flowed_amount = self.accu.take_value_at_time(now_ms);
+            let (debt, cash) = DdcBucket::borrow_debt_cash(flowed_amount);
+            (flowed_amount, (self.from, debt), (self.to, cash))
         }
     }
 
@@ -320,6 +394,10 @@ pub mod ddc_bucket {
     }
 
     impl Accumulator {
+        pub fn new(start_ms: u64, rate: Balance) -> Accumulator {
+            Accumulator { rate, start_ms }
+        }
+
         pub fn value_at_time(&self, time_ms: u64) -> Balance {
             assert!(time_ms >= self.start_ms);
             let period_ms = (time_ms - self.start_ms) as u128;
@@ -337,6 +415,18 @@ pub mod ddc_bucket {
             value
         }
     }
+
+    /// Cash represents some value that was taken from someone, and must be credited to someone.
+    #[must_use]
+    #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Cash(pub Balance);
+
+    /// Debt represents some value that was credited to someone, and must be paid by someone.
+    #[must_use]
+    #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Debt(pub Balance);
 
     // ---- End Billing ----
 
