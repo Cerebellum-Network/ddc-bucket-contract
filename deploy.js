@@ -16,15 +16,15 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0xd7b513d798721f09f608068952eac05fb882790b49dcf7970f2eab6417eb57d8";
-const REUSE_CONTRACT_ADDRESS = "5FAKopbXL47wUdEp2s5sdBCg3vxFqg295M326bvbe84Zmd6N";
+const REUSE_CODE_HASH = "0xf880703598da623325b6521d31f59f78dc93598361173df3e31927258a32cff0";
+const REUSE_CONTRACT_ADDRESS = "5Frr6hqoMjKFsfANMd26qnGZhKXzbU1uooFgdTsWVLguwXDq";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
 const CONSTRUCTOR = "new";
 
 const SEED = "//Alice";
-const RPC = "wss://rpc.devnet.cere.network:9945";
+const RPC = "wss://rpc.testnet.cere.network:9945";
 
 
 async function main() {
