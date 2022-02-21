@@ -79,11 +79,17 @@ pub mod ddc_bucket {
         #[ink(message)]
         #[ink(payable)]
         pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
+            // Receive the payable value.
+            let cash = Self::receive_cash();
+            let value = cash.0;
             let caller = self.env().caller();
+            self.billing_put(caller, cash);
 
+            // Start the payment flow for a bucket.
             let rent_per_month = self.get_provider_rent(provider_id)?;
-            let flow_id = self.billing_start_flow(caller, provider_id, rent_per_month);
+            let flow_id = self.billing_start_flow(caller, provider_id, rent_per_month)?;
 
+            // Create a new bucket.
             let bucket = Bucket {
                 owner_id: self.env().caller(),
                 provider_id,
@@ -93,26 +99,27 @@ pub mod ddc_bucket {
             let bucket_id = self.buckets.put(bucket);
 
             Self::env().emit_event(BucketCreated { bucket_id });
+            Self::env().emit_event(BucketTopup { bucket_id, value });
             Ok(bucket_id)
         }
 
         #[ink(message)]
         #[ink(payable)]
         pub fn bucket_topup(&mut self, bucket_id: BucketId) -> Result<()> {
-            // Receive the value.
-            let caller = Self::env().caller();
+            // Receive the payable value.
             let cash = Self::receive_cash();
-            Self::env().emit_event(BucketTopup { bucket_id, value: cash.0 });
+            let value = cash.0;
+            let caller = Self::env().caller();
             self.billing_put(caller, cash);
 
             // Validate the bucket.
-            match self.buckets.get_mut(bucket_id) {
-                None => Err(Error::BucketDoesNotExist),
-                Some(bucket) => {
-                    if caller != bucket.owner_id { return Err(UnauthorizedOwner); }
-                    Ok(())
-                }
+            let bucket = self.buckets.get(bucket_id)
+                .ok_or(BucketDoesNotExist)?;
+            if caller != bucket.owner_id {
+                return Err(UnauthorizedOwner);
             }
+            Self::env().emit_event(BucketTopup { bucket_id, value });
+            Ok(())
         }
 
         #[ink(message)]
@@ -218,8 +225,7 @@ pub mod ddc_bucket {
         pub fn billing_put(&mut self, to: AccountId, cash: Cash) {
             match self.billing_accounts.entry(to) {
                 Vacant(e) => {
-                    let start_ms = Self::env().block_timestamp();
-                    let mut account = BillingAccount::new(start_ms);
+                    let mut account = BillingAccount::new();
                     account.put(cash);
                     e.insert(account);
                 }
@@ -271,22 +277,29 @@ pub mod ddc_bucket {
             Ok(())
         }
 
-        pub fn billing_start_flow(&mut self, from: AccountId, to: AccountId, rate: Balance) -> FlowId {
+        pub fn billing_start_flow(&mut self, from: AccountId, to: AccountId, rate: Balance) -> Result<FlowId> {
             let start_ms = self.env().block_timestamp();
+            let cash_flow = Accumulator::new(start_ms, rate);
+            let debt_flow = cash_flow.clone();
+
+            let from_account = self.billing_accounts.get_mut(&from)
+                .ok_or(InsufficientBalance)?;
+            from_account.take_debt_flow(debt_flow)?;
+
             let flow = BillingFlow {
                 from,
                 to,
-                accu: Accumulator::new(start_ms, rate),
+                cash_flow,
             };
             let flow_id = self.billing_flows.put(flow);
-            flow_id
+            Ok(flow_id)
         }
 
         pub fn billing_get_flow_end(&self, flow_id: FlowId) -> Result<u64> {
             let flow = self.billing_flows.get(flow_id)
                 .ok_or(FlowDoesNotExist)?;
             let flow_deposit = self.billing_balance(flow.from);
-            let end_ms = flow.accu.time_of_value(flow_deposit);
+            let end_ms = flow.cash_flow.time_of_value(flow_deposit);
             Ok(end_ms)
         }
 
@@ -329,10 +342,10 @@ pub mod ddc_bucket {
     }
 
     impl BillingAccount {
-        pub fn new(start_ms: u64) -> BillingAccount {
+        pub fn new() -> BillingAccount {
             BillingAccount {
                 deposit: Cash(0),
-                out_flows: Accumulator::new(start_ms, 0),
+                out_flows: Accumulator::empty(),
             }
         }
 
@@ -366,6 +379,11 @@ pub mod ddc_bucket {
                 0
             }
         }
+
+        pub fn take_debt_flow(&mut self, debt_flow: Accumulator) -> Result<()> {
+            let debt = Debt(self.out_flows.take_value_then_add_rate(debt_flow));
+            self.take(debt)
+        }
     }
 
     type FlowId = u32;
@@ -375,17 +393,18 @@ pub mod ddc_bucket {
     struct BillingFlow {
         from: AccountId,
         to: AccountId,
-        accu: Accumulator,
+        cash_flow: Accumulator,
     }
 
     impl BillingFlow {
         pub fn execute(&mut self, now_ms: u64) -> (Balance, (AccountId, Debt), (AccountId, Cash)) {
-            let flowed_amount = self.accu.take_value_at_time(now_ms);
+            let flowed_amount = self.cash_flow.take_value_at_time(now_ms);
             let (debt, cash) = DdcBucket::borrow_debt_cash(flowed_amount);
             (flowed_amount, (self.from, debt), (self.to, cash))
         }
     }
 
+    #[must_use]
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Accumulator {
@@ -397,6 +416,8 @@ pub mod ddc_bucket {
         pub fn new(start_ms: u64, rate: Balance) -> Accumulator {
             Accumulator { rate, start_ms }
         }
+
+        pub fn empty() -> Accumulator { Accumulator::new(0, 0) }
 
         pub fn value_at_time(&self, time_ms: u64) -> Balance {
             assert!(time_ms >= self.start_ms);
@@ -414,15 +435,21 @@ pub mod ddc_bucket {
             self.start_ms = now_ms;
             value
         }
+
+        pub fn take_value_then_add_rate(&mut self, acc: Accumulator) -> Balance {
+            let accumulated = self.take_value_at_time(acc.start_ms);
+            self.rate += acc.rate;
+            accumulated
+        }
     }
 
-    /// Cash represents some value that was taken from someone, and must be credited to someone.
+    /// Cash represents some value that was taken from someone, and that must be credited to someone.
     #[must_use]
     #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Cash(pub Balance);
 
-    /// Debt represents some value that was credited to someone, and must be paid by someone.
+    /// Debt represents some value that was credited to someone, and that must be paid by someone.
     #[must_use]
     #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
