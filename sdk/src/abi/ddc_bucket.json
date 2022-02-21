@@ -1,13 +1,13 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xf0937b2ca82eeaf5ce73050910ad093d10ac0e537dc441f6ef7e85547644dd1b",
+    "hash": "0xf880703598da623325b6521d31f59f78dc93598361173df3e31927258a32cff0",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "authors": [
       "Aurélien Nicolas <aurel@cere.network>"
     ]
@@ -29,7 +29,52 @@
         "args": [
           {
             "docs": [],
+            "indexed": true,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          }
+        ],
+        "docs": [],
+        "name": "BucketCreated"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 2
+            }
+          },
+          {
+            "docs": [],
             "indexed": false,
+            "name": "value",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "docs": [],
+        "name": "BucketTopup"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
             "name": "provider_id",
             "type": {
               "displayName": [
@@ -68,7 +113,7 @@
         "args": [
           {
             "docs": [],
-            "indexed": false,
+            "indexed": true,
             "name": "provider_id",
             "type": {
               "displayName": [
@@ -79,7 +124,7 @@
           },
           {
             "docs": [],
-            "indexed": false,
+            "indexed": true,
             "name": "bucket_id",
             "type": {
               "displayName": [
@@ -102,51 +147,6 @@
         ],
         "docs": [],
         "name": "ProviderWithdraw"
-      },
-      {
-        "args": [
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "bucket_id",
-            "type": {
-              "displayName": [
-                "BucketId"
-              ],
-              "type": 2
-            }
-          }
-        ],
-        "docs": [],
-        "name": "CreateBucket"
-      },
-      {
-        "args": [
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "bucket_id",
-            "type": {
-              "displayName": [
-                "BucketId"
-              ],
-              "type": 2
-            }
-          },
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "value",
-            "type": {
-              "displayName": [
-                "Balance"
-              ],
-              "type": 10
-            }
-          }
-        ],
-        "docs": [],
-        "name": "TopupBucket"
       }
     ],
     "messages": [
@@ -167,7 +167,7 @@
         "name": [
           "bucket_create"
         ],
-        "payable": false,
+        "payable": true,
         "returnType": {
           "displayName": [
             "Result"
@@ -193,7 +193,7 @@
         "name": [
           "bucket_topup"
         ],
-        "payable": false,
+        "payable": true,
         "returnType": {
           "displayName": [
             "Result"
