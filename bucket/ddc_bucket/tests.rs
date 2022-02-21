@@ -47,7 +47,7 @@ fn ddc_bucket_works() {
     let status = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(status, BucketStatus {
         provider_id,
-        estimated_rent_end_ms: 0, // TODO: should find 26784000000,
+        estimated_rent_end_ms: 26784000000,
         writer_ids: vec![consumer_id],
     });
 

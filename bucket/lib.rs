@@ -5,8 +5,6 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
-    use core::cmp::min;
-
     use ink_prelude::{
         string::String,
         vec, vec::Vec,
@@ -56,12 +54,8 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Bucket {
         owner_id: AccountId,
-        deposit: Balance,
-
         provider_id: AccountId,
         rent_per_month: Balance,
-        rent_start_ms: u64,
-
         flow_id: FlowId,
     }
 
@@ -97,15 +91,10 @@ pub mod ddc_bucket {
             let rent_per_month = self.get_provider_rent(provider_id)?;
             let flow_id = self.billing_start_flow(caller, provider_id, rent_per_month);
 
-            let now_ms = Self::env().block_timestamp();
             let bucket = Bucket {
                 owner_id: self.env().caller(),
-                deposit: 0,
-
                 provider_id,
                 rent_per_month,
-                rent_start_ms: now_ms,
-
                 flow_id,
             };
             let bucket_id = self.buckets.put(bucket);
@@ -124,7 +113,6 @@ pub mod ddc_bucket {
             match self.buckets.get_mut(bucket_id) {
                 None => Err(Error::BucketDoesNotExist),
                 Some(bucket) => {
-                    bucket.deposit += value;
                     if caller != bucket.owner_id { return Err(UnauthorizedOwner); }
                     Self::env().emit_event(BucketTopup { bucket_id, value });
                     Ok(())
@@ -144,12 +132,6 @@ pub mod ddc_bucket {
                 estimated_rent_end_ms,
                 writer_ids: vec![bucket.owner_id],
             })
-        }
-
-        fn estimate_rent_end_ms(bucket: &Bucket) -> u64 {
-            let paid_duration_ms = bucket.deposit * MS_PER_MONTH / bucket.rent_per_month;
-            let end_ms = bucket.rent_start_ms + paid_duration_ms as u64;
-            end_ms
         }
 
         fn get_provider_rent(&self, provider_id: AccountId) -> Result<Balance> {
@@ -215,22 +197,14 @@ pub mod ddc_bucket {
             let flow_id = {
                 let bucket = self.buckets.get(bucket_id)
                     .ok_or(Error::BucketDoesNotExist)?;
+                if bucket.provider_id != provider_id {
+                    return Err(Error::UnauthorizedProvider);
+                }
                 bucket.flow_id
             };
+
             let value_flowed = self.billing_settle_flow(flow_id)?;
-            let value_to_send = self.billing_withdraw_all(provider_id);
-
-            let bucket = self.buckets.get_mut(bucket_id)
-                .ok_or(Error::BucketDoesNotExist)?;
-
-            if bucket.provider_id != provider_id {
-                return Err(Error::UnauthorizedProvider);
-            }
-
-            let now_ms = Self::env().block_timestamp();
-            bucket.rent_start_ms = now_ms;
-            bucket.deposit -= value_flowed;
-
+            self.billing_take(provider_id, value_flowed)?;
             Self::transfer(provider_id, value_flowed)?;
 
             Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: value_flowed });
@@ -282,6 +256,21 @@ pub mod ddc_bucket {
             Ok(())
         }
 
+        pub fn billing_take_all(&mut self, from: AccountId) -> Result<Balance> {
+            let account = self.billing_accounts.get_mut(&from)
+                .ok_or(InsufficientBalance)?;
+            let value_to_send = account.balance;
+            account.balance = 0;
+            Ok(value_to_send)
+        }
+
+        pub fn billing_balance(&self, account_id: AccountId) -> Balance {
+            match self.billing_accounts.get(&account_id) {
+                None => 0,
+                Some(account) => account.balance,
+            }
+        }
+
         pub fn billing_transfer(&mut self, from: AccountId, to: AccountId, value: Balance) -> Result<()> {
             self.billing_take(from, value)?;
             self.billing_fund(to, value);
@@ -302,7 +291,7 @@ pub mod ddc_bucket {
         pub fn billing_get_flow_end(&self, flow_id: FlowId) -> Result<u64> {
             let flow = self.billing_flows.get(flow_id)
                 .ok_or(FlowDoesNotExist)?;
-            let flow_deposit = 0; // TODO.
+            let flow_deposit = self.billing_balance(flow.from);
             let end_ms = flow.accu.time_of_value(flow_deposit);
             Ok(end_ms)
         }
@@ -320,14 +309,6 @@ pub mod ddc_bucket {
 
             self.billing_transfer(from, to, value_flowed)?;
             Ok(value_flowed)
-        }
-
-        pub fn billing_withdraw_all(&mut self, from: AccountId) -> Result<Balance> {
-            let account = self.billing_accounts.get_mut(&from)
-                .ok_or(InsufficientBalance)?;
-            let value_to_send = account.balance;
-            account.balance = 0;
-            Ok(value_to_send)
         }
     }
 
