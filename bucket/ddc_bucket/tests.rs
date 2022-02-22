@@ -35,7 +35,7 @@ fn ddc_bucket_works() {
 
     // Add more value into the bucket.
     push_caller_value(consumer_id, 100 * CURRENCY);
-    ddc_bucket.bucket_topup(bucket_id)?;
+    ddc_bucket.deposit()?;
     pop_caller();
 
     // Provider checks the status of the bucket.
@@ -77,21 +77,21 @@ fn ddc_bucket_works() {
     assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if *ev ==
         ProviderSetInfo { provider_id, rent_per_month, location: location.to_string() }));
 
-    // Create bucket 1 with an initial topup.
-    assert!(matches!(&evs[1], Event::BucketCreated(ev) if *ev ==
+    // Create bucket 1 with an initial deposit.
+    assert!(matches!(&evs[1], Event::Deposit(ev) if *ev ==
+        Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
+    assert!(matches!(&evs[2], Event::BucketCreated(ev) if *ev ==
         BucketCreated { bucket_id }));
-    assert!(matches!(&evs[2], Event::BucketTopup(ev) if *ev ==
-        BucketTopup { bucket_id, value: 10 * CURRENCY }));
 
-    // Topup bucket 1.
-    assert!(matches!(&evs[3], Event::BucketTopup(ev) if *ev ==
-        BucketTopup { bucket_id, value: 100 * CURRENCY }));
+    // Deposit more.
+    assert!(matches!(&evs[3], Event::Deposit(ev) if *ev ==
+        Deposit { account_id: consumer_id, value: 100 * CURRENCY }));
 
-    // Create bucket 2 with an initial topup.
-    assert!(matches!(&evs[4], Event::BucketCreated(ev) if *ev ==
+    // Create bucket 2 with an additional deposit.
+    assert!(matches!(&evs[4], Event::Deposit(ev) if *ev ==
+        Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
+    assert!(matches!(&evs[5], Event::BucketCreated(ev) if *ev ==
         BucketCreated { bucket_id: bucket_id2 }));
-    assert!(matches!(&evs[5], Event::BucketTopup(ev) if *ev ==
-        BucketTopup { bucket_id: bucket_id2, value: 10 * CURRENCY }));
 
     // Provider withdrawaw.
     assert!(matches!(&evs[6], Event::ProviderWithdraw(ev) if *ev ==
@@ -103,7 +103,7 @@ fn _print_events(events: &[Event]) {
         match ev {
             Event::ProviderSetInfo(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
-            Event::BucketTopup(ev) => println!("EVENT {:?}", ev),
+            Event::Deposit(ev) => println!("EVENT {:?}", ev),
             Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
         }
     }

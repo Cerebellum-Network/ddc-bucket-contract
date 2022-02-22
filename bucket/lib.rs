@@ -62,9 +62,9 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct BucketTopup {
+    pub struct Deposit {
         #[ink(topic)]
-        bucket_id: BucketId,
+        account_id: AccountId,
         value: Balance,
     }
 
@@ -81,10 +81,8 @@ pub mod ddc_bucket {
         #[ink(payable)]
         pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
             // Receive the payable value.
-            let cash = Self::receive_cash();
-            let value = cash.0;
-            let caller = self.env().caller();
-            self.billing_deposit(caller, cash);
+            self.deposit()?;
+            let caller = Self::env().caller();
 
             // Start the payment flow for a bucket.
             let rent_per_month = self.get_provider_rent(provider_id)?;
@@ -92,7 +90,7 @@ pub mod ddc_bucket {
 
             // Create a new bucket.
             let bucket = Bucket {
-                owner_id: self.env().caller(),
+                owner_id: caller,
                 provider_id,
                 rent_per_month,
                 flow_id,
@@ -100,26 +98,19 @@ pub mod ddc_bucket {
             let bucket_id = self.buckets.put(bucket);
 
             Self::env().emit_event(BucketCreated { bucket_id });
-            Self::env().emit_event(BucketTopup { bucket_id, value });
             Ok(bucket_id)
         }
 
         #[ink(message)]
         #[ink(payable)]
-        pub fn bucket_topup(&mut self, bucket_id: BucketId) -> Result<()> {
+        pub fn deposit(&mut self) -> Result<()> {
             // Receive the payable value.
             let cash = Self::receive_cash();
             let value = cash.0;
-            let caller = Self::env().caller();
-            self.billing_deposit(caller, cash);
+            let account_id = Self::env().caller();
+            self.billing_deposit(account_id, cash);
 
-            // Validate the bucket.
-            let bucket = self.buckets.get(bucket_id)
-                .ok_or(BucketDoesNotExist)?;
-            if caller != bucket.owner_id {
-                return Err(UnauthorizedOwner);
-            }
-            Self::env().emit_event(BucketTopup { bucket_id, value });
+            Self::env().emit_event(Deposit { account_id, value });
             Ok(())
         }
 
