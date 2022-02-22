@@ -49,7 +49,6 @@ pub mod ddc_bucket {
     pub struct Bucket {
         owner_id: AccountId,
         service_id: ServiceId,
-        rent_per_month: Balance,
         flow_id: FlowId,
     }
 
@@ -88,15 +87,13 @@ pub mod ddc_bucket {
 
             // Start the payment flow for a bucket.
             let service = self.service_get_info(service_id)?;
-            let rent_per_month = service.rent_per_month;
             let to = service.get_revenue_address();
-            let flow_id = self.billing_start_flow(caller, to, rent_per_month)?;
+            let flow_id = self.billing_start_flow(caller, to, service.rent_per_month)?;
 
             // Create a new bucket.
             let bucket = Bucket {
                 owner_id: caller,
                 service_id,
-                rent_per_month,
                 flow_id,
             };
             let bucket_id = self.buckets.put(bucket);
