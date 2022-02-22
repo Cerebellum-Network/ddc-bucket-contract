@@ -106,7 +106,7 @@ pub mod ddc_bucket {
         pub fn deposit(&mut self) -> Result<()> {
             // Receive the payable value.
             let cash = Self::receive_cash();
-            let value = cash.0;
+            let value = cash.peek();
             let account_id = Self::env().caller();
             self.billing_deposit(account_id, cash);
 
@@ -199,7 +199,7 @@ pub mod ddc_bucket {
 
             let flowed_amount = self.billing_settle_flow(flow_id)?;
 
-            let (payable, cash) = Self::borrow_payable_cash(flowed_amount);
+            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
             self.billing_withdraw(provider_id, payable)?;
             Self::send_cash(provider_id, cash)?;
 
@@ -250,12 +250,12 @@ pub mod ddc_bucket {
         pub fn billing_balance(&self, account_id: AccountId) -> Balance {
             match self.billing_accounts.get(&account_id) {
                 None => 0,
-                Some(account) => account.deposit.0,
+                Some(account) => account.deposit.peek(),
             }
         }
 
         pub fn billing_transfer(&mut self, from: AccountId, to: AccountId, amount: Balance) -> Result<()> {
-            let (payable, cash) = Self::borrow_payable_cash(amount);
+            let (payable, cash) = Cash::borrow_payable_cash(amount);
             self.billing_withdraw(from, payable)?;
             self.billing_deposit(to, cash);
             Ok(())
@@ -311,14 +311,10 @@ pub mod ddc_bucket {
         }
 
         pub fn send_cash(destination: AccountId, cash: Cash) -> Result<()> {
-            match Self::env().transfer(destination, cash.0) {
+            match Self::env().transfer(destination, cash.consume()) {
                 Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
                 Ok(_v) => Ok(()),
             }
-        }
-
-        pub fn borrow_payable_cash(amount: Balance) -> (Payable, Cash) {
-            (Payable(amount), Cash(amount))
         }
     }
 
@@ -340,12 +336,12 @@ pub mod ddc_bucket {
         }
 
         pub fn deposit(&mut self, cash: Cash) {
-            self.deposit.0 += cash.0;
+            self.deposit.increase(cash);
         }
 
         pub fn withdraw(&mut self, time_ms: u64, payable: Payable) -> Result<()> {
-            if self.get_withdrawable(time_ms) >= payable.0 {
-                self.deposit.0 -= payable.0;
+            if self.get_withdrawable(time_ms) >= payable.peek() {
+                self.deposit.pay_unchecked(payable);
                 Ok(())
             } else {
                 Err(InsufficientBalance)
@@ -353,9 +349,10 @@ pub mod ddc_bucket {
         }
 
         pub fn get_withdrawable(&self, time_ms: u64) -> Balance {
+            let deposit = self.deposit.peek();
             let consumed = self.payable_locked + self.payable_schedule.value_at_time(time_ms);
-            if self.deposit.0 >= consumed {
-                self.deposit.0 - consumed
+            if deposit >= consumed {
+                deposit - consumed
             } else {
                 0
             }
@@ -366,17 +363,17 @@ pub mod ddc_bucket {
         }
 
         pub fn schedule_covered_until(&self) -> u64 {
-            self.payable_schedule.time_of_value(self.deposit.0)
+            self.payable_schedule.time_of_value(self.deposit.peek())
         }
 
         pub fn pay_scheduled(&mut self, now_ms: u64, payable: Payable) -> Result<()> {
-            self.unlock_scheduled_amount(now_ms, payable.0);
+            self.unlock_scheduled_amount(now_ms, payable.peek());
             self.pay(payable)
         }
 
         fn pay(&mut self, payable: Payable) -> Result<()> {
-            if self.deposit.0 >= payable.0 {
-                self.deposit.0 -= payable.0;
+            if self.deposit.peek() >= payable.peek() {
+                self.deposit.pay_unchecked(payable);
                 Ok(())
             } else {
                 Err(InsufficientBalance)
@@ -403,7 +400,7 @@ pub mod ddc_bucket {
     impl BillingFlow {
         pub fn run_until(&mut self, now_ms: u64) -> (Balance, (AccountId, Payable), (AccountId, Cash)) {
             let flowed_amount = self.schedule.take_value_at_time(now_ms);
-            let (payable, cash) = DdcBucket::borrow_payable_cash(flowed_amount);
+            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
             (flowed_amount, (self.from, payable), (self.to, cash))
         }
     }
@@ -462,6 +459,32 @@ pub mod ddc_bucket {
     #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Payable(pub Balance);
+
+    impl Cash {
+        pub fn borrow_payable_cash(amount: Balance) -> (Payable, Cash) {
+            (Payable(amount), Cash(amount))
+        }
+
+        #[must_use]
+        pub fn consume(self) -> Balance { self.0 }
+
+        pub fn peek(&self) -> Balance { self.0 }
+
+        pub fn increase(&mut self, cash: Cash) {
+            self.0 += cash.consume();
+        }
+
+        pub fn pay_unchecked(&mut self, payable: Payable) {
+            self.0 -= payable.consume();
+        }
+    }
+
+    impl Payable {
+        #[must_use]
+        pub fn consume(self) -> Balance { self.0 }
+
+        pub fn peek(&self) -> Balance { self.0 }
+    }
 
     // ---- End Billing ----
 
