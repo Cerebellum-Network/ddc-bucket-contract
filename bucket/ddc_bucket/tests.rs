@@ -20,14 +20,14 @@ fn ddc_bucket_works() {
     // Provide a Service.
     let service_id = (provider_id, 0);
     let rent_per_month: Balance = 10 * CURRENCY;
-    let location = "https://ddc.cere.network/bucket/{BUCKET_ID}";
-    ddc_bucket.service_set_info(service_id, rent_per_month, location.to_string())?;
+    let description = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"";
+    ddc_bucket.service_set_info(service_id, rent_per_month, description.to_string())?;
 
     // Provide another Service.
     push_caller(provider_id2);
     let service_id2 = (provider_id2, 1);
-    let location2 = "https://ddc-2.cere.network/bucket/{BUCKET_ID}";
-    ddc_bucket.service_set_info(service_id2, rent_per_month, location2.to_string())?;
+    let description2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"";
+    ddc_bucket.service_set_info(service_id2, rent_per_month, description2.to_string())?;
     pop_caller();
 
     // Consumer discovers the Provider.
@@ -35,7 +35,7 @@ fn ddc_bucket_works() {
     assert_eq!(service, Service {
         provider_id,
         rent_per_month,
-        location: location.to_string(),
+        description: description.to_string(),
     });
 
     // Create a bucket, including some value.
@@ -85,11 +85,11 @@ fn ddc_bucket_works() {
     let evs = get_events(8);
     // Provider setup.
     assert!(matches!(&evs[0], Event::ServiceSetInfo(ev) if *ev ==
-        ServiceSetInfo { provider_id, service_id, rent_per_month, location: location.to_string() }));
+        ServiceSetInfo { provider_id, service_id, rent_per_month, description: description.to_string() }));
 
     // Provider setup 2.
     assert!(matches!(&evs[1], Event::ServiceSetInfo(ev) if *ev ==
-        ServiceSetInfo { provider_id:provider_id2, service_id:service_id2, rent_per_month, location: location2.to_string() }));
+        ServiceSetInfo { provider_id:provider_id2, service_id:service_id2, rent_per_month, description: description2.to_string() }));
 
     // Create bucket 1 with an initial deposit.
     assert!(matches!(&evs[2], Event::Deposit(ev) if *ev ==

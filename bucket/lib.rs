@@ -150,7 +150,7 @@ pub mod ddc_bucket {
     pub struct Service {
         provider_id: ProviderId,
         rent_per_month: Balance,
-        location: String,
+        description: String,
     }
 
     #[ink(event)]
@@ -158,10 +158,11 @@ pub mod ddc_bucket {
     pub struct ServiceSetInfo {
         #[ink(topic)]
         provider_id: AccountId,
+        // TODO: remove?
         #[ink(topic)]
         service_id: ServiceId,
         rent_per_month: Balance,
-        location: String,
+        description: String,
     }
 
     #[ink(event)]
@@ -176,7 +177,7 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, location: String) -> Result<()> {
+        pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, description: String) -> Result<()> {
             let provider_id = self.env().caller();
 
             if !Service::is_owner(service_id, provider_id) {
@@ -186,10 +187,10 @@ pub mod ddc_bucket {
             self.services.insert(service_id, Service {
                 provider_id,
                 rent_per_month,
-                location: location.clone(),
+                description: description.clone(),
             });
 
-            Self::env().emit_event(ServiceSetInfo { provider_id, service_id, rent_per_month, location });
+            Self::env().emit_event(ServiceSetInfo { provider_id, service_id, rent_per_month, description });
             Ok(())
         }
 
