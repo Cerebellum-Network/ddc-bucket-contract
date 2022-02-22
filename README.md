@@ -11,9 +11,11 @@ See the latest deployments in [deployments.js](sdk/src/deployments.js). Use git 
 To deploy:
 
 - Update the version in the relevant `CONTRACT/Cargo.toml` and [package.json](sdk/package.json).
-- See the script [deploy.js](deploy.js).
+- Build the contracts: `cd CONTRACT && cargo test && cargo contract build`
+- Use the script [deploy.js](deploy.js) to deploy the contracts.
 - Update the [SDK ABIs](sdk/src/abi/) using `target/ink/CONTRACT/metadata.json`.
 - Update the [SDK default contracts](sdk/src/deployments.js).
+- Publish the JS SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
 
 # Contract Development
 
