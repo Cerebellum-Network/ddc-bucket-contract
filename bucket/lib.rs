@@ -137,12 +137,6 @@ pub mod ddc_bucket {
                 writer_ids: vec![bucket.owner_id],
             })
         }
-
-        fn get_service_rent(&self, service_id: AccountId) -> Result<Balance> {
-            let provider = self.services.get(&service_id)
-                .ok_or(Error::ServiceDoesNotExist)?;
-            Ok(provider.rent_per_month)
-        }
     }
     // ---- End Bucket ----
 
@@ -209,14 +203,17 @@ pub mod ddc_bucket {
         pub fn provider_withdraw(&mut self, bucket_id: BucketId) -> Result<()> {
             let provider_id = self.env().caller();
 
-            let flow_id = {
+            let (flow_id, service_id) = {
                 let bucket = self.buckets.get(bucket_id)
                     .ok_or(Error::BucketDoesNotExist)?;
-                if bucket.service_id != provider_id {
-                    return Err(Error::UnauthorizedProvider);
-                }
-                bucket.flow_id
+                (bucket.flow_id, bucket.service_id)
             };
+
+            // Authorize as provider for this service.
+            let service = self.service_get_info(service_id)?;
+            if provider_id != service.get_revenue_address() {
+                return Err(UnauthorizedProvider);
+            }
 
             let flowed_amount = self.billing_settle_flow(flow_id)?;
 
