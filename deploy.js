@@ -87,7 +87,7 @@ async function main() {
     const contract = getContract(CONTRACT_NAME, chainName, api);
 
     const txOptions = {
-        value: 0n * CERE,
+        value: 0n,
         gasLimit: -1, //100_000n * MGAS,
     };
     const txOptionsPay = {
@@ -142,9 +142,9 @@ async function main() {
         log("New bucketId", bucketId);
     }
     {
-        log("Topup the bucket…");
+        log("Topup the account…");
         const tx = contract.tx
-            .bucketTopup(txOptionsPay, bucketId);
+            .deposit(txOptionsPay);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
