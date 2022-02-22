@@ -22,7 +22,7 @@ pub mod ddc_bucket {
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: Stash<Bucket>,
-        services: HashMap<AccountId, Service>,
+        services: HashMap<ServiceId, Service>,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
         billing_flows: Stash<BillingFlow>,
@@ -73,7 +73,7 @@ pub mod ddc_bucket {
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct BucketStatus {
-        service_id: AccountId,
+        service_id: ServiceId,
         estimated_rent_end_ms: u64,
         writer_ids: Vec<AccountId>,
     }
@@ -143,7 +143,7 @@ pub mod ddc_bucket {
 
     // ---- Provider ----
     pub type ProviderId = AccountId;
-    pub type ServiceId = AccountId;
+    pub type ServiceId = (AccountId, u32);
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -176,9 +176,10 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_set_info(&mut self, service_id: AccountId, rent_per_month: Balance, location: String) -> Result<()> {
+        pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, location: String) -> Result<()> {
             let provider_id = self.env().caller();
-            if provider_id != service_id {
+
+            if !Service::is_owner(service_id, provider_id) {
                 return Err(UnauthorizedProvider);
             }
 
@@ -193,7 +194,7 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn service_get_info(&self, service_id: AccountId) -> Result<Service> {
+        pub fn service_get_info(&self, service_id: ServiceId) -> Result<Service> {
             self.services.get(&service_id)
                 .cloned()
                 .ok_or(Error::ServiceDoesNotExist)
@@ -229,6 +230,10 @@ pub mod ddc_bucket {
     impl Service {
         pub fn get_revenue_address(&self) -> AccountId {
             self.provider_id
+        }
+
+        pub fn is_owner(service_id: ServiceId, provider_id: AccountId) -> bool {
+            service_id.0 == provider_id
         }
     }
     // ---- End Provider ----
