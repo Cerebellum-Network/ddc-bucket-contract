@@ -284,7 +284,7 @@ pub mod ddc_bucket {
 
             let from_account = self.billing_accounts.get_mut(&from)
                 .ok_or(InsufficientBalance)?;
-            from_account.take_debt_flow(debt_flow)?;
+            from_account.lock_flow(debt_flow);
 
             let flow = BillingFlow {
                 from,
@@ -310,10 +310,14 @@ pub mod ddc_bucket {
             let (flowed_amount, (from, debt), (to, cash)) = {
                 let flow = self.billing_flows.get_mut(flow_id)
                     .ok_or(FlowDoesNotExist)?;
-                flow.execute(now_ms)
+                flow.run_until(now_ms)
             };
 
-            self.billing_take(from, debt)?;
+            let account = self.billing_accounts.get_mut(&from)
+                .ok_or(InsufficientBalance)?;
+
+            account.unlock_amount(now_ms, flowed_amount);
+            account.take(debt)?;
             self.billing_put(to, cash);
 
             Ok(flowed_amount)
@@ -339,6 +343,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     struct BillingAccount {
         deposit: Cash,
+        locked: Balance,
         out_flows: Accumulator,
     }
 
@@ -346,6 +351,7 @@ pub mod ddc_bucket {
         pub fn new() -> BillingAccount {
             BillingAccount {
                 deposit: Cash(0),
+                locked: 0,
                 out_flows: Accumulator::empty(),
             }
         }
@@ -373,7 +379,7 @@ pub mod ddc_bucket {
         }
 
         pub fn get_net(&self, time_ms: u64) -> Balance {
-            let consumed = self.out_flows.value_at_time(time_ms);
+            let consumed = self.locked + self.out_flows.value_at_time(time_ms);
             if self.deposit.0 >= consumed {
                 self.deposit.0 - consumed
             } else {
@@ -381,9 +387,13 @@ pub mod ddc_bucket {
             }
         }
 
-        pub fn take_debt_flow(&mut self, debt_flow: Accumulator) -> Result<()> {
-            let debt = Debt(self.out_flows.take_value_then_add_rate(debt_flow));
-            self.take(debt)
+        pub fn lock_flow(&mut self, debt_flow: Accumulator) {
+            self.locked += self.out_flows.take_value_then_add_rate(debt_flow);
+        }
+
+        pub fn unlock_amount(&mut self, now_ms: u64, unlocked: Balance) {
+            self.locked += self.out_flows.take_value_at_time(now_ms);
+            self.locked -= unlocked;
         }
 
         pub fn get_flow_end(&self) -> u64 {
@@ -402,7 +412,7 @@ pub mod ddc_bucket {
     }
 
     impl BillingFlow {
-        pub fn execute(&mut self, now_ms: u64) -> (Balance, (AccountId, Debt), (AccountId, Cash)) {
+        pub fn run_until(&mut self, now_ms: u64) -> (Balance, (AccountId, Debt), (AccountId, Cash)) {
             let flowed_amount = self.cash_flow.take_value_at_time(now_ms);
             let (debt, cash) = DdcBucket::borrow_debt_cash(flowed_amount);
             (flowed_amount, (self.from, debt), (self.to, cash))
