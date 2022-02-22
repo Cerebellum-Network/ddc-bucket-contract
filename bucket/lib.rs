@@ -103,6 +103,12 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         #[ink(payable)]
+        pub fn bucket_topup(&mut self, _bucket_id: BucketId) -> Result<()> {
+            self.deposit()
+        }
+
+        #[ink(message)]
+        #[ink(payable)]
         pub fn deposit(&mut self) -> Result<()> {
             // Receive the payable value.
             let cash = Self::receive_cash();
