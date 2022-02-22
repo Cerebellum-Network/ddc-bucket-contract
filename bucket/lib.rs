@@ -87,8 +87,7 @@ pub mod ddc_bucket {
 
             // Start the payment flow for a bucket.
             let service = self.service_get_info(service_id)?;
-            let to = service.get_revenue_address();
-            let flow_id = self.billing_start_flow(caller, to, service.rent_per_month)?;
+            let flow_id = self.billing_start_flow(caller, service.rent_per_month)?;
 
             // Create a new bucket.
             let bucket = Bucket {
@@ -176,10 +175,7 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, description: String) -> Result<()> {
             let provider_id = self.env().caller();
-
-            if !Service::is_owner(service_id, provider_id) {
-                return Err(UnauthorizedProvider);
-            }
+            Service::only_owner(service_id, provider_id)?;
 
             self.services.insert(service_id, Service {
                 provider_id,
@@ -200,7 +196,7 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn provider_withdraw(&mut self, bucket_id: BucketId) -> Result<()> {
-            let provider_id = self.env().caller();
+            let caller = self.env().caller();
 
             let (flow_id, service_id) = {
                 let bucket = self.buckets.get(bucket_id)
@@ -208,30 +204,29 @@ pub mod ddc_bucket {
                 (bucket.flow_id, bucket.service_id)
             };
 
-            // Authorize as provider for this service.
-            let service = self.service_get_info(service_id)?;
-            if provider_id != service.get_revenue_address() {
-                return Err(UnauthorizedProvider);
-            }
+            // Find where to distribute the revenues.
+            let revenue_account_id = {
+                let service = self.service_get_info(service_id)?;
+                // Authorize only the service owner to trigger the distribution.
+                Service::only_owner(service_id, caller)?;
+                service.revenue_account_id()
+            };
 
-            let flowed_amount = self.billing_settle_flow(flow_id)?;
+            let cash = self.billing_settle_flow(flow_id)?;
 
-            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
-            self.billing_withdraw(provider_id, payable)?;
-            Self::send_cash(provider_id, cash)?;
+            Self::env().emit_event(ProviderWithdraw { provider_id: revenue_account_id, bucket_id, value: cash.peek() });
 
-            Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: flowed_amount });
-            Ok(())
+            Self::send_cash(revenue_account_id, cash)
         }
     }
 
     impl Service {
-        pub fn get_revenue_address(&self) -> AccountId {
+        pub fn revenue_account_id(&self) -> AccountId {
             self.provider_id
         }
 
-        pub fn is_owner(service_id: ServiceId, provider_id: AccountId) -> bool {
-            service_id.0 == provider_id
+        pub fn only_owner(service_id: ServiceId, provider_id: AccountId) -> Result<()> {
+            if service_id.0 == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
         }
     }
     // ---- End Provider ----
@@ -288,7 +283,7 @@ pub mod ddc_bucket {
             Ok(())
         }
 
-        pub fn billing_start_flow(&mut self, from: AccountId, to: AccountId, rate: Balance) -> Result<FlowId> {
+        pub fn billing_start_flow(&mut self, from: AccountId, rate: Balance) -> Result<FlowId> {
             let start_ms = self.env().block_timestamp();
             let cash_schedule = Schedule::new(start_ms, rate);
             let payable_schedule = cash_schedule.clone();
@@ -299,7 +294,6 @@ pub mod ddc_bucket {
 
             let flow = BillingFlow {
                 from,
-                to,
                 schedule: cash_schedule,
             };
             let flow_id = self.billing_flows.put(flow);
@@ -315,22 +309,19 @@ pub mod ddc_bucket {
             Ok(account.schedule_covered_until())
         }
 
-        pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Balance> {
+        pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Cash> {
             let now_ms = Self::env().block_timestamp();
 
-            let (flowed_amount, (from, payable), (to, cash)) = {
-                let flow = self.billing_flows.get_mut(flow_id)
-                    .ok_or(FlowDoesNotExist)?;
-                flow.run_until(now_ms)
-            };
+            let flow = self.billing_flows.get_mut(flow_id)
+                .ok_or(FlowDoesNotExist)?;
+            let flowed_amount = flow.schedule.take_value_at_time(now_ms);
+            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
 
-            let account = self.billing_accounts.get_mut(&from)
+            let account = self.billing_accounts.get_mut(&flow.from)
                 .ok_or(InsufficientBalance)?;
 
             account.pay_scheduled(now_ms, payable)?;
-            self.billing_deposit(to, cash);
-
-            Ok(flowed_amount)
+            Ok(cash)
         }
 
         pub fn receive_cash() -> Cash {
@@ -420,16 +411,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     struct BillingFlow {
         from: AccountId,
-        to: AccountId,
         schedule: Schedule,
-    }
-
-    impl BillingFlow {
-        pub fn run_until(&mut self, now_ms: u64) -> (Balance, (AccountId, Payable), (AccountId, Cash)) {
-            let flowed_amount = self.schedule.take_value_at_time(now_ms);
-            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
-            (flowed_amount, (self.from, payable), (self.to, cash))
-        }
     }
 
     #[must_use]
