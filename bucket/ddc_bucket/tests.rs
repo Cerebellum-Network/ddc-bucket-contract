@@ -17,20 +17,21 @@ fn ddc_bucket_works() {
     set_balance(contract_id(), 1000); // For contract subsistence.
 
     // Provider setup.
+    let service_id = provider_id;
     let rent_per_month: Balance = 10 * CURRENCY;
     let location = "https://ddc.cere.network/bucket/{BUCKET_ID}";
-    ddc_bucket.provider_set_info(rent_per_month, location.to_string())?;
+    ddc_bucket.service_set_info(service_id, rent_per_month, location.to_string())?;
 
     // Consumer discovers the Provider.
-    let provider = ddc_bucket.provider_get_info(provider_id)?;
-    assert_eq!(provider, Provider {
+    let service = ddc_bucket.service_get_info(service_id)?;
+    assert_eq!(service, Service {
         rent_per_month,
         location: location.to_string(),
     });
 
     // Create a bucket, including some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let bucket_id = ddc_bucket.bucket_create(provider_id)?;
+    let bucket_id = ddc_bucket.bucket_create(service_id)?;
     pop_caller();
 
     // Add more value into the bucket.
@@ -74,8 +75,8 @@ fn ddc_bucket_works() {
 
     let evs = get_events(7);
     // Provider setup.
-    assert!(matches!(&evs[0], Event::ProviderSetInfo(ev) if *ev ==
-        ProviderSetInfo { provider_id, rent_per_month, location: location.to_string() }));
+    assert!(matches!(&evs[0], Event::ServiceSetInfo(ev) if *ev ==
+        ServiceSetInfo { provider_id, service_id, rent_per_month, location: location.to_string() }));
 
     // Create bucket 1 with an initial deposit.
     assert!(matches!(&evs[1], Event::Deposit(ev) if *ev ==
@@ -101,7 +102,7 @@ fn ddc_bucket_works() {
 fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
-            Event::ProviderSetInfo(ev) => println!("EVENT {:?}", ev),
+            Event::ServiceSetInfo(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
             Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),

@@ -22,7 +22,7 @@ pub mod ddc_bucket {
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: Stash<Bucket>,
-        providers: HashMap<AccountId, Provider>,
+        services: HashMap<AccountId, Service>,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
         billing_flows: Stash<BillingFlow>,
@@ -33,7 +33,7 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: Stash::new(),
-                providers: HashMap::new(),
+                services: HashMap::new(),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
             }
@@ -48,7 +48,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Bucket {
         owner_id: AccountId,
-        provider_id: AccountId,
+        service_id: ServiceId,
         rent_per_month: Balance,
         flow_id: FlowId,
     }
@@ -79,19 +79,20 @@ pub mod ddc_bucket {
     impl DdcBucket {
         #[ink(message)]
         #[ink(payable)]
-        pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
+        pub fn bucket_create(&mut self, service_id: ServiceId) -> Result<BucketId> {
             // Receive the payable value.
             self.deposit()?;
             let caller = Self::env().caller();
 
             // Start the payment flow for a bucket.
-            let rent_per_month = self.get_provider_rent(provider_id)?;
+            let rent_per_month = self.get_service_rent(service_id)?;
+            let provider_id = service_id;
             let flow_id = self.billing_start_flow(caller, provider_id, rent_per_month)?;
 
             // Create a new bucket.
             let bucket = Bucket {
                 owner_id: caller,
-                provider_id,
+                service_id,
                 rent_per_month,
                 flow_id,
             };
@@ -128,15 +129,15 @@ pub mod ddc_bucket {
             let estimated_rent_end_ms = self.billing_flow_covered_until(bucket.flow_id)?;
 
             Ok(BucketStatus {
-                provider_id: bucket.provider_id,
+                provider_id: bucket.service_id,
                 estimated_rent_end_ms,
                 writer_ids: vec![bucket.owner_id],
             })
         }
 
-        fn get_provider_rent(&self, provider_id: AccountId) -> Result<Balance> {
-            let provider = self.providers.get(&provider_id)
-                .ok_or(Error::ProviderDoesNotExist)?;
+        fn get_service_rent(&self, service_id: AccountId) -> Result<Balance> {
+            let provider = self.services.get(&service_id)
+                .ok_or(Error::ServiceDoesNotExist)?;
             Ok(provider.rent_per_month)
         }
     }
@@ -144,18 +145,22 @@ pub mod ddc_bucket {
 
 
     // ---- Provider ----
+    pub type ServiceId = AccountId;
+
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Provider {
+    pub struct Service {
         rent_per_month: Balance,
         location: String,
     }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderSetInfo {
+    pub struct ServiceSetInfo {
         #[ink(topic)]
         provider_id: AccountId,
+        #[ink(topic)]
+        service_id: ServiceId,
         rent_per_month: Balance,
         location: String,
     }
@@ -172,22 +177,26 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn provider_set_info(&mut self, rent_per_month: Balance, location: String) -> Result<()> {
+        pub fn service_set_info(&mut self, service_id: AccountId, rent_per_month: Balance, location: String) -> Result<()> {
             let provider_id = self.env().caller();
-            self.providers.insert(provider_id, Provider {
+            if provider_id != service_id {
+                return Err(UnauthorizedProvider);
+            }
+
+            self.services.insert(service_id, Service {
                 rent_per_month,
                 location: location.clone(),
             });
 
-            Self::env().emit_event(ProviderSetInfo { provider_id, rent_per_month, location });
+            Self::env().emit_event(ServiceSetInfo { provider_id, service_id, rent_per_month, location });
             Ok(())
         }
 
         #[ink(message)]
-        pub fn provider_get_info(&self, provider_id: AccountId) -> Result<Provider> {
-            self.providers.get(&provider_id)
+        pub fn service_get_info(&self, service_id: AccountId) -> Result<Service> {
+            self.services.get(&service_id)
                 .cloned()
-                .ok_or(Error::ProviderDoesNotExist)
+                .ok_or(Error::ServiceDoesNotExist)
         }
 
         #[ink(message)]
@@ -197,7 +206,7 @@ pub mod ddc_bucket {
             let flow_id = {
                 let bucket = self.buckets.get(bucket_id)
                     .ok_or(Error::BucketDoesNotExist)?;
-                if bucket.provider_id != provider_id {
+                if bucket.service_id != provider_id {
                     return Err(Error::UnauthorizedProvider);
                 }
                 bucket.flow_id
@@ -500,7 +509,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BucketDoesNotExist,
-        ProviderDoesNotExist,
+        ServiceDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
         UnauthorizedProvider,
