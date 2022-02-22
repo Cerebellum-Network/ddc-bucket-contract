@@ -58,6 +58,8 @@ pub mod ddc_bucket {
     pub struct BucketCreated {
         #[ink(topic)]
         bucket_id: BucketId,
+        #[ink(topic)]
+        service_id: ServiceId,
     }
 
     #[ink(event)]
@@ -71,7 +73,7 @@ pub mod ddc_bucket {
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct BucketStatus {
-        provider_id: AccountId,
+        service_id: AccountId,
         estimated_rent_end_ms: u64,
         writer_ids: Vec<AccountId>,
     }
@@ -85,9 +87,10 @@ pub mod ddc_bucket {
             let caller = Self::env().caller();
 
             // Start the payment flow for a bucket.
-            let rent_per_month = self.get_service_rent(service_id)?;
-            let provider_id = service_id;
-            let flow_id = self.billing_start_flow(caller, provider_id, rent_per_month)?;
+            let service = self.service_get_info(service_id)?;
+            let rent_per_month = service.rent_per_month;
+            let to = service.get_revenue_address();
+            let flow_id = self.billing_start_flow(caller, to, rent_per_month)?;
 
             // Create a new bucket.
             let bucket = Bucket {
@@ -98,7 +101,7 @@ pub mod ddc_bucket {
             };
             let bucket_id = self.buckets.put(bucket);
 
-            Self::env().emit_event(BucketCreated { bucket_id });
+            Self::env().emit_event(BucketCreated { bucket_id, service_id });
             Ok(bucket_id)
         }
 
@@ -129,7 +132,7 @@ pub mod ddc_bucket {
             let estimated_rent_end_ms = self.billing_flow_covered_until(bucket.flow_id)?;
 
             Ok(BucketStatus {
-                provider_id: bucket.service_id,
+                service_id: bucket.service_id,
                 estimated_rent_end_ms,
                 writer_ids: vec![bucket.owner_id],
             })
@@ -145,11 +148,13 @@ pub mod ddc_bucket {
 
 
     // ---- Provider ----
+    pub type ProviderId = AccountId;
     pub type ServiceId = AccountId;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Service {
+        provider_id: ProviderId,
         rent_per_month: Balance,
         location: String,
     }
@@ -184,6 +189,7 @@ pub mod ddc_bucket {
             }
 
             self.services.insert(service_id, Service {
+                provider_id,
                 rent_per_month,
                 location: location.clone(),
             });
@@ -220,6 +226,12 @@ pub mod ddc_bucket {
 
             Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: flowed_amount });
             Ok(())
+        }
+    }
+
+    impl Service {
+        pub fn get_revenue_address(&self) -> AccountId {
+            self.provider_id
         }
     }
     // ---- End Provider ----

@@ -10,21 +10,30 @@ type Event = <DdcBucket as ink::BaseEvent>::Type;
 fn ddc_bucket_works() {
     let accounts = get_accounts();
     let provider_id = accounts.alice;
-    let consumer_id = accounts.bob;
-    push_caller(provider_id);
+    let provider_id2 = accounts.bob;
+    let consumer_id = accounts.charlie;
 
+    push_caller(provider_id);
     let mut ddc_bucket = DdcBucket::new();
     set_balance(contract_id(), 1000); // For contract subsistence.
 
-    // Provider setup.
+    // Provide a Service.
     let service_id = provider_id;
     let rent_per_month: Balance = 10 * CURRENCY;
     let location = "https://ddc.cere.network/bucket/{BUCKET_ID}";
     ddc_bucket.service_set_info(service_id, rent_per_month, location.to_string())?;
 
+    // Provide another Service.
+    push_caller(provider_id2);
+    let service_id2 = provider_id2;
+    let location2 = "https://ddc-2.cere.network/bucket/{BUCKET_ID}";
+    ddc_bucket.service_set_info(service_id2, rent_per_month, location2.to_string())?;
+    pop_caller();
+
     // Consumer discovers the Provider.
     let service = ddc_bucket.service_get_info(service_id)?;
     assert_eq!(service, Service {
+        provider_id,
         rent_per_month,
         location: location.to_string(),
     });
@@ -42,7 +51,7 @@ fn ddc_bucket_works() {
     // Provider checks the status of the bucket.
     let status = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(status, BucketStatus {
-        provider_id,
+        service_id,
         estimated_rent_end_ms: 29462400000,
         writer_ids: vec![consumer_id],
     });
@@ -56,7 +65,7 @@ fn ddc_bucket_works() {
     // The end time of the first bucket is earlier because the deposit is being depleted faster.
     let status1 = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(status1, BucketStatus {
-        provider_id,
+        service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
         writer_ids: vec![consumer_id],
     });
@@ -64,7 +73,7 @@ fn ddc_bucket_works() {
     // The end time of the second bucket is the same because it is paid from the same account.
     let status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
     assert_eq!(status2, BucketStatus {
-        provider_id,
+        service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
         writer_ids: vec![consumer_id],
     });
@@ -73,29 +82,33 @@ fn ddc_bucket_works() {
     advance_block::<DefaultEnvironment>().unwrap();
     ddc_bucket.provider_withdraw(bucket_id)?;
 
-    let evs = get_events(7);
+    let evs = get_events(8);
     // Provider setup.
     assert!(matches!(&evs[0], Event::ServiceSetInfo(ev) if *ev ==
         ServiceSetInfo { provider_id, service_id, rent_per_month, location: location.to_string() }));
 
+    // Provider setup 2.
+    assert!(matches!(&evs[1], Event::ServiceSetInfo(ev) if *ev ==
+        ServiceSetInfo { provider_id:provider_id2, service_id:service_id2, rent_per_month, location: location2.to_string() }));
+
     // Create bucket 1 with an initial deposit.
-    assert!(matches!(&evs[1], Event::Deposit(ev) if *ev ==
+    assert!(matches!(&evs[2], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[2], Event::BucketCreated(ev) if *ev ==
-        BucketCreated { bucket_id }));
+    assert!(matches!(&evs[3], Event::BucketCreated(ev) if *ev ==
+        BucketCreated { bucket_id, service_id }));
 
     // Deposit more.
-    assert!(matches!(&evs[3], Event::Deposit(ev) if *ev ==
+    assert!(matches!(&evs[4], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 100 * CURRENCY }));
 
     // Create bucket 2 with an additional deposit.
-    assert!(matches!(&evs[4], Event::Deposit(ev) if *ev ==
+    assert!(matches!(&evs[5], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[5], Event::BucketCreated(ev) if *ev ==
-        BucketCreated { bucket_id: bucket_id2 }));
+    assert!(matches!(&evs[6], Event::BucketCreated(ev) if *ev ==
+        BucketCreated { bucket_id: bucket_id2, service_id }));
 
     // Provider withdrawaw.
-    assert!(matches!(&evs[6], Event::ProviderWithdraw(ev) if *ev ==
+    assert!(matches!(&evs[7], Event::ProviderWithdraw(ev) if *ev ==
         ProviderWithdraw { provider_id, bucket_id, value: 186 }));
 }
 
