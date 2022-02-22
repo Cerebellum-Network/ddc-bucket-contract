@@ -20,13 +20,13 @@ fn ddc_bucket_works() {
     // Provide a Service.
     let service_id = (provider_id, 0);
     let rent_per_month: Balance = 10 * CURRENCY;
-    let description = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"";
+    let description = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     ddc_bucket.service_set_info(service_id, rent_per_month, description.to_string())?;
 
     // Provide another Service.
     push_caller(provider_id2);
     let service_id2 = (provider_id2, 1);
-    let description2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"";
+    let description2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     ddc_bucket.service_set_info(service_id2, rent_per_month, description2.to_string())?;
     pop_caller();
 
@@ -38,12 +38,17 @@ fn ddc_bucket_works() {
         description: description.to_string(),
     });
 
-    // Create a bucket, including some value.
-    push_caller_value(consumer_id, 10 * CURRENCY);
-    let bucket_id = ddc_bucket.bucket_create(service_id)?;
+    // Create a replicated-bucket.
+    push_caller_value(consumer_id, 0);
+    let repbuck_id = ddc_bucket.repbuck_create()?;
     pop_caller();
 
-    // Add more value into the bucket.
+    // Create a bucket, also depositing some value.
+    push_caller_value(consumer_id, 10 * CURRENCY);
+    let bucket_id = ddc_bucket.repbuck_attach_service(repbuck_id, service_id)?;
+    pop_caller();
+
+    // Deposit more value into the account.
     push_caller_value(consumer_id, 100 * CURRENCY);
     ddc_bucket.deposit()?;
     pop_caller();
@@ -58,7 +63,7 @@ fn ddc_bucket_works() {
 
     // Create another bucket, making the consumer pay a more expensive rate.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let bucket_id2 = ddc_bucket.bucket_create(service_id)?;
+    let bucket_id2 = ddc_bucket.repbuck_attach_service(repbuck_id, service_id)?;
     assert_ne!(bucket_id, bucket_id2);
     pop_caller();
 
@@ -76,6 +81,13 @@ fn ddc_bucket_works() {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
         writer_ids: vec![consumer_id],
+    });
+
+    // Check the status of the replicated-bucket to discover the two sub-buckets.
+    let repbuck = ddc_bucket.repbuck_get(repbuck_id)?;
+    assert_eq!(repbuck, RepBuck {
+        owner_id: consumer_id,
+        bucket_ids: vec![bucket_id, bucket_id2],
     });
 
     // Provider withdraws in the future.

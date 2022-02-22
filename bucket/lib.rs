@@ -21,6 +21,7 @@ pub mod ddc_bucket {
 
     #[ink(storage)]
     pub struct DdcBucket {
+        repbucks: Stash<RepBuck>,
         buckets: Stash<Bucket>,
         services: HashMap<ServiceId, Service>,
 
@@ -32,6 +33,7 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self {
+                repbucks: Stash::new(),
                 buckets: Stash::new(),
                 services: HashMap::new(),
                 billing_accounts: HashMap::new(),
@@ -39,6 +41,59 @@ pub mod ddc_bucket {
             }
         }
     }
+
+
+    // ---- RepBucket ----
+    pub type RepBuckId = u32;
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct RepBuck {
+        owner_id: AccountId,
+        bucket_ids: Vec<BucketId>,
+    }
+
+    impl RepBuck {
+        pub fn only_owner(&self, caller: AccountId) -> Result<()> {
+            if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
+        }
+    }
+
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn repbuck_create(&mut self) -> Result<RepBuckId> {
+            let caller = Self::env().caller();
+
+            let repbuck = RepBuck {
+                owner_id: caller,
+                bucket_ids: Vec::new(),
+            };
+            let repbuck_id = self.repbucks.put(repbuck);
+            Ok(repbuck_id)
+        }
+
+        #[ink(message)]
+        pub fn repbuck_attach_service(&mut self, repbuck_id: RepBuckId, service_id: ServiceId) -> Result<BucketId> {
+            // bucket_create captures the sent value.
+            let bucket_id = self.bucket_create(service_id)?;
+
+            let repbuck = self.repbucks.get_mut(repbuck_id)
+                .ok_or(RepbuckDoesNotExist)?;
+            repbuck.only_owner(Self::env().caller())?;
+
+            repbuck.bucket_ids.push(bucket_id);
+            Ok(bucket_id)
+        }
+
+        #[ink(message)]
+        pub fn repbuck_get(&self, repbuck_id: RepBuckId) -> Result<RepBuck> {
+            self.repbucks.get(repbuck_id)
+                .cloned().ok_or(RepbuckDoesNotExist)
+        }
+    }
+
+
+    // ---- End RepBucket ----
 
 
     // ---- Bucket ----
@@ -191,7 +246,7 @@ pub mod ddc_bucket {
         pub fn service_get_info(&self, service_id: ServiceId) -> Result<Service> {
             self.services.get(&service_id)
                 .cloned()
-                .ok_or(Error::ServiceDoesNotExist)
+                .ok_or(ServiceDoesNotExist)
         }
 
         #[ink(message)]
@@ -200,7 +255,7 @@ pub mod ddc_bucket {
 
             let (flow_id, service_id) = {
                 let bucket = self.buckets.get(bucket_id)
-                    .ok_or(Error::BucketDoesNotExist)?;
+                    .ok_or(BucketDoesNotExist)?;
                 (bucket.flow_id, bucket.service_id)
             };
 
@@ -502,6 +557,7 @@ pub mod ddc_bucket {
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
+        RepbuckDoesNotExist,
         BucketDoesNotExist,
         ServiceDoesNotExist,
         FlowDoesNotExist,
