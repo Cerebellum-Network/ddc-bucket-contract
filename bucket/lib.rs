@@ -128,7 +128,7 @@ pub mod ddc_bucket {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(Error::BucketDoesNotExist)?;
 
-            let estimated_rent_end_ms = self.billing_get_flow_end(bucket.flow_id)?;
+            let estimated_rent_end_ms = self.billing_flow_covered_until(bucket.flow_id)?;
 
             Ok(BucketStatus {
                 provider_id: bucket.provider_id,
@@ -237,14 +237,6 @@ pub mod ddc_bucket {
             };
         }
 
-        pub fn billing_pay(&mut self, from: AccountId, payable: Payable) -> Result<()> {
-            let account = self.billing_accounts.get_mut(&from)
-                .ok_or(InsufficientBalance)?;
-
-            account.pay(payable)?;
-            Ok(())
-        }
-
         pub fn billing_withdraw(&mut self, from: AccountId, payable: Payable) -> Result<()> {
             let account = self.billing_accounts.get_mut(&from)
                 .ok_or(InsufficientBalance)?;
@@ -259,7 +251,7 @@ pub mod ddc_bucket {
                 None => 0,
                 Some(account) => {
                     let time_ms = Self::env().block_timestamp();
-                    account.get_net(time_ms)
+                    account.get_withdrawable(time_ms)
                 }
             }
         }
@@ -280,29 +272,29 @@ pub mod ddc_bucket {
 
         pub fn billing_start_flow(&mut self, from: AccountId, to: AccountId, rate: Balance) -> Result<FlowId> {
             let start_ms = self.env().block_timestamp();
-            let cash_flow = Accumulator::new(start_ms, rate);
-            let payable_flow = cash_flow.clone();
+            let cash_schedule = Schedule::new(start_ms, rate);
+            let payable_schedule = cash_schedule.clone();
 
             let from_account = self.billing_accounts.get_mut(&from)
                 .ok_or(InsufficientBalance)?;
-            from_account.lock_flow(payable_flow);
+            from_account.lock_schedule(payable_schedule);
 
             let flow = BillingFlow {
                 from,
                 to,
-                cash_flow,
+                schedule: cash_schedule,
             };
             let flow_id = self.billing_flows.put(flow);
             Ok(flow_id)
         }
 
-        pub fn billing_get_flow_end(&self, flow_id: FlowId) -> Result<u64> {
+        pub fn billing_flow_covered_until(&self, flow_id: FlowId) -> Result<u64> {
             let flow = self.billing_flows.get(flow_id)
                 .ok_or(FlowDoesNotExist)?;
             let account = self.billing_accounts.get(&flow.from)
                 .ok_or(AccountDoesNotExist)?;
 
-            Ok(account.get_flow_end())
+            Ok(account.schedule_covered_until())
         }
 
         pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Balance> {
@@ -317,8 +309,7 @@ pub mod ddc_bucket {
             let account = self.billing_accounts.get_mut(&from)
                 .ok_or(InsufficientBalance)?;
 
-            account.unlock_amount(now_ms, flowed_amount);
-            account.pay(payable)?;
+            account.pay_scheduled(now_ms, payable)?;
             self.billing_deposit(to, cash);
 
             Ok(flowed_amount)
@@ -344,16 +335,16 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     struct BillingAccount {
         deposit: Cash,
-        locked: Balance,
-        out_flows: Accumulator,
+        payable_locked: Balance,
+        payable_schedule: Schedule,
     }
 
     impl BillingAccount {
         pub fn new() -> BillingAccount {
             BillingAccount {
                 deposit: Cash(0),
-                locked: 0,
-                out_flows: Accumulator::empty(),
+                payable_locked: 0,
+                payable_schedule: Schedule::empty(),
             }
         }
 
@@ -361,7 +352,38 @@ pub mod ddc_bucket {
             self.deposit.0 += cash.0;
         }
 
-        pub fn pay(&mut self, payable: Payable) -> Result<()> {
+        pub fn withdraw(&mut self, time_ms: u64, payable: Payable) -> Result<()> {
+            if self.get_withdrawable(time_ms) >= payable.0 {
+                self.deposit.0 -= payable.0;
+                Ok(())
+            } else {
+                Err(InsufficientBalance)
+            }
+        }
+
+        pub fn get_withdrawable(&self, time_ms: u64) -> Balance {
+            let consumed = self.payable_locked + self.payable_schedule.value_at_time(time_ms);
+            if self.deposit.0 >= consumed {
+                self.deposit.0 - consumed
+            } else {
+                0
+            }
+        }
+
+        pub fn lock_schedule(&mut self, payable_schedule: Schedule) {
+            self.payable_locked += self.payable_schedule.take_value_then_add_rate(payable_schedule);
+        }
+
+        pub fn schedule_covered_until(&self) -> u64 {
+            self.payable_schedule.time_of_value(self.deposit.0)
+        }
+
+        pub fn pay_scheduled(&mut self, now_ms: u64, payable: Payable) -> Result<()> {
+            self.unlock_scheduled_amount(now_ms, payable.0);
+            self.pay(payable)
+        }
+
+        fn pay(&mut self, payable: Payable) -> Result<()> {
             if self.deposit.0 >= payable.0 {
                 self.deposit.0 -= payable.0;
                 Ok(())
@@ -370,35 +392,10 @@ pub mod ddc_bucket {
             }
         }
 
-        pub fn withdraw(&mut self, time_ms: u64, payable: Payable) -> Result<()> {
-            if self.get_net(time_ms) >= payable.0 {
-                self.deposit.0 -= payable.0;
-                Ok(())
-            } else {
-                Err(InsufficientBalance)
-            }
-        }
-
-        pub fn get_net(&self, time_ms: u64) -> Balance {
-            let consumed = self.locked + self.out_flows.value_at_time(time_ms);
-            if self.deposit.0 >= consumed {
-                self.deposit.0 - consumed
-            } else {
-                0
-            }
-        }
-
-        pub fn lock_flow(&mut self, payable_flow: Accumulator) {
-            self.locked += self.out_flows.take_value_then_add_rate(payable_flow);
-        }
-
-        pub fn unlock_amount(&mut self, now_ms: u64, unlocked: Balance) {
-            self.locked += self.out_flows.take_value_at_time(now_ms);
-            self.locked -= unlocked;
-        }
-
-        pub fn get_flow_end(&self) -> u64 {
-            self.out_flows.time_of_value(self.deposit.0)
+        fn unlock_scheduled_amount(&mut self, now_ms: u64, unlocked: Balance) {
+            self.payable_locked = self.payable_locked
+                + self.payable_schedule.take_value_at_time(now_ms)
+                - unlocked;
         }
     }
 
@@ -409,12 +406,12 @@ pub mod ddc_bucket {
     struct BillingFlow {
         from: AccountId,
         to: AccountId,
-        cash_flow: Accumulator,
+        schedule: Schedule,
     }
 
     impl BillingFlow {
         pub fn run_until(&mut self, now_ms: u64) -> (Balance, (AccountId, Payable), (AccountId, Cash)) {
-            let flowed_amount = self.cash_flow.take_value_at_time(now_ms);
+            let flowed_amount = self.schedule.take_value_at_time(now_ms);
             let (payable, cash) = DdcBucket::borrow_payable_cash(flowed_amount);
             (flowed_amount, (self.from, payable), (self.to, cash))
         }
@@ -423,17 +420,17 @@ pub mod ddc_bucket {
     #[must_use]
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Accumulator {
+    pub struct Schedule {
         rate: Balance,
         start_ms: u64,
     }
 
-    impl Accumulator {
-        pub fn new(start_ms: u64, rate: Balance) -> Accumulator {
-            Accumulator { rate, start_ms }
+    impl Schedule {
+        pub fn new(start_ms: u64, rate: Balance) -> Schedule {
+            Schedule { rate, start_ms }
         }
 
-        pub fn empty() -> Accumulator { Accumulator::new(0, 0) }
+        pub fn empty() -> Schedule { Schedule::new(0, 0) }
 
         pub fn value_at_time(&self, time_ms: u64) -> Balance {
             assert!(time_ms >= self.start_ms);
@@ -455,9 +452,9 @@ pub mod ddc_bucket {
         }
 
         #[must_use]
-        pub fn take_value_then_add_rate(&mut self, acc: Accumulator) -> Balance {
-            let accumulated = self.take_value_at_time(acc.start_ms);
-            self.rate += acc.rate;
+        pub fn take_value_then_add_rate(&mut self, to_add: Schedule) -> Balance {
+            let accumulated = self.take_value_at_time(to_add.start_ms);
+            self.rate += to_add.rate;
             accumulated
         }
     }
