@@ -66,6 +66,8 @@ pub mod ddc_bucket {
         #[ink(topic)]
         deal_id: DealId,
         #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
         service_id: ServiceId,
     }
 
@@ -102,7 +104,7 @@ pub mod ddc_bucket {
             bucket.only_owner(Self::env().caller())?;
 
             bucket.deal_ids.push(deal_id);
-            Self::env().emit_event(DealCreated { deal_id, service_id });
+            Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
             Ok(deal_id)
         }
 

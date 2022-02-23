@@ -119,7 +119,7 @@ fn ddc_bucket_works() {
     assert!(matches!(&evs[2], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
     assert!(matches!(&evs[3], Event::DealCreated(ev) if *ev ==
-        DealCreated { deal_id: deal_id1, service_id }));
+        DealCreated { deal_id: deal_id1, bucket_id, service_id }));
 
     // Deposit more.
     assert!(matches!(&evs[4], Event::Deposit(ev) if *ev ==
@@ -129,7 +129,7 @@ fn ddc_bucket_works() {
     assert!(matches!(&evs[5], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
     assert!(matches!(&evs[6], Event::DealCreated(ev) if *ev ==
-        DealCreated { deal_id: deal_id2, service_id }));
+        DealCreated { deal_id: deal_id2, bucket_id, service_id }));
 
     // Provider withdrawals.
     assert!(matches!(&evs[7], Event::ProviderWithdraw(ev) if *ev ==

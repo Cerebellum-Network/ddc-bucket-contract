@@ -3,8 +3,8 @@ const _ = require("lodash");
 
 function findCreatedId(events, eventName) {
     const event = _.find(events, ["event.identifier", eventName]);
-    const bucketId = _.get(event, "args[0]");
-    return bucketId.toString();
+    const id = _.get(event, "args[0]");
+    return id && id.toString();
 }
 
 function findCreatedBucketId(events) {
