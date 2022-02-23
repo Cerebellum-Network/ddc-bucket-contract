@@ -90,6 +90,7 @@ fn ddc_bucket_works() {
     // Check the status of the bucket recursively including all deal statuses.
     let bucket_status = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
+        bucket_id,
         bucket,
         writer_ids: vec![consumer_id],
         deal_statuses: vec![deal_status1, deal_status2],
@@ -148,39 +149,33 @@ fn bucket_list_works() {
 
     push_caller(owner_id1);
     let bucket_id1 = ddc_bucket.bucket_create()?;
+    let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
 
     push_caller(owner_id2);
     let bucket_id2 = ddc_bucket.bucket_create()?;
-    assert_ne!(bucket_id1, bucket_id2);
+    let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
 
-    let bucket1 = (bucket_id1, Bucket {
-        owner_id: owner_id1,
-        deal_ids: vec![],
-    });
-    let bucket2 = (bucket_id2, Bucket {
-        owner_id: owner_id2,
-        deal_ids: vec![],
-    });
+    assert_ne!(bucket_id1, bucket_id2);
     let count = 2;
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100),
-        (vec![bucket1.clone(), bucket2.clone()], count));
+        ddc_bucket.bucket_list_statuses(0, 100),
+        (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 2),
-        (vec![bucket1.clone(), bucket2.clone()], count));
+        ddc_bucket.bucket_list_statuses(0, 2),
+        (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 1),
-        (vec![bucket1.clone() /*, bucket2.clone()*/], count));
+        ddc_bucket.bucket_list_statuses(0, 1),
+        (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(1, 1),
-        (vec![/*bucket1.clone(),*/ bucket2.clone()], count));
+        ddc_bucket.bucket_list_statuses(1, 1),
+        (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(20, 20),
+        ddc_bucket.bucket_list_statuses(20, 20),
         (vec![], count));
 }
 

@@ -57,6 +57,7 @@ pub mod ddc_bucket {
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct BucketStatus {
+        bucket_id: BucketId,
         bucket: Bucket,
         writer_ids: Vec<AccountId>,
         deal_statuses: Vec<DealStatus>,
@@ -127,16 +128,17 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn bucket_list(&self, offset: u32, limit: u32) -> (Vec<(BucketId, Bucket)>, u32) {
-            let mut buckets = Vec::with_capacity(limit as usize);
+        pub fn bucket_list_statuses(&self, offset: u32, limit: u32) -> (Vec<BucketStatus>, u32) {
+            let mut bucket_statuses = Vec::with_capacity(limit as usize);
             for bucket_id in offset..offset + limit {
-                match self.buckets.get(bucket_id) {
-                    None => break,
-                    Some(bucket) =>
-                        buckets.push((bucket_id, bucket.clone())),
+                match self.bucket_get_status(bucket_id) {
+                    Err(BucketDoesNotExist) => break, // No more buckets.
+                    Err(_) => continue, // Skip on unexpected error.
+                    Ok(bucket_status) =>
+                        bucket_statuses.push(bucket_status),
                 }
             }
-            (buckets, self.buckets.len())
+            (bucket_statuses, self.buckets.len())
         }
 
         #[ink(message)]
@@ -151,7 +153,7 @@ pub mod ddc_bucket {
                 deal_statuses.push(self.deal_get_status(*deal_id)?);
             }
 
-            Ok(BucketStatus { bucket, writer_ids, deal_statuses })
+            Ok(BucketStatus { bucket_id, bucket, writer_ids, deal_statuses })
         }
     }
     // ---- End Bucket ----
