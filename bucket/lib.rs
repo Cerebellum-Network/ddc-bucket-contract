@@ -22,7 +22,7 @@ pub mod ddc_bucket {
     #[ink(storage)]
     pub struct DdcBucket {
         repbucks: Stash<RepBuck>,
-        buckets: Stash<Bucket>,
+        deals: Stash<Deal>,
         services: HashMap<ServiceId, Service>,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
@@ -34,7 +34,7 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 repbucks: Stash::new(),
-                buckets: Stash::new(),
+                deals: Stash::new(),
                 services: HashMap::new(),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
@@ -43,21 +43,21 @@ pub mod ddc_bucket {
     }
 
 
-    // ---- RepBucket ----
+    // ---- RepBuck ----
     pub type RepBuckId = u32;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct RepBuck {
         owner_id: AccountId,
-        bucket_ids: Vec<BucketId>,
+        deal_ids: Vec<DealId>,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct RepBuckStatus {
         repbuck: RepBuck,
-        buckets: Vec<BucketStatus>,
+        deal_statuses: Vec<DealStatus>,
     }
 
     impl RepBuck {
@@ -74,7 +74,7 @@ pub mod ddc_bucket {
 
             let repbuck = RepBuck {
                 owner_id: caller,
-                bucket_ids: Vec::new(),
+                deal_ids: Vec::new(),
             };
             let repbuck_id = self.repbucks.put(repbuck);
             Ok(repbuck_id)
@@ -82,18 +82,18 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         #[ink(payable)]
-        pub fn repbuck_attach_service(&mut self, repbuck_id: RepBuckId, service_id: ServiceId) -> Result<BucketId> {
+        pub fn repbuck_add_deal(&mut self, repbuck_id: RepBuckId, service_id: ServiceId) -> Result<DealId> {
             // Receive the payable value.
             self.deposit()?;
 
-            let bucket_id = self.bucket_create(service_id)?;
+            let deal_id = self.deal_create(service_id)?;
 
             let repbuck = self.repbucks.get_mut(repbuck_id)
                 .ok_or(RepbuckDoesNotExist)?;
             repbuck.only_owner(Self::env().caller())?;
 
-            repbuck.bucket_ids.push(bucket_id);
-            Ok(bucket_id)
+            repbuck.deal_ids.push(deal_id);
+            Ok(deal_id)
         }
 
         #[ink(message)]
@@ -107,25 +107,25 @@ pub mod ddc_bucket {
             let repbuck = self.repbucks.get(repbuck_id)
                 .ok_or(RepbuckDoesNotExist)?.clone();
 
-            let mut buckets = vec![];
-            for bid in repbuck.bucket_ids.iter() {
-                buckets.push(self.bucket_get_status(*bid)?);
+            let mut deal_statuses = vec![];
+            for deal_id in repbuck.deal_ids.iter() {
+                deal_statuses.push(self.deal_get_status(*deal_id)?);
             }
 
-            Ok(RepBuckStatus { repbuck, buckets })
+            Ok(RepBuckStatus { repbuck, deal_statuses })
         }
     }
 
 
-    // ---- End RepBucket ----
+    // ---- End RepBuck ----
 
 
-    // ---- Bucket ----
-    pub type BucketId = u32;
+    // ---- Deal ----
+    pub type DealId = u32;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Bucket {
+    pub struct Deal {
         owner_id: AccountId,
         service_id: ServiceId,
         flow_id: FlowId,
@@ -133,9 +133,9 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct BucketCreated {
+    pub struct DealCreated {
         #[ink(topic)]
-        bucket_id: BucketId,
+        deal_id: DealId,
         #[ink(topic)]
         service_id: ServiceId,
     }
@@ -150,30 +150,30 @@ pub mod ddc_bucket {
 
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct BucketStatus {
+    pub struct DealStatus {
         service_id: ServiceId,
         estimated_rent_end_ms: u64,
         writer_ids: Vec<AccountId>,
     }
 
     impl DdcBucket {
-        pub fn bucket_create(&mut self, service_id: ServiceId) -> Result<BucketId> {
-            let caller = Self::env().caller();
+        pub fn deal_create(&mut self, service_id: ServiceId) -> Result<DealId> {
+            let owner_id = Self::env().caller();
 
-            // Start the payment flow for a bucket.
+            // Start the payment flow for a deal.
             let service = self.service_get_info(service_id)?;
-            let flow_id = self.billing_start_flow(caller, service.rent_per_month)?;
+            let flow_id = self.billing_start_flow(owner_id, service.rent_per_month)?;
 
-            // Create a new bucket.
-            let bucket = Bucket {
-                owner_id: caller,
+            // Create a new deal.
+            let deal = Deal {
+                owner_id,
                 service_id,
                 flow_id,
             };
-            let bucket_id = self.buckets.put(bucket);
+            let deal_id = self.deals.put(deal);
 
-            Self::env().emit_event(BucketCreated { bucket_id, service_id });
-            Ok(bucket_id)
+            Self::env().emit_event(DealCreated { deal_id, service_id });
+            Ok(deal_id)
         }
 
         #[ink(message)]
@@ -190,20 +190,20 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-            let bucket = self.buckets.get(bucket_id)
-                .ok_or(Error::BucketDoesNotExist)?;
+        pub fn deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
+            let deal = self.deals.get(deal_id)
+                .ok_or(Error::DealDoesNotExist)?;
 
-            let estimated_rent_end_ms = self.billing_flow_covered_until(bucket.flow_id)?;
+            let estimated_rent_end_ms = self.billing_flow_covered_until(deal.flow_id)?;
 
-            Ok(BucketStatus {
-                service_id: bucket.service_id,
+            Ok(DealStatus {
+                service_id: deal.service_id,
                 estimated_rent_end_ms,
-                writer_ids: vec![bucket.owner_id],
+                writer_ids: vec![deal.owner_id],
             })
         }
     }
-    // ---- End Bucket ----
+    // ---- End Deal ----
 
 
     // ---- Provider ----
@@ -236,7 +236,7 @@ pub mod ddc_bucket {
         #[ink(topic)]
         provider_id: AccountId,
         #[ink(topic)]
-        bucket_id: BucketId,
+        deal_id: DealId,
         value: Balance,
     }
 
@@ -264,13 +264,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn provider_withdraw(&mut self, bucket_id: BucketId) -> Result<()> {
+        pub fn provider_withdraw(&mut self, deal_id: DealId) -> Result<()> {
             let caller = self.env().caller();
 
             let (flow_id, service_id) = {
-                let bucket = self.buckets.get(bucket_id)
-                    .ok_or(BucketDoesNotExist)?;
-                (bucket.flow_id, bucket.service_id)
+                let deal = self.deals.get(deal_id)
+                    .ok_or(DealDoesNotExist)?;
+                (deal.flow_id, deal.service_id)
             };
 
             // Find where to distribute the revenues.
@@ -283,7 +283,7 @@ pub mod ddc_bucket {
 
             let cash = self.billing_settle_flow(flow_id)?;
 
-            Self::env().emit_event(ProviderWithdraw { provider_id: revenue_account_id, bucket_id, value: cash.peek() });
+            Self::env().emit_event(ProviderWithdraw { provider_id: revenue_account_id, deal_id, value: cash.peek() });
 
             Self::send_cash(revenue_account_id, cash)
         }
@@ -572,7 +572,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         RepbuckDoesNotExist,
-        BucketDoesNotExist,
+        DealDoesNotExist,
         ServiceDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,

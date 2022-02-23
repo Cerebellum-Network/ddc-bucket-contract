@@ -45,7 +45,7 @@ fn ddc_bucket_works() {
 
     // Create a bucket, also depositing some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let bucket_id = ddc_bucket.repbuck_attach_service(repbuck_id, service_id)?;
+    let deal_id1 = ddc_bucket.repbuck_add_deal(repbuck_id, service_id)?;
     pop_caller();
 
     // Deposit more value into the account.
@@ -54,55 +54,56 @@ fn ddc_bucket_works() {
     pop_caller();
 
     // Provider checks the status of the bucket.
-    let status = ddc_bucket.bucket_get_status(bucket_id)?;
-    assert_eq!(status, BucketStatus {
+    let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
+    assert_eq!(deal_status1, DealStatus {
         service_id,
         estimated_rent_end_ms: 29462400000,
         writer_ids: vec![consumer_id],
     });
 
-    // Create another bucket, making the consumer pay a more expensive rate.
+    // Create another deal, making the consumer pay a more expensive rate.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let bucket_id2 = ddc_bucket.repbuck_attach_service(repbuck_id, service_id)?;
-    assert_ne!(bucket_id, bucket_id2);
+    let deal_id2 = ddc_bucket.repbuck_add_deal(repbuck_id, service_id)?;
+    assert_ne!(deal_id1, deal_id2);
     pop_caller();
 
-    // The end time of the first bucket is earlier because the deposit is being depleted faster.
-    let status1 = ddc_bucket.bucket_get_status(bucket_id)?;
-    assert_eq!(status1, BucketStatus {
+    // The end time of the first deal is earlier because the deposit is being depleted faster.
+    let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
+    assert_eq!(deal_status1, DealStatus {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
         writer_ids: vec![consumer_id],
     });
 
-    // The end time of the second bucket is the same because it is paid from the same account.
-    let status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
-    assert_eq!(status2, BucketStatus {
+    // The end time of the second deal is the same because it is paid from the same account.
+    let deal_status2 = ddc_bucket.deal_get_status(deal_id2)?;
+    assert_eq!(deal_status2, DealStatus {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
         writer_ids: vec![consumer_id],
     });
 
-    // Check the structure of the replicated-bucket including all sub-bucket IDs.
+    // Check the structure of the bucket including all deal IDs.
     let repbuck = ddc_bucket.repbuck_get(repbuck_id)?;
     assert_eq!(repbuck, RepBuck {
         owner_id: consumer_id,
-        bucket_ids: vec![bucket_id, bucket_id2],
+        deal_ids: vec![deal_id1, deal_id2],
     });
 
-    // Check the status of the replicated-bucket recursively including all sub-bucket status.
-    let repbuck_deep = ddc_bucket.repbuck_get_status(repbuck_id)?;
-    assert_eq!(repbuck_deep, RepBuckStatus {
+    // Check the status of the bucket recursively including all deal statuses.
+    let repbuck_status = ddc_bucket.repbuck_get_status(repbuck_id)?;
+    assert_eq!(repbuck_status, RepBuckStatus {
         repbuck,
-        buckets: vec![status1, status2],
+        deal_statuses: vec![deal_status1, deal_status2],
     });
 
 
     // Provider withdraws in the future.
     advance_block::<DefaultEnvironment>().unwrap();
-    ddc_bucket.provider_withdraw(bucket_id)?;
+    ddc_bucket.provider_withdraw(deal_id1)?;
+    ddc_bucket.provider_withdraw(deal_id2)?;
 
-    let evs = get_events(8);
+    let evs = get_events(9);
     // Provider setup.
     assert!(matches!(&evs[0], Event::ServiceSetInfo(ev) if *ev ==
         ServiceSetInfo { provider_id, service_id, rent_per_month, description: description.to_string() }));
@@ -111,32 +112,37 @@ fn ddc_bucket_works() {
     assert!(matches!(&evs[1], Event::ServiceSetInfo(ev) if *ev ==
         ServiceSetInfo { provider_id:provider_id2, service_id:service_id2, rent_per_month, description: description2.to_string() }));
 
-    // Create bucket 1 with an initial deposit.
+    // Create bucket.
+    // TODO
+
+    // Add deal 1 with an initial deposit.
     assert!(matches!(&evs[2], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[3], Event::BucketCreated(ev) if *ev ==
-        BucketCreated { bucket_id, service_id }));
+    assert!(matches!(&evs[3], Event::DealCreated(ev) if *ev ==
+        DealCreated { deal_id: deal_id1, service_id }));
 
     // Deposit more.
     assert!(matches!(&evs[4], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 100 * CURRENCY }));
 
-    // Create bucket 2 with an additional deposit.
+    // Add deal 2 with an additional deposit.
     assert!(matches!(&evs[5], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[6], Event::BucketCreated(ev) if *ev ==
-        BucketCreated { bucket_id: bucket_id2, service_id }));
+    assert!(matches!(&evs[6], Event::DealCreated(ev) if *ev ==
+        DealCreated { deal_id: deal_id2, service_id }));
 
-    // Provider withdrawaw.
+    // Provider withdrawals.
     assert!(matches!(&evs[7], Event::ProviderWithdraw(ev) if *ev ==
-        ProviderWithdraw { provider_id, bucket_id, value: 186 }));
+        ProviderWithdraw { provider_id, deal_id: deal_id1, value: 186 }));
+    assert!(matches!(&evs[8], Event::ProviderWithdraw(ev) if *ev ==
+        ProviderWithdraw { provider_id, deal_id: deal_id2, value: 186 }));
 }
 
 fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ServiceSetInfo(ev) => println!("EVENT {:?}", ev),
-            Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
+            Event::DealCreated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
             Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
         }

@@ -146,18 +146,18 @@ async function main() {
         repbuckId = 0;
         log("New repbuckId", repbuckId);
     }
-    let bucketId;
+    let dealId;
     {
-        log("Create a bucket…");
+        log("Create a deal for the bucket…");
         const tx = contract.tx
-            .repbuckAttachService(txOptionsPay, repbuckId, service_id);
+            .repbuckAddDeal(txOptionsPay, repbuckId, service_id);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        bucketId = ddcBucket.findCreatedBucketId(events);
-        log("New bucketId", bucketId);
+        dealId = ddcBucket.findCreatedDealId(events);
+        log("New dealId", dealId);
     }
     {
         log("Topup the account…");
@@ -170,9 +170,22 @@ async function main() {
         log("EVENTS", JSON.stringify(events, null, 4));
     }
     {
+        log("\nRead deal status…");
+        let {result, output} = await contract.query
+            .dealGetStatus(anyAccountId, txOptions, dealId);
+
+        if (!result.isOk) assert.fail(result.asErr);
+        output = output.toJSON();
+        log('OUTPUT', output);
+
+        assert.deepEqual(output.ok.service_id, service_id);
+        assert(output.ok.estimated_rent_end_ms > 0);
+        assert.deepEqual(output.ok.writer_ids, [ownerId]);
+    }
+    {
         log("\nRead bucket status…");
         let {result, output} = await contract.query
-            .bucketGetStatus(anyAccountId, txOptions, bucketId);
+            .repbuckGetStatus(anyAccountId, txOptions, repbuckId);
 
         if (!result.isOk) assert.fail(result.asErr);
         output = output.toJSON();
