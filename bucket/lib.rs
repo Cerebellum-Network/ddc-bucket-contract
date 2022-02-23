@@ -21,7 +21,7 @@ pub mod ddc_bucket {
 
     #[ink(storage)]
     pub struct DdcBucket {
-        repbucks: Stash<RepBuck>,
+        buckets: Stash<Bucket>,
         deals: Stash<Deal>,
         services: HashMap<ServiceId, Service>,
 
@@ -33,7 +33,7 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self {
-                repbucks: Stash::new(),
+                buckets: Stash::new(),
                 deals: Stash::new(),
                 services: HashMap::new(),
                 billing_accounts: HashMap::new(),
@@ -43,24 +43,24 @@ pub mod ddc_bucket {
     }
 
 
-    // ---- RepBuck ----
-    pub type RepBuckId = u32;
+    // ---- Bucket ----
+    pub type BucketId = u32;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct RepBuck {
+    pub struct Bucket {
         owner_id: AccountId,
         deal_ids: Vec<DealId>,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct RepBuckStatus {
-        repbuck: RepBuck,
+    pub struct BucketStatus {
+        bucket: Bucket,
         deal_statuses: Vec<DealStatus>,
     }
 
-    impl RepBuck {
+    impl Bucket {
         pub fn only_owner(&self, caller: AccountId) -> Result<()> {
             if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
         }
@@ -69,55 +69,53 @@ pub mod ddc_bucket {
     // TODO: events
     impl DdcBucket {
         #[ink(message)]
-        pub fn repbuck_create(&mut self) -> Result<RepBuckId> {
-            let caller = Self::env().caller();
+        pub fn bucket_create(&mut self) -> Result<BucketId> {
+            let owner_id = Self::env().caller();
 
-            let repbuck = RepBuck {
-                owner_id: caller,
+            let bucket = Bucket {
+                owner_id,
                 deal_ids: Vec::new(),
             };
-            let repbuck_id = self.repbucks.put(repbuck);
-            Ok(repbuck_id)
+            let bucket_id = self.buckets.put(bucket);
+            Ok(bucket_id)
         }
 
         #[ink(message)]
         #[ink(payable)]
-        pub fn repbuck_add_deal(&mut self, repbuck_id: RepBuckId, service_id: ServiceId) -> Result<DealId> {
+        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId) -> Result<DealId> {
             // Receive the payable value.
             self.deposit()?;
 
             let deal_id = self.deal_create(service_id)?;
 
-            let repbuck = self.repbucks.get_mut(repbuck_id)
-                .ok_or(RepbuckDoesNotExist)?;
-            repbuck.only_owner(Self::env().caller())?;
+            let bucket = self.buckets.get_mut(bucket_id)
+                .ok_or(BucketDoesNotExist)?;
+            bucket.only_owner(Self::env().caller())?;
 
-            repbuck.deal_ids.push(deal_id);
+            bucket.deal_ids.push(deal_id);
             Ok(deal_id)
         }
 
         #[ink(message)]
-        pub fn repbuck_get(&self, repbuck_id: RepBuckId) -> Result<RepBuck> {
-            self.repbucks.get(repbuck_id)
-                .cloned().ok_or(RepbuckDoesNotExist)
+        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
+            self.buckets.get(bucket_id)
+                .cloned().ok_or(BucketDoesNotExist)
         }
 
         #[ink(message)]
-        pub fn repbuck_get_status(&self, repbuck_id: RepBuckId) -> Result<RepBuckStatus> {
-            let repbuck = self.repbucks.get(repbuck_id)
-                .ok_or(RepbuckDoesNotExist)?.clone();
+        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+            let bucket = self.buckets.get(bucket_id)
+                .ok_or(BucketDoesNotExist)?.clone();
 
             let mut deal_statuses = vec![];
-            for deal_id in repbuck.deal_ids.iter() {
+            for deal_id in bucket.deal_ids.iter() {
                 deal_statuses.push(self.deal_get_status(*deal_id)?);
             }
 
-            Ok(RepBuckStatus { repbuck, deal_statuses })
+            Ok(BucketStatus { bucket, deal_statuses })
         }
     }
-
-
-    // ---- End RepBuck ----
+    // ---- End Bucket ----
 
 
     // ---- Deal ----
@@ -571,7 +569,7 @@ pub mod ddc_bucket {
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
-        RepbuckDoesNotExist,
+        BucketDoesNotExist,
         DealDoesNotExist,
         ServiceDoesNotExist,
         FlowDoesNotExist,

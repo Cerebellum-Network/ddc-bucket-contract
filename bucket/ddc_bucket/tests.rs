@@ -38,14 +38,14 @@ fn ddc_bucket_works() {
         description: description.to_string(),
     });
 
-    // Create a replicated-bucket.
+    // Create a bucket.
     push_caller_value(consumer_id, 0);
-    let repbuck_id = ddc_bucket.repbuck_create()?;
+    let bucket_id = ddc_bucket.bucket_create()?;
     pop_caller();
 
-    // Create a bucket, also depositing some value.
+    // Add a deal to the bucket, also depositing some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let deal_id1 = ddc_bucket.repbuck_add_deal(repbuck_id, service_id)?;
+    let deal_id1 = ddc_bucket.bucket_add_deal(bucket_id, service_id)?;
     pop_caller();
 
     // Deposit more value into the account.
@@ -53,7 +53,7 @@ fn ddc_bucket_works() {
     ddc_bucket.deposit()?;
     pop_caller();
 
-    // Provider checks the status of the bucket.
+    // Provider checks the status of the deal.
     let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
     assert_eq!(deal_status1, DealStatus {
         service_id,
@@ -61,9 +61,9 @@ fn ddc_bucket_works() {
         writer_ids: vec![consumer_id],
     });
 
-    // Create another deal, making the consumer pay a more expensive rate.
+    // Add another deal, making the consumer pay a more expensive rate.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let deal_id2 = ddc_bucket.repbuck_add_deal(repbuck_id, service_id)?;
+    let deal_id2 = ddc_bucket.bucket_add_deal(bucket_id, service_id)?;
     assert_ne!(deal_id1, deal_id2);
     pop_caller();
 
@@ -84,16 +84,16 @@ fn ddc_bucket_works() {
     });
 
     // Check the structure of the bucket including all deal IDs.
-    let repbuck = ddc_bucket.repbuck_get(repbuck_id)?;
-    assert_eq!(repbuck, RepBuck {
+    let bucket = ddc_bucket.bucket_get(bucket_id)?;
+    assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         deal_ids: vec![deal_id1, deal_id2],
     });
 
     // Check the status of the bucket recursively including all deal statuses.
-    let repbuck_status = ddc_bucket.repbuck_get_status(repbuck_id)?;
-    assert_eq!(repbuck_status, RepBuckStatus {
-        repbuck,
+    let bucket_status = ddc_bucket.bucket_get_status(bucket_id)?;
+    assert_eq!(bucket_status, BucketStatus {
+        bucket,
         deal_statuses: vec![deal_status1, deal_status2],
     });
 

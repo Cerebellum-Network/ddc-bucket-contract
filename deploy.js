@@ -132,25 +132,25 @@ async function main() {
         });
     }
 
-    // TODO: find repbuckId from events.
-    let repbuckId;
+    // TODO: find bucketId from events.
+    let bucketId;
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .repbuckCreate(txOptionsPay);
+            .bucketCreate(txOptionsPay);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        repbuckId = 0;
-        log("New repbuckId", repbuckId);
+        bucketId = 0;
+        log("New bucketId", bucketId);
     }
     let dealId;
     {
         log("Create a deal for the bucket…");
         const tx = contract.tx
-            .repbuckAddDeal(txOptionsPay, repbuckId, service_id);
+            .bucketAddDeal(txOptionsPay, bucketId, service_id);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -185,7 +185,7 @@ async function main() {
     {
         log("\nRead bucket status…");
         let {result, output} = await contract.query
-            .repbuckGetStatus(anyAccountId, txOptions, repbuckId);
+            .bucketGetStatus(anyAccountId, txOptions, bucketId);
 
         if (!result.isOk) assert.fail(result.asErr);
         output = output.toJSON();
