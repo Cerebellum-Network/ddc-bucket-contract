@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0xc9e137e30ece8a464286e92cea70e4181ce3a80a2c4602da768e53632c5027d6";
-const REUSE_CONTRACT_ADDRESS = "5CNZigA12EL2LvE4DmQ5mNppjpJKumCTBx8suzZQEdL9rHQz";
+const REUSE_CODE_HASH = "0x13e4fb9d2616b8fc0d425096875b38cba637091e7eca71c5a439be5a63e3cdd6";
+const REUSE_CONTRACT_ADDRESS = "5FmheLMsby7gDfJU4LVN5tNT8wu5DpTRigTaL2jhKdwTCpT6";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -26,6 +26,8 @@ const CONSTRUCTOR = "new";
 
 const SEED = "//Alice";
 const RPC = "wss://rpc.testnet.cere.network:9945";
+
+const ENDOWMENT = 2n * CERE;
 
 
 async function main() {
@@ -67,7 +69,7 @@ async function main() {
         log("Instantiating a contract…");
 
         const txOptions = {
-            value: 10n * CERE,
+            value: ENDOWMENT,
             gasLimit: 100_000n * MGAS,
         };
 
@@ -96,16 +98,17 @@ async function main() {
     };
 
     // Test data.
-    const providerId = account.address;
+    const provider_id = account.address;
     const ownerId = account.address;
     const anyAccountId = account.address;
+    const service_id = [provider_id, 0];
     const rent_per_month = 10n * CERE;
     const location = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
 
     {
-        log("Setup a provider…");
+        log("Setup a service…", service_id);
         const tx = contract.tx
-            .providerSetInfo(txOptions, rent_per_month, location);
+            .serviceSetInfo(txOptions, service_id, rent_per_month, location);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -113,33 +116,48 @@ async function main() {
         log("EVENTS", JSON.stringify(events, null, 4));
     }
     {
-        log("\nRead provider info…");
+        log("\nRead service info…");
         const {result, output} = await contract.query
-            .providerGetInfo(anyAccountId, txOptions, providerId);
+            .serviceGetInfo(anyAccountId, txOptions, service_id);
 
         if (!result.isOk) assert.fail(result.asErr);
 
         log('OUTPUT', output.toHuman());
         assert.deepEqual(output.toJSON(), {
             "ok": {
+                provider_id,
                 rent_per_month,
                 location,
             },
         });
     }
 
+    // TODO: find bucketId from events.
     let bucketId;
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .bucketCreate(txOptionsPay, providerId);
+            .bucketCreate(txOptionsPay);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        bucketId = ddcBucket.findCreatedBucketId(events);
+        bucketId = 0;
         log("New bucketId", bucketId);
+    }
+    let dealId;
+    {
+        log("Create a deal for the bucket…");
+        const tx = contract.tx
+            .bucketAddDeal(txOptionsPay, bucketId, service_id);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        dealId = ddcBucket.findCreatedDealId(events);
+        log("New dealId", dealId);
     }
     {
         log("Topup the account…");
@@ -152,6 +170,19 @@ async function main() {
         log("EVENTS", JSON.stringify(events, null, 4));
     }
     {
+        log("\nRead deal status…");
+        let {result, output} = await contract.query
+            .dealGetStatus(anyAccountId, txOptions, dealId);
+
+        if (!result.isOk) assert.fail(result.asErr);
+        output = output.toJSON();
+        log('OUTPUT', output);
+
+        assert.deepEqual(output.ok.service_id, service_id);
+        assert(output.ok.estimated_rent_end_ms > 0);
+        assert.deepEqual(output.ok.writer_ids, [ownerId]);
+    }
+    {
         log("\nRead bucket status…");
         let {result, output} = await contract.query
             .bucketGetStatus(anyAccountId, txOptions, bucketId);
@@ -160,7 +191,7 @@ async function main() {
         output = output.toJSON();
         log('OUTPUT', output);
 
-        assert.equal(output.ok.provider_id, providerId);
+        assert.deepEqual(output.ok.service_id, service_id);
         assert(output.ok.estimated_rent_end_ms > 0);
         assert.deepEqual(output.ok.writer_ids, [ownerId]);
     }

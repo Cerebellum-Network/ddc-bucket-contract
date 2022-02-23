@@ -22,7 +22,8 @@ pub mod ddc_bucket {
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: Stash<Bucket>,
-        providers: HashMap<AccountId, Provider>,
+        deals: Stash<Deal>,
+        services: HashMap<ServiceId, Service>,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
         billing_flows: Stash<BillingFlow>,
@@ -33,7 +34,8 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: Stash::new(),
-                providers: HashMap::new(),
+                deals: Stash::new(),
+                services: HashMap::new(),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
             }
@@ -48,9 +50,15 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Bucket {
         owner_id: AccountId,
-        provider_id: AccountId,
-        rent_per_month: Balance,
-        flow_id: FlowId,
+        deal_ids: Vec<DealId>,
+    }
+
+    #[derive(Clone, PartialEq, Encode, Decode)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct BucketStatus {
+        bucket: Bucket,
+        writer_ids: Vec<AccountId>,
+        deal_statuses: Vec<DealStatus>,
     }
 
     #[ink(event)]
@@ -58,7 +66,228 @@ pub mod ddc_bucket {
     pub struct BucketCreated {
         #[ink(topic)]
         bucket_id: BucketId,
+        #[ink(topic)]
+        owner_id: AccountId,
     }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct DealCreated {
+        #[ink(topic)]
+        deal_id: DealId,
+        #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
+        service_id: ServiceId,
+    }
+
+    impl Bucket {
+        pub fn only_owner(&self, caller: AccountId) -> Result<()> {
+            if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
+        }
+    }
+
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn bucket_create(&mut self) -> Result<BucketId> {
+            let owner_id = Self::env().caller();
+
+            let bucket = Bucket {
+                owner_id,
+                deal_ids: Vec::new(),
+            };
+            let bucket_id = self.buckets.put(bucket);
+            Self::env().emit_event(BucketCreated { bucket_id, owner_id });
+            Ok(bucket_id)
+        }
+
+        #[ink(message)]
+        #[ink(payable)]
+        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId) -> Result<DealId> {
+            // Receive the payable value.
+            self.deposit()?;
+
+            let deal_id = self.deal_create(service_id)?;
+
+            let bucket = self.buckets.get_mut(bucket_id)
+                .ok_or(BucketDoesNotExist)?;
+            bucket.only_owner(Self::env().caller())?;
+
+            bucket.deal_ids.push(deal_id);
+            Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
+            Ok(deal_id)
+        }
+
+        #[ink(message)]
+        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
+            self.buckets.get(bucket_id)
+                .cloned().ok_or(BucketDoesNotExist)
+        }
+
+        #[ink(message)]
+        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+            let bucket = self.buckets.get(bucket_id)
+                .ok_or(BucketDoesNotExist)?.clone();
+
+            let writer_ids = vec![bucket.owner_id];
+
+            let mut deal_statuses = vec![];
+            for deal_id in bucket.deal_ids.iter() {
+                deal_statuses.push(self.deal_get_status(*deal_id)?);
+            }
+
+            Ok(BucketStatus { bucket, writer_ids, deal_statuses })
+        }
+    }
+    // ---- End Bucket ----
+
+
+    // ---- Deal ----
+    pub type DealId = u32;
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Deal {
+        service_id: ServiceId,
+        flow_id: FlowId,
+    }
+
+    #[derive(Clone, PartialEq, Encode, Decode)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct DealStatus {
+        service_id: ServiceId,
+        estimated_rent_end_ms: u64,
+    }
+
+    impl DdcBucket {
+        pub fn deal_create(&mut self, service_id: ServiceId) -> Result<DealId> {
+            let payer_id = Self::env().caller();
+
+            // Start the payment flow for a deal.
+            let service = self.service_get_info(service_id)?;
+            let flow_id = self.billing_start_flow(payer_id, service.rent_per_month)?;
+
+            // Create a new deal.
+            let deal = Deal {
+                service_id,
+                flow_id,
+            };
+            let deal_id = self.deals.put(deal);
+            Ok(deal_id)
+        }
+
+        #[ink(message)]
+        pub fn deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
+            let deal = self.deals.get(deal_id)
+                .ok_or(Error::DealDoesNotExist)?;
+
+            let estimated_rent_end_ms = self.billing_flow_covered_until(deal.flow_id)?;
+
+            Ok(DealStatus {
+                service_id: deal.service_id,
+                estimated_rent_end_ms,
+            })
+        }
+    }
+    // ---- End Deal ----
+
+
+    // ---- Provider ----
+    pub type ProviderId = AccountId;
+    pub type ServiceId = (AccountId, u32);
+
+    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct Service {
+        provider_id: ProviderId,
+        rent_per_month: Balance,
+        description: String,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ServiceSetInfo {
+        #[ink(topic)]
+        provider_id: AccountId,
+        // TODO: remove?
+        #[ink(topic)]
+        service_id: ServiceId,
+        rent_per_month: Balance,
+        description: String,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ProviderWithdraw {
+        #[ink(topic)]
+        provider_id: AccountId,
+        #[ink(topic)]
+        deal_id: DealId,
+        value: Balance,
+    }
+
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, description: String) -> Result<()> {
+            let provider_id = self.env().caller();
+            Service::only_owner(service_id, provider_id)?;
+
+            self.services.insert(service_id, Service {
+                provider_id,
+                rent_per_month,
+                description: description.clone(),
+            });
+
+            Self::env().emit_event(ServiceSetInfo { provider_id, service_id, rent_per_month, description });
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn service_get_info(&self, service_id: ServiceId) -> Result<Service> {
+            self.services.get(&service_id)
+                .cloned()
+                .ok_or(ServiceDoesNotExist)
+        }
+
+        #[ink(message)]
+        pub fn provider_withdraw(&mut self, deal_id: DealId) -> Result<()> {
+            let caller = self.env().caller();
+
+            let (flow_id, service_id) = {
+                let deal = self.deals.get(deal_id)
+                    .ok_or(DealDoesNotExist)?;
+                (deal.flow_id, deal.service_id)
+            };
+
+            // Find where to distribute the revenues.
+            let revenue_account_id = {
+                let service = self.service_get_info(service_id)?;
+                // Authorize only the service owner to trigger the distribution.
+                Service::only_owner(service_id, caller)?;
+                service.revenue_account_id()
+            };
+
+            let cash = self.billing_settle_flow(flow_id)?;
+
+            Self::env().emit_event(ProviderWithdraw { provider_id: revenue_account_id, deal_id, value: cash.peek() });
+
+            Self::send_cash(revenue_account_id, cash)
+        }
+    }
+
+    impl Service {
+        pub fn revenue_account_id(&self) -> AccountId {
+            self.provider_id
+        }
+
+        pub fn only_owner(service_id: ServiceId, provider_id: AccountId) -> Result<()> {
+            if service_id.0 == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+        }
+    }
+    // ---- End Provider ----
+
+
+    // ---- Billing ----
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
@@ -68,45 +297,7 @@ pub mod ddc_bucket {
         value: Balance,
     }
 
-    #[derive(Clone, PartialEq, Encode, Decode)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct BucketStatus {
-        provider_id: AccountId,
-        estimated_rent_end_ms: u64,
-        writer_ids: Vec<AccountId>,
-    }
-
     impl DdcBucket {
-        #[ink(message)]
-        #[ink(payable)]
-        pub fn bucket_create(&mut self, provider_id: AccountId) -> Result<BucketId> {
-            // Receive the payable value.
-            self.deposit()?;
-            let caller = Self::env().caller();
-
-            // Start the payment flow for a bucket.
-            let rent_per_month = self.get_provider_rent(provider_id)?;
-            let flow_id = self.billing_start_flow(caller, provider_id, rent_per_month)?;
-
-            // Create a new bucket.
-            let bucket = Bucket {
-                owner_id: caller,
-                provider_id,
-                rent_per_month,
-                flow_id,
-            };
-            let bucket_id = self.buckets.put(bucket);
-
-            Self::env().emit_event(BucketCreated { bucket_id });
-            Ok(bucket_id)
-        }
-
-        #[ink(message)]
-        #[ink(payable)]
-        pub fn bucket_topup(&mut self, _bucket_id: BucketId) -> Result<()> {
-            self.deposit()
-        }
-
         #[ink(message)]
         #[ink(payable)]
         pub fn deposit(&mut self) -> Result<()> {
@@ -120,106 +311,6 @@ pub mod ddc_bucket {
             Ok(())
         }
 
-        #[ink(message)]
-        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-            let bucket = self.buckets.get(bucket_id)
-                .ok_or(Error::BucketDoesNotExist)?;
-
-            let estimated_rent_end_ms = self.billing_flow_covered_until(bucket.flow_id)?;
-
-            Ok(BucketStatus {
-                provider_id: bucket.provider_id,
-                estimated_rent_end_ms,
-                writer_ids: vec![bucket.owner_id],
-            })
-        }
-
-        fn get_provider_rent(&self, provider_id: AccountId) -> Result<Balance> {
-            let provider = self.providers.get(&provider_id)
-                .ok_or(Error::ProviderDoesNotExist)?;
-            Ok(provider.rent_per_month)
-        }
-    }
-    // ---- End Bucket ----
-
-
-    // ---- Provider ----
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Provider {
-        rent_per_month: Balance,
-        location: String,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderSetInfo {
-        #[ink(topic)]
-        provider_id: AccountId,
-        rent_per_month: Balance,
-        location: String,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderWithdraw {
-        #[ink(topic)]
-        provider_id: AccountId,
-        #[ink(topic)]
-        bucket_id: BucketId,
-        value: Balance,
-    }
-
-    impl DdcBucket {
-        #[ink(message)]
-        pub fn provider_set_info(&mut self, rent_per_month: Balance, location: String) -> Result<()> {
-            let provider_id = self.env().caller();
-            self.providers.insert(provider_id, Provider {
-                rent_per_month,
-                location: location.clone(),
-            });
-
-            Self::env().emit_event(ProviderSetInfo { provider_id, rent_per_month, location });
-            Ok(())
-        }
-
-        #[ink(message)]
-        pub fn provider_get_info(&self, provider_id: AccountId) -> Result<Provider> {
-            self.providers.get(&provider_id)
-                .cloned()
-                .ok_or(Error::ProviderDoesNotExist)
-        }
-
-        #[ink(message)]
-        pub fn provider_withdraw(&mut self, bucket_id: BucketId) -> Result<()> {
-            let provider_id = self.env().caller();
-
-            let flow_id = {
-                let bucket = self.buckets.get(bucket_id)
-                    .ok_or(Error::BucketDoesNotExist)?;
-                if bucket.provider_id != provider_id {
-                    return Err(Error::UnauthorizedProvider);
-                }
-                bucket.flow_id
-            };
-
-            let flowed_amount = self.billing_settle_flow(flow_id)?;
-
-            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
-            self.billing_withdraw(provider_id, payable)?;
-            Self::send_cash(provider_id, cash)?;
-
-            Self::env().emit_event(ProviderWithdraw { provider_id, bucket_id, value: flowed_amount });
-            Ok(())
-        }
-    }
-    // ---- End Provider ----
-
-
-    // ---- Billing ----
-
-    #[ink(impl)]
-    impl DdcBucket {
         pub fn billing_deposit(&mut self, to: AccountId, cash: Cash) {
             match self.billing_accounts.entry(to) {
                 Vacant(e) => {
@@ -267,7 +358,7 @@ pub mod ddc_bucket {
             Ok(())
         }
 
-        pub fn billing_start_flow(&mut self, from: AccountId, to: AccountId, rate: Balance) -> Result<FlowId> {
+        pub fn billing_start_flow(&mut self, from: AccountId, rate: Balance) -> Result<FlowId> {
             let start_ms = self.env().block_timestamp();
             let cash_schedule = Schedule::new(start_ms, rate);
             let payable_schedule = cash_schedule.clone();
@@ -278,7 +369,6 @@ pub mod ddc_bucket {
 
             let flow = BillingFlow {
                 from,
-                to,
                 schedule: cash_schedule,
             };
             let flow_id = self.billing_flows.put(flow);
@@ -294,22 +384,19 @@ pub mod ddc_bucket {
             Ok(account.schedule_covered_until())
         }
 
-        pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Balance> {
+        pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Cash> {
             let now_ms = Self::env().block_timestamp();
 
-            let (flowed_amount, (from, payable), (to, cash)) = {
-                let flow = self.billing_flows.get_mut(flow_id)
-                    .ok_or(FlowDoesNotExist)?;
-                flow.run_until(now_ms)
-            };
+            let flow = self.billing_flows.get_mut(flow_id)
+                .ok_or(FlowDoesNotExist)?;
+            let flowed_amount = flow.schedule.take_value_at_time(now_ms);
+            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
 
-            let account = self.billing_accounts.get_mut(&from)
+            let account = self.billing_accounts.get_mut(&flow.from)
                 .ok_or(InsufficientBalance)?;
 
             account.pay_scheduled(now_ms, payable)?;
-            self.billing_deposit(to, cash);
-
-            Ok(flowed_amount)
+            Ok(cash)
         }
 
         pub fn receive_cash() -> Cash {
@@ -399,16 +486,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     struct BillingFlow {
         from: AccountId,
-        to: AccountId,
         schedule: Schedule,
-    }
-
-    impl BillingFlow {
-        pub fn run_until(&mut self, now_ms: u64) -> (Balance, (AccountId, Payable), (AccountId, Cash)) {
-            let flowed_amount = self.schedule.take_value_at_time(now_ms);
-            let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
-            (flowed_amount, (self.from, payable), (self.to, cash))
-        }
     }
 
     #[must_use]
@@ -500,7 +578,8 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BucketDoesNotExist,
-        ProviderDoesNotExist,
+        DealDoesNotExist,
+        ServiceDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
         UnauthorizedProvider,
