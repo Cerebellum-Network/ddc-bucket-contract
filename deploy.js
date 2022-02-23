@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0x13e4fb9d2616b8fc0d425096875b38cba637091e7eca71c5a439be5a63e3cdd6";
-const REUSE_CONTRACT_ADDRESS = "5FmheLMsby7gDfJU4LVN5tNT8wu5DpTRigTaL2jhKdwTCpT6";
+const REUSE_CODE_HASH = "0x52fb51b7e7b89d4470a6356379bce342d5370566f5aedfd96016c1b958478a4b";
+const REUSE_CONTRACT_ADDRESS = "5E8FN8XvMg3jt3bfYBt34HMxuGYKMAjrsUaSRtCRaX2qwm9q";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -103,12 +103,12 @@ async function main() {
     const anyAccountId = account.address;
     const service_id = [provider_id, 0];
     const rent_per_month = 10n * CERE;
-    const location = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
+    const description = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
 
     {
         log("Setup a service…", service_id);
         const tx = contract.tx
-            .serviceSetInfo(txOptions, service_id, rent_per_month, location);
+            .serviceSetInfo(txOptions, service_id, rent_per_month, description);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -127,23 +127,22 @@ async function main() {
             "ok": {
                 provider_id,
                 rent_per_month,
-                location,
+                description,
             },
         });
     }
 
-    // TODO: find bucketId from events.
     let bucketId;
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .bucketCreate(txOptionsPay);
+            .bucketCreate(txOptions);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        bucketId = 0;
+        bucketId = ddcBucket.findCreatedBucketId(events);
         log("New bucketId", bucketId);
     }
     let dealId;
@@ -180,7 +179,6 @@ async function main() {
 
         assert.deepEqual(output.ok.service_id, service_id);
         assert(output.ok.estimated_rent_end_ms > 0);
-        assert.deepEqual(output.ok.writer_ids, [ownerId]);
     }
     {
         log("\nRead bucket status…");
@@ -191,9 +189,11 @@ async function main() {
         output = output.toJSON();
         log('OUTPUT', output);
 
+        /* TODO
         assert.deepEqual(output.ok.service_id, service_id);
         assert(output.ok.estimated_rent_end_ms > 0);
         assert.deepEqual(output.ok.writer_ids, [ownerId]);
+        */
     }
 
     process.exit(0);
