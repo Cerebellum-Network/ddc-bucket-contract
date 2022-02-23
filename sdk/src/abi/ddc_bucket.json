@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x52fb51b7e7b89d4470a6356379bce342d5370566f5aedfd96016c1b958478a4b",
+    "hash": "0x5900876f0e07782c85b624fe8a85865e3103bbdc9b50bb676a8eafdf97234472",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -442,6 +442,39 @@
           "type": 38
         },
         "selector": "0xf0f1cb75"
+      },
+      {
+        "args": [
+          {
+            "name": "offset",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "limit",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "service_list"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [],
+          "type": 39
+        },
+        "selector": "0x1ad41d0a"
       },
       {
         "args": [
@@ -1605,6 +1638,29 @@
       "path": [
         "Result"
       ]
+    },
+    {
+      "def": {
+        "tuple": [
+          40,
+          1
+        ]
+      }
+    },
+    {
+      "def": {
+        "sequence": {
+          "type": 41
+        }
+      }
+    },
+    {
+      "def": {
+        "tuple": [
+          10,
+          14
+        ]
+      }
     }
   ]
 }

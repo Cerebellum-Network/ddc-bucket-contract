@@ -1,6 +1,5 @@
 const {
     connect,
-    accountFromUri,
     getContract,
     ddcBucketQuery,
 } = require("./sdk");
@@ -16,8 +15,11 @@ async function main() {
 
     const contract = getContract(CONTRACT_NAME, chainName, api);
 
+    const services = await ddcBucketQuery.serviceList(contract);
+    log("\nServices", JSON.stringify(services, null, 4));
+
     const buckets = await ddcBucketQuery.bucketListStatuses(contract);
-    log("Buckets", JSON.stringify(buckets, null, 4));
+    log("\nBuckets", JSON.stringify(buckets, null, 4));
 
 
     process.exit(0);

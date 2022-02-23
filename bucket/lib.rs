@@ -267,6 +267,18 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn service_list(&self, offset: u32, limit: u32) -> (Vec<(ServiceId, Service)>, u32) {
+            let mut services = Vec::with_capacity(limit as usize);
+            let iter = self.services.iter()
+                .skip(offset as usize)
+                .take(limit as usize);
+            for (service_id, service) in iter {
+                services.push((*service_id, service.clone()));
+            }
+            (services, self.services.len())
+        }
+
+        #[ink(message)]
         pub fn provider_withdraw(&mut self, deal_id: DealId) -> Result<()> {
             let caller = self.env().caller();
 

@@ -5,29 +5,39 @@ const TX_OPTIONS = {
     gasLimit: -1,
 };
 const ANY_ACCOUNT_ID = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
-const LIMIT = 1;
+const LIMIT = 10;
 
 
-async function bucketListStatuses(contract) {
-    let buckets = [];
+async function listAll(contract, listMethod) {
+    let objects = [];
 
     let offset = 0;
     while (true) {
         let {result, output} = await contract.query
-            .bucketListStatuses(ANY_ACCOUNT_ID, TX_OPTIONS, offset, LIMIT);
+            [listMethod](ANY_ACCOUNT_ID, TX_OPTIONS, offset, LIMIT);
 
         if (!result.isOk) throw result.asErr;
-        let [more_buckets, count] = output.toJSON();
-        buckets.push(...more_buckets);
+        let [more_objects, count] = output.toJSON();
+        objects.push(...more_objects);
 
         offset += LIMIT;
         if (offset >= count) break;
     }
 
-    return buckets;
+    return objects;
+}
+
+
+async function bucketListStatuses(contract) {
+    return listAll(contract, "bucketListStatuses");
+}
+
+async function serviceList(contract) {
+    return listAll(contract, "serviceList");
 }
 
 
 module.exports = {
     bucketListStatuses,
+    serviceList,
 };
