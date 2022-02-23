@@ -58,7 +58,6 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status1, DealStatus {
         service_id,
         estimated_rent_end_ms: 29462400000,
-        writer_ids: vec![consumer_id],
     });
 
     // Add another deal, making the consumer pay a more expensive rate.
@@ -72,7 +71,6 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status1, DealStatus {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
-        writer_ids: vec![consumer_id],
     });
 
     // The end time of the second deal is the same because it is paid from the same account.
@@ -80,7 +78,6 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status2, DealStatus {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
-        writer_ids: vec![consumer_id],
     });
 
     // Check the structure of the bucket including all deal IDs.
@@ -94,6 +91,7 @@ fn ddc_bucket_works() {
     let bucket_status = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
         bucket,
+        writer_ids: vec![consumer_id],
         deal_statuses: vec![deal_status1, deal_status2],
     });
 

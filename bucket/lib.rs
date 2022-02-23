@@ -57,6 +57,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct BucketStatus {
         bucket: Bucket,
+        writer_ids: Vec<AccountId>,
         deal_statuses: Vec<DealStatus>,
     }
 
@@ -128,12 +129,14 @@ pub mod ddc_bucket {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(BucketDoesNotExist)?.clone();
 
+            let writer_ids = vec![bucket.owner_id];
+
             let mut deal_statuses = vec![];
             for deal_id in bucket.deal_ids.iter() {
                 deal_statuses.push(self.deal_get_status(*deal_id)?);
             }
 
-            Ok(BucketStatus { bucket, deal_statuses })
+            Ok(BucketStatus { bucket, writer_ids, deal_statuses })
         }
     }
     // ---- End Bucket ----
@@ -145,7 +148,6 @@ pub mod ddc_bucket {
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Deal {
-        owner_id: AccountId,
         service_id: ServiceId,
         flow_id: FlowId,
     }
@@ -155,20 +157,18 @@ pub mod ddc_bucket {
     pub struct DealStatus {
         service_id: ServiceId,
         estimated_rent_end_ms: u64,
-        writer_ids: Vec<AccountId>,
     }
 
     impl DdcBucket {
         pub fn deal_create(&mut self, service_id: ServiceId) -> Result<DealId> {
-            let owner_id = Self::env().caller();
+            let payer_id = Self::env().caller();
 
             // Start the payment flow for a deal.
             let service = self.service_get_info(service_id)?;
-            let flow_id = self.billing_start_flow(owner_id, service.rent_per_month)?;
+            let flow_id = self.billing_start_flow(payer_id, service.rent_per_month)?;
 
             // Create a new deal.
             let deal = Deal {
-                owner_id,
                 service_id,
                 flow_id,
             };
@@ -186,7 +186,6 @@ pub mod ddc_bucket {
             Ok(DealStatus {
                 service_id: deal.service_id,
                 estimated_rent_end_ms,
-                writer_ids: vec![deal.owner_id],
             })
         }
     }
