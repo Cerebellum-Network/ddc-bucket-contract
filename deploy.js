@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0x7829cae3fad09b46cf757fb1acab51c47fbd6895360f51845d42c517d687a";
-const REUSE_CONTRACT_ADDRESS = "5G5z6G9if3LFGrPLNDJgcaKH6E2FYrEKbXVFNt86QM9yXsV9";
+const REUSE_CODE_HASH = "0xec3a60f3fff9ee251277724e84ce2a13ed8d2bedd1e7e3f3640f56e85e98233d";
+const REUSE_CONTRACT_ADDRESS = "5FDGE7j9DXDbh6TmHkz2bR8FsN3VbSGjCQgbWzSc3izBqdXW";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -101,33 +101,33 @@ async function main() {
     const provider_id = account.address;
     const ownerId = account.address;
     const anyAccountId = account.address;
-    const service_number = 123;
-    const service_id = [provider_id, service_number];
     const rent_per_month = 10n * CERE;
     const description = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
 
+    let service_id;
     {
-        log("Setup a service…", service_id);
+        log("Setup a service…");
         const tx = contract.tx
-            .serviceSetInfo(txOptions, service_id, rent_per_month, description);
+            .serviceCreate(txOptions, rent_per_month, description);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
+        service_id = ddcBucket.findCreatedServiceId(events);
     }
     {
         log("\nRead service info…");
         const {result, output} = await contract.query
-            .serviceGetInfo(anyAccountId, txOptions, service_id);
+            .serviceGet(anyAccountId, txOptions, service_id);
 
         if (!result.isOk) assert.fail(result.asErr);
 
         log('OUTPUT', output.toHuman());
         assert.deepEqual(output.toJSON(), {
             "ok": {
+                service_id,
                 provider_id,
-                service_number,
                 rent_per_month,
                 description,
             },

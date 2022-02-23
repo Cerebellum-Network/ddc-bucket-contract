@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x7829cae3fad09b46cf757fb1acab51c47fbd6895360f51845d42c517d687ad9e",
+    "hash": "0xec3a60f3fff9ee251277724e84ce2a13ed8d2bedd1e7e3f3640f56e85e98233d",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -85,7 +85,7 @@
               "displayName": [
                 "ServiceId"
               ],
-              "type": 10
+              "type": 1
             }
           }
         ],
@@ -94,6 +94,17 @@
       },
       {
         "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "service_id",
+            "type": {
+              "displayName": [
+                "ServiceId"
+              ],
+              "type": 1
+            }
+          },
           {
             "docs": [],
             "indexed": true,
@@ -107,24 +118,13 @@
           },
           {
             "docs": [],
-            "indexed": true,
-            "name": "service_number",
-            "type": {
-              "displayName": [
-                "ServiceNumber"
-              ],
-              "type": 1
-            }
-          },
-          {
-            "docs": [],
             "indexed": false,
             "name": "rent_per_month",
             "type": {
               "displayName": [
                 "Balance"
               ],
-              "type": 15
+              "type": 12
             }
           },
           {
@@ -135,12 +135,12 @@
               "displayName": [
                 "String"
               ],
-              "type": 16
+              "type": 13
             }
           }
         ],
         "docs": [],
-        "name": "ServiceSetInfo"
+        "name": "ServiceCreated"
       },
       {
         "args": [
@@ -174,7 +174,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 15
+              "type": 12
             }
           }
         ],
@@ -202,7 +202,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 15
+              "type": 12
             }
           }
         ],
@@ -223,7 +223,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 25
+          "type": 22
         },
         "selector": "0x0aeb2379"
       },
@@ -244,7 +244,7 @@
               "displayName": [
                 "ServiceId"
               ],
-              "type": 10
+              "type": 1
             }
           }
         ],
@@ -258,7 +258,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 25
+          "type": 22
         },
         "selector": "0x7f82fb8e"
       },
@@ -284,7 +284,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 27
+          "type": 24
         },
         "selector": "0x3802cb77"
       },
@@ -317,7 +317,7 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 28
+          "type": 25
         },
         "selector": "0x0b04c5f2"
       },
@@ -343,7 +343,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 34
+          "type": 31
         },
         "selector": "0xcef55af6"
       },
@@ -369,28 +369,19 @@
           "displayName": [
             "Result"
           ],
-          "type": 35
+          "type": 32
         },
         "selector": "0x54739bc7"
       },
       {
         "args": [
           {
-            "name": "service_id",
-            "type": {
-              "displayName": [
-                "ServiceId"
-              ],
-              "type": 10
-            }
-          },
-          {
             "name": "rent_per_month",
             "type": {
               "displayName": [
                 "Balance"
               ],
-              "type": 15
+              "type": 12
             }
           },
           {
@@ -399,23 +390,23 @@
               "displayName": [
                 "String"
               ],
-              "type": 16
+              "type": 13
             }
           }
         ],
         "docs": [],
         "mutates": true,
         "name": [
-          "service_set_info"
+          "service_create"
         ],
         "payable": false,
         "returnType": {
           "displayName": [
             "Result"
           ],
-          "type": 36
+          "type": 22
         },
-        "selector": "0x13003476"
+        "selector": "0x93d2f3ba"
       },
       {
         "args": [
@@ -425,23 +416,23 @@
               "displayName": [
                 "ServiceId"
               ],
-              "type": 10
+              "type": 1
             }
           }
         ],
         "docs": [],
         "mutates": false,
         "name": [
-          "service_get_info"
+          "service_get"
         ],
         "payable": false,
         "returnType": {
           "displayName": [
             "Result"
           ],
-          "type": 38
+          "type": 33
         },
-        "selector": "0xf0f1cb75"
+        "selector": "0xe5afdb1f"
       },
       {
         "args": [
@@ -472,7 +463,7 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 39
+          "type": 34
         },
         "selector": "0x1ad41d0a"
       },
@@ -615,74 +606,28 @@
               "fields": [
                 {
                   "layout": {
-                    "struct": {
-                      "fields": [
-                        {
-                          "layout": {
-                            "cell": {
-                              "key": "0x0100000002000000000000000000000000000000000000000000000000000000",
-                              "ty": 7
-                            }
-                          },
-                          "name": "header"
-                        },
-                        {
-                          "layout": {
-                            "struct": {
-                              "fields": [
-                                {
-                                  "layout": {
-                                    "cell": {
-                                      "key": "0x0200000002000000000000000000000000000000000000000000000000000000",
-                                      "ty": 1
-                                    }
-                                  },
-                                  "name": "len"
-                                },
-                                {
-                                  "layout": {
-                                    "array": {
-                                      "cellsPerElem": 1,
-                                      "layout": {
-                                        "cell": {
-                                          "key": "0x0200000003000000000000000000000000000000000000000000000000000000",
-                                          "ty": 12
-                                        }
-                                      },
-                                      "len": 4294967295,
-                                      "offset": "0x0300000002000000000000000000000000000000000000000000000000000000"
-                                    }
-                                  },
-                                  "name": "elems"
-                                }
-                              ]
-                            }
-                          },
-                          "name": "entries"
-                        }
-                      ]
+                    "cell": {
+                      "key": "0x0100000002000000000000000000000000000000000000000000000000000000",
+                      "ty": 1
                     }
                   },
-                  "name": "keys"
+                  "name": "len"
                 },
                 {
                   "layout": {
-                    "hash": {
+                    "array": {
+                      "cellsPerElem": 1,
                       "layout": {
                         "cell": {
-                          "key": "0x0300000003000000000000000000000000000000000000000000000000000000",
-                          "ty": 13
+                          "key": "0x0100000003000000000000000000000000000000000000000000000000000000",
+                          "ty": 11
                         }
                       },
-                      "offset": "0x0200000003000000000000000000000000000000000000000000000000000000",
-                      "strategy": {
-                        "hasher": "Blake2x256",
-                        "postfix": "",
-                        "prefix": "0x696e6b20686173686d6170"
-                      }
+                      "len": 4294967295,
+                      "offset": "0x0200000002000000000000000000000000000000000000000000000000000000"
                     }
                   },
-                  "name": "values"
+                  "name": "elems"
                 }
               ]
             }
@@ -700,7 +645,7 @@
                         {
                           "layout": {
                             "cell": {
-                              "key": "0x0300000003000000000000000000000000000000000000000000000000000000",
+                              "key": "0x0100000003000000000000000000000000000000000000000000000000000000",
                               "ty": 7
                             }
                           },
@@ -713,7 +658,7 @@
                                 {
                                   "layout": {
                                     "cell": {
-                                      "key": "0x0400000003000000000000000000000000000000000000000000000000000000",
+                                      "key": "0x0200000003000000000000000000000000000000000000000000000000000000",
                                       "ty": 1
                                     }
                                   },
@@ -725,12 +670,12 @@
                                       "cellsPerElem": 1,
                                       "layout": {
                                         "cell": {
-                                          "key": "0x0400000004000000000000000000000000000000000000000000000000000000",
-                                          "ty": 17
+                                          "key": "0x0200000004000000000000000000000000000000000000000000000000000000",
+                                          "ty": 14
                                         }
                                       },
                                       "len": 4294967295,
-                                      "offset": "0x0500000003000000000000000000000000000000000000000000000000000000"
+                                      "offset": "0x0300000003000000000000000000000000000000000000000000000000000000"
                                     }
                                   },
                                   "name": "elems"
@@ -750,11 +695,11 @@
                     "hash": {
                       "layout": {
                         "cell": {
-                          "key": "0x0500000004000000000000000000000000000000000000000000000000000000",
-                          "ty": 18
+                          "key": "0x0300000004000000000000000000000000000000000000000000000000000000",
+                          "ty": 15
                         }
                       },
-                      "offset": "0x0400000004000000000000000000000000000000000000000000000000000000",
+                      "offset": "0x0200000004000000000000000000000000000000000000000000000000000000",
                       "strategy": {
                         "hasher": "Blake2x256",
                         "postfix": "",
@@ -776,7 +721,7 @@
                 {
                   "layout": {
                     "cell": {
-                      "key": "0x0500000004000000000000000000000000000000000000000000000000000000",
+                      "key": "0x0300000004000000000000000000000000000000000000000000000000000000",
                       "ty": 7
                     }
                   },
@@ -789,7 +734,7 @@
                         {
                           "layout": {
                             "cell": {
-                              "key": "0x0600000004000000000000000000000000000000000000000000000000000000",
+                              "key": "0x0400000004000000000000000000000000000000000000000000000000000000",
                               "ty": 1
                             }
                           },
@@ -801,12 +746,12 @@
                               "cellsPerElem": 1,
                               "layout": {
                                 "cell": {
-                                  "key": "0x0600000005000000000000000000000000000000000000000000000000000000",
-                                  "ty": 23
+                                  "key": "0x0400000005000000000000000000000000000000000000000000000000000000",
+                                  "ty": 20
                                 }
                               },
                               "len": 4294967295,
-                              "offset": "0x0700000004000000000000000000000000000000000000000000000000000000"
+                              "offset": "0x0500000004000000000000000000000000000000000000000000000000000000"
                             }
                           },
                           "name": "elems"
@@ -926,7 +871,7 @@
             {
               "fields": [
                 {
-                  "type": 11,
+                  "type": 10,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -960,7 +905,7 @@
           "fields": [
             {
               "name": "service_id",
-              "type": 10,
+              "type": 1,
               "typeName": "ServiceId"
             },
             {
@@ -976,14 +921,6 @@
         "ddc_bucket",
         "Deal"
       ]
-    },
-    {
-      "def": {
-        "tuple": [
-          3,
-          1
-        ]
-      }
     },
     {
       "def": {
@@ -1011,88 +948,26 @@
     },
     {
       "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 11,
-                  "typeName": "VacantEntry"
-                }
-              ],
-              "name": "Vacant"
-            },
-            {
-              "fields": [
-                {
-                  "type": 10,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Occupied"
-            }
-          ]
-        }
-      },
-      "params": [
-        10
-      ],
-      "path": [
-        "ink_storage",
-        "collections",
-        "stash",
-        "Entry"
-      ]
-    },
-    {
-      "def": {
         "composite": {
           "fields": [
             {
-              "name": "value",
-              "type": 14,
-              "typeName": "V"
-            },
-            {
-              "name": "key_index",
+              "name": "service_id",
               "type": 1,
-              "typeName": "KeyIndex"
-            }
-          ]
-        }
-      },
-      "params": [
-        14
-      ],
-      "path": [
-        "ink_storage",
-        "collections",
-        "hashmap",
-        "ValueEntry"
-      ]
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
+              "typeName": "ServiceId"
+            },
             {
               "name": "provider_id",
               "type": 3,
               "typeName": "ProviderId"
             },
             {
-              "name": "service_number",
-              "type": 1,
-              "typeName": "ServiceNumber"
-            },
-            {
               "name": "rent_per_month",
-              "type": 15,
+              "type": 12,
               "typeName": "Balance"
             },
             {
               "name": "description",
-              "type": 16,
+              "type": 13,
               "typeName": "String"
             }
           ]
@@ -1121,7 +996,7 @@
             {
               "fields": [
                 {
-                  "type": 11,
+                  "type": 10,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -1155,7 +1030,7 @@
           "fields": [
             {
               "name": "value",
-              "type": 19,
+              "type": 16,
               "typeName": "V"
             },
             {
@@ -1167,7 +1042,7 @@
         }
       },
       "params": [
-        19
+        16
       ],
       "path": [
         "ink_storage",
@@ -1182,17 +1057,17 @@
           "fields": [
             {
               "name": "deposit",
-              "type": 20,
+              "type": 17,
               "typeName": "Cash"
             },
             {
               "name": "payable_locked",
-              "type": 15,
+              "type": 12,
               "typeName": "Balance"
             },
             {
               "name": "payable_schedule",
-              "type": 21,
+              "type": 18,
               "typeName": "Schedule"
             }
           ]
@@ -1209,7 +1084,7 @@
         "composite": {
           "fields": [
             {
-              "type": 15,
+              "type": 12,
               "typeName": "Balance"
             }
           ]
@@ -1227,12 +1102,12 @@
           "fields": [
             {
               "name": "rate",
-              "type": 15,
+              "type": 12,
               "typeName": "Balance"
             },
             {
               "name": "start_ms",
-              "type": 22,
+              "type": 19,
               "typeName": "u64"
             }
           ]
@@ -1256,7 +1131,7 @@
             {
               "fields": [
                 {
-                  "type": 11,
+                  "type": 10,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -1265,7 +1140,7 @@
             {
               "fields": [
                 {
-                  "type": 24,
+                  "type": 21,
                   "typeName": "T"
                 }
               ],
@@ -1275,7 +1150,7 @@
         }
       },
       "params": [
-        24
+        21
       ],
       "path": [
         "ink_storage",
@@ -1295,7 +1170,7 @@
             },
             {
               "name": "schedule",
-              "type": 21,
+              "type": 18,
               "typeName": "Schedule"
             }
           ]
@@ -1323,7 +1198,7 @@
             {
               "fields": [
                 {
-                  "type": 26,
+                  "type": 23,
                   "typeName": "E"
                 }
               ],
@@ -1334,7 +1209,7 @@
       },
       "params": [
         1,
-        26
+        23
       ],
       "path": [
         "Result"
@@ -1405,7 +1280,7 @@
             {
               "fields": [
                 {
-                  "type": 26,
+                  "type": 23,
                   "typeName": "E"
                 }
               ],
@@ -1416,7 +1291,7 @@
       },
       "params": [
         2,
-        26
+        23
       ],
       "path": [
         "Result"
@@ -1425,7 +1300,7 @@
     {
       "def": {
         "tuple": [
-          29,
+          26,
           1
         ]
       }
@@ -1433,7 +1308,7 @@
     {
       "def": {
         "sequence": {
-          "type": 30
+          "type": 27
         }
       }
     },
@@ -1453,12 +1328,12 @@
             },
             {
               "name": "writer_ids",
-              "type": 31,
+              "type": 28,
               "typeName": "Vec<AccountId>"
             },
             {
               "name": "deal_statuses",
-              "type": 32,
+              "type": 29,
               "typeName": "Vec<DealStatus>"
             }
           ]
@@ -1480,7 +1355,7 @@
     {
       "def": {
         "sequence": {
-          "type": 33
+          "type": 30
         }
       }
     },
@@ -1490,12 +1365,12 @@
           "fields": [
             {
               "name": "service_id",
-              "type": 10,
+              "type": 1,
               "typeName": "ServiceId"
             },
             {
               "name": "estimated_rent_end_ms",
-              "type": 22,
+              "type": 19,
               "typeName": "u64"
             }
           ]
@@ -1514,7 +1389,7 @@
             {
               "fields": [
                 {
-                  "type": 30,
+                  "type": 27,
                   "typeName": "T"
                 }
               ],
@@ -1523,7 +1398,7 @@
             {
               "fields": [
                 {
-                  "type": 26,
+                  "type": 23,
                   "typeName": "E"
                 }
               ],
@@ -1533,8 +1408,8 @@
         }
       },
       "params": [
-        30,
-        26
+        27,
+        23
       ],
       "path": [
         "Result"
@@ -1547,7 +1422,7 @@
             {
               "fields": [
                 {
-                  "type": 33,
+                  "type": 30,
                   "typeName": "T"
                 }
               ],
@@ -1556,7 +1431,7 @@
             {
               "fields": [
                 {
-                  "type": 26,
+                  "type": 23,
                   "typeName": "E"
                 }
               ],
@@ -1566,12 +1441,60 @@
         }
       },
       "params": [
-        33,
-        26
+        30,
+        23
       ],
       "path": [
         "Result"
       ]
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 11,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 23,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        11,
+        23
+      ],
+      "path": [
+        "Result"
+      ]
+    },
+    {
+      "def": {
+        "tuple": [
+          35,
+          1
+        ]
+      }
+    },
+    {
+      "def": {
+        "sequence": {
+          "type": 11
+        }
+      }
     },
     {
       "def": {
@@ -1589,7 +1512,7 @@
             {
               "fields": [
                 {
-                  "type": 26,
+                  "type": 23,
                   "typeName": "E"
                 }
               ],
@@ -1600,7 +1523,7 @@
       },
       "params": [
         37,
-        26
+        23
       ],
       "path": [
         "Result"
@@ -1609,54 +1532,6 @@
     {
       "def": {
         "tuple": []
-      }
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 14,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 26,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        14,
-        26
-      ],
-      "path": [
-        "Result"
-      ]
-    },
-    {
-      "def": {
-        "tuple": [
-          40,
-          1
-        ]
-      }
-    },
-    {
-      "def": {
-        "sequence": {
-          "type": 14
-        }
       }
     }
   ]

@@ -24,7 +24,7 @@ pub mod ddc_bucket {
     pub struct DdcBucket {
         buckets: InkVec<Bucket>,
         deals: Stash<Deal>,
-        services: HashMap<ServiceId, Service>,
+        services: InkVec<Service>,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
         billing_flows: Stash<BillingFlow>,
@@ -36,7 +36,7 @@ pub mod ddc_bucket {
             Self {
                 buckets: InkVec::new(),
                 deals: Stash::new(),
-                services: HashMap::new(),
+                services: InkVec::new(),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
             }
@@ -181,7 +181,7 @@ pub mod ddc_bucket {
             let payer_id = Self::env().caller();
 
             // Start the payment flow for a deal.
-            let service = self.service_get_info(service_id)?;
+            let service = self.service_get(service_id)?;
             let flow_id = self.billing_start_flow(payer_id, service.rent_per_month)?;
 
             // Create a new deal.
@@ -211,25 +211,24 @@ pub mod ddc_bucket {
 
     // ---- Provider ----
     pub type ProviderId = AccountId;
-    pub type ServiceNumber = u32;
-    pub type ServiceId = (AccountId, ServiceNumber);
+    pub type ServiceId = u32;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Service {
+        service_id: ServiceId,
         provider_id: ProviderId,
-        service_number: ServiceNumber,
         rent_per_month: Balance,
         description: String,
     }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ServiceSetInfo {
+    pub struct ServiceCreated {
+        #[ink(topic)]
+        service_id: ServiceId,
         #[ink(topic)]
         provider_id: AccountId,
-        #[ink(topic)]
-        service_number: ServiceNumber,
         rent_per_month: Balance,
         description: String,
     }
@@ -246,25 +245,24 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, description: String) -> Result<()> {
+        pub fn service_create(&mut self, rent_per_month: Balance, description: String) -> Result<ServiceId> {
+            let service_id = self.services.len();
             let provider_id = self.env().caller();
-            Service::only_owner(&service_id, provider_id)?;
-            let service_number = service_id.1;
-
-            self.services.insert(service_id, Service {
+            let service = Service {
+                service_id,
                 provider_id,
-                service_number,
                 rent_per_month,
                 description: description.clone(),
-            });
+            };
 
-            Self::env().emit_event(ServiceSetInfo { provider_id, service_number, rent_per_month, description });
-            Ok(())
+            self.services.push(service);
+            Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, description });
+            Ok(service_id)
         }
 
         #[ink(message)]
-        pub fn service_get_info(&self, service_id: ServiceId) -> Result<Service> {
-            self.services.get(&service_id)
+        pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
+            self.services.get(service_id)
                 .cloned()
                 .ok_or(ServiceDoesNotExist)
         }
@@ -272,11 +270,11 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn service_list(&self, offset: u32, limit: u32) -> (Vec<Service>, u32) {
             let mut services = Vec::with_capacity(limit as usize);
-            let iter = self.services.values()
-                .skip(offset as usize)
-                .take(limit as usize);
-            for service in iter {
-                services.push(service.clone());
+            for service_id in offset..offset + limit {
+                match self.services.get(service_id) {
+                    None => break, // No more services.
+                    Some(service) => services.push(service.clone()),
+                }
             }
             (services, self.services.len())
         }
@@ -293,9 +291,9 @@ pub mod ddc_bucket {
 
             // Find where to distribute the revenues.
             let revenue_account_id = {
-                let service = self.service_get_info(service_id)?;
+                let service = self.service_get(service_id)?;
                 // Authorize only the service owner to trigger the distribution.
-                Service::only_owner(&service_id, caller)?;
+                service.only_owner(caller)?;
                 service.revenue_account_id()
             };
 
@@ -312,8 +310,8 @@ pub mod ddc_bucket {
             self.provider_id
         }
 
-        pub fn only_owner(service_id: &ServiceId, provider_id: AccountId) -> Result<()> {
-            if service_id.0 == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+        pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
+            if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
         }
     }
     // ---- End Provider ----
