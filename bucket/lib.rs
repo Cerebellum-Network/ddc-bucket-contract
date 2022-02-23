@@ -13,6 +13,7 @@ pub mod ddc_bucket {
     use ink_storage::{
         collections::{HashMap, hashmap::Entry::*},
         collections::Stash,
+        collections::Vec as InkVec,
         traits::{PackedLayout, SpreadLayout},
     };
     use scale::{Decode, Encode};
@@ -21,7 +22,7 @@ pub mod ddc_bucket {
 
     #[ink(storage)]
     pub struct DdcBucket {
-        buckets: Stash<Bucket>,
+        buckets: InkVec<Bucket>,
         deals: Stash<Deal>,
         services: HashMap<ServiceId, Service>,
 
@@ -33,7 +34,7 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self {
-                buckets: Stash::new(),
+                buckets: InkVec::new(),
                 deals: Stash::new(),
                 services: HashMap::new(),
                 billing_accounts: HashMap::new(),
@@ -96,7 +97,8 @@ pub mod ddc_bucket {
                 owner_id,
                 deal_ids: Vec::new(),
             };
-            let bucket_id = self.buckets.put(bucket);
+            let bucket_id = self.buckets.len();
+            self.buckets.push(bucket);
             Self::env().emit_event(BucketCreated { bucket_id, owner_id });
             Ok(bucket_id)
         }
@@ -125,13 +127,26 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn bucket_list(&self, offset: u32, limit: u32) -> (Vec<(BucketId, Bucket)>, u32) {
+            let mut buckets = Vec::with_capacity(limit as usize);
+            for bucket_id in offset..offset + limit {
+                match self.buckets.get(bucket_id) {
+                    None => break,
+                    Some(bucket) =>
+                        buckets.push((bucket_id, bucket.clone())),
+                }
+            }
+            (buckets, self.buckets.len())
+        }
+
+        #[ink(message)]
         pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(BucketDoesNotExist)?.clone();
 
             let writer_ids = vec![bucket.owner_id];
 
-            let mut deal_statuses = vec![];
+            let mut deal_statuses = Vec::with_capacity(bucket.deal_ids.len());
             for deal_id in bucket.deal_ids.iter() {
                 deal_statuses.push(self.deal_get_status(*deal_id)?);
             }

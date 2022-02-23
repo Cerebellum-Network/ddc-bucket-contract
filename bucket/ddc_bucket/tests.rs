@@ -137,6 +137,54 @@ fn ddc_bucket_works() {
         ProviderWithdraw { provider_id, deal_id: deal_id2, value: 186 }));
 }
 
+
+#[ink::test]
+fn bucket_list_works() {
+    let accounts = get_accounts();
+    let owner_id1 = accounts.alice;
+    let owner_id2 = accounts.bob;
+
+    let mut ddc_bucket = DdcBucket::new();
+
+    push_caller(owner_id1);
+    let bucket_id1 = ddc_bucket.bucket_create()?;
+
+    push_caller(owner_id2);
+    let bucket_id2 = ddc_bucket.bucket_create()?;
+    assert_ne!(bucket_id1, bucket_id2);
+
+    let bucket1 = (bucket_id1, Bucket {
+        owner_id: owner_id1,
+        deal_ids: vec![],
+    });
+    let bucket2 = (bucket_id2, Bucket {
+        owner_id: owner_id2,
+        deal_ids: vec![],
+    });
+    let count = 2;
+
+    assert_eq!(
+        ddc_bucket.bucket_list(0, 100),
+        (vec![bucket1.clone(), bucket2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.bucket_list(0, 2),
+        (vec![bucket1.clone(), bucket2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.bucket_list(0, 1),
+        (vec![bucket1.clone() /*, bucket2.clone()*/], count));
+
+    assert_eq!(
+        ddc_bucket.bucket_list(1, 1),
+        (vec![/*bucket1.clone(),*/ bucket2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.bucket_list(20, 20),
+        (vec![], count));
+}
+
+
 fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
