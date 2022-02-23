@@ -53,12 +53,20 @@ pub mod ddc_bucket {
         bucket_ids: Vec<BucketId>,
     }
 
+    #[derive(Clone, PartialEq, Encode, Decode)]
+    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+    pub struct RepBuckStatus {
+        repbuck: RepBuck,
+        buckets: Vec<BucketStatus>,
+    }
+
     impl RepBuck {
         pub fn only_owner(&self, caller: AccountId) -> Result<()> {
             if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
         }
     }
 
+    // TODO: events
     impl DdcBucket {
         #[ink(message)]
         pub fn repbuck_create(&mut self) -> Result<RepBuckId> {
@@ -73,8 +81,11 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        #[ink(payable)]
         pub fn repbuck_attach_service(&mut self, repbuck_id: RepBuckId, service_id: ServiceId) -> Result<BucketId> {
-            // bucket_create captures the sent value.
+            // Receive the payable value.
+            self.deposit()?;
+
             let bucket_id = self.bucket_create(service_id)?;
 
             let repbuck = self.repbucks.get_mut(repbuck_id)
@@ -89,6 +100,19 @@ pub mod ddc_bucket {
         pub fn repbuck_get(&self, repbuck_id: RepBuckId) -> Result<RepBuck> {
             self.repbucks.get(repbuck_id)
                 .cloned().ok_or(RepbuckDoesNotExist)
+        }
+
+        #[ink(message)]
+        pub fn repbuck_get_status(&self, repbuck_id: RepBuckId) -> Result<RepBuckStatus> {
+            let repbuck = self.repbucks.get(repbuck_id)
+                .ok_or(RepbuckDoesNotExist)?.clone();
+
+            let mut buckets = vec![];
+            for bid in repbuck.bucket_ids.iter() {
+                buckets.push(self.bucket_get_status(*bid)?);
+            }
+
+            Ok(RepBuckStatus { repbuck, buckets })
         }
     }
 
@@ -133,11 +157,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
-        #[ink(payable)]
         pub fn bucket_create(&mut self, service_id: ServiceId) -> Result<BucketId> {
-            // Receive the payable value.
-            self.deposit()?;
             let caller = Self::env().caller();
 
             // Start the payment flow for a bucket.
@@ -154,12 +174,6 @@ pub mod ddc_bucket {
 
             Self::env().emit_event(BucketCreated { bucket_id, service_id });
             Ok(bucket_id)
-        }
-
-        #[ink(message)]
-        #[ink(payable)]
-        pub fn bucket_topup(&mut self, _bucket_id: BucketId) -> Result<()> {
-            self.deposit()
         }
 
         #[ink(message)]

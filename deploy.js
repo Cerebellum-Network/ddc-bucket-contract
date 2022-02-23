@@ -132,11 +132,25 @@ async function main() {
         });
     }
 
+    // TODO: find repbuckId from events.
+    let repbuckId;
+    {
+        log("Create a bucket…");
+        const tx = contract.tx
+            .repbuckCreate(txOptionsPay);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        repbuckId = 0;
+        log("New repbuckId", repbuckId);
+    }
     let bucketId;
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .bucketCreate(txOptionsPay, service_id);
+            .repbuckAttachService(txOptionsPay, repbuckId, service_id);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];

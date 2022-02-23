@@ -83,12 +83,20 @@ fn ddc_bucket_works() {
         writer_ids: vec![consumer_id],
     });
 
-    // Check the status of the replicated-bucket to discover the two sub-buckets.
+    // Check the structure of the replicated-bucket including all sub-bucket IDs.
     let repbuck = ddc_bucket.repbuck_get(repbuck_id)?;
     assert_eq!(repbuck, RepBuck {
         owner_id: consumer_id,
         bucket_ids: vec![bucket_id, bucket_id2],
     });
+
+    // Check the status of the replicated-bucket recursively including all sub-bucket status.
+    let repbuck_deep = ddc_bucket.repbuck_get_status(repbuck_id)?;
+    assert_eq!(repbuck_deep, RepBuckStatus {
+        repbuck,
+        buckets: vec![status1, status2],
+    });
+
 
     // Provider withdraws in the future.
     advance_block::<DefaultEnvironment>().unwrap();
