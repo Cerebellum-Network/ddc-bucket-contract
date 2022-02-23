@@ -62,6 +62,15 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketCreated {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
+        owner_id: AccountId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct DealCreated {
         #[ink(topic)]
         deal_id: DealId,
@@ -77,7 +86,6 @@ pub mod ddc_bucket {
         }
     }
 
-    // TODO: events
     impl DdcBucket {
         #[ink(message)]
         pub fn bucket_create(&mut self) -> Result<BucketId> {
@@ -88,6 +96,7 @@ pub mod ddc_bucket {
                 deal_ids: Vec::new(),
             };
             let bucket_id = self.buckets.put(bucket);
+            Self::env().emit_event(BucketCreated { bucket_id, owner_id });
             Ok(bucket_id)
         }
 

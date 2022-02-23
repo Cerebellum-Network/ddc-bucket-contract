@@ -103,7 +103,7 @@ fn ddc_bucket_works() {
     ddc_bucket.provider_withdraw(deal_id1)?;
     ddc_bucket.provider_withdraw(deal_id2)?;
 
-    let evs = get_events(9);
+    let evs = get_events(10);
     // Provider setup.
     assert!(matches!(&evs[0], Event::ServiceSetInfo(ev) if *ev ==
         ServiceSetInfo { provider_id, service_id, rent_per_month, description: description.to_string() }));
@@ -113,28 +113,29 @@ fn ddc_bucket_works() {
         ServiceSetInfo { provider_id:provider_id2, service_id:service_id2, rent_per_month, description: description2.to_string() }));
 
     // Create bucket.
-    // TODO
+    assert!(matches!(&evs[2], Event::BucketCreated(ev) if *ev ==
+        BucketCreated {  bucket_id, owner_id: consumer_id }));
 
     // Add deal 1 with an initial deposit.
-    assert!(matches!(&evs[2], Event::Deposit(ev) if *ev ==
+    assert!(matches!(&evs[3], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[3], Event::DealCreated(ev) if *ev ==
+    assert!(matches!(&evs[4], Event::DealCreated(ev) if *ev ==
         DealCreated { deal_id: deal_id1, bucket_id, service_id }));
 
     // Deposit more.
-    assert!(matches!(&evs[4], Event::Deposit(ev) if *ev ==
+    assert!(matches!(&evs[5], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 100 * CURRENCY }));
 
     // Add deal 2 with an additional deposit.
-    assert!(matches!(&evs[5], Event::Deposit(ev) if *ev ==
+    assert!(matches!(&evs[6], Event::Deposit(ev) if *ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[6], Event::DealCreated(ev) if *ev ==
+    assert!(matches!(&evs[7], Event::DealCreated(ev) if *ev ==
         DealCreated { deal_id: deal_id2, bucket_id, service_id }));
 
     // Provider withdrawals.
-    assert!(matches!(&evs[7], Event::ProviderWithdraw(ev) if *ev ==
-        ProviderWithdraw { provider_id, deal_id: deal_id1, value: 186 }));
     assert!(matches!(&evs[8], Event::ProviderWithdraw(ev) if *ev ==
+        ProviderWithdraw { provider_id, deal_id: deal_id1, value: 186 }));
+    assert!(matches!(&evs[9], Event::ProviderWithdraw(ev) if *ev ==
         ProviderWithdraw { provider_id, deal_id: deal_id2, value: 186 }));
 }
 
@@ -142,6 +143,7 @@ fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ServiceSetInfo(ev) => println!("EVENT {:?}", ev),
+            Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::DealCreated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
             Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
