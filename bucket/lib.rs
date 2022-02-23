@@ -60,6 +60,15 @@ pub mod ddc_bucket {
         deal_statuses: Vec<DealStatus>,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct DealCreated {
+        #[ink(topic)]
+        deal_id: DealId,
+        #[ink(topic)]
+        service_id: ServiceId,
+    }
+
     impl Bucket {
         pub fn only_owner(&self, caller: AccountId) -> Result<()> {
             if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
@@ -93,6 +102,7 @@ pub mod ddc_bucket {
             bucket.only_owner(Self::env().caller())?;
 
             bucket.deal_ids.push(deal_id);
+            Self::env().emit_event(DealCreated { deal_id, service_id });
             Ok(deal_id)
         }
 
@@ -129,23 +139,6 @@ pub mod ddc_bucket {
         flow_id: FlowId,
     }
 
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct DealCreated {
-        #[ink(topic)]
-        deal_id: DealId,
-        #[ink(topic)]
-        service_id: ServiceId,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct Deposit {
-        #[ink(topic)]
-        account_id: AccountId,
-        value: Balance,
-    }
-
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct DealStatus {
@@ -169,22 +162,7 @@ pub mod ddc_bucket {
                 flow_id,
             };
             let deal_id = self.deals.put(deal);
-
-            Self::env().emit_event(DealCreated { deal_id, service_id });
             Ok(deal_id)
-        }
-
-        #[ink(message)]
-        #[ink(payable)]
-        pub fn deposit(&mut self) -> Result<()> {
-            // Receive the payable value.
-            let cash = Self::receive_cash();
-            let value = cash.peek();
-            let account_id = Self::env().caller();
-            self.billing_deposit(account_id, cash);
-
-            Self::env().emit_event(Deposit { account_id, value });
-            Ok(())
         }
 
         #[ink(message)]
@@ -301,8 +279,28 @@ pub mod ddc_bucket {
 
     // ---- Billing ----
 
-    #[ink(impl)]
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct Deposit {
+        #[ink(topic)]
+        account_id: AccountId,
+        value: Balance,
+    }
+
     impl DdcBucket {
+        #[ink(message)]
+        #[ink(payable)]
+        pub fn deposit(&mut self) -> Result<()> {
+            // Receive the payable value.
+            let cash = Self::receive_cash();
+            let value = cash.peek();
+            let account_id = Self::env().caller();
+            self.billing_deposit(account_id, cash);
+
+            Self::env().emit_event(Deposit { account_id, value });
+            Ok(())
+        }
+
         pub fn billing_deposit(&mut self, to: AccountId, cash: Cash) {
             match self.billing_accounts.entry(to) {
                 Vacant(e) => {
