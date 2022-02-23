@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0x5900876f0e07782c85b624fe8a85865e3103bbdc9b50bb676a8eafdf97234472";
-const REUSE_CONTRACT_ADDRESS = "5GrS5krqZf1cKkofUmoKeU2rZ3XcMTpG3Qfk2EUDWWPemsy4";
+const REUSE_CODE_HASH = "0x7829cae3fad09b46cf757fb1acab51c47fbd6895360f51845d42c517d687a";
+const REUSE_CONTRACT_ADDRESS = "5G5z6G9if3LFGrPLNDJgcaKH6E2FYrEKbXVFNt86QM9yXsV9";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -101,9 +101,10 @@ async function main() {
     const provider_id = account.address;
     const ownerId = account.address;
     const anyAccountId = account.address;
-    const service_id = [provider_id, 0];
+    const service_number = 123;
+    const service_id = [provider_id, service_number];
     const rent_per_month = 10n * CERE;
-    const description = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
+    const description = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
 
     {
         log("Setup a service…", service_id);
@@ -126,6 +127,7 @@ async function main() {
         assert.deepEqual(output.toJSON(), {
             "ok": {
                 provider_id,
+                service_number,
                 rent_per_month,
                 description,
             },

@@ -18,14 +18,16 @@ fn ddc_bucket_works() {
     set_balance(contract_id(), 1000); // For contract subsistence.
 
     // Provide a Service.
-    let service_id = (provider_id, 0);
+    let service_number = 0;
+    let service_id = (provider_id, service_number);
     let rent_per_month: Balance = 10 * CURRENCY;
     let description = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     ddc_bucket.service_set_info(service_id, rent_per_month, description.to_string())?;
 
     // Provide another Service.
     push_caller(provider_id2);
-    let service_id2 = (provider_id2, 1);
+    let service_number2 = 1;
+    let service_id2 = (provider_id2, service_number2);
     let description2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     ddc_bucket.service_set_info(service_id2, rent_per_month, description2.to_string())?;
     pop_caller();
@@ -34,6 +36,7 @@ fn ddc_bucket_works() {
     let service = ddc_bucket.service_get_info(service_id)?;
     assert_eq!(service, Service {
         provider_id,
+        service_number,
         rent_per_month,
         description: description.to_string(),
     });
@@ -105,11 +108,11 @@ fn ddc_bucket_works() {
     let evs = get_events(10);
     // Provider setup.
     assert!(matches!(&evs[0], Event::ServiceSetInfo(ev) if *ev ==
-        ServiceSetInfo { provider_id, service_id, rent_per_month, description: description.to_string() }));
+        ServiceSetInfo { provider_id, service_number, rent_per_month, description: description.to_string() }));
 
     // Provider setup 2.
     assert!(matches!(&evs[1], Event::ServiceSetInfo(ev) if *ev ==
-        ServiceSetInfo { provider_id:provider_id2, service_id:service_id2, rent_per_month, description: description2.to_string() }));
+        ServiceSetInfo { provider_id: provider_id2, service_number: service_number2, rent_per_month, description: description2.to_string() }));
 
     // Create bucket.
     assert!(matches!(&evs[2], Event::BucketCreated(ev) if *ev ==

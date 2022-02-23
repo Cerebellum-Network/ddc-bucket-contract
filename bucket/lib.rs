@@ -211,12 +211,14 @@ pub mod ddc_bucket {
 
     // ---- Provider ----
     pub type ProviderId = AccountId;
-    pub type ServiceId = (AccountId, u32);
+    pub type ServiceNumber = u32;
+    pub type ServiceId = (AccountId, ServiceNumber);
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Service {
         provider_id: ProviderId,
+        service_number: ServiceNumber,
         rent_per_month: Balance,
         description: String,
     }
@@ -226,9 +228,8 @@ pub mod ddc_bucket {
     pub struct ServiceSetInfo {
         #[ink(topic)]
         provider_id: AccountId,
-        // TODO: remove?
         #[ink(topic)]
-        service_id: ServiceId,
+        service_number: ServiceNumber,
         rent_per_month: Balance,
         description: String,
     }
@@ -247,15 +248,17 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, description: String) -> Result<()> {
             let provider_id = self.env().caller();
-            Service::only_owner(service_id, provider_id)?;
+            Service::only_owner(&service_id, provider_id)?;
+            let service_number = service_id.1;
 
             self.services.insert(service_id, Service {
                 provider_id,
+                service_number,
                 rent_per_month,
                 description: description.clone(),
             });
 
-            Self::env().emit_event(ServiceSetInfo { provider_id, service_id, rent_per_month, description });
+            Self::env().emit_event(ServiceSetInfo { provider_id, service_number, rent_per_month, description });
             Ok(())
         }
 
@@ -267,13 +270,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn service_list(&self, offset: u32, limit: u32) -> (Vec<(ServiceId, Service)>, u32) {
+        pub fn service_list(&self, offset: u32, limit: u32) -> (Vec<Service>, u32) {
             let mut services = Vec::with_capacity(limit as usize);
-            let iter = self.services.iter()
+            let iter = self.services.values()
                 .skip(offset as usize)
                 .take(limit as usize);
-            for (service_id, service) in iter {
-                services.push((*service_id, service.clone()));
+            for service in iter {
+                services.push(service.clone());
             }
             (services, self.services.len())
         }
@@ -292,7 +295,7 @@ pub mod ddc_bucket {
             let revenue_account_id = {
                 let service = self.service_get_info(service_id)?;
                 // Authorize only the service owner to trigger the distribution.
-                Service::only_owner(service_id, caller)?;
+                Service::only_owner(&service_id, caller)?;
                 service.revenue_account_id()
             };
 
@@ -309,7 +312,7 @@ pub mod ddc_bucket {
             self.provider_id
         }
 
-        pub fn only_owner(service_id: ServiceId, provider_id: AccountId) -> Result<()> {
+        pub fn only_owner(service_id: &ServiceId, provider_id: AccountId) -> Result<()> {
             if service_id.0 == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
         }
     }

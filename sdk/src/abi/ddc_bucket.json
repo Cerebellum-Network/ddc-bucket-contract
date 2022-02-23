@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x5900876f0e07782c85b624fe8a85865e3103bbdc9b50bb676a8eafdf97234472",
+    "hash": "0x7829cae3fad09b46cf757fb1acab51c47fbd6895360f51845d42c517d687ad9e",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -108,12 +108,12 @@
           {
             "docs": [],
             "indexed": true,
-            "name": "service_id",
+            "name": "service_number",
             "type": {
               "displayName": [
-                "ServiceId"
+                "ServiceNumber"
               ],
-              "type": 10
+              "type": 1
             }
           },
           {
@@ -1081,6 +1081,11 @@
               "typeName": "ProviderId"
             },
             {
+              "name": "service_number",
+              "type": 1,
+              "typeName": "ServiceNumber"
+            },
+            {
               "name": "rent_per_month",
               "type": 15,
               "typeName": "Balance"
@@ -1650,16 +1655,8 @@
     {
       "def": {
         "sequence": {
-          "type": 41
+          "type": 14
         }
-      }
-    },
-    {
-      "def": {
-        "tuple": [
-          10,
-          14
-        ]
       }
     }
   ]
