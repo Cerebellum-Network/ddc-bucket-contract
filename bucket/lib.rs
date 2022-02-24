@@ -131,24 +131,37 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn bucket_list_statuses(&self, offset: u32, limit: u32) -> (Vec<BucketStatus>, u32) {
+        pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
             let mut bucket_statuses = Vec::with_capacity(limit as usize);
             for bucket_id in offset..offset + limit {
-                match self.bucket_get_status(bucket_id) {
+                let bucket = match self.bucket_get(bucket_id) {
                     Err(BucketDoesNotExist) => break, // No more buckets.
                     Err(_) => continue, // Skip on unexpected error.
-                    Ok(bucket_status) =>
-                        bucket_statuses.push(bucket_status),
+                    Ok(bucket) => bucket,
+                };
+                // If there is a filter, skip non-matches.
+                if let Some(owner_id) = filter_owner_id {
+                    if owner_id != bucket.owner_id {
+                        continue;
+                    }
                 }
+                // Collect all the details of the bucket.
+                match self.bucket_collect_status(bucket_id, bucket) {
+                    Err(_) => continue, // Skip on unexpected error.
+                    Ok(status) =>
+                        bucket_statuses.push(status),
+                };
             }
             (bucket_statuses, self.buckets.len())
         }
 
         #[ink(message)]
         pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-            let bucket = self.buckets.get(bucket_id)
-                .ok_or(BucketDoesNotExist)?.clone();
+            let bucket = self.bucket_get(bucket_id)?;
+            self.bucket_collect_status(bucket_id, bucket)
+        }
 
+        fn bucket_collect_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
             let writer_ids = vec![bucket.owner_id];
 
             let mut deal_statuses = Vec::with_capacity(bucket.deal_ids.len());
