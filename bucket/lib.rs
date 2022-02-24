@@ -13,6 +13,7 @@ pub mod ddc_bucket {
     use ink_storage::{
         collections::{HashMap, hashmap::Entry::*},
         collections::Stash,
+        collections::Vec as InkVec,
         traits::{PackedLayout, SpreadLayout},
     };
     use scale::{Decode, Encode};
@@ -21,9 +22,9 @@ pub mod ddc_bucket {
 
     #[ink(storage)]
     pub struct DdcBucket {
-        buckets: Stash<Bucket>,
+        buckets: InkVec<Bucket>,
         deals: Stash<Deal>,
-        services: HashMap<ServiceId, Service>,
+        services: InkVec<Service>,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
         billing_flows: Stash<BillingFlow>,
@@ -33,9 +34,9 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self {
-                buckets: Stash::new(),
+                buckets: InkVec::new(),
                 deals: Stash::new(),
-                services: HashMap::new(),
+                services: InkVec::new(),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
             }
@@ -45,17 +46,20 @@ pub mod ddc_bucket {
 
     // ---- Bucket ----
     pub type BucketId = u32;
+    pub type BucketParams = String;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Bucket {
         owner_id: AccountId,
         deal_ids: Vec<DealId>,
+        bucket_params: BucketParams,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct BucketStatus {
+        bucket_id: BucketId,
         bucket: Bucket,
         writer_ids: Vec<AccountId>,
         deal_statuses: Vec<DealStatus>,
@@ -89,25 +93,27 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn bucket_create(&mut self) -> Result<BucketId> {
+        pub fn bucket_create(&mut self, bucket_params: BucketParams) -> Result<BucketId> {
             let owner_id = Self::env().caller();
 
             let bucket = Bucket {
                 owner_id,
                 deal_ids: Vec::new(),
+                bucket_params,
             };
-            let bucket_id = self.buckets.put(bucket);
+            let bucket_id = self.buckets.len();
+            self.buckets.push(bucket);
             Self::env().emit_event(BucketCreated { bucket_id, owner_id });
             Ok(bucket_id)
         }
 
         #[ink(message)]
         #[ink(payable)]
-        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId) -> Result<DealId> {
+        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
             // Receive the payable value.
             self.deposit()?;
 
-            let deal_id = self.deal_create(service_id)?;
+            let deal_id = self.deal_create(service_id, deal_params)?;
 
             let bucket = self.buckets.get_mut(bucket_id)
                 .ok_or(BucketDoesNotExist)?;
@@ -125,18 +131,32 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn bucket_list_statuses(&self, offset: u32, limit: u32) -> (Vec<BucketStatus>, u32) {
+            let mut bucket_statuses = Vec::with_capacity(limit as usize);
+            for bucket_id in offset..offset + limit {
+                match self.bucket_get_status(bucket_id) {
+                    Err(BucketDoesNotExist) => break, // No more buckets.
+                    Err(_) => continue, // Skip on unexpected error.
+                    Ok(bucket_status) =>
+                        bucket_statuses.push(bucket_status),
+                }
+            }
+            (bucket_statuses, self.buckets.len())
+        }
+
+        #[ink(message)]
         pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
             let bucket = self.buckets.get(bucket_id)
                 .ok_or(BucketDoesNotExist)?.clone();
 
             let writer_ids = vec![bucket.owner_id];
 
-            let mut deal_statuses = vec![];
+            let mut deal_statuses = Vec::with_capacity(bucket.deal_ids.len());
             for deal_id in bucket.deal_ids.iter() {
                 deal_statuses.push(self.deal_get_status(*deal_id)?);
             }
 
-            Ok(BucketStatus { bucket, writer_ids, deal_statuses })
+            Ok(BucketStatus { bucket_id, bucket, writer_ids, deal_statuses })
         }
     }
     // ---- End Bucket ----
@@ -144,12 +164,14 @@ pub mod ddc_bucket {
 
     // ---- Deal ----
     pub type DealId = u32;
+    pub type DealParams = String;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Deal {
         service_id: ServiceId,
         flow_id: FlowId,
+        deal_params: DealParams,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
@@ -157,20 +179,22 @@ pub mod ddc_bucket {
     pub struct DealStatus {
         service_id: ServiceId,
         estimated_rent_end_ms: u64,
+        deal_params: DealParams,
     }
 
     impl DdcBucket {
-        pub fn deal_create(&mut self, service_id: ServiceId) -> Result<DealId> {
+        pub fn deal_create(&mut self, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
             let payer_id = Self::env().caller();
 
             // Start the payment flow for a deal.
-            let service = self.service_get_info(service_id)?;
+            let service = self.service_get(service_id)?;
             let flow_id = self.billing_start_flow(payer_id, service.rent_per_month)?;
 
             // Create a new deal.
             let deal = Deal {
                 service_id,
                 flow_id,
+                deal_params,
             };
             let deal_id = self.deals.put(deal);
             Ok(deal_id)
@@ -186,6 +210,7 @@ pub mod ddc_bucket {
             Ok(DealStatus {
                 service_id: deal.service_id,
                 estimated_rent_end_ms,
+                deal_params: deal.deal_params.clone(),
             })
         }
     }
@@ -194,26 +219,27 @@ pub mod ddc_bucket {
 
     // ---- Provider ----
     pub type ProviderId = AccountId;
-    pub type ServiceId = (AccountId, u32);
+    pub type ServiceId = u32;
+    pub type ServiceParams = String;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Service {
+        service_id: ServiceId,
         provider_id: ProviderId,
         rent_per_month: Balance,
-        description: String,
+        service_params: ServiceParams,
     }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ServiceSetInfo {
-        #[ink(topic)]
-        provider_id: AccountId,
-        // TODO: remove?
+    pub struct ServiceCreated {
         #[ink(topic)]
         service_id: ServiceId,
+        #[ink(topic)]
+        provider_id: AccountId,
         rent_per_month: Balance,
-        description: String,
+        service_params: ServiceParams,
     }
 
     #[ink(event)]
@@ -228,25 +254,38 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_set_info(&mut self, service_id: ServiceId, rent_per_month: Balance, description: String) -> Result<()> {
+        pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
+            let service_id = self.services.len();
             let provider_id = self.env().caller();
-            Service::only_owner(service_id, provider_id)?;
-
-            self.services.insert(service_id, Service {
+            let service = Service {
+                service_id,
                 provider_id,
                 rent_per_month,
-                description: description.clone(),
-            });
+                service_params: service_params.clone(),
+            };
 
-            Self::env().emit_event(ServiceSetInfo { provider_id, service_id, rent_per_month, description });
-            Ok(())
+            self.services.push(service);
+            Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, service_params });
+            Ok(service_id)
         }
 
         #[ink(message)]
-        pub fn service_get_info(&self, service_id: ServiceId) -> Result<Service> {
-            self.services.get(&service_id)
+        pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
+            self.services.get(service_id)
                 .cloned()
                 .ok_or(ServiceDoesNotExist)
+        }
+
+        #[ink(message)]
+        pub fn service_list(&self, offset: u32, limit: u32) -> (Vec<Service>, u32) {
+            let mut services = Vec::with_capacity(limit as usize);
+            for service_id in offset..offset + limit {
+                match self.services.get(service_id) {
+                    None => break, // No more services.
+                    Some(service) => services.push(service.clone()),
+                }
+            }
+            (services, self.services.len())
         }
 
         #[ink(message)]
@@ -261,9 +300,9 @@ pub mod ddc_bucket {
 
             // Find where to distribute the revenues.
             let revenue_account_id = {
-                let service = self.service_get_info(service_id)?;
+                let service = self.service_get(service_id)?;
                 // Authorize only the service owner to trigger the distribution.
-                Service::only_owner(service_id, caller)?;
+                service.only_owner(caller)?;
                 service.revenue_account_id()
             };
 
@@ -280,8 +319,8 @@ pub mod ddc_bucket {
             self.provider_id
         }
 
-        pub fn only_owner(service_id: ServiceId, provider_id: AccountId) -> Result<()> {
-            if service_id.0 == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+        pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
+            if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
         }
     }
     // ---- End Provider ----

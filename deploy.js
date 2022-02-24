@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0x13e4fb9d2616b8fc0d425096875b38cba637091e7eca71c5a439be5a63e3cdd6";
-const REUSE_CONTRACT_ADDRESS = "5FmheLMsby7gDfJU4LVN5tNT8wu5DpTRigTaL2jhKdwTCpT6";
+const REUSE_CODE_HASH = "0x4979b0025b64cd25c2a7fa4a7e4299fd9845d25ec7ac3e53562b5e4050d63334";
+const REUSE_CONTRACT_ADDRESS = "5DvZVawJJaaVLL9d1wAfrqc6v1RUmx5Yan8YuVYvvFKmgoFR";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -101,56 +101,59 @@ async function main() {
     const provider_id = account.address;
     const ownerId = account.address;
     const anyAccountId = account.address;
-    const service_id = [provider_id, 0];
     const rent_per_month = 10n * CERE;
-    const location = "https://ddc.dev.cere.network/bucket/{BUCKET_ID}";
+    const service_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
+    const bucket_params = "{}";
+    const deal_params = "{}";
 
+    let service_id;
     {
-        log("Setup a service…", service_id);
+        log("Setup a service…");
         const tx = contract.tx
-            .serviceSetInfo(txOptions, service_id, rent_per_month, location);
+            .serviceCreate(txOptions, rent_per_month, service_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
+        service_id = ddcBucket.findCreatedServiceId(events);
     }
     {
         log("\nRead service info…");
         const {result, output} = await contract.query
-            .serviceGetInfo(anyAccountId, txOptions, service_id);
+            .serviceGet(anyAccountId, txOptions, service_id);
 
         if (!result.isOk) assert.fail(result.asErr);
 
         log('OUTPUT', output.toHuman());
         assert.deepEqual(output.toJSON(), {
             "ok": {
+                service_id,
                 provider_id,
                 rent_per_month,
-                location,
+                service_params,
             },
         });
     }
 
-    // TODO: find bucketId from events.
     let bucketId;
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .bucketCreate(txOptionsPay);
+            .bucketCreate(txOptions, bucket_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        bucketId = 0;
+        bucketId = ddcBucket.findCreatedBucketId(events);
         log("New bucketId", bucketId);
     }
     let dealId;
     {
         log("Create a deal for the bucket…");
         const tx = contract.tx
-            .bucketAddDeal(txOptionsPay, bucketId, service_id);
+            .bucketAddDeal(txOptionsPay, bucketId, service_id, deal_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -180,7 +183,6 @@ async function main() {
 
         assert.deepEqual(output.ok.service_id, service_id);
         assert(output.ok.estimated_rent_end_ms > 0);
-        assert.deepEqual(output.ok.writer_ids, [ownerId]);
     }
     {
         log("\nRead bucket status…");
@@ -191,9 +193,11 @@ async function main() {
         output = output.toJSON();
         log('OUTPUT', output);
 
+        /* TODO
         assert.deepEqual(output.ok.service_id, service_id);
         assert(output.ok.estimated_rent_end_ms > 0);
         assert.deepEqual(output.ok.writer_ids, [ownerId]);
+        */
     }
 
     process.exit(0);

@@ -7,6 +7,10 @@ function findCreatedId(events, eventName) {
     return id && id.toString();
 }
 
+function findCreatedServiceId(events) {
+    return findCreatedId(events, "ServiceCreated");
+}
+
 function findCreatedBucketId(events) {
     return findCreatedId(events, "BucketCreated");
 }
@@ -18,6 +22,7 @@ function findCreatedDealId(events) {
 
 module.exports = {
     findCreatedId,
+    findCreatedServiceId,
     findCreatedBucketId,
     findCreatedDealId,
 };
