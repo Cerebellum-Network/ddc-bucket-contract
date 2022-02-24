@@ -289,7 +289,7 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn service_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<Service>, u32) {
+        pub fn service_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
             let mut services = Vec::with_capacity(limit as usize);
             for service_id in offset..offset + limit {
                 let service = match self.services.get(service_id) {
@@ -297,8 +297,8 @@ pub mod ddc_bucket {
                     Some(service) => service,
                 };
                 // Apply the filter if given.
-                if let Some(owner_id) = filter_owner_id {
-                    if owner_id != service.provider_id {
+                if let Some(provider_id) = filter_provider_id {
+                    if provider_id != service.provider_id {
                         continue; // Skip non-matches.
                     }
                 }
