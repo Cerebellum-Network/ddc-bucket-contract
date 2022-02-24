@@ -151,6 +151,7 @@ fn bucket_list_works() {
     let accounts = get_accounts();
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
+    let owner_id3 = accounts.charlie;
 
     let mut ddc_bucket = DdcBucket::new();
 
@@ -168,23 +169,109 @@ fn bucket_list_works() {
     let count = 2;
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100),
+        ddc_bucket.bucket_list_statuses(0, 100, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 2),
+        ddc_bucket.bucket_list_statuses(0, 2, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 1),
+        ddc_bucket.bucket_list_statuses(0, 1, None),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(1, 1),
+        ddc_bucket.bucket_list_statuses(1, 1, None),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(20, 20),
+        ddc_bucket.bucket_list_statuses(20, 20, None),
+        (vec![], count));
+
+    // Filter by owner.
+    assert_eq!(
+        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id1)),
+        (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
+
+    assert_eq!(
+        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id2)),
+        (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id3)),
+        (vec![], count));
+}
+
+
+#[ink::test]
+fn service_list_works() {
+    let accounts = get_accounts();
+    let owner_id1 = accounts.alice;
+    let owner_id2 = accounts.bob;
+    let owner_id3 = accounts.charlie;
+    let rent_per_month: Balance = 10 * CURRENCY;
+
+    let mut ddc_bucket = DdcBucket::new();
+
+    // Create two Services.
+    push_caller(owner_id1);
+    let service_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
+    let service_id1 = ddc_bucket.service_create(rent_per_month, service_params1.to_string())?;
+    pop_caller();
+
+    push_caller(owner_id2);
+    let service_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    let service_id2 = ddc_bucket.service_create(rent_per_month, service_params2.to_string())?;
+    pop_caller();
+
+    assert_ne!(service_id1, service_id2);
+    let count = 2;
+
+    let service1 = Service {
+        service_id: service_id1,
+        provider_id: owner_id1,
+        rent_per_month,
+        service_params: service_params1.to_string(),
+    };
+
+    let service2 = Service {
+        service_id: service_id2,
+        provider_id: owner_id2,
+        rent_per_month,
+        service_params: service_params2.to_string(),
+    };
+
+    assert_eq!(
+        ddc_bucket.service_list(0, 100, None),
+        (vec![service1.clone(), service2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.service_list(0, 2, None),
+        (vec![service1.clone(), service2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.service_list(0, 1, None),
+        (vec![service1.clone() /*, service2.clone()*/], count));
+
+    assert_eq!(
+        ddc_bucket.service_list(1, 1, None),
+        (vec![/*service1.clone(),*/ service2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.service_list(20, 20, None),
+        (vec![], count));
+
+    // Filter by owner.
+    assert_eq!(
+        ddc_bucket.service_list(0, 100, Some(owner_id1)),
+        (vec![service1.clone() /*, service2.clone()*/], count));
+
+    assert_eq!(
+        ddc_bucket.service_list(0, 100, Some(owner_id2)),
+        (vec![/*service1.clone(),*/ service2.clone()], count));
+
+    assert_eq!(
+        ddc_bucket.service_list(0, 100, Some(owner_id3)),
         (vec![], count));
 }
 
