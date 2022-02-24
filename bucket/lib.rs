@@ -125,34 +125,33 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
-            self.buckets.get(bucket_id)
-                .cloned().ok_or(BucketDoesNotExist)
-        }
-
-        #[ink(message)]
         pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
             let mut bucket_statuses = Vec::with_capacity(limit as usize);
             for bucket_id in offset..offset + limit {
-                let bucket = match self.bucket_get(bucket_id) {
-                    Err(BucketDoesNotExist) => break, // No more buckets.
-                    Err(_) => continue, // Skip on unexpected error.
-                    Ok(bucket) => bucket,
+                let bucket = match self.buckets.get(bucket_id) {
+                    None => break, // No more buckets, stop.
+                    Some(bucket) => bucket,
                 };
-                // If there is a filter, skip non-matches.
+                // Apply the filter if given.
                 if let Some(owner_id) = filter_owner_id {
                     if owner_id != bucket.owner_id {
-                        continue;
+                        continue; // Skip non-matches.
                     }
                 }
                 // Collect all the details of the bucket.
-                match self.bucket_collect_status(bucket_id, bucket) {
+                match self.bucket_collect_status(bucket_id, bucket.clone()) {
                     Err(_) => continue, // Skip on unexpected error.
                     Ok(status) =>
                         bucket_statuses.push(status),
                 };
             }
             (bucket_statuses, self.buckets.len())
+        }
+
+        #[ink(message)]
+        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
+            self.buckets.get(bucket_id)
+                .cloned().ok_or(BucketDoesNotExist)
         }
 
         #[ink(message)]
@@ -290,13 +289,20 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn service_list(&self, offset: u32, limit: u32) -> (Vec<Service>, u32) {
+        pub fn service_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<Service>, u32) {
             let mut services = Vec::with_capacity(limit as usize);
             for service_id in offset..offset + limit {
-                match self.services.get(service_id) {
-                    None => break, // No more services.
-                    Some(service) => services.push(service.clone()),
+                let service = match self.services.get(service_id) {
+                    None => break, // No more services, stop.
+                    Some(service) => service,
+                };
+                // Apply the filter if given.
+                if let Some(owner_id) = filter_owner_id {
+                    if owner_id != service.provider_id {
+                        continue; // Skip non-matches.
+                    }
                 }
+                services.push(service.clone());
             }
             (services, self.services.len())
         }
