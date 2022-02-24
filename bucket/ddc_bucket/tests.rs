@@ -19,13 +19,13 @@ fn ddc_bucket_works() {
 
     // Provide a Service.
     let rent_per_month: Balance = 10 * CURRENCY;
-    let description = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id = ddc_bucket.service_create(rent_per_month, description.to_string())?;
+    let service_params = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let service_id = ddc_bucket.service_create(rent_per_month, service_params.to_string())?;
 
     // Provide another Service.
     push_caller(provider_id2);
-    let description2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id2 = ddc_bucket.service_create(rent_per_month, description2.to_string())?;
+    let service_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    let service_id2 = ddc_bucket.service_create(rent_per_month, service_params2.to_string())?;
     pop_caller();
     assert_ne!(service_id, service_id2);
 
@@ -35,17 +35,19 @@ fn ddc_bucket_works() {
         service_id,
         provider_id,
         rent_per_month,
-        description: description.to_string(),
+        service_params: service_params.to_string(),
     });
 
     // Create a bucket.
     push_caller_value(consumer_id, 0);
-    let bucket_id = ddc_bucket.bucket_create()?;
+    let bucket_params = "{}".to_string();
+    let bucket_id = ddc_bucket.bucket_create(bucket_params.clone())?;
     pop_caller();
 
     // Add a deal to the bucket, also depositing some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let deal_id1 = ddc_bucket.bucket_add_deal(bucket_id, service_id)?;
+    let deal_params1 = "{}".to_string();
+    let deal_id1 = ddc_bucket.bucket_add_deal(bucket_id, service_id, deal_params1.clone())?;
     pop_caller();
 
     // Deposit more value into the account.
@@ -58,11 +60,13 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status1, DealStatus {
         service_id,
         estimated_rent_end_ms: 29462400000,
+        deal_params: deal_params1.clone(),
     });
 
     // Add another deal, making the consumer pay a more expensive rate.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    let deal_id2 = ddc_bucket.bucket_add_deal(bucket_id, service_id)?;
+    let deal_params2 = "{}".to_string();
+    let deal_id2 = ddc_bucket.bucket_add_deal(bucket_id, service_id, deal_params2.clone())?;
     assert_ne!(deal_id1, deal_id2);
     pop_caller();
 
@@ -71,6 +75,7 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status1, DealStatus {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
+        deal_params: deal_params1.clone(),
     });
 
     // The end time of the second deal is the same because it is paid from the same account.
@@ -78,6 +83,7 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status2, DealStatus {
         service_id,
         estimated_rent_end_ms: 16070400000, // TODO: this value looks wrong.
+        deal_params: deal_params2.clone(),
     });
 
     // Check the structure of the bucket including all deal IDs.
@@ -85,6 +91,7 @@ fn ddc_bucket_works() {
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         deal_ids: vec![deal_id1, deal_id2],
+        bucket_params: bucket_params.clone(),
     });
 
     // Check the status of the bucket recursively including all deal statuses.
@@ -105,11 +112,11 @@ fn ddc_bucket_works() {
     let evs = get_events(10);
     // Provider setup.
     assert!(matches!(&evs[0], Event::ServiceCreated(ev) if *ev ==
-        ServiceCreated { service_id, provider_id, rent_per_month, description: description.to_string() }));
+        ServiceCreated { service_id, provider_id, rent_per_month, service_params: service_params.to_string() }));
 
     // Provider setup 2.
     assert!(matches!(&evs[1], Event::ServiceCreated(ev) if *ev ==
-        ServiceCreated { service_id: service_id2, provider_id: provider_id2, rent_per_month, description: description2.to_string() }));
+        ServiceCreated { service_id: service_id2, provider_id: provider_id2, rent_per_month, service_params: service_params2.to_string() }));
 
     // Create bucket.
     assert!(matches!(&evs[2], Event::BucketCreated(ev) if *ev ==
@@ -148,12 +155,12 @@ fn bucket_list_works() {
     let mut ddc_bucket = DdcBucket::new();
 
     push_caller(owner_id1);
-    let bucket_id1 = ddc_bucket.bucket_create()?;
+    let bucket_id1 = ddc_bucket.bucket_create("".to_string())?;
     let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
     pop_caller();
 
     push_caller(owner_id2);
-    let bucket_id2 = ddc_bucket.bucket_create()?;
+    let bucket_id2 = ddc_bucket.bucket_create("".to_string())?;
     let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
     pop_caller();
 

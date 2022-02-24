@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xec3a60f3fff9ee251277724e84ce2a13ed8d2bedd1e7e3f3640f56e85e98233d",
+    "hash": "0x4979b0025b64cd25c2a7fa4a7e4299fd9845d25ec7ac3e53562b5e4050d63334",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -124,18 +124,18 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 12
+              "type": 13
             }
           },
           {
             "docs": [],
             "indexed": false,
-            "name": "description",
+            "name": "service_params",
             "type": {
               "displayName": [
-                "String"
+                "ServiceParams"
               ],
-              "type": 13
+              "type": 7
             }
           }
         ],
@@ -174,7 +174,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -202,7 +202,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -212,7 +212,17 @@
     ],
     "messages": [
       {
-        "args": [],
+        "args": [
+          {
+            "name": "bucket_params",
+            "type": {
+              "displayName": [
+                "BucketParams"
+              ],
+              "type": 7
+            }
+          }
+        ],
         "docs": [],
         "mutates": true,
         "name": [
@@ -245,6 +255,15 @@
                 "ServiceId"
               ],
               "type": 1
+            }
+          },
+          {
+            "name": "deal_params",
+            "type": {
+              "displayName": [
+                "DealParams"
+              ],
+              "type": 7
             }
           }
         ],
@@ -381,16 +400,16 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 12
+              "type": 13
             }
           },
           {
-            "name": "description",
+            "name": "service_params",
             "type": {
               "displayName": [
-                "String"
+                "ServiceParams"
               ],
-              "type": 13
+              "type": 7
             }
           }
         ],
@@ -556,7 +575,7 @@
                   "layout": {
                     "cell": {
                       "key": "0x0000000001000000000000000000000000000000000000000000000000000000",
-                      "ty": 7
+                      "ty": 8
                     }
                   },
                   "name": "header"
@@ -581,7 +600,7 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0100000002000000000000000000000000000000000000000000000000000000",
-                                  "ty": 8
+                                  "ty": 9
                                 }
                               },
                               "len": 4294967295,
@@ -620,7 +639,7 @@
                       "layout": {
                         "cell": {
                           "key": "0x0100000003000000000000000000000000000000000000000000000000000000",
-                          "ty": 11
+                          "ty": 12
                         }
                       },
                       "len": 4294967295,
@@ -646,7 +665,7 @@
                           "layout": {
                             "cell": {
                               "key": "0x0100000003000000000000000000000000000000000000000000000000000000",
-                              "ty": 7
+                              "ty": 8
                             }
                           },
                           "name": "header"
@@ -722,7 +741,7 @@
                   "layout": {
                     "cell": {
                       "key": "0x0300000004000000000000000000000000000000000000000000000000000000",
-                      "ty": 7
+                      "ty": 8
                     }
                   },
                   "name": "header"
@@ -788,6 +807,11 @@
               "name": "deal_ids",
               "type": 6,
               "typeName": "Vec<DealId>"
+            },
+            {
+              "name": "bucket_params",
+              "type": 7,
+              "typeName": "BucketParams"
             }
           ]
         }
@@ -837,6 +861,11 @@
     },
     {
       "def": {
+        "primitive": "str"
+      }
+    },
+    {
+      "def": {
         "composite": {
           "fields": [
             {
@@ -871,7 +900,7 @@
             {
               "fields": [
                 {
-                  "type": 10,
+                  "type": 11,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -880,7 +909,7 @@
             {
               "fields": [
                 {
-                  "type": 9,
+                  "type": 10,
                   "typeName": "T"
                 }
               ],
@@ -890,7 +919,7 @@
         }
       },
       "params": [
-        9
+        10
       ],
       "path": [
         "ink_storage",
@@ -912,6 +941,11 @@
               "name": "flow_id",
               "type": 1,
               "typeName": "FlowId"
+            },
+            {
+              "name": "deal_params",
+              "type": 7,
+              "typeName": "DealParams"
             }
           ]
         }
@@ -962,13 +996,13 @@
             },
             {
               "name": "rent_per_month",
-              "type": 12,
+              "type": 13,
               "typeName": "Balance"
             },
             {
-              "name": "description",
-              "type": 13,
-              "typeName": "String"
+              "name": "service_params",
+              "type": 7,
+              "typeName": "ServiceParams"
             }
           ]
         }
@@ -986,17 +1020,12 @@
     },
     {
       "def": {
-        "primitive": "str"
-      }
-    },
-    {
-      "def": {
         "variant": {
           "variants": [
             {
               "fields": [
                 {
-                  "type": 10,
+                  "type": 11,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -1062,7 +1091,7 @@
             },
             {
               "name": "payable_locked",
-              "type": 12,
+              "type": 13,
               "typeName": "Balance"
             },
             {
@@ -1084,7 +1113,7 @@
         "composite": {
           "fields": [
             {
-              "type": 12,
+              "type": 13,
               "typeName": "Balance"
             }
           ]
@@ -1102,7 +1131,7 @@
           "fields": [
             {
               "name": "rate",
-              "type": 12,
+              "type": 13,
               "typeName": "Balance"
             },
             {
@@ -1131,7 +1160,7 @@
             {
               "fields": [
                 {
-                  "type": 10,
+                  "type": 11,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -1372,6 +1401,11 @@
               "name": "estimated_rent_end_ms",
               "type": 19,
               "typeName": "u64"
+            },
+            {
+              "name": "deal_params",
+              "type": 7,
+              "typeName": "DealParams"
             }
           ]
         }
@@ -1455,7 +1489,7 @@
             {
               "fields": [
                 {
-                  "type": 11,
+                  "type": 12,
                   "typeName": "T"
                 }
               ],
@@ -1474,7 +1508,7 @@
         }
       },
       "params": [
-        11,
+        12,
         23
       ],
       "path": [
@@ -1492,7 +1526,7 @@
     {
       "def": {
         "sequence": {
-          "type": 11
+          "type": 12
         }
       }
     },

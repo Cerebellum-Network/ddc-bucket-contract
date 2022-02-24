@@ -46,12 +46,14 @@ pub mod ddc_bucket {
 
     // ---- Bucket ----
     pub type BucketId = u32;
+    pub type BucketParams = String;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Bucket {
         owner_id: AccountId,
         deal_ids: Vec<DealId>,
+        bucket_params: BucketParams,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
@@ -91,12 +93,13 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn bucket_create(&mut self) -> Result<BucketId> {
+        pub fn bucket_create(&mut self, bucket_params: BucketParams) -> Result<BucketId> {
             let owner_id = Self::env().caller();
 
             let bucket = Bucket {
                 owner_id,
                 deal_ids: Vec::new(),
+                bucket_params,
             };
             let bucket_id = self.buckets.len();
             self.buckets.push(bucket);
@@ -106,11 +109,11 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         #[ink(payable)]
-        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId) -> Result<DealId> {
+        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
             // Receive the payable value.
             self.deposit()?;
 
-            let deal_id = self.deal_create(service_id)?;
+            let deal_id = self.deal_create(service_id, deal_params)?;
 
             let bucket = self.buckets.get_mut(bucket_id)
                 .ok_or(BucketDoesNotExist)?;
@@ -161,12 +164,14 @@ pub mod ddc_bucket {
 
     // ---- Deal ----
     pub type DealId = u32;
+    pub type DealParams = String;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
     pub struct Deal {
         service_id: ServiceId,
         flow_id: FlowId,
+        deal_params: DealParams,
     }
 
     #[derive(Clone, PartialEq, Encode, Decode)]
@@ -174,10 +179,11 @@ pub mod ddc_bucket {
     pub struct DealStatus {
         service_id: ServiceId,
         estimated_rent_end_ms: u64,
+        deal_params: DealParams,
     }
 
     impl DdcBucket {
-        pub fn deal_create(&mut self, service_id: ServiceId) -> Result<DealId> {
+        pub fn deal_create(&mut self, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
             let payer_id = Self::env().caller();
 
             // Start the payment flow for a deal.
@@ -188,6 +194,7 @@ pub mod ddc_bucket {
             let deal = Deal {
                 service_id,
                 flow_id,
+                deal_params,
             };
             let deal_id = self.deals.put(deal);
             Ok(deal_id)
@@ -203,6 +210,7 @@ pub mod ddc_bucket {
             Ok(DealStatus {
                 service_id: deal.service_id,
                 estimated_rent_end_ms,
+                deal_params: deal.deal_params.clone(),
             })
         }
     }
@@ -212,6 +220,7 @@ pub mod ddc_bucket {
     // ---- Provider ----
     pub type ProviderId = AccountId;
     pub type ServiceId = u32;
+    pub type ServiceParams = String;
 
     #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
     #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -219,7 +228,7 @@ pub mod ddc_bucket {
         service_id: ServiceId,
         provider_id: ProviderId,
         rent_per_month: Balance,
-        description: String,
+        service_params: ServiceParams,
     }
 
     #[ink(event)]
@@ -230,7 +239,7 @@ pub mod ddc_bucket {
         #[ink(topic)]
         provider_id: AccountId,
         rent_per_month: Balance,
-        description: String,
+        service_params: ServiceParams,
     }
 
     #[ink(event)]
@@ -245,18 +254,18 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_create(&mut self, rent_per_month: Balance, description: String) -> Result<ServiceId> {
+        pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
             let service_id = self.services.len();
             let provider_id = self.env().caller();
             let service = Service {
                 service_id,
                 provider_id,
                 rent_per_month,
-                description: description.clone(),
+                service_params: service_params.clone(),
             };
 
             self.services.push(service);
-            Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, description });
+            Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, service_params });
             Ok(service_id)
         }
 

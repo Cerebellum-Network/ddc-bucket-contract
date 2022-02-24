@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0xec3a60f3fff9ee251277724e84ce2a13ed8d2bedd1e7e3f3640f56e85e98233d";
-const REUSE_CONTRACT_ADDRESS = "5FDGE7j9DXDbh6TmHkz2bR8FsN3VbSGjCQgbWzSc3izBqdXW";
+const REUSE_CODE_HASH = "0x4979b0025b64cd25c2a7fa4a7e4299fd9845d25ec7ac3e53562b5e4050d63334";
+const REUSE_CONTRACT_ADDRESS = "5DvZVawJJaaVLL9d1wAfrqc6v1RUmx5Yan8YuVYvvFKmgoFR";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -102,13 +102,15 @@ async function main() {
     const ownerId = account.address;
     const anyAccountId = account.address;
     const rent_per_month = 10n * CERE;
-    const description = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
+    const service_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
+    const bucket_params = "{}";
+    const deal_params = "{}";
 
     let service_id;
     {
         log("Setup a service…");
         const tx = contract.tx
-            .serviceCreate(txOptions, rent_per_month, description);
+            .serviceCreate(txOptions, rent_per_month, service_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -129,7 +131,7 @@ async function main() {
                 service_id,
                 provider_id,
                 rent_per_month,
-                description,
+                service_params,
             },
         });
     }
@@ -138,7 +140,7 @@ async function main() {
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .bucketCreate(txOptions);
+            .bucketCreate(txOptions, bucket_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -151,7 +153,7 @@ async function main() {
     {
         log("Create a deal for the bucket…");
         const tx = contract.tx
-            .bucketAddDeal(txOptionsPay, bucketId, service_id);
+            .bucketAddDeal(txOptionsPay, bucketId, service_id, deal_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
