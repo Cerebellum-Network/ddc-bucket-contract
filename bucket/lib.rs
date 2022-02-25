@@ -21,6 +21,7 @@ pub mod ddc_bucket {
     use billing_account::*;
     use billing_flow::*;
     use bucket::*;
+    use bucket_store::*;
     use cash::*;
     use deal::*;
     use Error::*;
@@ -35,12 +36,13 @@ pub mod ddc_bucket {
     pub mod service;
     pub mod service_store;
     pub mod bucket;
+    pub mod bucket_store;
     pub mod deal;
     //use ink_lang::{Env, StaticEnv, EnvAccess, ContractEnv};
 
     #[ink(storage)]
     pub struct DdcBucket {
-        buckets: InkVec<Bucket>,
+        buckets: BucketStore,
         deals: Stash<Deal>,
         services: ServiceStore,
 
@@ -52,9 +54,9 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             Self {
-                buckets: InkVec::new(),
+                buckets: BucketStore::default(),
                 deals: Stash::new(),
-                services: ServiceStore(InkVec::new()),
+                services: ServiceStore::default(),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
             }
@@ -96,8 +98,8 @@ pub mod ddc_bucket {
                 deal_ids: Vec::new(),
                 bucket_params,
             };
-            let bucket_id = self.buckets.len();
-            self.buckets.push(bucket);
+            let bucket_id = self.buckets.0.len();
+            self.buckets.0.push(bucket);
             Self::env().emit_event(BucketCreated { bucket_id, owner_id });
             Ok(bucket_id)
         }
@@ -110,7 +112,7 @@ pub mod ddc_bucket {
 
             let deal_id = self.deal_create(service_id, deal_params)?;
 
-            let bucket = self.buckets.get_mut(bucket_id)
+            let bucket = self.buckets.0.get_mut(bucket_id)
                 .ok_or(BucketDoesNotExist)?;
             bucket.only_owner(Self::env().caller())?;
 
@@ -123,7 +125,7 @@ pub mod ddc_bucket {
         pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
             let mut bucket_statuses = Vec::with_capacity(limit as usize);
             for bucket_id in offset..offset + limit {
-                let bucket = match self.buckets.get(bucket_id) {
+                let bucket = match self.buckets.0.get(bucket_id) {
                     None => break, // No more buckets, stop.
                     Some(bucket) => bucket,
                 };
@@ -140,13 +142,12 @@ pub mod ddc_bucket {
                         bucket_statuses.push(status),
                 };
             }
-            (bucket_statuses, self.buckets.len())
+            (bucket_statuses, self.buckets.0.len())
         }
 
         #[ink(message)]
         pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
             self.buckets.get(bucket_id)
-                .cloned().ok_or(BucketDoesNotExist)
         }
 
         #[ink(message)]

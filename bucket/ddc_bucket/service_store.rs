@@ -12,7 +12,7 @@ use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 use super::service::{Service, ServiceId, ServiceParams};
 
-#[derive(SpreadLayout)]
+#[derive(SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct ServiceStore(pub InkVec<Service>);
 
