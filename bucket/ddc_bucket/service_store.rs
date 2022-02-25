@@ -30,8 +30,7 @@ impl ServiceStore {
     }
 
     pub fn get(&self, service_id: ServiceId) -> Result<Service> {
-        self.0.get(service_id).cloned()
-            .ok_or(ServiceDoesNotExist)
+        self.0.get(service_id).cloned().ok_or(ServiceDoesNotExist)
     }
 
     pub fn list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
