@@ -27,13 +27,12 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod deal;
 
-
+    // ---- Global state ----
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
         deals: DealStore,
         services: ServiceStore,
-
         billing_accounts: AccountStore,
         billing_flows: FlowStore,
     }
@@ -50,10 +49,10 @@ pub mod ddc_bucket {
             }
         }
     }
+    // ---- End global state ----
 
 
     // ---- Bucket ----
-
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
@@ -74,7 +73,6 @@ pub mod ddc_bucket {
         #[ink(topic)]
         service_id: ServiceId,
     }
-
 
     impl DdcBucket {
         #[ink(message)]
@@ -106,7 +104,23 @@ pub mod ddc_bucket {
 
 
     // ---- Deal ----
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ProviderWithdraw {
+        #[ink(topic)]
+        provider_id: AccountId,
+        #[ink(topic)]
+        deal_id: DealId,
+        value: Balance,
+    }
+
     impl DdcBucket {
+        #[ink(message)]
+        pub fn provider_withdraw(&mut self, deal_id: DealId) -> Result<()> {
+            self.message_provider_withdraw(deal_id)
+        }
+
         #[ink(message)]
         pub fn deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
             self.message_deal_get_status(deal_id)
@@ -115,7 +129,7 @@ pub mod ddc_bucket {
     // ---- End Deal ----
 
 
-    // ---- Provider ----
+    // ---- Service ----
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
@@ -126,16 +140,6 @@ pub mod ddc_bucket {
         provider_id: AccountId,
         rent_per_month: Balance,
         service_params: ServiceParams,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderWithdraw {
-        #[ink(topic)]
-        provider_id: AccountId,
-        #[ink(topic)]
-        deal_id: DealId,
-        value: Balance,
     }
 
     impl DdcBucket {
@@ -153,33 +157,8 @@ pub mod ddc_bucket {
         pub fn service_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
             self.services.list(offset, limit, filter_provider_id)
         }
-
-        #[ink(message)]
-        pub fn provider_withdraw(&mut self, deal_id: DealId) -> Result<()> {
-            let caller = self.env().caller();
-
-            let (flow_id, service_id) = {
-                let deal = self.deals.get(deal_id)?;
-                (deal.flow_id, deal.service_id)
-            };
-
-            // Find where to distribute the revenues.
-            let revenue_account_id = {
-                let service = self.services.get(service_id)?;
-                // Authorize only the service owner to trigger the distribution.
-                service.only_owner(caller)?;
-                service.revenue_account_id()
-            };
-
-            let cash = self.billing_settle_flow(flow_id)?;
-
-            Self::env().emit_event(ProviderWithdraw { provider_id: revenue_account_id, deal_id, value: cash.peek() });
-
-            Self::send_cash(revenue_account_id, cash)
-        }
     }
-
-    // ---- End Provider ----
+    // ---- End Service ----
 
 
     // ---- Billing ----
@@ -198,7 +177,6 @@ pub mod ddc_bucket {
             self.message_deposit()
         }
     }
-
     // ---- End Billing ----
 
 
@@ -224,9 +202,8 @@ pub mod ddc_bucket {
             ink_env::Error::Unknown
         }
     }
-
-
     // ---- End Utils ----
+
     #[cfg(test)]
     mod tests;
     #[cfg(test)]
