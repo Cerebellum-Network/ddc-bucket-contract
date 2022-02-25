@@ -1,13 +1,13 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x04f51b74accd640aee7dcdf7f8872a614d1c45db20f0ea614c33b67c18ba95cf",
+    "hash": "0x840d4bfd5ee171934712531c6112083e5a07393608fa28fbca79e81ec3940262",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "authors": [
       "Aurélien Nicolas <aurel@cere.network>"
     ]

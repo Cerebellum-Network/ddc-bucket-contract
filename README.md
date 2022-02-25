@@ -10,10 +10,10 @@ See the latest deployments in [deployments.js](sdk/src/deployments.js). Use git 
 
 To deploy:
 
-- Update the version in the relevant `CONTRACT/Cargo.toml` and [package.json](sdk/package.json).
-- Build the contracts: `cd CONTRACT && cargo test && cargo contract build`
+- Update the version in the relevant `ddc_bucket/Cargo.toml` and [package.json](sdk/package.json).
+- Build the contracts: `cd ddc_bucket && cargo test && cargo contract build`
+- Update the [SDK ABIs](sdk/src/abi/) using `cp target/ink/ddc_bucket/metadata.json sdk/src/abi/ddc_bucket.json`
 - Use the script [deploy.js](deploy.js) to deploy the contracts.
-- Update the [SDK ABIs](sdk/src/abi/) using `target/ink/CONTRACT/metadata.json`.
 - Update the [SDK default contracts](sdk/src/deployments.js).
 - Publish the JS SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
 

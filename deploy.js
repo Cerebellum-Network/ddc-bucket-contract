@@ -27,7 +27,7 @@ const CONSTRUCTOR = "new";
 const SEED = "//Alice";
 const RPC = "wss://rpc.testnet.cere.network:9945";
 
-const ENDOWMENT = 2n * CERE;
+const ENDOWMENT = 10n * CERE;
 
 
 async function main() {
