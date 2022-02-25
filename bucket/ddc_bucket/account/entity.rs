@@ -1,22 +1,23 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{Balance, Error::*, Result};
-
-use super::cash::{Cash, Payable};
-use super::schedule::Schedule;
+use crate::ddc_bucket::{
+    Balance, cash::{Cash, Payable},
+    Error::*, Result,
+    schedule::Schedule,
+};
 
 #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub struct BillingAccount {
+pub struct Account {
     pub deposit: Cash,
     pub payable_locked: Balance,
     pub payable_schedule: Schedule,
 }
 
-impl BillingAccount {
-    pub fn new() -> BillingAccount {
-        BillingAccount {
+impl Account {
+    pub fn new() -> Account {
+        Account {
             deposit: Cash(0),
             payable_locked: 0,
             payable_schedule: Schedule::empty(),

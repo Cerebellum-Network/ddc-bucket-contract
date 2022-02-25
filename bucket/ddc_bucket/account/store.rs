@@ -3,20 +3,22 @@ use ink_storage::{
     traits,
 };
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::{
+    AccountId, Balance, cash::Cash, Error::*,
+    Result,
+};
 
-use super::billing_account::BillingAccount;
-use super::cash::Cash;
+use super::entity::Account;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct AccountStore(pub HashMap<AccountId, BillingAccount>);
+pub struct AccountStore(pub HashMap<AccountId, Account>);
 
 impl AccountStore {
     pub fn deposit(&mut self, to: AccountId, cash: Cash) {
         match self.0.entry(to) {
             Vacant(e) => {
-                let mut account = BillingAccount::new();
+                let mut account = Account::new();
                 account.deposit(cash);
                 e.insert(account);
             }
@@ -34,11 +36,11 @@ impl AccountStore {
         }
     }
 
-    pub fn get(&self, account_id: &AccountId) -> Result<&BillingAccount> {
+    pub fn get(&self, account_id: &AccountId) -> Result<&Account> {
         self.0.get(account_id).ok_or(AccountDoesNotExist)
     }
 
-    pub fn get_mut(&mut self, account_id: &AccountId) -> Result<&mut BillingAccount> {
+    pub fn get_mut(&mut self, account_id: &AccountId) -> Result<&mut Account> {
         self.0.get_mut(account_id).ok_or(AccountDoesNotExist)
     }
 }

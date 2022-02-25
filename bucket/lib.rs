@@ -9,7 +9,7 @@ pub mod ddc_bucket {
     use ink_prelude::{vec, vec::Vec};
     use scale::{Decode, Encode};
 
-    use account_store::*;
+    use account::store::*;
     use billing_flow::*;
     use bucket::*;
     use bucket_store::*;
@@ -21,8 +21,7 @@ pub mod ddc_bucket {
     use service::{entity::*, store::*};
 
     pub mod billing;
-    pub mod account_store;
-    pub mod billing_account;
+    pub mod account;
     pub mod billing_flow;
     pub mod schedule;
     pub mod cash;
