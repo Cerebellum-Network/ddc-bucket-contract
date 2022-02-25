@@ -50,7 +50,8 @@ impl BillingAccount {
     }
 
     pub fn lock_schedule(&mut self, payable_schedule: Schedule) {
-        self.payable_locked += self.payable_schedule.take_value_then_add_rate(payable_schedule);
+        let more_locked = self.payable_schedule.take_value_then_add_rate(payable_schedule);
+        self.payable_locked += more_locked;
     }
 
     pub fn schedule_covered_until(&self) -> u64 {

@@ -29,6 +29,7 @@ pub mod ddc_bucket {
     use schedule::*;
     use service::*;
     use service_store::*;
+    use flow_store::*;
 
     pub mod account_store;
     pub mod billing_account;
@@ -40,7 +41,8 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod bucket_store;
     pub mod deal;
-    //use ink_lang::{Env, StaticEnv, EnvAccess, ContractEnv};
+    pub mod flow_store;
+
 
     #[ink(storage)]
     pub struct DdcBucket {
@@ -49,7 +51,7 @@ pub mod ddc_bucket {
         services: ServiceStore,
 
         billing_accounts: AccountStore,
-        billing_flows: Stash<BillingFlow>,
+        billing_flows: FlowStore,
     }
 
     impl DdcBucket {
@@ -60,7 +62,7 @@ pub mod ddc_bucket {
                 deals: Stash::new(),
                 services: ServiceStore::default(),
                 billing_accounts: AccountStore::default(),
-                billing_flows: Stash::new(),
+                billing_flows: FlowStore::default(),
             }
         }
     }
@@ -332,17 +334,12 @@ pub mod ddc_bucket {
             let from_account = self.billing_accounts.get_mut(&from)?;
             from_account.lock_schedule(payable_schedule);
 
-            let flow = BillingFlow {
-                from,
-                schedule: cash_schedule,
-            };
-            let flow_id = self.billing_flows.put(flow);
+            let flow_id = self.billing_flows.create(from, cash_schedule);
             Ok(flow_id)
         }
 
         pub fn billing_flow_covered_until(&self, flow_id: FlowId) -> Result<u64> {
-            let flow = self.billing_flows.get(flow_id)
-                .ok_or(FlowDoesNotExist)?;
+            let flow = self.billing_flows.get(flow_id)?;
             let account = self.billing_accounts.get(&flow.from)?;
             Ok(account.schedule_covered_until())
         }
@@ -350,8 +347,7 @@ pub mod ddc_bucket {
         pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Cash> {
             let now_ms = Self::env().block_timestamp();
 
-            let flow = self.billing_flows.get_mut(flow_id)
-                .ok_or(FlowDoesNotExist)?;
+            let flow = self.billing_flows.get_mut(flow_id)?;
             let flowed_amount = flow.schedule.take_value_at_time(now_ms);
             let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
 
