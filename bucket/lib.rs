@@ -18,6 +18,7 @@ pub mod ddc_bucket {
     };
     use scale::{Decode, Encode};
 
+    use account_store::*;
     use billing_account::*;
     use billing_flow::*;
     use bucket::*;
@@ -28,7 +29,6 @@ pub mod ddc_bucket {
     use schedule::*;
     use service::*;
     use service_store::*;
-    use account_store::*;
 
     pub mod account_store;
     pub mod billing_account;
@@ -292,24 +292,10 @@ pub mod ddc_bucket {
             let cash = Self::receive_cash();
             let value = cash.peek();
             let account_id = Self::env().caller();
-            self.billing_deposit(account_id, cash);
 
+            self.billing_accounts.deposit(account_id, cash);
             Self::env().emit_event(Deposit { account_id, value });
             Ok(())
-        }
-
-        pub fn billing_deposit(&mut self, to: AccountId, cash: Cash) {
-            match self.billing_accounts.0.entry(to) {
-                Vacant(e) => {
-                    let mut account = BillingAccount::new();
-                    account.deposit(cash);
-                    e.insert(account);
-                }
-                Occupied(mut e) => {
-                    let account = e.get_mut();
-                    account.deposit(cash);
-                }
-            };
         }
 
         pub fn billing_withdraw(&mut self, from: AccountId, payable: Payable) -> Result<()> {
@@ -331,17 +317,10 @@ pub mod ddc_bucket {
             }
         }
 
-        pub fn billing_balance(&self, account_id: AccountId) -> Balance {
-            match self.billing_accounts.0.get(&account_id) {
-                None => 0,
-                Some(account) => account.deposit.peek(),
-            }
-        }
-
         pub fn billing_transfer(&mut self, from: AccountId, to: AccountId, amount: Balance) -> Result<()> {
             let (payable, cash) = Cash::borrow_payable_cash(amount);
             self.billing_withdraw(from, payable)?;
-            self.billing_deposit(to, cash);
+            self.billing_accounts.deposit(to, cash);
             Ok(())
         }
 
@@ -350,8 +329,7 @@ pub mod ddc_bucket {
             let cash_schedule = Schedule::new(start_ms, rate);
             let payable_schedule = cash_schedule.clone();
 
-            let from_account = self.billing_accounts.0.get_mut(&from)
-                .ok_or(InsufficientBalance)?;
+            let from_account = self.billing_accounts.get_mut(&from)?;
             from_account.lock_schedule(payable_schedule);
 
             let flow = BillingFlow {
@@ -365,9 +343,7 @@ pub mod ddc_bucket {
         pub fn billing_flow_covered_until(&self, flow_id: FlowId) -> Result<u64> {
             let flow = self.billing_flows.get(flow_id)
                 .ok_or(FlowDoesNotExist)?;
-            let account = self.billing_accounts.0.get(&flow.from)
-                .ok_or(AccountDoesNotExist)?;
-
+            let account = self.billing_accounts.get(&flow.from)?;
             Ok(account.schedule_covered_until())
         }
 
@@ -379,9 +355,7 @@ pub mod ddc_bucket {
             let flowed_amount = flow.schedule.take_value_at_time(now_ms);
             let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
 
-            let account = self.billing_accounts.0.get_mut(&flow.from)
-                .ok_or(InsufficientBalance)?;
-
+            let account = self.billing_accounts.get_mut(&flow.from)?;
             account.pay_scheduled(now_ms, payable)?;
             Ok(cash)
         }
