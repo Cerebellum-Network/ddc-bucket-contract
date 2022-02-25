@@ -1,10 +1,6 @@
-use ink_prelude::{
-    string::String,
-};
+use ink_prelude::string::String;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 use super::billing_flow::FlowId;
 use super::service::ServiceId;

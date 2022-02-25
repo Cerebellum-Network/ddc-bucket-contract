@@ -1,23 +1,16 @@
-use ink_prelude::{
-    vec, vec::Vec,
-};
 use ink_storage::{
-    collections::{HashMap, hashmap::Entry::*},
-    collections::Stash,
     collections::Vec as InkVec,
-    traits::{PackedLayout, SpreadLayout, StorageLayout},
+    traits,
 };
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use crate::ddc_bucket::billing_flow::FlowId;
-use crate::ddc_bucket::deal::DealParams;
-use crate::ddc_bucket::schedule::Schedule;
-
+use super::{Error::*, Result};
+use super::billing_flow::FlowId;
 use super::deal::{Deal, DealId};
+use super::deal::DealParams;
 use super::service::ServiceId;
 
-#[derive(SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[derive(traits::SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct DealStore(pub InkVec<Deal>);
 
 impl DealStore {

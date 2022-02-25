@@ -4,7 +4,7 @@ use ink_prelude::{
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Result, Error::*};
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 pub type ProviderId = AccountId;
 pub type ServiceId = u32;

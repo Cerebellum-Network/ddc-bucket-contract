@@ -1,11 +1,6 @@
-use ink_prelude::{
-    vec, vec::Vec,
-};
 use ink_storage::{
     collections::{HashMap, hashmap::Entry::*},
-    collections::Stash,
-    collections::Vec as InkVec,
-    traits::{PackedLayout, SpreadLayout, StorageLayout},
+    traits,
 };
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
@@ -13,8 +8,8 @@ use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use super::billing_account::BillingAccount;
 use super::cash::Cash;
 
-#[derive(SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[derive(traits::SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct AccountStore(pub HashMap<AccountId, BillingAccount>);
 
 impl AccountStore {

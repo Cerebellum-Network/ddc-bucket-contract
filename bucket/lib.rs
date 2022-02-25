@@ -6,20 +6,10 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
-    use ink_prelude::{
-        string::String,
-        vec, vec::Vec,
-    };
-    use ink_storage::{
-        collections::{HashMap, hashmap::Entry::*},
-        collections::Stash,
-        collections::Vec as InkVec,
-        traits::{PackedLayout, SpreadLayout, StorageLayout},
-    };
+    use ink_prelude::{vec, vec::Vec};
     use scale::{Decode, Encode};
 
     use account_store::*;
-    use billing_account::*;
     use billing_flow::*;
     use bucket::*;
     use bucket_store::*;

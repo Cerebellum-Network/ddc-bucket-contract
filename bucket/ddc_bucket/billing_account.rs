@@ -1,10 +1,7 @@
-use ink_prelude::{
-    string::String,
-};
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::{Balance, Error::*, Result};
 
 use super::cash::{Cash, Payable};
 use super::schedule::Schedule;

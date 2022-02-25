@@ -1,19 +1,14 @@
-use ink_prelude::{
-    vec, vec::Vec,
-};
+use ink_prelude::vec::Vec;
 use ink_storage::{
-    collections::{HashMap, hashmap::Entry::*},
-    collections::Stash,
     collections::Vec as InkVec,
-    traits::{PackedLayout, SpreadLayout, StorageLayout},
+    traits,
 };
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-
+use super::{AccountId, Balance, Error::*, Result};
 use super::service::{Service, ServiceId, ServiceParams};
 
-#[derive(SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[derive(traits::SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct ServiceStore(pub InkVec<Service>);
 
 impl ServiceStore {
