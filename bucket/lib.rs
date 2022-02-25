@@ -142,7 +142,7 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
-            self.buckets.get(bucket_id)
+            Ok(self.buckets.get(bucket_id)?.clone())
         }
 
         #[ink(message)]
@@ -173,8 +173,8 @@ pub mod ddc_bucket {
             let payer_id = Self::env().caller();
 
             // Start the payment flow for a deal.
-            let service = self.services.get(service_id)?;
-            let flow_id = self.billing_start_flow(payer_id, service.rent_per_month)?;
+            let rent_per_month = self.services.get(service_id)?.rent_per_month;
+            let flow_id = self.billing_start_flow(payer_id, rent_per_month)?;
 
             // Create a new deal.
             let deal = Deal {
@@ -237,7 +237,7 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
-            self.services.get(service_id)
+            Ok(self.services.get(service_id)?.clone())
         }
 
         #[ink(message)]

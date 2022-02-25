@@ -28,8 +28,8 @@ impl BucketStore {
         bucket_id
     }
 
-    pub fn get(&self, bucket_id: BucketId) -> Result<Bucket> {
-        self.0.get(bucket_id).cloned().ok_or(BucketDoesNotExist)
+    pub fn get(&self, bucket_id: BucketId) -> Result<&Bucket> {
+        self.0.get(bucket_id).ok_or(BucketDoesNotExist)
     }
 
     pub fn get_mut(&mut self, bucket_id: BucketId) -> Result<&mut Bucket> {
