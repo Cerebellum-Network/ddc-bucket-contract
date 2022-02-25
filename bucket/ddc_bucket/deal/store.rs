@@ -4,11 +4,13 @@ use ink_storage::{
 };
 
 use crate::ddc_bucket::{
-    billing_flow::FlowId, deal::{Deal, DealId, DealParams},
+    billing_flow::FlowId,
     Error::*,
     Result,
     service::entity::ServiceId,
 };
+
+use super::entity::{Deal, DealId, DealParams};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]

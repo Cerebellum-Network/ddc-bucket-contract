@@ -5,9 +5,10 @@ use ink_prelude::{
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Error::*, Result};
-
-use super::deal::{DealId, DealStatus};
+use crate::ddc_bucket::{
+    AccountId, deal::entity::{DealId, DealStatus}, Error::*,
+    Result,
+};
 
 pub type BucketId = u32;
 pub type BucketParams = String;

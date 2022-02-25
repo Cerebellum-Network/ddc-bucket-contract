@@ -14,12 +14,11 @@ pub mod ddc_bucket {
     use bucket::*;
     use bucket_store::*;
     use cash::*;
-    use deal::*;
-    use deal_store::*;
+    use deal::{entity::*, store::*};
     use Error::*;
     use flow_store::*;
     use schedule::*;
-    use service::{entity::*, messages::*, store::*};
+    use service::{entity::*, store::*};
 
     pub mod billing;
     pub mod account_store;
@@ -32,7 +31,6 @@ pub mod ddc_bucket {
     pub mod bucket_store;
     pub mod deal;
     pub mod flow_store;
-    pub mod deal_store;
 
 
     #[ink(storage)]

@@ -1,6 +1,6 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, FlowId, InsufficientBalance, Payable, Result, Schedule, ServiceCreated};
+use crate::ddc_bucket::{Balance, DdcBucket, Result, ServiceCreated};
 
 use super::entity::{ServiceId, ServiceParams};
 
