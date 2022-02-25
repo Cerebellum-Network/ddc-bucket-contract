@@ -20,13 +20,13 @@ pub mod ddc_bucket {
 
     use billing_account::*;
     use billing_flow::*;
+    use bucket::*;
     use cash::*;
+    use deal::*;
     use Error::*;
     use schedule::*;
     use service::*;
     use service_store::*;
-    use bucket::*;
-    use deal::*;
 
     pub mod billing_account;
     pub mod billing_flow;
@@ -177,7 +177,7 @@ pub mod ddc_bucket {
             let payer_id = Self::env().caller();
 
             // Start the payment flow for a deal.
-            let service = self.service_get(service_id)?;
+            let service = self.services.get(service_id)?;
             let flow_id = self.billing_start_flow(payer_id, service.rent_per_month)?;
 
             // Create a new deal.
@@ -233,30 +233,20 @@ pub mod ddc_bucket {
     impl DdcBucket {
         #[ink(message)]
         pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
-            let service_id = self.services.0.len();
             let provider_id = self.env().caller();
-            let service = Service {
-                service_id,
-                provider_id,
-                rent_per_month,
-                service_params: service_params.clone(),
-            };
-
-            self.services.0.push(service);
+            let service_id = self.services.create(provider_id, rent_per_month, service_params.clone());
             Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, service_params });
             Ok(service_id)
         }
 
         #[ink(message)]
         pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
-            self.services.0.get(service_id)
-                .cloned()
-                .ok_or(ServiceDoesNotExist)
+            self.services.get(service_id)
         }
 
         #[ink(message)]
         pub fn service_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
-            self.services.list(offset,limit,filter_provider_id)
+            self.services.list(offset, limit, filter_provider_id)
         }
 
         #[ink(message)]
@@ -271,7 +261,7 @@ pub mod ddc_bucket {
 
             // Find where to distribute the revenues.
             let revenue_account_id = {
-                let service = self.service_get(service_id)?;
+                let service = self.services.get(service_id)?;
                 // Authorize only the service owner to trigger the distribution.
                 service.only_owner(caller)?;
                 service.revenue_account_id()

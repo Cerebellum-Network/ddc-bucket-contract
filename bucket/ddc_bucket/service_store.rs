@@ -10,13 +10,30 @@ use ink_storage::{
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
-use super::service::Service;
+use super::service::{Service, ServiceId, ServiceParams};
 
 #[derive(SpreadLayout)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct ServiceStore(pub InkVec<Service>);
 
 impl ServiceStore {
+    pub fn create(&mut self, provider_id: AccountId, rent_per_month: Balance, service_params: ServiceParams) -> ServiceId {
+        let service_id = self.0.len();
+        let service = Service {
+            service_id,
+            provider_id,
+            rent_per_month,
+            service_params,
+        };
+        self.0.push(service);
+        service_id
+    }
+
+    pub fn get(&self, service_id: ServiceId) -> Result<Service> {
+        self.0.get(service_id).cloned()
+            .ok_or(ServiceDoesNotExist)
+    }
+
     pub fn list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
         let mut services = Vec::with_capacity(limit as usize);
         for service_id in offset..offset + limit {
