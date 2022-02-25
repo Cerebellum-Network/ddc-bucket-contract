@@ -6,7 +6,7 @@ use ink_storage::{
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 
-use super::bucket::{Bucket, BucketId, BucketParams};
+use super::entity::{Bucket, BucketId, BucketParams};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]

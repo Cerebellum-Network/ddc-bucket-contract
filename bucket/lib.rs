@@ -10,8 +10,7 @@ pub mod ddc_bucket {
     use scale::{Decode, Encode};
 
     use account::store::*;
-    use bucket::*;
-    use bucket_store::*;
+    use bucket::{entity::*, store::*};
     use cash::*;
     use deal::{entity::*, store::*};
     use Error::*;
@@ -26,7 +25,6 @@ pub mod ddc_bucket {
     pub mod cash;
     pub mod service;
     pub mod bucket;
-    pub mod bucket_store;
     pub mod deal;
 
 
