@@ -24,12 +24,16 @@ pub mod ddc_bucket {
     use Error::*;
     use schedule::*;
     use service::*;
+    use bucket::*;
+    use deal::*;
 
     pub mod billing_account;
     pub mod billing_flow;
     pub mod schedule;
     pub mod cash;
     pub mod service;
+    pub mod bucket;
+    pub mod deal;
     //use ink_lang::{Env, StaticEnv, EnvAccess, ContractEnv};
 
     #[ink(storage)]
@@ -57,25 +61,7 @@ pub mod ddc_bucket {
 
 
     // ---- Bucket ----
-    pub type BucketId = u32;
-    pub type BucketParams = String;
 
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Bucket {
-        owner_id: AccountId,
-        deal_ids: Vec<DealId>,
-        bucket_params: BucketParams,
-    }
-
-    #[derive(Clone, PartialEq, Encode, Decode)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct BucketStatus {
-        bucket_id: BucketId,
-        bucket: Bucket,
-        writer_ids: Vec<AccountId>,
-        deal_statuses: Vec<DealStatus>,
-    }
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
@@ -97,11 +83,6 @@ pub mod ddc_bucket {
         service_id: ServiceId,
     }
 
-    impl Bucket {
-        pub fn only_owner(&self, caller: AccountId) -> Result<()> {
-            if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
-        }
-    }
 
     impl DdcBucket {
         #[ink(message)]
@@ -187,24 +168,7 @@ pub mod ddc_bucket {
 
 
     // ---- Deal ----
-    pub type DealId = u32;
-    pub type DealParams = String;
 
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Deal {
-        service_id: ServiceId,
-        flow_id: FlowId,
-        deal_params: DealParams,
-    }
-
-    #[derive(Clone, PartialEq, Encode, Decode)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct DealStatus {
-        service_id: ServiceId,
-        estimated_rent_end_ms: u64,
-        deal_params: DealParams,
-    }
 
     impl DdcBucket {
         pub fn deal_create(&mut self, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
