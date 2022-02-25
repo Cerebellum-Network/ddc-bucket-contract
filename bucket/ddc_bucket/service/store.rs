@@ -4,8 +4,8 @@ use ink_storage::{
     traits,
 };
 
-use super::{AccountId, Balance, Error::*, Result};
-use super::service::{Service, ServiceId, ServiceParams};
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use super::entity::{Service, ServiceId, ServiceParams};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]

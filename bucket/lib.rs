@@ -19,8 +19,7 @@ pub mod ddc_bucket {
     use Error::*;
     use flow_store::*;
     use schedule::*;
-    use service::*;
-    use service_store::*;
+    use service::{entity::*, messages::*, store::*};
 
     pub mod billing;
     pub mod account_store;
@@ -29,7 +28,6 @@ pub mod ddc_bucket {
     pub mod schedule;
     pub mod cash;
     pub mod service;
-    pub mod service_store;
     pub mod bucket;
     pub mod bucket_store;
     pub mod deal;
@@ -216,10 +214,7 @@ pub mod ddc_bucket {
     impl DdcBucket {
         #[ink(message)]
         pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
-            let provider_id = self.env().caller();
-            let service_id = self.services.create(provider_id, rent_per_month, service_params.clone());
-            Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, service_params });
-            Ok(service_id)
+            self.message_service_create(rent_per_month, service_params)
         }
 
         #[ink(message)]

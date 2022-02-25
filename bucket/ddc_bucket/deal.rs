@@ -2,8 +2,10 @@ use ink_prelude::string::String;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use super::billing_flow::FlowId;
-use super::service::ServiceId;
+use crate::ddc_bucket::{
+    billing_flow::FlowId,
+    service::entity::ServiceId,
+};
 
 pub type DealId = u32;
 pub type DealParams = String;
