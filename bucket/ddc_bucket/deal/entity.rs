@@ -3,7 +3,7 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    billing_flow::FlowId,
+    flow::entity::FlowId,
     service::entity::ServiceId,
 };
 

@@ -1,9 +1,10 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::AccountId;
-
-use super::schedule::Schedule;
+use crate::ddc_bucket::{
+    AccountId,
+    schedule::Schedule,
+};
 
 pub type FlowId = u32;
 

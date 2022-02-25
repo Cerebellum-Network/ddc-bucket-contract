@@ -10,26 +10,24 @@ pub mod ddc_bucket {
     use scale::{Decode, Encode};
 
     use account::store::*;
-    use billing_flow::*;
     use bucket::*;
     use bucket_store::*;
     use cash::*;
     use deal::{entity::*, store::*};
     use Error::*;
-    use flow_store::*;
+    use flow::{entity::*, store::*};
     use schedule::*;
     use service::{entity::*, store::*};
 
     pub mod billing;
     pub mod account;
-    pub mod billing_flow;
+    pub mod flow;
     pub mod schedule;
     pub mod cash;
     pub mod service;
     pub mod bucket;
     pub mod bucket_store;
     pub mod deal;
-    pub mod flow_store;
 
 
     #[ink(storage)]

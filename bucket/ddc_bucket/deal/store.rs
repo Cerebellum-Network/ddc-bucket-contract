@@ -4,8 +4,8 @@ use ink_storage::{
 };
 
 use crate::ddc_bucket::{
-    billing_flow::FlowId,
     Error::*,
+    flow::entity::FlowId,
     Result,
     service::entity::ServiceId,
 };

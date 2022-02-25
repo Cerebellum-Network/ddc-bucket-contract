@@ -3,9 +3,12 @@ use ink_storage::{
     traits,
 };
 
-use super::{AccountId, Error::*, Result};
-use super::billing_flow::{BillingFlow, FlowId};
-use super::schedule::Schedule;
+use crate::ddc_bucket::{
+    AccountId, Error::*, Result,
+    schedule::Schedule,
+};
+
+use super::entity::{BillingFlow, FlowId};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
