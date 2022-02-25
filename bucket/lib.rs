@@ -6,7 +6,7 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
-    use ink_prelude::{vec, vec::Vec};
+    use ink_prelude::vec::Vec;
     use scale::{Decode, Encode};
 
     use account::store::*;
@@ -33,8 +33,8 @@ pub mod ddc_bucket {
         buckets: BucketStore,
         deals: DealStore,
         services: ServiceStore,
-        billing_accounts: AccountStore,
-        billing_flows: FlowStore,
+        accounts: AccountStore,
+        flows: FlowStore,
     }
 
     impl DdcBucket {
@@ -44,8 +44,8 @@ pub mod ddc_bucket {
                 buckets: BucketStore::default(),
                 deals: DealStore::default(),
                 services: ServiceStore::default(),
-                billing_accounts: AccountStore::default(),
-                billing_flows: FlowStore::default(),
+                accounts: AccountStore::default(),
+                flows: FlowStore::default(),
             }
         }
     }
