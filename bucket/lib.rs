@@ -17,9 +17,13 @@ pub mod ddc_bucket {
         traits::{PackedLayout, SpreadLayout},
     };
     use scale::{Decode, Encode};
-    //use ink_lang::{Env, StaticEnv, EnvAccess, ContractEnv};
 
+    use cash::*;
     use Error::*;
+    use schedule::*;
+    use service::*;
+
+//use ink_lang::{Env, StaticEnv, EnvAccess, ContractEnv};
 
     #[ink(storage)]
     pub struct DdcBucket {
@@ -231,18 +235,7 @@ pub mod ddc_bucket {
 
 
     // ---- Provider ----
-    pub type ProviderId = AccountId;
-    pub type ServiceId = u32;
-    pub type ServiceParams = String;
-
-    #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-    #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-    pub struct Service {
-        service_id: ServiceId,
-        provider_id: ProviderId,
-        rent_per_month: Balance,
-        service_params: ServiceParams,
-    }
+    pub mod service;
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
@@ -334,15 +327,6 @@ pub mod ddc_bucket {
         }
     }
 
-    impl Service {
-        pub fn revenue_account_id(&self) -> AccountId {
-            self.provider_id
-        }
-
-        pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
-            if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
-        }
-    }
     // ---- End Provider ----
 
 
@@ -549,11 +533,7 @@ pub mod ddc_bucket {
     }
 
     pub mod schedule;
-    use schedule::*;
-
     pub mod cash;
-    use cash::*;
-
     // ---- End Billing ----
 
 
