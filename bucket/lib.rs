@@ -25,11 +25,12 @@ pub mod ddc_bucket {
     use bucket_store::*;
     use cash::*;
     use deal::*;
+    use deal_store::*;
     use Error::*;
+    use flow_store::*;
     use schedule::*;
     use service::*;
     use service_store::*;
-    use flow_store::*;
 
     pub mod account_store;
     pub mod billing_account;
@@ -42,12 +43,13 @@ pub mod ddc_bucket {
     pub mod bucket_store;
     pub mod deal;
     pub mod flow_store;
+    pub mod deal_store;
 
 
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
-        deals: Stash<Deal>,
+        deals: DealStore,
         services: ServiceStore,
 
         billing_accounts: AccountStore,
@@ -59,7 +61,7 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: BucketStore::default(),
-                deals: Stash::new(),
+                deals: DealStore::default(),
                 services: ServiceStore::default(),
                 billing_accounts: AccountStore::default(),
                 billing_flows: FlowStore::default(),
@@ -177,22 +179,14 @@ pub mod ddc_bucket {
             // Start the payment flow for a deal.
             let rent_per_month = self.services.get(service_id)?.rent_per_month;
             let flow_id = self.billing_start_flow(payer_id, rent_per_month)?;
+            let deal_id = self.deals.create(service_id, flow_id, deal_params);
 
-            // Create a new deal.
-            let deal = Deal {
-                service_id,
-                flow_id,
-                deal_params,
-            };
-            let deal_id = self.deals.put(deal);
             Ok(deal_id)
         }
 
         #[ink(message)]
         pub fn deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
-            let deal = self.deals.get(deal_id)
-                .ok_or(Error::DealDoesNotExist)?;
-
+            let deal = self.deals.get(deal_id)?;
             let estimated_rent_end_ms = self.billing_flow_covered_until(deal.flow_id)?;
 
             Ok(DealStatus {
@@ -252,8 +246,7 @@ pub mod ddc_bucket {
             let caller = self.env().caller();
 
             let (flow_id, service_id) = {
-                let deal = self.deals.get(deal_id)
-                    .ok_or(DealDoesNotExist)?;
+                let deal = self.deals.get(deal_id)?;
                 (deal.flow_id, deal.service_id)
             };
 
