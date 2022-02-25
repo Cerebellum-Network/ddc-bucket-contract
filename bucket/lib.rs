@@ -14,7 +14,7 @@ pub mod ddc_bucket {
         collections::{HashMap, hashmap::Entry::*},
         collections::Stash,
         collections::Vec as InkVec,
-        traits::{PackedLayout, SpreadLayout},
+        traits::{PackedLayout, SpreadLayout, StorageLayout},
     };
     use scale::{Decode, Encode};
 
@@ -24,6 +24,7 @@ pub mod ddc_bucket {
     use Error::*;
     use schedule::*;
     use service::*;
+    use service_store::*;
     use bucket::*;
     use deal::*;
 
@@ -32,6 +33,7 @@ pub mod ddc_bucket {
     pub mod schedule;
     pub mod cash;
     pub mod service;
+    pub mod service_store;
     pub mod bucket;
     pub mod deal;
     //use ink_lang::{Env, StaticEnv, EnvAccess, ContractEnv};
@@ -40,7 +42,7 @@ pub mod ddc_bucket {
     pub struct DdcBucket {
         buckets: InkVec<Bucket>,
         deals: Stash<Deal>,
-        services: InkVec<Service>,
+        services: ServiceStore,
 
         billing_accounts: HashMap<AccountId, BillingAccount>,
         billing_flows: Stash<BillingFlow>,
@@ -52,7 +54,7 @@ pub mod ddc_bucket {
             Self {
                 buckets: InkVec::new(),
                 deals: Stash::new(),
-                services: InkVec::new(),
+                services: ServiceStore(InkVec::new()),
                 billing_accounts: HashMap::new(),
                 billing_flows: Stash::new(),
             }
@@ -231,7 +233,7 @@ pub mod ddc_bucket {
     impl DdcBucket {
         #[ink(message)]
         pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
-            let service_id = self.services.len();
+            let service_id = self.services.0.len();
             let provider_id = self.env().caller();
             let service = Service {
                 service_id,
@@ -240,35 +242,21 @@ pub mod ddc_bucket {
                 service_params: service_params.clone(),
             };
 
-            self.services.push(service);
+            self.services.0.push(service);
             Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, service_params });
             Ok(service_id)
         }
 
         #[ink(message)]
         pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
-            self.services.get(service_id)
+            self.services.0.get(service_id)
                 .cloned()
                 .ok_or(ServiceDoesNotExist)
         }
 
         #[ink(message)]
         pub fn service_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
-            let mut services = Vec::with_capacity(limit as usize);
-            for service_id in offset..offset + limit {
-                let service = match self.services.get(service_id) {
-                    None => break, // No more services, stop.
-                    Some(service) => service,
-                };
-                // Apply the filter if given.
-                if let Some(provider_id) = filter_provider_id {
-                    if provider_id != service.provider_id {
-                        continue; // Skip non-matches.
-                    }
-                }
-                services.push(service.clone());
-            }
-            (services, self.services.len())
+            self.services.list(offset,limit,filter_provider_id)
         }
 
         #[ink(message)]
