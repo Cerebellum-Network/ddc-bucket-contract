@@ -4,7 +4,7 @@ use ink_storage::{
     traits,
 };
 
-use crate::ddc_bucket::{Balance, Error::*, Result};
+use crate::ddc_bucket::{Error::*, Result, ServiceId};
 
 use super::entity::{Cluster, ClusterId, ClusterParams};
 
@@ -13,11 +13,10 @@ use super::entity::{Cluster, ClusterId, ClusterParams};
 pub struct ClusterStore(pub InkVec<Cluster>);
 
 impl ClusterStore {
-    pub fn create(&mut self, rent_per_month: Balance, cluster_params: ClusterParams) -> ClusterId {
+    pub fn create(&mut self, cluster_params: ClusterParams) -> ClusterId {
         let cluster_id = self.0.len();
         let cluster = Cluster {
             cluster_id,
-            rent_per_month,
             cluster_params,
             service_ids: Vec::new(),
         };
@@ -25,8 +24,18 @@ impl ClusterStore {
         cluster_id
     }
 
+    pub fn add_service(&mut self, cluster_id: ClusterId, service_id: ServiceId) -> Result<()> {
+        let cluster = self.get_mut(cluster_id)?;
+        cluster.service_ids.push(service_id);
+        Ok(())
+    }
+
     pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {
         self.0.get(cluster_id).ok_or(ClusterDoesNotExist)
+    }
+
+    pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut Cluster> {
+        self.0.get_mut(cluster_id).ok_or(ClusterDoesNotExist)
     }
 
     pub fn list(&self, offset: u32, limit: u32) -> (Vec<Cluster>, u32) {

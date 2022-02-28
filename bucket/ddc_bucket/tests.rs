@@ -17,15 +17,19 @@ fn ddc_bucket_works() {
     let mut ddc_bucket = DdcBucket::new();
     set_balance(contract_id(), 1000); // For contract subsistence.
 
+    // Create a Cluster.
+    let cluster_params = "{}";
+    let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
+
     // Provide a Service.
     let rent_per_month: Balance = 10 * CURRENCY;
     let service_params = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id = ddc_bucket.service_create(rent_per_month, service_params.to_string())?;
+    let service_id = ddc_bucket.service_create(cluster_id, rent_per_month, service_params.to_string())?;
 
     // Provide another Service.
     push_caller(provider_id2);
     let service_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id2 = ddc_bucket.service_create(rent_per_month, service_params2.to_string())?;
+    let service_id2 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params2.to_string())?;
     pop_caller();
     assert_ne!(service_id, service_id2);
 
@@ -109,39 +113,45 @@ fn ddc_bucket_works() {
     ddc_bucket.provider_withdraw(deal_id1)?;
     ddc_bucket.provider_withdraw(deal_id2)?;
 
-    let evs = get_events(10);
+    let mut evs = get_events(11);
+    evs.reverse();
+
+    // Cluster setup.
+    assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
+        ClusterCreated { cluster_id, cluster_params: cluster_params.to_string() }));
+
     // Provider setup.
-    assert!(matches!(&evs[0], Event::ServiceCreated(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::ServiceCreated(ev) if ev ==
         ServiceCreated { service_id, provider_id, rent_per_month, service_params: service_params.to_string() }));
 
     // Provider setup 2.
-    assert!(matches!(&evs[1], Event::ServiceCreated(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::ServiceCreated(ev) if ev ==
         ServiceCreated { service_id: service_id2, provider_id: provider_id2, rent_per_month, service_params: service_params2.to_string() }));
 
     // Create bucket.
-    assert!(matches!(&evs[2], Event::BucketCreated(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
         BucketCreated {  bucket_id, owner_id: consumer_id }));
 
     // Add deal 1 with an initial deposit.
-    assert!(matches!(&evs[3], Event::Deposit(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[4], Event::DealCreated(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
         DealCreated { deal_id: deal_id1, bucket_id, service_id }));
 
     // Deposit more.
-    assert!(matches!(&evs[5], Event::Deposit(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: consumer_id, value: 100 * CURRENCY }));
 
     // Add deal 2 with an additional deposit.
-    assert!(matches!(&evs[6], Event::Deposit(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
-    assert!(matches!(&evs[7], Event::DealCreated(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
         DealCreated { deal_id: deal_id2, bucket_id, service_id }));
 
     // Provider withdrawals.
-    assert!(matches!(&evs[8], Event::ProviderWithdraw(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::ProviderWithdraw(ev) if ev ==
         ProviderWithdraw { provider_id, deal_id: deal_id1, value: 186 }));
-    assert!(matches!(&evs[9], Event::ProviderWithdraw(ev) if *ev ==
+    assert!(matches!(evs.pop().unwrap(), Event::ProviderWithdraw(ev) if ev ==
         ProviderWithdraw { provider_id, deal_id: deal_id2, value: 186 }));
 }
 
@@ -213,15 +223,21 @@ fn service_list_works() {
 
     let mut ddc_bucket = DdcBucket::new();
 
+    // Create a Cluster.
+    push_caller(owner_id1);
+    let cluster_params = "{}";
+    let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
+    pop_caller();
+
     // Create two Services.
     push_caller(owner_id1);
     let service_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id1 = ddc_bucket.service_create(rent_per_month, service_params1.to_string())?;
+    let service_id1 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params1.to_string())?;
     pop_caller();
 
     push_caller(owner_id2);
     let service_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id2 = ddc_bucket.service_create(rent_per_month, service_params2.to_string())?;
+    let service_id2 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params2.to_string())?;
     pop_caller();
 
     assert_ne!(service_id1, service_id2);

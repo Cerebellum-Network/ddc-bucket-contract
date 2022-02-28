@@ -140,14 +140,13 @@ pub mod ddc_bucket {
     pub struct ClusterCreated {
         #[ink(topic)]
         cluster_id: ClusterId,
-        rent_per_month: Balance,
         cluster_params: ClusterParams,
     }
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn cluster_create(&mut self, rent_per_month: Balance, cluster_params: ClusterParams) -> Result<ServiceId> {
-            self.message_cluster_create(rent_per_month, cluster_params)
+        pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<ServiceId> {
+            self.message_cluster_create(cluster_params)
         }
 
         #[ink(message)]
@@ -178,8 +177,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
-            self.message_service_create(rent_per_month, service_params)
+        pub fn service_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
+            self.message_service_create(cluster_id, rent_per_month, service_params)
         }
 
         #[ink(message)]
