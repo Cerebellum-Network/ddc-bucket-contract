@@ -94,6 +94,7 @@ fn ddc_bucket_works() {
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
+        cluster_ids: vec![],
         deal_ids: vec![deal_id1, deal_id2],
         bucket_params: bucket_params.clone(),
     });

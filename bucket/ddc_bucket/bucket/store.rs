@@ -16,6 +16,7 @@ impl BucketStore {
     pub fn create(&mut self, owner_id: AccountId, bucket_params: BucketParams) -> BucketId {
         let bucket = Bucket {
             owner_id,
+            cluster_ids: Vec::new(),
             deal_ids: Vec::new(),
             bucket_params,
         };

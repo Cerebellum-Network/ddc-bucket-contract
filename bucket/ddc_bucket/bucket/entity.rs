@@ -7,7 +7,7 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
     AccountId, deal::entity::{DealId, DealStatus}, Error::*,
-    Result,
+    Result, ClusterId,
 };
 
 pub type BucketId = u32;
@@ -17,6 +17,7 @@ pub type BucketParams = String;
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Bucket {
     pub owner_id: AccountId,
+    pub cluster_ids: Vec<ClusterId>,
     pub deal_ids: Vec<DealId>,
     pub bucket_params: BucketParams,
 }
