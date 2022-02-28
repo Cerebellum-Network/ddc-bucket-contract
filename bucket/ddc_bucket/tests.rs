@@ -279,6 +279,7 @@ fn service_list_works() {
 fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
+            Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
             Event::ServiceCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::DealCreated(ev) => println!("EVENT {:?}", ev),

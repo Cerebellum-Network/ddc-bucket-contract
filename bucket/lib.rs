@@ -12,6 +12,7 @@ pub mod ddc_bucket {
     use account::store::*;
     use bucket::{entity::*, store::*};
     use cash::*;
+    use cluster::{entity::*, store::*};
     use deal::{entity::*, store::*};
     use Error::*;
     use flow::{entity::*, store::*};
@@ -26,12 +27,14 @@ pub mod ddc_bucket {
     pub mod service;
     pub mod bucket;
     pub mod deal;
+    pub mod cluster;
 
     // ---- Global state ----
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
         deals: DealStore,
+        clusters: ClusterStore,
         services: ServiceStore,
         accounts: AccountStore,
         flows: FlowStore,
@@ -43,6 +46,7 @@ pub mod ddc_bucket {
             Self {
                 buckets: BucketStore::default(),
                 deals: DealStore::default(),
+                clusters: ClusterStore::default(),
                 services: ServiceStore::default(),
                 accounts: AccountStore::default(),
                 flows: FlowStore::default(),
@@ -129,6 +133,36 @@ pub mod ddc_bucket {
     // ---- End Deal ----
 
 
+    // ---- Cluster ----
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCreated {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        rent_per_month: Balance,
+        cluster_params: ClusterParams,
+    }
+
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn cluster_create(&mut self, rent_per_month: Balance, cluster_params: ClusterParams) -> Result<ServiceId> {
+            self.message_cluster_create(rent_per_month, cluster_params)
+        }
+
+        #[ink(message)]
+        pub fn cluster_get(&self, cluster_id: ServiceId) -> Result<Cluster> {
+            Ok(self.clusters.get(cluster_id)?.clone())
+        }
+
+        #[ink(message)]
+        pub fn cluster_list(&self, offset: u32, limit: u32) -> (Vec<Cluster>, u32) {
+            self.clusters.list(offset, limit)
+        }
+    }
+    // ---- End Cluster ----
+
+
     // ---- Service ----
 
     #[ink(event)]
@@ -186,6 +220,7 @@ pub mod ddc_bucket {
     pub enum Error {
         BucketDoesNotExist,
         DealDoesNotExist,
+        ClusterDoesNotExist,
         ServiceDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
