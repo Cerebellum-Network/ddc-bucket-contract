@@ -85,6 +85,11 @@ pub mod ddc_bucket {
         }
 
         #[ink(message, payable)]
+        pub fn bucket_add_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
+            self.message_bucket_add_cluster(bucket_id, cluster_id)
+        }
+
+        #[ink(message, payable)]
         pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
             self.message_bucket_add_deal(bucket_id, service_id, deal_params)
         }

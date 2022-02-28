@@ -30,13 +30,13 @@ impl DdcBucket {
 
         let bucket = self.buckets.get_mut(bucket_id)?;
         bucket.only_owner(owner_id)?;
+        bucket.cluster_ids.push(cluster_id);
 
-        for deal_id in deal_ids {
+        for (&service_id, deal_id) in service_ids.iter().zip(deal_ids) {
             bucket.deal_ids.push(deal_id);
+            Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
         }
 
-        // TODO: events.
-        //Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
         Ok(())
     }
 
