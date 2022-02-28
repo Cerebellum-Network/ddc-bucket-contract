@@ -1,7 +1,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{vec, vec::Vec};
 
-use crate::ddc_bucket::{AccountId, BucketCreated, DdcBucket, DealCreated, DealId, DealParams, Result, ServiceId};
+use crate::ddc_bucket::{AccountId, BucketCreated, DdcBucket, DealCreated, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
@@ -14,7 +14,7 @@ impl DdcBucket {
         Ok(bucket_id)
     }
 
-    pub fn message_bucket_add_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
+    pub fn message_bucket_connect_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
         // Receive the payable value.
         self.deposit()?;
         let owner_id = Self::env().caller();
@@ -38,21 +38,6 @@ impl DdcBucket {
         }
 
         Ok(())
-    }
-
-    pub fn message_bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
-        // Receive the payable value.
-        self.deposit()?;
-        let owner_id = Self::env().caller();
-
-        let deal_id = self.deal_create(service_id, deal_params)?;
-
-        let bucket = self.buckets.get_mut(bucket_id)?;
-        bucket.only_owner(owner_id)?;
-        bucket.deal_ids.push(deal_id);
-
-        Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
-        Ok(deal_id)
     }
 
     pub fn message_bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {

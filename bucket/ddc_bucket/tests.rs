@@ -64,7 +64,7 @@ fn ddc_bucket_works() {
 
     // Add a deal to the bucket, also depositing some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    ddc_bucket.bucket_add_cluster(bucket_id, cluster_id)?;
+    ddc_bucket.bucket_connect_cluster(bucket_id, cluster_id)?;
     pop_caller();
 
     // Check the structure of the bucket including all deal IDs.
