@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x77f0d2358b9e34565ad44383c74376a86ad4cfdc649b4f0444eb27707e22b943",
+    "hash": "0x75f300198e48015c82edf1eade7f8eab198608a9cbe08a950920c3aa834d834d",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -108,10 +108,10 @@
           {
             "docs": [],
             "indexed": true,
-            "name": "service_id",
+            "name": "vnode_id",
             "type": {
               "displayName": [
-                "ServiceId"
+                "VNodeId"
               ],
               "type": 1
             }
@@ -192,10 +192,10 @@
           {
             "docs": [],
             "indexed": true,
-            "name": "service_id",
+            "name": "vnode_id",
             "type": {
               "displayName": [
-                "ServiceId"
+                "VNodeId"
               ],
               "type": 1
             }
@@ -225,17 +225,17 @@
           {
             "docs": [],
             "indexed": false,
-            "name": "service_params",
+            "name": "vnode_params",
             "type": {
               "displayName": [
-                "ServiceParams"
+                "VNodeParams"
               ],
               "type": 7
             }
           }
         ],
         "docs": [],
-        "name": "ServiceCreated"
+        "name": "VNodeCreated"
       },
       {
         "args": [
@@ -506,7 +506,7 @@
             "name": "cluster_id",
             "type": {
               "displayName": [
-                "ServiceId"
+                "ClusterId"
               ],
               "type": 1
             }
@@ -580,10 +580,10 @@
             }
           },
           {
-            "name": "service_params",
+            "name": "vnode_params",
             "type": {
               "displayName": [
-                "ServiceParams"
+                "VNodeParams"
               ],
               "type": 7
             }
@@ -592,7 +592,7 @@
         "docs": [],
         "mutates": true,
         "name": [
-          "service_create"
+          "vnode_create"
         ],
         "payable": false,
         "returnType": {
@@ -601,15 +601,15 @@
           ],
           "type": 21
         },
-        "selector": "0x93d2f3ba"
+        "selector": "0x45964ffc"
       },
       {
         "args": [
           {
-            "name": "service_id",
+            "name": "vnode_id",
             "type": {
               "displayName": [
-                "ServiceId"
+                "VNodeId"
               ],
               "type": 1
             }
@@ -618,7 +618,7 @@
         "docs": [],
         "mutates": false,
         "name": [
-          "service_get"
+          "vnode_get"
         ],
         "payable": false,
         "returnType": {
@@ -627,7 +627,7 @@
           ],
           "type": 38
         },
-        "selector": "0xe5afdb1f"
+        "selector": "0xfa27f50d"
       },
       {
         "args": [
@@ -662,14 +662,14 @@
         "docs": [],
         "mutates": false,
         "name": [
-          "service_list"
+          "vnode_list"
         ],
         "payable": false,
         "returnType": {
           "displayName": [],
           "type": 39
         },
-        "selector": "0x1ad41d0a"
+        "selector": "0x502ac7bd"
       },
       {
         "args": [],
@@ -862,7 +862,7 @@
               ]
             }
           },
-          "name": "services"
+          "name": "vnodes"
         },
         {
           "layout": {
@@ -1087,19 +1087,14 @@
         "composite": {
           "fields": [
             {
-              "name": "service_id",
+              "name": "vnode_id",
               "type": 1,
-              "typeName": "ServiceId"
+              "typeName": "VNodeId"
             },
             {
               "name": "flow_id",
               "type": 1,
               "typeName": "FlowId"
-            },
-            {
-              "name": "deal_params",
-              "type": 7,
-              "typeName": "DealParams"
             }
           ]
         }
@@ -1127,9 +1122,9 @@
               "typeName": "ClusterParams"
             },
             {
-              "name": "service_ids",
+              "name": "vnode_ids",
               "type": 6,
-              "typeName": "Vec<ServiceId>"
+              "typeName": "Vec<VNodeId>"
             }
           ]
         }
@@ -1147,9 +1142,9 @@
         "composite": {
           "fields": [
             {
-              "name": "service_id",
+              "name": "vnode_id",
               "type": 1,
-              "typeName": "ServiceId"
+              "typeName": "VNodeId"
             },
             {
               "name": "provider_id",
@@ -1162,9 +1157,9 @@
               "typeName": "Balance"
             },
             {
-              "name": "service_params",
+              "name": "vnode_params",
               "type": 7,
-              "typeName": "ServiceParams"
+              "typeName": "VNodeParams"
             }
           ]
         }
@@ -1174,7 +1169,7 @@
         "ddc_bucket",
         "service",
         "entity",
-        "Service"
+        "VNode"
       ]
     },
     {
@@ -1454,7 +1449,7 @@
             },
             {
               "discriminant": 4,
-              "name": "ServiceDoesNotExist"
+              "name": "VNodeDoesNotExist"
             },
             {
               "discriminant": 5,
@@ -1622,19 +1617,14 @@
         "composite": {
           "fields": [
             {
-              "name": "service_id",
+              "name": "vnode_id",
               "type": 1,
-              "typeName": "ServiceId"
+              "typeName": "VNodeId"
             },
             {
               "name": "estimated_rent_end_ms",
               "type": 19,
               "typeName": "u64"
-            },
-            {
-              "name": "deal_params",
-              "type": 7,
-              "typeName": "DealParams"
             }
           ]
         }

@@ -5,44 +5,44 @@ use ink_storage::{
 };
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use super::entity::{Service, ServiceId, ServiceParams};
+use super::entity::{VNode, VNodeId, VNodeParams};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct ServiceStore(pub InkVec<Service>);
+pub struct VNodeStore(pub InkVec<VNode>);
 
-impl ServiceStore {
-    pub fn create(&mut self, provider_id: AccountId, rent_per_month: Balance, service_params: ServiceParams) -> ServiceId {
-        let service_id = self.0.len();
-        let service = Service {
-            service_id,
+impl VNodeStore {
+    pub fn create(&mut self, provider_id: AccountId, rent_per_month: Balance, vnode_params: VNodeParams) -> VNodeId {
+        let vnode_id = self.0.len();
+        let service = VNode {
+            vnode_id,
             provider_id,
             rent_per_month,
-            service_params,
+            vnode_params,
         };
         self.0.push(service);
-        service_id
+        vnode_id
     }
 
-    pub fn get(&self, service_id: ServiceId) -> Result<&Service> {
-        self.0.get(service_id).ok_or(ServiceDoesNotExist)
+    pub fn get(&self, vnode_id: VNodeId) -> Result<&VNode> {
+        self.0.get(vnode_id).ok_or(VNodeDoesNotExist)
     }
 
-    pub fn list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
-        let mut services = Vec::with_capacity(limit as usize);
-        for service_id in offset..offset + limit {
-            let service = match self.0.get(service_id) {
+    pub fn list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<VNode>, u32) {
+        let mut vnodes = Vec::with_capacity(limit as usize);
+        for vnode_id in offset..offset + limit {
+            let vnode = match self.0.get(vnode_id) {
                 None => break, // No more services, stop.
-                Some(service) => service,
+                Some(vnode) => vnode,
             };
             // Apply the filter if given.
             if let Some(provider_id) = filter_provider_id {
-                if provider_id != service.provider_id {
+                if provider_id != vnode.provider_id {
                     continue; // Skip non-matches.
                 }
             }
-            services.push(service.clone());
+            vnodes.push(vnode.clone());
         }
-        (services, self.0.len())
+        (vnodes, self.0.len())
     }
 }

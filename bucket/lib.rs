@@ -35,7 +35,7 @@ pub mod ddc_bucket {
         buckets: BucketStore,
         deals: DealStore,
         clusters: ClusterStore,
-        services: ServiceStore,
+        vnodes: VNodeStore,
         accounts: AccountStore,
         flows: FlowStore,
     }
@@ -47,7 +47,7 @@ pub mod ddc_bucket {
                 buckets: BucketStore::default(),
                 deals: DealStore::default(),
                 clusters: ClusterStore::default(),
-                services: ServiceStore::default(),
+                vnodes: VNodeStore::default(),
                 accounts: AccountStore::default(),
                 flows: FlowStore::default(),
             }
@@ -84,7 +84,7 @@ pub mod ddc_bucket {
         #[ink(topic)]
         bucket_id: BucketId,
         #[ink(topic)]
-        service_id: ServiceId,
+        vnode_id: VNodeId,
     }
 
     impl DdcBucket {
@@ -154,12 +154,12 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<ServiceId> {
+        pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<VNodeId> {
             self.message_cluster_create(cluster_params)
         }
 
         #[ink(message)]
-        pub fn cluster_get(&self, cluster_id: ServiceId) -> Result<Cluster> {
+        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<Cluster> {
             Ok(self.clusters.get(cluster_id)?.clone())
         }
 
@@ -171,36 +171,36 @@ pub mod ddc_bucket {
     // ---- End Cluster ----
 
 
-    // ---- Service ----
+    // ---- VNode ----
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ServiceCreated {
+    pub struct VNodeCreated {
         #[ink(topic)]
-        service_id: ServiceId,
+        vnode_id: VNodeId,
         #[ink(topic)]
         provider_id: AccountId,
         rent_per_month: Balance,
-        service_params: ServiceParams,
+        vnode_params: VNodeParams,
     }
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
-            self.message_service_create(cluster_id, rent_per_month, service_params)
+        pub fn vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
+            self.message_vnode_create(cluster_id, rent_per_month, vnode_params)
         }
 
         #[ink(message)]
-        pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
-            Ok(self.services.get(service_id)?.clone())
+        pub fn vnode_get(&self, vnode_id: VNodeId) -> Result<VNode> {
+            Ok(self.vnodes.get(vnode_id)?.clone())
         }
 
         #[ink(message)]
-        pub fn service_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
-            self.services.list(offset, limit, filter_provider_id)
+        pub fn vnode_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<VNode>, u32) {
+            self.vnodes.list(offset, limit, filter_provider_id)
         }
     }
-    // ---- End Service ----
+    // ---- End VNode ----
 
 
     // ---- Billing ----
@@ -230,7 +230,7 @@ pub mod ddc_bucket {
         DealDoesNotExist,
         ClusterDoesNotExist,
         BucketClusterAlreadyConnected,
-        ServiceDoesNotExist,
+        VNodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
         UnauthorizedProvider,

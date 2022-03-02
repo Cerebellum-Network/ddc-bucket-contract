@@ -7,19 +7,19 @@ use scale::{Decode, Encode};
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 pub type ProviderId = AccountId;
-pub type ServiceId = u32;
-pub type ServiceParams = String;
+pub type VNodeId = u32;
+pub type VNodeParams = String;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub struct Service {
-    pub service_id: ServiceId,
+pub struct VNode {
+    pub vnode_id: VNodeId,
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
-    pub service_params: ServiceParams,
+    pub vnode_params: VNodeParams,
 }
 
-impl Service {
+impl VNode {
     pub fn revenue_account_id(&self) -> AccountId {
         self.provider_id
     }

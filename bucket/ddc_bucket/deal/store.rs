@@ -7,7 +7,7 @@ use crate::ddc_bucket::{
     Error::*,
     flow::entity::FlowId,
     Result,
-    service::entity::ServiceId,
+    service::entity::VNodeId,
 };
 
 use super::entity::{Deal, DealId};
@@ -17,9 +17,9 @@ use super::entity::{Deal, DealId};
 pub struct DealStore(pub InkVec<Deal>);
 
 impl DealStore {
-    pub fn create(&mut self, service_id: ServiceId, flow_id: FlowId) -> DealId {
+    pub fn create(&mut self, vnode_id: VNodeId, flow_id: FlowId) -> DealId {
         let deal = Deal {
-            service_id,
+            vnode_id,
             flow_id,
         };
         let deal_id = self.0.len();

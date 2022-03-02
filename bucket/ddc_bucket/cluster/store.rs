@@ -4,7 +4,7 @@ use ink_storage::{
     traits,
 };
 
-use crate::ddc_bucket::{Error::*, Result, ServiceId};
+use crate::ddc_bucket::{Error::*, Result, VNodeId};
 
 use super::entity::{Cluster, ClusterId, ClusterParams};
 
@@ -18,15 +18,15 @@ impl ClusterStore {
         let cluster = Cluster {
             cluster_id,
             cluster_params,
-            service_ids: Vec::new(),
+            vnode_ids: Vec::new(),
         };
         self.0.push(cluster);
         cluster_id
     }
 
-    pub fn add_service(&mut self, cluster_id: ClusterId, service_id: ServiceId) -> Result<()> {
+    pub fn add_vnode(&mut self, cluster_id: ClusterId, vnode_id: VNodeId) -> Result<()> {
         let cluster = self.get_mut(cluster_id)?;
-        cluster.service_ids.push(service_id);
+        cluster.vnode_ids.push(vnode_id);
         Ok(())
     }
 

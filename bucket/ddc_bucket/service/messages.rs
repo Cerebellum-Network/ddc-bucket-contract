@@ -1,17 +1,17 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{Balance, ClusterId, DdcBucket, Result, ServiceCreated};
+use crate::ddc_bucket::{Balance, ClusterId, DdcBucket, Result, VNodeCreated};
 
-use super::entity::{ServiceId, ServiceParams};
+use super::entity::{VNodeId, VNodeParams};
 
 impl DdcBucket {
-    pub fn message_service_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
+    pub fn message_vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, service_params: VNodeParams) -> Result<VNodeId> {
         let provider_id = Self::env().caller();
-        let service_id = self.services.create(provider_id, rent_per_month, service_params.clone());
+        let vnode_id = self.vnodes.create(provider_id, rent_per_month, service_params.clone());
 
-        self.clusters.add_service(cluster_id, service_id)?;
+        self.clusters.add_vnode(cluster_id, vnode_id)?;
 
-        Self::env().emit_event(ServiceCreated { service_id, provider_id, rent_per_month, service_params });
-        Ok(service_id)
+        Self::env().emit_event(VNodeCreated { vnode_id, provider_id, rent_per_month, vnode_params: service_params });
+        Ok(vnode_id)
     }
 }

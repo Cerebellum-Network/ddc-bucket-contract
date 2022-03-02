@@ -22,38 +22,38 @@ fn ddc_bucket_works() {
     let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
     pop_caller();
 
-    // Provide a Service.
+    // Provide a VNode.
     let rent_per_month: Balance = 10 * CURRENCY;
-    let service_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id0 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params0.to_string())?;
+    let vnode_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let vnode_id0 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params0.to_string())?;
 
-    // Provide another Service.
+    // Provide another VNode.
     push_caller(provider_id1);
-    let service_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id1 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params1.to_string())?;
+    let vnode_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    let vnode_id1 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params1.to_string())?;
     pop_caller();
-    assert_ne!(service_id0, service_id1);
+    assert_ne!(vnode_id0, vnode_id1);
 
-    // Consumer discovers the Cluster with the 2 Services.
+    // Consumer discovers the Cluster with the 2 VNodes.
     let cluster = ddc_bucket.cluster_get(cluster_id)?;
     assert_eq!(cluster, Cluster {
         cluster_id,
         cluster_params: cluster_params.to_string(),
-        service_ids: vec![service_id0, service_id1],
+        vnode_ids: vec![vnode_id0, vnode_id1],
     });
-    let service0 = ddc_bucket.service_get(service_id0)?;
-    assert_eq!(service0, Service {
-        service_id: service_id0,
+    let vnode0 = ddc_bucket.vnode_get(vnode_id0)?;
+    assert_eq!(vnode0, VNode {
+        vnode_id: vnode_id0,
         provider_id: provider_id0,
         rent_per_month,
-        service_params: service_params0.to_string(),
+        vnode_params: vnode_params0.to_string(),
     });
-    let service1 = ddc_bucket.service_get(service_id1)?;
-    assert_eq!(service1, Service {
-        service_id: service_id1,
+    let vnode1 = ddc_bucket.vnode_get(vnode_id1)?;
+    assert_eq!(vnode1, VNode {
+        vnode_id: vnode_id1,
         provider_id: provider_id1,
         rent_per_month,
-        service_params: service_params1.to_string(),
+        vnode_params: vnode_params1.to_string(),
     });
 
     // Create a bucket.
@@ -81,7 +81,7 @@ fn ddc_bucket_works() {
     // Check the status of the deal.
     let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
     assert_eq!(deal_status0, DealStatus {
-        service_id: service_id0,
+        vnode_id: vnode_id0,
         estimated_rent_end_ms: 1339200000, // TODO: calculate this value.
     });
 
@@ -93,14 +93,14 @@ fn ddc_bucket_works() {
     // The end time increased because there is more deposit.
     let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
     assert_eq!(deal_status0, DealStatus {
-        service_id: service_id0,
+        vnode_id: vnode_id0,
         estimated_rent_end_ms: 14731200000, // TODO: calculate this value.
     });
 
     // The end time of the second deal is the same because it is paid from the same account.
     let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
     assert_eq!(deal_status1, DealStatus {
-        service_id: service_id1,
+        vnode_id: vnode_id1,
         estimated_rent_end_ms: 14731200000, // TODO: calculate this value.
     });
 
@@ -116,7 +116,7 @@ fn ddc_bucket_works() {
     // A provider is looking for the status of his deal with a bucket.
     let deal_of_provider = bucket_status.deal_statuses
         .iter().find(|deal|
-        deal.service_id == service_id1);
+        deal.vnode_id == vnode_id1);
     assert!(deal_of_provider.is_some());
 
     // Provider withdraws in the future.
@@ -137,12 +137,12 @@ fn ddc_bucket_works() {
         ClusterCreated { cluster_id, cluster_params: cluster_params.to_string() }));
 
     // Provider setup.
-    assert!(matches!(evs.pop().unwrap(), Event::ServiceCreated(ev) if ev ==
-        ServiceCreated { service_id: service_id0, provider_id: provider_id0, rent_per_month, service_params: service_params0.to_string() }));
+    assert!(matches!(evs.pop().unwrap(), Event::VNodeCreated(ev) if ev ==
+        VNodeCreated { vnode_id: vnode_id0, provider_id: provider_id0, rent_per_month, vnode_params: vnode_params0.to_string() }));
 
     // Provider setup 2.
-    assert!(matches!(evs.pop().unwrap(), Event::ServiceCreated(ev) if ev ==
-        ServiceCreated { service_id: service_id1, provider_id: provider_id1, rent_per_month, service_params: service_params1.to_string() }));
+    assert!(matches!(evs.pop().unwrap(), Event::VNodeCreated(ev) if ev ==
+        VNodeCreated { vnode_id: vnode_id1, provider_id: provider_id1, rent_per_month, vnode_params: vnode_params1.to_string() }));
 
     // Create bucket.
     assert!(matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
@@ -154,9 +154,9 @@ fn ddc_bucket_works() {
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
         BucketAllocated { bucket_id, cluster_id }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
-        DealCreated { deal_id: deal_id0, bucket_id, service_id: service_id0 }));
+        DealCreated { deal_id: deal_id0, bucket_id, vnode_id: vnode_id0 }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
-        DealCreated { deal_id: deal_id1, bucket_id, service_id: service_id1 }));
+        DealCreated { deal_id: deal_id1, bucket_id, vnode_id: vnode_id1 }));
 
     // Deposit more.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
@@ -228,7 +228,7 @@ fn bucket_list_works() {
 
 
 #[ink::test]
-fn service_list_works() {
+fn vnode_list_works() {
     let accounts = get_accounts();
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
@@ -243,65 +243,65 @@ fn service_list_works() {
     let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
     pop_caller();
 
-    // Create two Services.
+    // Create two VNodes.
     push_caller(owner_id1);
-    let service_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id1 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params1.to_string())?;
+    let vnode_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
+    let vnode_id1 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params1.to_string())?;
     pop_caller();
 
     push_caller(owner_id2);
-    let service_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    let service_id2 = ddc_bucket.service_create(cluster_id, rent_per_month, service_params2.to_string())?;
+    let vnode_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    let vnode_id2 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params2.to_string())?;
     pop_caller();
 
-    assert_ne!(service_id1, service_id2);
+    assert_ne!(vnode_id1, vnode_id2);
     let count = 2;
 
-    let service1 = Service {
-        service_id: service_id1,
+    let vnode1 = VNode {
+        vnode_id: vnode_id1,
         provider_id: owner_id1,
         rent_per_month,
-        service_params: service_params1.to_string(),
+        vnode_params: vnode_params1.to_string(),
     };
 
-    let service2 = Service {
-        service_id: service_id2,
+    let vnode2 = VNode {
+        vnode_id: vnode_id2,
         provider_id: owner_id2,
         rent_per_month,
-        service_params: service_params2.to_string(),
+        vnode_params: vnode_params2.to_string(),
     };
 
     assert_eq!(
-        ddc_bucket.service_list(0, 100, None),
-        (vec![service1.clone(), service2.clone()], count));
+        ddc_bucket.vnode_list(0, 100, None),
+        (vec![vnode1.clone(), vnode2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.service_list(0, 2, None),
-        (vec![service1.clone(), service2.clone()], count));
+        ddc_bucket.vnode_list(0, 2, None),
+        (vec![vnode1.clone(), vnode2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.service_list(0, 1, None),
-        (vec![service1.clone() /*, service2.clone()*/], count));
+        ddc_bucket.vnode_list(0, 1, None),
+        (vec![vnode1.clone() /*, vnode2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.service_list(1, 1, None),
-        (vec![/*service1.clone(),*/ service2.clone()], count));
+        ddc_bucket.vnode_list(1, 1, None),
+        (vec![/*vnode1.clone(),*/ vnode2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.service_list(20, 20, None),
+        ddc_bucket.vnode_list(20, 20, None),
         (vec![], count));
 
     // Filter by owner.
     assert_eq!(
-        ddc_bucket.service_list(0, 100, Some(owner_id1)),
-        (vec![service1.clone() /*, service2.clone()*/], count));
+        ddc_bucket.vnode_list(0, 100, Some(owner_id1)),
+        (vec![vnode1.clone() /*, vnode2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.service_list(0, 100, Some(owner_id2)),
-        (vec![/*service1.clone(),*/ service2.clone()], count));
+        ddc_bucket.vnode_list(0, 100, Some(owner_id2)),
+        (vec![/*vnode1.clone(),*/ vnode2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.service_list(0, 100, Some(owner_id3)),
+        ddc_bucket.vnode_list(0, 100, Some(owner_id3)),
         (vec![], count));
 }
 
@@ -310,7 +310,7 @@ fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
-            Event::ServiceCreated(ev) => println!("EVENT {:?}", ev),
+            Event::VNodeCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
             Event::DealCreated(ev) => println!("EVENT {:?}", ev),

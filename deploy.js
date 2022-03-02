@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "";
-const REUSE_CONTRACT_ADDRESS = "";
+const REUSE_CODE_HASH = "0x75f300198e48015c82edf1eade7f8eab198608a9cbe08a950920c3aa834d834d";
+const REUSE_CONTRACT_ADDRESS = "5EjAx9r2VwMAJDg5zgbUCSfcZNKRz8p7ZoWGdsyjEkvnFYY8";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -102,7 +102,7 @@ async function main() {
     const ownerId = account.address;
     const anyAccountId = account.address;
     const rent_per_month = 10n * CERE;
-    const service_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
+    const vnode_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
     const bucket_params = "{}";
 
     let cluster_id;
@@ -116,37 +116,37 @@ async function main() {
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        cluster_id = ddcBucket.findCreatedId(events, "ClusterCreated");
+        cluster_id = ddcBucket.findCreatedClusterId(events);
         log("New Cluster", cluster_id);
     }
 
-    let service_id;
+    let vnode_id;
     {
-        log("Setup a service…");
+        log("Setup a vnode…");
         const tx = contract.tx
-            .serviceCreate(txOptions, cluster_id, rent_per_month, service_params);
+            .vnodeCreate(txOptions, cluster_id, rent_per_month, vnode_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        service_id = ddcBucket.findCreatedServiceId(events);
-        log("New Service", service_id);
+        vnode_id = ddcBucket.findCreatedVNodeId(events);
+        log("New VNode", vnode_id);
     }
     {
-        log("\nRead service info…");
+        log("\nRead vnode info…");
         const {result, output} = await contract.query
-            .serviceGet(anyAccountId, txOptions, service_id);
+            .vnodeGet(anyAccountId, txOptions, vnode_id);
 
         if (!result.isOk) assert.fail(result.asErr);
 
         log('OUTPUT', output.toHuman());
         assert.deepEqual(output.toJSON(), {
             "ok": {
-                service_id,
+                vnode_id,
                 provider_id,
                 rent_per_month,
-                service_params,
+                vnode_params,
             },
         });
     }
@@ -196,7 +196,7 @@ async function main() {
         output = output.toJSON();
         log('OUTPUT', output);
 
-        assert.deepEqual(output.ok.service_id, service_id);
+        assert.deepEqual(output.ok.vnode_id, vnode_id);
         assert(output.ok.estimated_rent_end_ms > 0);
     }
     {
@@ -209,7 +209,7 @@ async function main() {
         log('OUTPUT', output);
 
         /* TODO
-        assert.deepEqual(output.ok.service_id, service_id);
+        assert.deepEqual(output.ok.vnode_id, vnode_id);
         assert(output.ok.estimated_rent_end_ms > 0);
         assert.deepEqual(output.ok.writer_ids, [ownerId]);
         */

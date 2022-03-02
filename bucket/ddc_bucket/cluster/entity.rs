@@ -5,7 +5,7 @@ use ink_prelude::{
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::ServiceId;
+use crate::ddc_bucket::VNodeId;
 
 pub type ClusterId = u32;
 pub type ClusterParams = String;
@@ -15,5 +15,5 @@ pub type ClusterParams = String;
 pub struct Cluster {
     pub cluster_id: ClusterId,
     pub cluster_params: ClusterParams,
-    pub service_ids: Vec<ServiceId>,
+    pub vnode_ids: Vec<VNodeId>,
 }

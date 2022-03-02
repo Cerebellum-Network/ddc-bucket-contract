@@ -21,11 +21,11 @@ impl DdcBucket {
 
         Self::env().emit_event(BucketAllocated { bucket_id, cluster_id });
 
-        let service_ids = self.clusters.get(cluster_id)?.service_ids.clone();
-        let mut deal_ids = Vec::with_capacity(service_ids.len());
+        let vnode_ids = self.clusters.get(cluster_id)?.vnode_ids.clone();
+        let mut deal_ids = Vec::with_capacity(vnode_ids.len());
 
-        for service_id in service_ids.iter() {
-            let deal_id = self.deal_create(*service_id)?;
+        for vnode_id in vnode_ids.iter() {
+            let deal_id = self.deal_create(*vnode_id)?;
             deal_ids.push(deal_id);
         }
 
@@ -33,9 +33,9 @@ impl DdcBucket {
         bucket.only_owner(owner_id)?;
         bucket.connect_cluster(cluster_id)?;
 
-        for (&service_id, deal_id) in service_ids.iter().zip(deal_ids) {
+        for (&vnode_id, deal_id) in vnode_ids.iter().zip(deal_ids) {
             bucket.deal_ids.push(deal_id);
-            Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
+            Self::env().emit_event(DealCreated { deal_id, bucket_id, vnode_id: vnode_id });
         }
 
 
