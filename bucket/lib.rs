@@ -220,6 +220,7 @@ pub mod ddc_bucket {
         BucketDoesNotExist,
         DealDoesNotExist,
         ClusterDoesNotExist,
+        BucketClusterAlreadyConnected,
         ServiceDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
