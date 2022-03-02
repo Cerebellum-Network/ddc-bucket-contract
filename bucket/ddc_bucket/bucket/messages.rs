@@ -1,7 +1,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{string::String, vec, vec::Vec};
 
-use crate::ddc_bucket::{AccountId, BucketCreated, DdcBucket, DealCreated, Result};
+use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, DealCreated, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
@@ -14,10 +14,12 @@ impl DdcBucket {
         Ok(bucket_id)
     }
 
-    pub fn message_bucket_connect_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
+    pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
         // Receive the payable value.
         self.deposit()?;
         let owner_id = Self::env().caller();
+
+        Self::env().emit_event(BucketAllocated { bucket_id, cluster_id });
 
         let service_ids = self.clusters.get(cluster_id)?.service_ids.clone();
         let mut deal_ids = Vec::with_capacity(service_ids.len());
@@ -36,6 +38,7 @@ impl DdcBucket {
             bucket.deal_ids.push(deal_id);
             Self::env().emit_event(DealCreated { deal_id, bucket_id, service_id });
         }
+
 
         Ok(())
     }

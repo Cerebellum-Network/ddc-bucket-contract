@@ -69,6 +69,15 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketAllocated {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
+        cluster_id: ClusterId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct DealCreated {
         #[ink(topic)]
         deal_id: DealId,
@@ -85,8 +94,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message, payable)]
-        pub fn bucket_connect_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
-            self.message_bucket_connect_cluster(bucket_id, cluster_id)
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
+            self.message_bucket_alloc_into_cluster(bucket_id, cluster_id)
         }
 
         #[ink(message)]

@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0xf0407d7cf18fd72482c900307fea930ba7c433aac316860d5edcc93999b8112b";
-const REUSE_CONTRACT_ADDRESS = "5Hcng9tMZD6mNqKknYsckNs5XLMw4EWsqMtQ2NB23oJwxSwC";
+const REUSE_CODE_HASH = "";
+const REUSE_CONTRACT_ADDRESS = "";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -169,7 +169,7 @@ async function main() {
     {
         log("Create a deal for the bucket…");
         const tx = contract.tx
-            .bucketConnectCluster(txOptionsPay, bucketId, cluster_id);
+            .bucketAllocIntoCluster(txOptionsPay, bucketId, cluster_id);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];

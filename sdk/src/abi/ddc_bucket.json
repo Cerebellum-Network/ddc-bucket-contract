@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xf0407d7cf18fd72482c900307fea930ba7c433aac316860d5edcc93999b8112b",
+    "hash": "0x77f0d2358b9e34565ad44383c74376a86ad4cfdc649b4f0444eb27707e22b943",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -52,6 +52,34 @@
         ],
         "docs": [],
         "name": "BucketCreated"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "name": "BucketAllocated"
       },
       {
         "args": [
@@ -289,7 +317,7 @@
         "docs": [],
         "mutates": true,
         "name": [
-          "bucket_connect_cluster"
+          "bucket_alloc_into_cluster"
         ],
         "payable": true,
         "returnType": {
@@ -298,7 +326,7 @@
           ],
           "type": 23
         },
-        "selector": "0xeb0c7996"
+        "selector": "0x4c482d19"
       },
       {
         "args": [

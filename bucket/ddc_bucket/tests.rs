@@ -64,7 +64,7 @@ fn ddc_bucket_works() {
 
     // Add a deal to the bucket, also depositing some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
-    ddc_bucket.bucket_connect_cluster(bucket_id, cluster_id)?;
+    ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
     pop_caller();
 
     // Check the structure of the bucket including all deal IDs.
@@ -133,7 +133,7 @@ fn ddc_bucket_works() {
     ddc_bucket.provider_withdraw(deal_id1)?;
     pop_caller();
 
-    let mut evs = get_events(10);
+    let mut evs = get_events(11);
     evs.reverse();
 
     // Cluster setup.
@@ -155,6 +155,8 @@ fn ddc_bucket_works() {
     // Add a cluster with 2 deals and an initial deposit.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
+    assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
+        BucketAllocated { bucket_id, cluster_id }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
         DealCreated { deal_id: deal_id0, bucket_id, service_id: service_id0 }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
@@ -314,6 +316,7 @@ fn _print_events(events: &[Event]) {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
             Event::ServiceCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
+            Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
             Event::DealCreated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
             Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
