@@ -14,13 +14,13 @@ pub struct VNodeStore(pub InkVec<VNode>);
 impl VNodeStore {
     pub fn create(&mut self, provider_id: AccountId, rent_per_month: Balance, vnode_params: VNodeParams) -> VNodeId {
         let vnode_id = self.0.len();
-        let service = VNode {
+        let vnode = VNode {
             vnode_id,
             provider_id,
             rent_per_month,
             vnode_params,
         };
-        self.0.push(service);
+        self.0.push(vnode);
         vnode_id
     }
 
@@ -32,7 +32,7 @@ impl VNodeStore {
         let mut vnodes = Vec::with_capacity(limit as usize);
         for vnode_id in offset..offset + limit {
             let vnode = match self.0.get(vnode_id) {
-                None => break, // No more services, stop.
+                None => break, // No more items, stop.
                 Some(vnode) => vnode,
             };
             // Apply the filter if given.

@@ -15,10 +15,10 @@ impl DdcBucket {
 
         // Find where to distribute the revenues.
         let revenue_account_id = {
-            let service = self.vnodes.get(vnode_id)?;
-            // Authorize only the service owner to trigger the distribution.
-            service.only_owner(caller)?;
-            service.revenue_account_id()
+            let vnode = self.vnodes.get(vnode_id)?;
+            // Authorize only the vnode owner to trigger the distribution.
+            vnode.only_owner(caller)?;
+            vnode.revenue_account_id()
         };
 
         let cash = self.billing_settle_flow(flow_id)?;

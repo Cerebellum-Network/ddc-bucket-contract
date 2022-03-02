@@ -32,12 +32,12 @@ async function bucketListStatuses(contract, optionalFilter) {
     return listAll(contract, "bucketListStatuses", optionalFilter);
 }
 
-async function VNodeList(contract, optionalFilter) {
-    return listAll(contract, "VNodeList", optionalFilter);
+async function vnodeList(contract, optionalFilter) {
+    return listAll(contract, "vnodeList", optionalFilter);
 }
 
 
 module.exports = {
     bucketListStatuses,
-    VNodeList,
+    vnodeList,
 };
