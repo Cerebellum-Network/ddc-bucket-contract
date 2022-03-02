@@ -1,5 +1,5 @@
 use ink_lang::{EmitEvent, StaticEnv};
-use ink_prelude::{string::String, vec, vec::Vec};
+use ink_prelude::{vec, vec::Vec};
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, DealCreated, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
@@ -25,8 +25,7 @@ impl DdcBucket {
         let mut deal_ids = Vec::with_capacity(service_ids.len());
 
         for service_id in service_ids.iter() {
-            let deal_params = String::new();
-            let deal_id = self.deal_create(*service_id, deal_params)?;
+            let deal_id = self.deal_create(*service_id)?;
             deal_ids.push(deal_id);
         }
 

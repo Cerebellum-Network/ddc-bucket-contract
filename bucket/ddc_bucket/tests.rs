@@ -71,7 +71,6 @@ fn ddc_bucket_works() {
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
     let deal_id0 = 0;
     let deal_id1 = 1;
-    let deal_params = "".to_string();
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         cluster_ids: vec![cluster_id],
@@ -84,7 +83,6 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status0, DealStatus {
         service_id: service_id0,
         estimated_rent_end_ms: 1339200000, // TODO: calculate this value.
-        deal_params: deal_params.clone(),
     });
 
     // Deposit more value into the account.
@@ -97,7 +95,6 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status0, DealStatus {
         service_id: service_id0,
         estimated_rent_end_ms: 14731200000, // TODO: calculate this value.
-        deal_params: deal_params.clone(),
     });
 
     // The end time of the second deal is the same because it is paid from the same account.
@@ -105,7 +102,6 @@ fn ddc_bucket_works() {
     assert_eq!(deal_status1, DealStatus {
         service_id: service_id1,
         estimated_rent_end_ms: 14731200000, // TODO: calculate this value.
-        deal_params: deal_params.clone(),
     });
 
     // Check the status of the bucket recursively including all deal statuses.

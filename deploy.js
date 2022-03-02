@@ -104,7 +104,6 @@ async function main() {
     const rent_per_month = 10n * CERE;
     const service_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
     const bucket_params = "{}";
-    const deal_params = "{}";
 
     let cluster_id;
     {
