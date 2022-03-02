@@ -7,7 +7,7 @@ use crate::ddc_bucket::{
     Error::*,
     flow::entity::FlowId,
     Result,
-    service::entity::VNodeId,
+    vnode::entity::VNodeId,
 };
 
 use super::entity::{Deal, DealId};

@@ -17,14 +17,14 @@ pub mod ddc_bucket {
     use Error::*;
     use flow::{entity::*, store::*};
     use schedule::*;
-    use service::{entity::*, store::*};
+    use vnode::{entity::*, store::*};
 
     pub mod billing;
     pub mod account;
     pub mod flow;
     pub mod schedule;
     pub mod cash;
-    pub mod service;
+    pub mod vnode;
     pub mod bucket;
     pub mod deal;
     pub mod cluster;

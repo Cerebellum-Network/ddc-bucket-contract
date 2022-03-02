@@ -3,7 +3,7 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
     flow::entity::FlowId,
-    service::entity::VNodeId,
+    vnode::entity::VNodeId,
 };
 
 pub type DealId = u32;
