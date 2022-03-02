@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "";
-const REUSE_CONTRACT_ADDRESS = "";
+const REUSE_CODE_HASH = "0xf0407d7cf18fd72482c900307fea930ba7c433aac316860d5edcc93999b8112b";
+const REUSE_CONTRACT_ADDRESS = "5Hcng9tMZD6mNqKknYsckNs5XLMw4EWsqMtQ2NB23oJwxSwC";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -106,17 +106,33 @@ async function main() {
     const bucket_params = "{}";
     const deal_params = "{}";
 
+    let cluster_id;
+    {
+        log("Setup a cluster…");
+        let cluster_params = "{}";
+        const tx = contract.tx
+            .clusterCreate(txOptions, cluster_params);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        cluster_id = ddcBucket.findCreatedId(events, "ClusterCreated");
+        log("New Cluster", cluster_id);
+    }
+
     let service_id;
     {
         log("Setup a service…");
         const tx = contract.tx
-            .serviceCreate(txOptions, rent_per_month, service_params);
+            .serviceCreate(txOptions, cluster_id, rent_per_month, service_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         service_id = ddcBucket.findCreatedServiceId(events);
+        log("New Service", service_id);
     }
     {
         log("\nRead service info…");
@@ -153,7 +169,7 @@ async function main() {
     {
         log("Create a deal for the bucket…");
         const tx = contract.tx
-            .bucketAddDeal(txOptionsPay, bucketId, service_id, deal_params);
+            .bucketConnectCluster(txOptionsPay, bucketId, cluster_id);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];

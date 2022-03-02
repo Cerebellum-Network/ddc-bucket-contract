@@ -79,7 +79,7 @@ fn ddc_bucket_works() {
         bucket_params: bucket_params.to_string(),
     });
 
-    // Provider checks the status of the deal.
+    // Check the status of the deal.
     let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
     assert_eq!(deal_status0, DealStatus {
         service_id: service_id0,
@@ -116,6 +116,12 @@ fn ddc_bucket_works() {
         writer_ids: vec![consumer_id],
         deal_statuses: vec![deal_status0, deal_status1],
     });
+
+    // A provider is looking for the status of his deal with a bucket.
+    let deal_of_provider = bucket_status.deal_statuses
+        .iter().find(|deal|
+        deal.service_id == service_id1);
+    assert!(deal_of_provider.is_some());
 
     // Provider withdraws in the future.
     advance_block::<DefaultEnvironment>().unwrap();
