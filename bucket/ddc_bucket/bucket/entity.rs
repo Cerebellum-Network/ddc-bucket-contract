@@ -6,8 +6,8 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    AccountId, deal::entity::{DealId, DealStatus}, Error::*,
-    Result,
+    AccountId, ClusterId, deal::entity::{DealId, DealStatus},
+    Error::*, Result,
 };
 
 pub type BucketId = u32;
@@ -17,6 +17,7 @@ pub type BucketParams = String;
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Bucket {
     pub owner_id: AccountId,
+    pub cluster_ids: Vec<ClusterId>,
     pub deal_ids: Vec<DealId>,
     pub bucket_params: BucketParams,
 }
@@ -33,5 +34,14 @@ pub struct BucketStatus {
 impl Bucket {
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
+    }
+
+    pub fn connect_cluster(&mut self, cluster_id: ClusterId) -> Result<()> {
+        if self.cluster_ids.contains(&cluster_id) {
+            Err(BucketClusterAlreadyConnected)
+        } else {
+            self.cluster_ids.push(cluster_id);
+            Ok(())
+        }
     }
 }

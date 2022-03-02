@@ -7,21 +7,20 @@ use crate::ddc_bucket::{
     Error::*,
     flow::entity::FlowId,
     Result,
-    service::entity::ServiceId,
+    vnode::entity::VNodeId,
 };
 
-use super::entity::{Deal, DealId, DealParams};
+use super::entity::{Deal, DealId};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct DealStore(pub InkVec<Deal>);
 
 impl DealStore {
-    pub fn create(&mut self, service_id: ServiceId, flow_id: FlowId, deal_params: DealParams) -> DealId {
+    pub fn create(&mut self, vnode_id: VNodeId, flow_id: FlowId) -> DealId {
         let deal = Deal {
-            service_id,
+            vnode_id,
             flow_id,
-            deal_params,
         };
         let deal_id = self.0.len();
         self.0.push(deal);

@@ -12,27 +12,30 @@ pub mod ddc_bucket {
     use account::store::*;
     use bucket::{entity::*, store::*};
     use cash::*;
+    use cluster::{entity::*, store::*};
     use deal::{entity::*, store::*};
     use Error::*;
     use flow::{entity::*, store::*};
     use schedule::*;
-    use service::{entity::*, store::*};
+    use vnode::{entity::*, store::*};
 
     pub mod billing;
     pub mod account;
     pub mod flow;
     pub mod schedule;
     pub mod cash;
-    pub mod service;
+    pub mod vnode;
     pub mod bucket;
     pub mod deal;
+    pub mod cluster;
 
     // ---- Global state ----
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
         deals: DealStore,
-        services: ServiceStore,
+        clusters: ClusterStore,
+        vnodes: VNodeStore,
         accounts: AccountStore,
         flows: FlowStore,
     }
@@ -43,7 +46,8 @@ pub mod ddc_bucket {
             Self {
                 buckets: BucketStore::default(),
                 deals: DealStore::default(),
-                services: ServiceStore::default(),
+                clusters: ClusterStore::default(),
+                vnodes: VNodeStore::default(),
                 accounts: AccountStore::default(),
                 flows: FlowStore::default(),
             }
@@ -65,13 +69,22 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketAllocated {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
+        cluster_id: ClusterId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct DealCreated {
         #[ink(topic)]
         deal_id: DealId,
         #[ink(topic)]
         bucket_id: BucketId,
         #[ink(topic)]
-        service_id: ServiceId,
+        vnode_id: VNodeId,
     }
 
     impl DdcBucket {
@@ -81,8 +94,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message, payable)]
-        pub fn bucket_add_deal(&mut self, bucket_id: BucketId, service_id: ServiceId, deal_params: DealParams) -> Result<DealId> {
-            self.message_bucket_add_deal(bucket_id, service_id, deal_params)
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
+            self.message_bucket_alloc_into_cluster(bucket_id, cluster_id)
         }
 
         #[ink(message)]
@@ -129,36 +142,65 @@ pub mod ddc_bucket {
     // ---- End Deal ----
 
 
-    // ---- Service ----
+    // ---- Cluster ----
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ServiceCreated {
+    pub struct ClusterCreated {
         #[ink(topic)]
-        service_id: ServiceId,
-        #[ink(topic)]
-        provider_id: AccountId,
-        rent_per_month: Balance,
-        service_params: ServiceParams,
+        cluster_id: ClusterId,
+        cluster_params: ClusterParams,
     }
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn service_create(&mut self, rent_per_month: Balance, service_params: ServiceParams) -> Result<ServiceId> {
-            self.message_service_create(rent_per_month, service_params)
+        pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<VNodeId> {
+            self.message_cluster_create(cluster_params)
         }
 
         #[ink(message)]
-        pub fn service_get(&self, service_id: ServiceId) -> Result<Service> {
-            Ok(self.services.get(service_id)?.clone())
+        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<Cluster> {
+            Ok(self.clusters.get(cluster_id)?.clone())
         }
 
         #[ink(message)]
-        pub fn service_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Service>, u32) {
-            self.services.list(offset, limit, filter_provider_id)
+        pub fn cluster_list(&self, offset: u32, limit: u32) -> (Vec<Cluster>, u32) {
+            self.clusters.list(offset, limit)
         }
     }
-    // ---- End Service ----
+    // ---- End Cluster ----
+
+
+    // ---- VNode ----
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct VNodeCreated {
+        #[ink(topic)]
+        vnode_id: VNodeId,
+        #[ink(topic)]
+        provider_id: AccountId,
+        rent_per_month: Balance,
+        vnode_params: VNodeParams,
+    }
+
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
+            self.message_vnode_create(cluster_id, rent_per_month, vnode_params)
+        }
+
+        #[ink(message)]
+        pub fn vnode_get(&self, vnode_id: VNodeId) -> Result<VNode> {
+            Ok(self.vnodes.get(vnode_id)?.clone())
+        }
+
+        #[ink(message)]
+        pub fn vnode_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<VNode>, u32) {
+            self.vnodes.list(offset, limit, filter_provider_id)
+        }
+    }
+    // ---- End VNode ----
 
 
     // ---- Billing ----
@@ -186,7 +228,9 @@ pub mod ddc_bucket {
     pub enum Error {
         BucketDoesNotExist,
         DealDoesNotExist,
-        ServiceDoesNotExist,
+        ClusterDoesNotExist,
+        BucketClusterAlreadyConnected,
+        VNodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
         UnauthorizedProvider,
