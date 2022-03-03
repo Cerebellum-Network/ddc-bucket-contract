@@ -3,7 +3,7 @@ use crate::ddc_bucket::tests::as_storage::STORAGE_ENGINE;
 
 use super::as_gateway::GATEWAY_ENGINE;
 use super::node::{find_cluster, TestRequest};
-use super::test_utils::*;
+use super::env_utils::*;
 use crate::ddc_bucket::tests::node::TestAction;
 
 pub struct TestUser {

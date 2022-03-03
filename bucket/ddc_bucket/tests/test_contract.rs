@@ -1,16 +1,7 @@
 use ink_lang as ink;
-
-use test_utils::*;
+use super::env_utils::*;
 
 use crate::ddc_bucket::*;
-
-mod test_utils;
-mod test_network;
-mod as_storage;
-mod as_gateway;
-mod as_user;
-mod node;
-
 
 #[ink::test]
 fn ddc_bucket_works() {

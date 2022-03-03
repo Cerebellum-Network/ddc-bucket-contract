@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::ddc_bucket::*;
 
-use super::test_utils::*;
+use super::env_utils::*;
 
 pub struct TestNode {
     pub provider_id: AccountId,

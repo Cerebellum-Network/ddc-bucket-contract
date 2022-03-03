@@ -1,16 +1,11 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::node::TestAction;
 
-use super::{as_gateway::*, as_storage::*, as_user::*, test_utils::*};
+use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 
 #[ink::test]
-fn partitioning_works() {
-    let _ddc_bucket = setup_cluster()?;
-}
-
-fn setup_cluster() -> Result<DdcBucket> {
+fn storage_network_works() {
     let accounts = get_accounts();
 
     let mut contract = DdcBucket::new();
@@ -61,6 +56,4 @@ fn setup_cluster() -> Result<DdcBucket> {
         storage_node0.handle_request(&contract, &storage_requests[0])?;
         storage_node1.handle_request(&contract, &storage_requests[1])?;
     }
-
-    Ok(contract)
 }
