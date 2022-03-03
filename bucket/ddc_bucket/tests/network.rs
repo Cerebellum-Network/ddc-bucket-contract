@@ -12,32 +12,36 @@ fn partitioning_works() {
 fn setup_cluster() -> Result<DdcBucket> {
     let accounts = get_accounts();
 
-    let mut ddc_bucket = DdcBucket::new();
+    let mut contract = DdcBucket::new();
     set_balance(contract_id(), 1000); // For contract subsistence.
 
     // Create a storage Cluster and a gateway Cluster.
     push_caller(accounts.alice);
-    let storage_cluster_id = ddc_bucket.cluster_create("engine storage".to_string())?;
-    let gateway_cluster_id = ddc_bucket.cluster_create("engine gateway".to_string())?;
+    let storage_cluster_id = contract.cluster_create(STORAGE_ENGINE.to_string())?;
+    let gateway_cluster_id = contract.cluster_create(GATEWAY_ENGINE.to_string())?;
     pop_caller();
 
     // Provide one gateway VNode.
     let mut gateway_node = TestGateway::new(accounts.alice, "alice");
-    gateway_node.vnode.join_cluster(&mut ddc_bucket, gateway_cluster_id)?;
+    gateway_node.vnode.join_cluster(&mut contract, gateway_cluster_id)?;
 
     // Provide two storage VNode’s.
     let mut storage_node0 = TestStorage::new(accounts.bob, "bob");
-    storage_node0.vnode.join_cluster(&mut ddc_bucket, storage_cluster_id)?;
+    storage_node0.vnode.join_cluster(&mut contract, storage_cluster_id)?;
 
     let mut storage_node1 = TestStorage::new(accounts.charlie, "charlie");
-    storage_node1.vnode.join_cluster(&mut ddc_bucket, storage_cluster_id)?;
+    storage_node1.vnode.join_cluster(&mut contract, storage_cluster_id)?;
 
     // Create a user with a storage bucket.
-    let user = TestUser::new(&mut ddc_bucket, accounts.django)?;
+    let user = TestUser::new(&mut contract, accounts.django)?;
 
     // Simulate a request.
-    let request = user.make_request(&ddc_bucket)?;
-    gateway_node.handle_request(request)?;
+    let request = user.make_request(&contract)?;
+    let storage_requests = gateway_node.handle_request(&contract, request)?;
 
-    Ok(ddc_bucket)
+    assert_eq!(storage_requests.len(), 2);
+    storage_node0.handle_request(&contract, &storage_requests[0]);
+    storage_node1.handle_request(&contract, &storage_requests[1]);
+
+    Ok(contract)
 }

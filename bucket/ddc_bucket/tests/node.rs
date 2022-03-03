@@ -15,18 +15,31 @@ impl TestNode {
         Self { provider_id, vnode_ids: vec![], engine_name: engine_name.into(), url }
     }
 
-    pub fn join_cluster(&mut self, ddc_bucket: &mut DdcBucket, cluster_id: ClusterId) -> Result<()> {
+    pub fn join_cluster(&mut self, contract: &mut DdcBucket, cluster_id: ClusterId) -> Result<()> {
         push_caller(self.provider_id);
 
         let rent_per_month: Balance = 10 * CURRENCY;
         let vnode_params = self.url.clone();
 
-        let vnode_id = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params)?;
+        let vnode_id = contract.vnode_create(cluster_id, rent_per_month, vnode_params)?;
         self.vnode_ids.push(vnode_id);
 
         pop_caller();
         Ok(())
     }
+}
+
+pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<Cluster> {
+    // Discover the available clusters.
+    let (clusters, _count) = contract.cluster_list(0, 20);
+
+    // Pick the first one that provides the right engine.
+    let cluster = clusters.iter()
+        .find(|cluster|
+            cluster.cluster_params == engine_name)
+        .expect(&format!("No cluster found for engine {}", engine_name));
+
+    Ok(cluster.clone())
 }
 
 pub struct TestRequest {
