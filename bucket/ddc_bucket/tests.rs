@@ -1,9 +1,16 @@
 use ink_lang as ink;
 
-use super::*;
-use super::test_utils::*;
+use test_utils::*;
 
-type Event = <DdcBucket as ink::BaseEvent>::Type;
+use crate::ddc_bucket::*;
+
+mod test_utils;
+
+mod network;
+mod as_storage;
+mod as_gateway;
+mod as_user;
+mod node;
 
 
 #[ink::test]
@@ -62,7 +69,7 @@ fn ddc_bucket_works() {
     let bucket_id = ddc_bucket.bucket_create(bucket_params.clone())?;
     pop_caller();
 
-    // Add a deal to the bucket, also depositing some value.
+    // Allocate the bucket to the cluster, also depositing some value.
     push_caller_value(consumer_id, 10 * CURRENCY);
     ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
     pop_caller();
@@ -303,19 +310,4 @@ fn vnode_list_works() {
     assert_eq!(
         ddc_bucket.vnode_list(0, 100, Some(owner_id3)),
         (vec![], count));
-}
-
-
-fn _print_events(events: &[Event]) {
-    for ev in events.iter() {
-        match ev {
-            Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
-            Event::VNodeCreated(ev) => println!("EVENT {:?}", ev),
-            Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
-            Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
-            Event::DealCreated(ev) => println!("EVENT {:?}", ev),
-            Event::Deposit(ev) => println!("EVENT {:?}", ev),
-            Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
-        }
-    }
 }
