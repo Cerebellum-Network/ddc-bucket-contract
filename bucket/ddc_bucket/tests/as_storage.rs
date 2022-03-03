@@ -20,13 +20,23 @@ impl TestStorage {
         }
     }
 
-    pub fn handle_request(&mut self, _contract: &DdcBucket, request: &TestRequest) {
+    pub fn handle_request(&mut self, contract: &DdcBucket, request: &TestRequest) -> Result<()> {
         assert_eq!(request.url, self.vnode.url, "wrong storage URL");
 
-        // TODO: check bucket - cluster - node relationship.
+        // Fetch the status of this bucket.
+        let status = contract.bucket_get_status(request.bucket_id)?;
+        let cluster_id = status.bucket.cluster_ids.first().expect("bucket has no clusters");
+
+        // Check that this bucket is allocated in the storage cluster of this node.
+        let allocated = self.vnode.cluster_ids.contains(cluster_id);
+        assert!(allocated, "bucket is not allocated on this node");
 
         match &request.action {
             TestAction::Write(value) => {
+                // Check the writer permission.
+                let authorized = status.writer_ids.contains(&request.sender);
+                assert!(authorized, "sender is not authorized to write to this bucket");
+
                 self.stored_data.insert(request.bucket_id, value.clone());
             }
 
@@ -38,5 +48,6 @@ impl TestStorage {
                 assert_eq!(stored_value, expected_value, "Incorrect stored data");
             }
         };
+        Ok(())
     }
 }

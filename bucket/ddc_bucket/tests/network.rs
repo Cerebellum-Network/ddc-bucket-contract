@@ -47,8 +47,8 @@ fn setup_cluster() -> Result<DdcBucket> {
 
         // Forward requests to storage nodes.
         assert_eq!(storage_requests.len(), 2);
-        storage_node0.handle_request(&contract, &storage_requests[0]);
-        storage_node1.handle_request(&contract, &storage_requests[1]);
+        storage_node0.handle_request(&contract, &storage_requests[0])?;
+        storage_node1.handle_request(&contract, &storage_requests[1])?;
     }
 
     // Simulate a read request to the gateway.
@@ -58,8 +58,8 @@ fn setup_cluster() -> Result<DdcBucket> {
         let storage_requests = gateway_node.handle_request(&contract, request)?;
         // Forward requests to storage nodes.
         assert_eq!(storage_requests.len(), 2);
-        storage_node0.handle_request(&contract, &storage_requests[0]);
-        storage_node1.handle_request(&contract, &storage_requests[1]);
+        storage_node0.handle_request(&contract, &storage_requests[0])?;
+        storage_node1.handle_request(&contract, &storage_requests[1])?;
     }
 
     Ok(contract)

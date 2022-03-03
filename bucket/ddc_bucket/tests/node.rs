@@ -1,10 +1,13 @@
+use std::collections::HashSet;
+
 use crate::ddc_bucket::*;
 
 use super::test_utils::*;
 
 pub struct TestNode {
     pub provider_id: AccountId,
-    pub vnode_ids: Vec<VNodeId>,
+    pub vnode_ids: HashSet<VNodeId>,
+    pub cluster_ids: HashSet<ClusterId>,
     pub engine_name: String,
     pub url: String,
 }
@@ -12,7 +15,8 @@ pub struct TestNode {
 impl TestNode {
     pub fn new(provider_id: AccountId, engine_name: &str, node_name: &str) -> Self {
         let url = format!("https://node-{}.ddc.cere.network/{}/", node_name, engine_name);
-        Self { provider_id, vnode_ids: vec![], engine_name: engine_name.into(), url }
+
+        Self { provider_id, vnode_ids: Default::default(), cluster_ids: Default::default(), engine_name: engine_name.into(), url }
     }
 
     pub fn join_cluster(&mut self, contract: &mut DdcBucket, cluster_id: ClusterId) -> Result<()> {
@@ -22,7 +26,8 @@ impl TestNode {
         let vnode_params = self.url.clone();
 
         let vnode_id = contract.vnode_create(cluster_id, rent_per_month, vnode_params)?;
-        self.vnode_ids.push(vnode_id);
+        self.vnode_ids.insert(vnode_id);
+        self.cluster_ids.insert(cluster_id);
 
         pop_caller();
         Ok(())
