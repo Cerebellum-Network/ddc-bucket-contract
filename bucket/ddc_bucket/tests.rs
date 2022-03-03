@@ -5,8 +5,7 @@ use test_utils::*;
 use crate::ddc_bucket::*;
 
 mod test_utils;
-
-mod network;
+mod test_network;
 mod as_storage;
 mod as_gateway;
 mod as_user;
