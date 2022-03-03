@@ -46,4 +46,11 @@ pub struct TestRequest {
     pub url: String,
     pub bucket_id: BucketId,
     pub sender: AccountId,
+    pub action: TestAction,
+}
+
+#[derive(Clone)]
+pub enum TestAction {
+    Write(String),
+    Read(String),
 }

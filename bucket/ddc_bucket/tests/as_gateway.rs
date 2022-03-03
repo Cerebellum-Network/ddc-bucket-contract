@@ -35,6 +35,7 @@ impl TestGateway {
                 url: storage_url,
                 bucket_id: client_request.bucket_id,
                 sender: client_request.sender,
+                action: client_request.action.clone(),
             };
             storage_requests.push(storage_request);
         }
