@@ -22,18 +22,22 @@ fn setup_cluster() -> Result<DdcBucket> {
     pop_caller();
 
     // Provide one gateway VNode.
-    let mut gateway_node = TestGateway::new(accounts.alice);
+    let mut gateway_node = TestGateway::new(accounts.alice, "alice");
     gateway_node.vnode.join_cluster(&mut ddc_bucket, gateway_cluster_id)?;
 
     // Provide two storage VNode’s.
-    let mut storage_node0 = TestStorage::new(accounts.bob);
+    let mut storage_node0 = TestStorage::new(accounts.bob, "bob");
     storage_node0.vnode.join_cluster(&mut ddc_bucket, storage_cluster_id)?;
 
-    let mut storage_node1 = TestStorage::new(accounts.charlie);
+    let mut storage_node1 = TestStorage::new(accounts.charlie, "charlie");
     storage_node1.vnode.join_cluster(&mut ddc_bucket, storage_cluster_id)?;
 
-    // Create a bucket.
-    let _user = TestUser::new(&mut ddc_bucket, accounts.django)?;
+    // Create a user with a storage bucket.
+    let user = TestUser::new(&mut ddc_bucket, accounts.django)?;
+
+    // Simulate a request.
+    let request = user.make_request(&ddc_bucket)?;
+    gateway_node.handle_request(request)?;
 
     Ok(ddc_bucket)
 }

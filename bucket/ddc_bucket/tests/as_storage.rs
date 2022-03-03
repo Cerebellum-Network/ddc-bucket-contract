@@ -7,8 +7,8 @@ pub struct TestStorage {
 }
 
 impl TestStorage {
-    pub fn new(provider_id: AccountId) -> Self {
-        Self { vnode: TestNode::new(provider_id, "storage") }
+    pub fn new(provider_id: AccountId, node_name: &str) -> Self {
+        Self { vnode: TestNode::new(provider_id, "storage", node_name) }
     }
 
     pub fn handle_request(&self, _bucket_id: BucketId) {}
