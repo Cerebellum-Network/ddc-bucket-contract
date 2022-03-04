@@ -27,9 +27,12 @@ impl TestGateway {
         let topology = Topology::from_str(&cluster.cluster_params).unwrap();
         assert_eq!(topology.engine_name, STORAGE_ENGINE, "cluster should run the storage engine");
 
+        let replica_indices = topology.get_replica_indices(0);
+
         // Make a request to the right storage nodes.
-        for vnode_id in cluster.vnode_ids {
-            let storage_vnode = contract.vnode_get(vnode_id)?;
+        for index in replica_indices {
+            let vnode_id = cluster.vnode_ids.get(index).expect("Not enough vnodes");
+            let storage_vnode = contract.vnode_get(*vnode_id)?;
             // Get the URL of the storage node.
             let storage_url = storage_vnode.vnode_params;
             // Prepare a request.

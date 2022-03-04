@@ -16,11 +16,19 @@ fn storage_network_works() {
     push_caller(accounts.alice);
 
     let storage_cluster_id = {
-        let topology = Topology { engine_name: STORAGE_ENGINE.to_string() };
+        let topology = Topology {
+            engine_name: STORAGE_ENGINE.to_string(),
+            shard_count: 2,
+            replica_count: 2,
+        };
         contract.cluster_create(topology.to_string().unwrap())?
     };
     let gateway_cluster_id = {
-        let topology = Topology { engine_name: GATEWAY_ENGINE.to_string() };
+        let topology = Topology {
+            engine_name: GATEWAY_ENGINE.to_string(),
+            shard_count: 1,
+            replica_count: 1,
+        };
         contract.cluster_create(topology.to_string().unwrap())?
     };
 
@@ -30,17 +38,24 @@ fn storage_network_works() {
     let mut gateway_node = TestGateway::new(accounts.alice, "alice");
     gateway_node.vnode.join_cluster(&mut contract, gateway_cluster_id)?;
 
-    // Provide two storage VNode’s.
-    let mut storage_node0 = TestStorage::new(accounts.bob, "bob");
-    storage_node0.vnode.join_cluster(&mut contract, storage_cluster_id)?;
+    // Provide storage VNodes.
+    let node_specs = vec![
+        (accounts.charlie, "charlie"),
+        (accounts.django, "django"),
+        (accounts.eve, "eve"),
+        (accounts.frank, "frank"),
+    ];
+    let mut storage_nodes: Vec<TestStorage> =
+        node_specs.iter().map(|spec| {
+            let mut node = TestStorage::new(spec.0, spec.1);
+            node.vnode.join_cluster(&mut contract, storage_cluster_id).unwrap();
+            node
+        }).collect();
 
-    let mut storage_node1 = TestStorage::new(accounts.charlie, "charlie");
-    storage_node1.vnode.join_cluster(&mut contract, storage_cluster_id)?;
-
-    assert_ne!(storage_node0.vnode.url, storage_node1.vnode.url, "nodes must have different URLs");
+    assert_ne!(storage_nodes[0].vnode.url, storage_nodes[1].vnode.url, "nodes must have different URLs");
 
     // Create a user with a storage bucket.
-    let user = TestUser::new(&mut contract, accounts.django)?;
+    let user = TestUser::new(&mut contract, accounts.bob)?;
 
     // Simulate a write request to the gateway.
     let data = "data";
@@ -51,8 +66,8 @@ fn storage_network_works() {
 
         // Forward requests to storage nodes.
         assert_eq!(storage_requests.len(), 2);
-        storage_node0.handle_request(&contract, &storage_requests[0])?;
-        storage_node1.handle_request(&contract, &storage_requests[1])?;
+        storage_nodes[0].handle_request(&contract, &storage_requests[0])?;
+        storage_nodes[1].handle_request(&contract, &storage_requests[1])?;
     }
 
     // Simulate a read request to the gateway.
@@ -62,7 +77,7 @@ fn storage_network_works() {
         let storage_requests = gateway_node.handle_request(&contract, request)?;
         // Forward requests to storage nodes.
         assert_eq!(storage_requests.len(), 2);
-        storage_node0.handle_request(&contract, &storage_requests[0])?;
-        storage_node1.handle_request(&contract, &storage_requests[1])?;
+        storage_nodes[0].handle_request(&contract, &storage_requests[0])?;
+        storage_nodes[1].handle_request(&contract, &storage_requests[1])?;
     }
 }
