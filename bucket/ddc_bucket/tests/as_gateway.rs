@@ -5,6 +5,7 @@ use super::cluster::Topology;
 use super::node::{TestNode, TestRequest};
 
 pub const GATEWAY_ENGINE: &str = "gateway";
+pub const DEFAULT_REPLICATION: usize = 2;
 
 pub struct TestGateway {
     pub vnode: TestNode,
@@ -28,7 +29,8 @@ impl TestGateway {
         assert_eq!(topology.engine_name, STORAGE_ENGINE, "cluster should run the storage engine");
 
         let replica_indices = topology.get_replica_indices(
-            client_request.action.routing_key);
+            client_request.action.routing_key, DEFAULT_REPLICATION);
+        println!("REP IDX {:?}", replica_indices);
 
         // Make a request to the right storage nodes.
         for index in replica_indices {

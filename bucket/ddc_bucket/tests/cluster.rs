@@ -3,8 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Topology {
     pub engine_name: String,
-    pub shard_count: usize,
-    pub replica_count: usize,
+    pub partition_count: usize,
 }
 
 impl Topology {
@@ -16,12 +15,9 @@ impl Topology {
         serde_json::from_str(ser)
     }
 
-    pub fn get_replica_indices(&self, routing_key: usize) -> Vec<usize> {
-        // Simulate routing.
-        let shard_index = routing_key % self.shard_count;
-        let first = shard_index * self.replica_count;
-        // Find all the replicas for this shard.
-        let indices = first..first + self.replica_count;
-        indices.collect()
+    pub fn get_replica_indices(&self, routing_key: usize, replication: usize) -> Vec<usize> {
+        (0..replication).map(|i|
+            (routing_key + i) % self.partition_count
+        ).collect()
     }
 }

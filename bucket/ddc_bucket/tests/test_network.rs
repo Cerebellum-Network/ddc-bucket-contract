@@ -15,19 +15,24 @@ fn storage_network_works() {
     // Create a storage Cluster and a gateway Cluster.
     push_caller(accounts.alice);
 
+    let vnode_specs = vec![
+        (accounts.charlie, "charlie"),
+        (accounts.django, "django"),
+        (accounts.eve, "eve"),
+        (accounts.frank, "frank"),
+    ];
+
     let storage_cluster_id = {
         let topology = Topology {
             engine_name: STORAGE_ENGINE.to_string(),
-            shard_count: 2,
-            replica_count: 2,
+            partition_count: vnode_specs.len(),
         };
         contract.cluster_create(topology.to_string().unwrap())?
     };
     let gateway_cluster_id = {
         let topology = Topology {
             engine_name: GATEWAY_ENGINE.to_string(),
-            shard_count: 1,
-            replica_count: 1,
+            partition_count: 1,
         };
         contract.cluster_create(topology.to_string().unwrap())?
     };
@@ -39,14 +44,9 @@ fn storage_network_works() {
     gateway_node.vnode.join_cluster(&mut contract, gateway_cluster_id)?;
 
     // Provide storage VNodes.
-    let node_specs = vec![
-        (accounts.charlie, "charlie"),
-        (accounts.django, "django"),
-        (accounts.eve, "eve"),
-        (accounts.frank, "frank"),
-    ];
+
     let mut storage_nodes: Vec<TestStorage> =
-        node_specs.iter().map(|spec| {
+        vnode_specs.iter().map(|spec| {
             let mut node = TestStorage::new(spec.0, spec.1);
             node.vnode.join_cluster(&mut contract, storage_cluster_id).unwrap();
             node
@@ -73,7 +73,7 @@ fn storage_network_works() {
         Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Write },
         &[0, 1]);
     execute_action(
-        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Write },
+        Action { routing_key: 2, data: "data in shard 1".to_string(), op: Op::Write },
         &[2, 3]);
 
     // Simulate read requests to the gateway.
@@ -81,6 +81,6 @@ fn storage_network_works() {
         Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Read },
         &[0, 1]);
     execute_action(
-        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Read },
+        Action { routing_key: 2, data: "data in shard 1".to_string(), op: Op::Read },
         &[2, 3]);
 }
