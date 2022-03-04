@@ -16,10 +16,12 @@ fn storage_network_works() {
     push_caller(accounts.alice);
 
     let vnode_specs = vec![
-        (accounts.charlie, "charlie"),
-        (accounts.django, "django"),
-        (accounts.eve, "eve"),
-        (accounts.frank, "frank"),
+        (accounts.charlie, "charlie-0"),
+        (accounts.django, "django-0"),
+        (accounts.eve, "eve-0"),
+        (accounts.charlie, "charlie-1"),
+        (accounts.django, "django-1"),
+        (accounts.eve, "eve-1"),
     ];
 
     let storage_cluster_id = {
@@ -73,14 +75,20 @@ fn storage_network_works() {
         Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Write },
         &[0, 1]);
     execute_action(
-        Action { routing_key: 2, data: "data in shard 1".to_string(), op: Op::Write },
-        &[2, 3]);
+        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Write },
+        &[1, 2]);
+    execute_action(
+        Action { routing_key: 4, data: "data in shard 4".to_string(), op: Op::Write },
+        &[4, 5]);
 
     // Simulate read requests to the gateway.
     execute_action(
         Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Read },
         &[0, 1]);
     execute_action(
-        Action { routing_key: 2, data: "data in shard 1".to_string(), op: Op::Read },
-        &[2, 3]);
+        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Read },
+        &[1, 2]);
+    execute_action(
+        Action { routing_key: 4, data: "data in shard 4".to_string(), op: Op::Read },
+        &[4, 5]);
 }

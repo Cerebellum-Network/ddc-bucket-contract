@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::ddc_bucket::*;
 
 use super::node::{Op, TestNode, TestRequest};
@@ -8,7 +6,13 @@ pub const STORAGE_ENGINE: &str = "storage";
 
 pub struct TestStorage {
     pub vnode: TestNode,
-    pub stored_data: HashMap<BucketId, String>,
+    stored_data: Vec<Row>,
+}
+
+struct Row {
+    bucket_id: BucketId,
+    routing_key: usize,
+    data: String,
 }
 
 impl TestStorage {
@@ -30,7 +34,9 @@ impl TestStorage {
         let allocated = self.vnode.cluster_ids.contains(cluster_id);
         assert!(allocated, "bucket is not allocated on this node");
 
-        let data = &request.action.data;
+        let bucket_id = request.bucket_id;
+        let routing_key = request.action.routing_key;
+        let data = request.action.data.clone();
 
         match &request.action.op {
             Op::Write => {
@@ -38,15 +44,18 @@ impl TestStorage {
                 let authorized = status.writer_ids.contains(&request.sender);
                 assert!(authorized, "sender is not authorized to write to this bucket");
 
-                self.stored_data.insert(request.bucket_id, data.clone());
+                self.stored_data.push(
+                    Row { bucket_id, routing_key, data });
             }
 
             Op::Read => {
-                let stored_value = self.stored_data
-                    .get(&request.bucket_id)
+                let stored_value = self.stored_data.iter()
+                    .rfind(|row| {
+                        row.bucket_id == bucket_id && row.routing_key == routing_key
+                    })
                     .expect("No stored data for bucket");
 
-                assert_eq!(stored_value, data, "Incorrect stored data");
+                assert_eq!(stored_value.data, data, "Incorrect stored data");
             }
         };
         Ok(())
