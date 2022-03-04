@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::ddc_bucket::*;
+use crate::ddc_bucket::tests::cluster::Topology;
 
 use super::env_utils::*;
 
@@ -40,8 +41,10 @@ pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<Cluster> 
 
     // Pick the first one that provides the right engine.
     let cluster = clusters.iter()
-        .find(|cluster|
-            cluster.cluster_params == engine_name)
+        .find(|cluster| {
+            let topology = Topology::from_str(&cluster.cluster_params).unwrap();
+            topology.engine_name == engine_name
+        })
         .expect(&format!("No cluster found for engine {}", engine_name));
 
     Ok(cluster.clone())

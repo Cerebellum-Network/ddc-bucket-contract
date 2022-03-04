@@ -1,6 +1,7 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
+use crate::ddc_bucket::tests::cluster::Topology;
 
 use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 
@@ -13,8 +14,16 @@ fn storage_network_works() {
 
     // Create a storage Cluster and a gateway Cluster.
     push_caller(accounts.alice);
-    let storage_cluster_id = contract.cluster_create(STORAGE_ENGINE.to_string())?;
-    let gateway_cluster_id = contract.cluster_create(GATEWAY_ENGINE.to_string())?;
+
+    let storage_cluster_id = {
+        let topology = Topology { engine_name: STORAGE_ENGINE.to_string() };
+        contract.cluster_create(topology.to_string().unwrap())?
+    };
+    let gateway_cluster_id = {
+        let topology = Topology { engine_name: GATEWAY_ENGINE.to_string() };
+        contract.cluster_create(topology.to_string().unwrap())?
+    };
+
     pop_caller();
 
     // Provide one gateway VNode.
