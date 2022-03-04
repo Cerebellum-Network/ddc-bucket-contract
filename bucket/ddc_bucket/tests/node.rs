@@ -59,6 +59,12 @@ pub struct TestRequest {
 
 #[derive(Clone)]
 pub enum TestAction {
-    Write(String),
-    Read(String),
+    Write(TestData),
+    Read(TestData),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TestData {
+    pub routing_key: usize,
+    pub data: String,
 }

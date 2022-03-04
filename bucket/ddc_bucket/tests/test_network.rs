@@ -57,27 +57,30 @@ fn storage_network_works() {
     // Create a user with a storage bucket.
     let user = TestUser::new(&mut contract, accounts.bob)?;
 
-    // Simulate a write request to the gateway.
-    let data = "data";
-    {
-        let action = TestAction::Write(data.to_string());
-        let request = user.make_request(&contract, action)?;
-        let storage_requests = gateway_node.handle_request(&contract, request)?;
+    let mut execute_action = |action: TestAction, expect_nodes: &[usize]| {
+        let request = user.make_request(&contract, action).unwrap();
+        let storage_requests = gateway_node.handle_request(&contract, request).unwrap();
 
         // Forward requests to storage nodes.
-        assert_eq!(storage_requests.len(), 2);
-        storage_nodes[0].handle_request(&contract, &storage_requests[0])?;
-        storage_nodes[1].handle_request(&contract, &storage_requests[1])?;
-    }
+        assert_eq!(storage_requests.len(), expect_nodes.len());
+        for (request_i, &node_i) in expect_nodes.iter().enumerate() {
+            storage_nodes[node_i].handle_request(&contract, &storage_requests[request_i]).unwrap();
+        }
+    };
 
-    // Simulate a read request to the gateway.
-    {
-        let action = TestAction::Read(data.to_string());
-        let request = user.make_request(&contract, action)?;
-        let storage_requests = gateway_node.handle_request(&contract, request)?;
-        // Forward requests to storage nodes.
-        assert_eq!(storage_requests.len(), 2);
-        storage_nodes[0].handle_request(&contract, &storage_requests[0])?;
-        storage_nodes[1].handle_request(&contract, &storage_requests[1])?;
-    }
+    // Simulate write requests to the gateway into different shards.
+    execute_action(
+        TestAction::Write(TestData { routing_key: 0, data: "data in shard 0".to_string() }),
+        &[0, 1]);
+    execute_action(
+        TestAction::Write(TestData { routing_key: 1, data: "data in shard 1".to_string() }),
+        &[2, 3]);
+
+    // Simulate read requests to the gateway.
+    execute_action(
+        TestAction::Read(TestData { routing_key: 0, data: "data in shard 0".to_string() }),
+        &[0, 1]);
+    execute_action(
+        TestAction::Read(TestData { routing_key: 1, data: "data in shard 1".to_string() }),
+        &[2, 3]);
 }

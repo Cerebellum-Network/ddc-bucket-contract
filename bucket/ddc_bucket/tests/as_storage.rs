@@ -37,7 +37,7 @@ impl TestStorage {
                 let authorized = status.writer_ids.contains(&request.sender);
                 assert!(authorized, "sender is not authorized to write to this bucket");
 
-                self.stored_data.insert(request.bucket_id, value.clone());
+                self.stored_data.insert(request.bucket_id, value.data.clone());
             }
 
             TestAction::Read(expected_value) => {
@@ -45,7 +45,7 @@ impl TestStorage {
                     .get(&request.bucket_id)
                     .expect("No stored data for bucket");
 
-                assert_eq!(stored_value, expected_value, "Incorrect stored data");
+                assert_eq!(stored_value, &expected_value.data, "Incorrect stored data");
             }
         };
         Ok(())
