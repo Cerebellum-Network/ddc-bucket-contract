@@ -4,7 +4,7 @@ use crate::ddc_bucket::tests::as_storage::STORAGE_ENGINE;
 use super::as_gateway::GATEWAY_ENGINE;
 use super::node::{find_cluster, TestRequest};
 use super::env_utils::*;
-use crate::ddc_bucket::tests::node::TestAction;
+use crate::ddc_bucket::tests::node::Action;
 
 pub struct TestUser {
     pub account_id: AccountId,
@@ -35,7 +35,7 @@ impl TestUser {
         Ok(bucket_id)
     }
 
-    pub fn make_request(&self, contract: &DdcBucket, action: TestAction) -> Result<TestRequest> {
+    pub fn make_request(&self, contract: &DdcBucket, action: Action) -> Result<TestRequest> {
         // Find a gateway cluster.
         let cluster = find_cluster(contract, GATEWAY_ENGINE)?;
         // Pick a gateway node.

@@ -54,17 +54,18 @@ pub struct TestRequest {
     pub url: String,
     pub bucket_id: BucketId,
     pub sender: AccountId,
-    pub action: TestAction,
-}
-
-#[derive(Clone)]
-pub enum TestAction {
-    Write(TestData),
-    Read(TestData),
+    pub action: Action,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TestData {
+pub struct Action {
     pub routing_key: usize,
     pub data: String,
+    pub op: Op,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Op {
+    Write,
+    Read,
 }

@@ -1,5 +1,4 @@
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::node::TestAction;
 
 use super::as_storage::STORAGE_ENGINE;
 use super::cluster::Topology;
@@ -28,11 +27,8 @@ impl TestGateway {
         let topology = Topology::from_str(&cluster.cluster_params).unwrap();
         assert_eq!(topology.engine_name, STORAGE_ENGINE, "cluster should run the storage engine");
 
-        let routing_key = match &client_request.action {
-            TestAction::Write(d) => d.routing_key,
-            TestAction::Read(d) => d.routing_key,
-        };
-        let replica_indices = topology.get_replica_indices(routing_key);
+        let replica_indices = topology.get_replica_indices(
+            client_request.action.routing_key);
 
         // Make a request to the right storage nodes.
         for index in replica_indices {

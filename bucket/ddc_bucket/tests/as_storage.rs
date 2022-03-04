@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::node::{TestAction, TestRequest};
 
-use super::node::TestNode;
+use super::node::{Op, TestNode, TestRequest};
 
 pub const STORAGE_ENGINE: &str = "storage";
 
@@ -31,21 +30,23 @@ impl TestStorage {
         let allocated = self.vnode.cluster_ids.contains(cluster_id);
         assert!(allocated, "bucket is not allocated on this node");
 
-        match &request.action {
-            TestAction::Write(value) => {
+        let data = &request.action.data;
+
+        match &request.action.op {
+            Op::Write => {
                 // Check the writer permission.
                 let authorized = status.writer_ids.contains(&request.sender);
                 assert!(authorized, "sender is not authorized to write to this bucket");
 
-                self.stored_data.insert(request.bucket_id, value.data.clone());
+                self.stored_data.insert(request.bucket_id, data.clone());
             }
 
-            TestAction::Read(expected_value) => {
+            Op::Read => {
                 let stored_value = self.stored_data
                     .get(&request.bucket_id)
                     .expect("No stored data for bucket");
 
-                assert_eq!(stored_value, &expected_value.data, "Incorrect stored data");
+                assert_eq!(stored_value, data, "Incorrect stored data");
             }
         };
         Ok(())

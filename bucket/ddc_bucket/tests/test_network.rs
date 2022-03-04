@@ -57,7 +57,7 @@ fn storage_network_works() {
     // Create a user with a storage bucket.
     let user = TestUser::new(&mut contract, accounts.bob)?;
 
-    let mut execute_action = |action: TestAction, expect_nodes: &[usize]| {
+    let mut execute_action = |action: Action, expect_nodes: &[usize]| {
         let request = user.make_request(&contract, action).unwrap();
         let storage_requests = gateway_node.handle_request(&contract, request).unwrap();
 
@@ -70,17 +70,17 @@ fn storage_network_works() {
 
     // Simulate write requests to the gateway into different shards.
     execute_action(
-        TestAction::Write(TestData { routing_key: 0, data: "data in shard 0".to_string() }),
+        Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Write },
         &[0, 1]);
     execute_action(
-        TestAction::Write(TestData { routing_key: 1, data: "data in shard 1".to_string() }),
+        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Write },
         &[2, 3]);
 
     // Simulate read requests to the gateway.
     execute_action(
-        TestAction::Read(TestData { routing_key: 0, data: "data in shard 0".to_string() }),
+        Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Read },
         &[0, 1]);
     execute_action(
-        TestAction::Read(TestData { routing_key: 1, data: "data in shard 1".to_string() }),
+        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Read },
         &[2, 3]);
 }
