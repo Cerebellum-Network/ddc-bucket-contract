@@ -18,7 +18,8 @@ impl DdcBucket {
             vnode.revenue_account_id()
         };
 
-        let cash = Self::billing_settle_flow(&mut self.accounts, &mut deal.flow)?;
+        let now_ms = Self::env().block_timestamp();
+        let cash = self.accounts.settle_flow(now_ms, &mut deal.flow)?;
 
         Self::env().emit_event(ProviderWithdraw { provider_id: revenue_account_id, deal_id, value: cash.peek() });
 
@@ -27,7 +28,7 @@ impl DdcBucket {
 
     pub fn message_deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
         let deal = self.deals.get(deal_id)?;
-        let estimated_rent_end_ms = self.billing_flow_covered_until(&deal.flow)?;
+        let estimated_rent_end_ms = self.accounts.flow_covered_until(&deal.flow)?;
 
         Ok(DealStatus {
             vnode_id: deal.vnode_id,
@@ -40,7 +41,8 @@ impl DdcBucket {
 
         // Start the payment flow for a deal.
         let rent_per_month = self.vnodes.get(vnode_id)?.rent_per_month;
-        let flow = Self::billing_start_flow(&mut self.accounts, payer_id, rent_per_month)?;
+        let start_ms = Self::env().block_timestamp();
+        let flow = self.accounts.start_flow(start_ms, payer_id, rent_per_month)?;
         let deal_id = self.deals.create(vnode_id, flow);
 
         Ok(deal_id)

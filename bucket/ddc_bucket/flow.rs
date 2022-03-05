@@ -6,8 +6,6 @@ use crate::ddc_bucket::{
     schedule::Schedule,
 };
 
-pub type FlowId = u32;
-
 #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Flow {

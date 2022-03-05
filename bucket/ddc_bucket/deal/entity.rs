@@ -2,9 +2,9 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    flow::entity::Flow,
     vnode::entity::VNodeId,
 };
+use crate::ddc_bucket::flow::Flow;
 
 pub type DealId = u32;
 

@@ -5,10 +5,10 @@ use ink_storage::{
 
 use crate::ddc_bucket::{
     Error::*,
-    flow::entity::Flow,
     Result,
     vnode::entity::VNodeId,
 };
+use crate::ddc_bucket::flow::Flow;
 
 use super::entity::{Deal, DealId};
 
