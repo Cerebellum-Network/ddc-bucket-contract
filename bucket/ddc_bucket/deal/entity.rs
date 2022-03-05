@@ -2,17 +2,17 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    flow::entity::FlowId,
+    flow::entity::Flow,
     vnode::entity::VNodeId,
 };
 
 pub type DealId = u32;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Deal {
     pub vnode_id: VNodeId,
-    pub flow_id: FlowId,
+    pub flow: Flow,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]

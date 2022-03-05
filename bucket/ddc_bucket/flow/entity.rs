@@ -8,7 +8,7 @@ use crate::ddc_bucket::{
 
 pub type FlowId = u32;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Flow {
     pub from: AccountId,

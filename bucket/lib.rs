@@ -15,7 +15,7 @@ pub mod ddc_bucket {
     use cluster::{entity::*, store::*};
     use deal::{entity::*, store::*};
     use Error::*;
-    use flow::{entity::*, store::*};
+    use flow::entity::*;
     use schedule::*;
     use vnode::{entity::*, store::*};
 
@@ -37,7 +37,6 @@ pub mod ddc_bucket {
         clusters: ClusterStore,
         vnodes: VNodeStore,
         accounts: AccountStore,
-        flows: FlowStore,
     }
 
     impl DdcBucket {
@@ -49,7 +48,6 @@ pub mod ddc_bucket {
                 clusters: ClusterStore::default(),
                 vnodes: VNodeStore::default(),
                 accounts: AccountStore::default(),
-                flows: FlowStore::default(),
             }
         }
     }

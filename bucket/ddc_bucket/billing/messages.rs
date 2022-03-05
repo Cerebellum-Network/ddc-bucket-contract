@@ -1,8 +1,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, FlowId, InsufficientBalance, Payable, Result, Schedule};
+use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Flow, InsufficientBalance, Payable, Result, Schedule};
 use crate::ddc_bucket::account::store::AccountStore;
-use crate::ddc_bucket::flow::store::FlowStore;
 
 impl DdcBucket {
     pub fn message_deposit(&mut self) -> Result<()> {
@@ -42,11 +41,7 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn billing_start_flow(&mut self, from: AccountId, rate: Balance) -> Result<FlowId> {
-        Self::billing_start_flow_impl(&mut self.accounts, &mut self.flows, from, rate)
-    }
-
-    pub fn billing_start_flow_impl(accounts: &mut AccountStore, flows: &mut FlowStore, from: AccountId, rate: Balance) -> Result<FlowId> {
+    pub fn billing_start_flow(accounts: &mut AccountStore, from: AccountId, rate: Balance) -> Result<Flow> {
         let start_ms = Self::env().block_timestamp();
         let cash_schedule = Schedule::new(start_ms, rate);
         let payable_schedule = cash_schedule.clone();
@@ -54,24 +49,25 @@ impl DdcBucket {
         let from_account = accounts.get_mut(&from)?;
         from_account.lock_schedule(payable_schedule);
 
-        let flow_id = flows.create(from, cash_schedule);
-        Ok(flow_id)
+        let flow = Flow {
+            from,
+            schedule: cash_schedule,
+        };
+        Ok(flow)
     }
 
-    pub fn billing_flow_covered_until(&self, flow_id: FlowId) -> Result<u64> {
-        let flow = self.flows.get(flow_id)?;
+    pub fn billing_flow_covered_until(&self, flow: &Flow) -> Result<u64> {
         let account = self.accounts.get(&flow.from)?;
         Ok(account.schedule_covered_until())
     }
 
-    pub fn billing_settle_flow(&mut self, flow_id: FlowId) -> Result<Cash> {
+    pub fn billing_settle_flow(accounts: &mut AccountStore, flow: &mut Flow) -> Result<Cash> {
         let now_ms = Self::env().block_timestamp();
 
-        let flow = self.flows.get_mut(flow_id)?;
         let flowed_amount = flow.schedule.take_value_at_time(now_ms);
         let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
 
-        let account = self.accounts.get_mut(&flow.from)?;
+        let account = accounts.get_mut(&flow.from)?;
         account.pay_scheduled(now_ms, payable)?;
         Ok(cash)
     }
