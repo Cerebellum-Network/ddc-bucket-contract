@@ -1,9 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "billing",
     "bucket",
-    "cluster",
 ]
 
 # Needed until https://github.com/paritytech/ink/issues/364 is resolved.
