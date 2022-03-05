@@ -23,6 +23,8 @@ ink_lang_ir = { version = "=3.0.0-rc4", default-features = false, optional = tru
 ink_lang_macro = { version = "=3.0.0-rc4", default-features = false, optional = true }
 #ink_eth_compatibility = { version = "=3.0.0-rc4", default-features = false, optional = true }
 
+serde = { version = "1.0.136", optional = true }
+serde_json = { version = "1.0.79", optional = true }
 
 [lib]
 name = "ddc_bucket"
@@ -51,6 +53,10 @@ std = [
     "ink_lang_ir/std",
     "ink_lang_macro/std",
     #"ink_eth_compatibility/std",
+
+    # For tests
+    "serde",
+    "serde_json",
 ]
 ink-as-dependency = []
 

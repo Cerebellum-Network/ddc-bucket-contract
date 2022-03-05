@@ -1,14 +1,15 @@
 #![allow(unused_variables, dead_code)]
 
 pub use ink_env::{
-    AccountId, call,
+    call,
     DefaultEnvironment,
     test,
     test::{advance_block, default_accounts, DefaultAccounts, initialize_or_reset_as_default, recorded_events},
 };
+use ink_lang as ink;
 use scale::Decode;
 
-use super::*;
+use crate::ddc_bucket::*;
 
 pub const CURRENCY: Balance = 10_000_000_000;
 
@@ -58,4 +59,21 @@ pub fn get_events<Event: Decode>(expected_count: usize) -> Vec<Event> {
     let raw_events = recorded_events().collect::<Vec<_>>();
     assert_eq!(raw_events.len(), expected_count);
     raw_events.iter().map(decode_event).collect()
+}
+
+
+pub type Event = <DdcBucket as ink::BaseEvent>::Type;
+
+fn _print_events(events: &[Event]) {
+    for ev in events.iter() {
+        match ev {
+            Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
+            Event::VNodeCreated(ev) => println!("EVENT {:?}", ev),
+            Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
+            Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
+            Event::DealCreated(ev) => println!("EVENT {:?}", ev),
+            Event::Deposit(ev) => println!("EVENT {:?}", ev),
+            Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
+        }
+    }
 }
