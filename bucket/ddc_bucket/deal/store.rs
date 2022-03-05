@@ -5,10 +5,10 @@ use ink_storage::{
 
 use crate::ddc_bucket::{
     Error::*,
-    flow::entity::FlowId,
     Result,
     vnode::entity::VNodeId,
 };
+use crate::ddc_bucket::flow::Flow;
 
 use super::entity::{Deal, DealId};
 
@@ -17,10 +17,10 @@ use super::entity::{Deal, DealId};
 pub struct DealStore(pub InkVec<Deal>);
 
 impl DealStore {
-    pub fn create(&mut self, vnode_id: VNodeId, flow_id: FlowId) -> DealId {
+    pub fn create(&mut self, vnode_id: VNodeId, flow: Flow) -> DealId {
         let deal = Deal {
             vnode_id,
-            flow_id,
+            flow,
         };
         let deal_id = self.0.len();
         self.0.push(deal);

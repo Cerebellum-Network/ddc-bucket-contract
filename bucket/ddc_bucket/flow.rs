@@ -6,11 +6,9 @@ use crate::ddc_bucket::{
     schedule::Schedule,
 };
 
-pub type FlowId = u32;
-
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub struct BillingFlow {
+pub struct Flow {
     pub from: AccountId,
     pub schedule: Schedule,
 }
