@@ -1,7 +1,7 @@
 use crate::ddc_bucket::*;
 
 use super::as_storage::STORAGE_ENGINE;
-use super::cluster::Topology;
+use super::topology::Topology;
 use super::node::{TestNode, TestRequest};
 
 pub const GATEWAY_ENGINE: &str = "gateway";

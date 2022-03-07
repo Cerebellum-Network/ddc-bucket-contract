@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::cluster::Topology;
+use crate::ddc_bucket::tests::topology::Topology;
 
 use super::env_utils::*;
 

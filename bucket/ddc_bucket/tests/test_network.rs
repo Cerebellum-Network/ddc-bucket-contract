@@ -1,7 +1,7 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::cluster::Topology;
+use crate::ddc_bucket::tests::topology::Topology;
 
 use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 
