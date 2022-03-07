@@ -6,7 +6,7 @@ use super::env_utils::*;
 use super::node::{Action, find_cluster, TestRequest};
 use super::topology::BucketParams;
 
-const BUCKET_PARAMS: BucketParams = BucketParams { replication: 2 };
+const BUCKET_PARAMS: BucketParams = BucketParams { replication: 3 };
 
 pub struct TestUser {
     pub account_id: AccountId,

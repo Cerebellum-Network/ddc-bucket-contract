@@ -73,22 +73,22 @@ fn storage_network_works() {
     // Simulate write requests to the gateway into different shards.
     execute_action(
         Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Write },
-        &[0, 1]);
+        &[0, 1, 2]);
     execute_action(
         Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Write },
-        &[1, 2]);
+        &[1, 2, 3]);
     execute_action(
         Action { routing_key: 4, data: "data in shard 4".to_string(), op: Op::Write },
-        &[4, 5]);
+        &[4, 5, 0]);
 
     // Simulate read requests to the gateway.
     execute_action(
         Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Read },
-        &[0, 1]);
+        &[0, 1, 2]);
     execute_action(
         Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Read },
-        &[1, 2]);
+        &[1, 2, 3]);
     execute_action(
         Action { routing_key: 4, data: "data in shard 4".to_string(), op: Op::Read },
-        &[4, 5]);
+        &[4, 5, 0]);
 }
