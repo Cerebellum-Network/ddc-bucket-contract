@@ -1,11 +1,10 @@
 use crate::ddc_bucket::*;
 
 use super::as_storage::STORAGE_ENGINE;
-use super::topology::Topology;
 use super::node::{TestNode, TestRequest};
+use super::topology::{BucketParams, Topology};
 
 pub const GATEWAY_ENGINE: &str = "gateway";
-pub const DEFAULT_REPLICATION: usize = 2;
 
 pub struct TestGateway {
     pub vnode: TestNode,
@@ -23,13 +22,14 @@ impl TestGateway {
 
         // Find the storage cluster of this bucket.
         let bucket = contract.bucket_get(client_request.bucket_id)?;
+        let bucket_params = BucketParams::from_str(&bucket.bucket_params).unwrap();
         let cluster_id = bucket.cluster_ids.first().expect("bucket has no clusters");
         let cluster = contract.cluster_get(*cluster_id)?;
         let topology = Topology::from_str(&cluster.cluster_params).unwrap();
         assert_eq!(topology.engine_name, STORAGE_ENGINE, "cluster should run the storage engine");
 
         let replica_indices = topology.get_replica_indices(
-            client_request.action.routing_key, DEFAULT_REPLICATION);
+            client_request.action.routing_key, bucket_params.replication);
         println!("REP IDX {:?}", replica_indices);
 
         // Make a request to the right storage nodes.

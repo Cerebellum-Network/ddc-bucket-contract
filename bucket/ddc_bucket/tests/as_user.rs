@@ -1,10 +1,12 @@
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::as_storage::STORAGE_ENGINE;
 
 use super::as_gateway::GATEWAY_ENGINE;
-use super::node::{find_cluster, TestRequest};
+use super::as_storage::STORAGE_ENGINE;
 use super::env_utils::*;
-use crate::ddc_bucket::tests::node::Action;
+use super::node::{Action, find_cluster, TestRequest};
+use super::topology::BucketParams;
+
+const BUCKET_PARAMS: BucketParams = BucketParams { replication: 2 };
 
 pub struct TestUser {
     pub account_id: AccountId,
@@ -20,8 +22,7 @@ impl TestUser {
 
     pub fn create_bucket(contract: &mut DdcBucket, account_id: AccountId, engine_name: &str) -> Result<BucketId> {
         push_caller_value(account_id, 0);
-        let bucket_params = "".to_string();
-        let bucket_id = contract.bucket_create(bucket_params.clone())?;
+        let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap())?;
         pop_caller();
 
         // Choose a cluster.

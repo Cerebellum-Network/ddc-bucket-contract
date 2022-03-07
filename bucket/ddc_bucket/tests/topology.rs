@@ -11,7 +11,7 @@ impl Topology {
         serde_json::to_string(&self)
     }
 
-    pub fn from_str(ser: &str) -> serde_json::Result<Topology> {
+    pub fn from_str(ser: &str) -> serde_json::Result<Self> {
         serde_json::from_str(ser)
     }
 
@@ -19,5 +19,20 @@ impl Topology {
         (0..replication).map(|i|
             (routing_key + i) % self.partition_count
         ).collect()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BucketParams {
+    pub replication: usize,
+}
+
+impl BucketParams {
+    pub fn to_string(&self) -> serde_json::Result<String> {
+        serde_json::to_string(&self)
+    }
+
+    pub fn from_str(ser: &str) -> serde_json::Result<Self> {
+        serde_json::from_str(ser)
     }
 }
