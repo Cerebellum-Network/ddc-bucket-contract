@@ -30,11 +30,10 @@ impl TestGateway {
 
         let replica_indices = topology.get_replica_indices(
             client_request.action.routing_key, bucket_params.replication);
-        println!("REP IDX {:?}", replica_indices);
 
         // Make a request to the right storage nodes.
         for index in replica_indices {
-            let vnode_id = cluster.vnode_ids.get(index as usize).expect("Not enough vnodes");
+            let vnode_id = cluster.vnode_ids.get(index).expect("Not enough vnodes");
             let storage_vnode = contract.vnode_get(*vnode_id)?;
             // Get the URL of the storage node.
             let storage_url = storage_vnode.vnode_params;
