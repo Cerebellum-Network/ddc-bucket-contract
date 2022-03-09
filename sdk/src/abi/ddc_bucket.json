@@ -1,13 +1,13 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x75f300198e48015c82edf1eade7f8eab198608a9cbe08a950920c3aa834d834d",
+    "hash": "0xd90275a50ac34e3647c5aec6a000781b3dde58c4e1625827b5594b4974b91434",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "authors": [
       "Aurélien Nicolas <aurel@cere.network>"
     ]
@@ -802,7 +802,7 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0000000003000000000000000000000000000000000000000000000000000000",
-                                  "ty": 9
+                                  "ty": 13
                                 }
                               },
                               "len": 4294967295,
@@ -845,7 +845,7 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0000000004000000000000000000000000000000000000000000000000000000",
-                                  "ty": 10
+                                  "ty": 14
                                 }
                               },
                               "len": 4294967295,
@@ -880,7 +880,7 @@
                                   "layout": {
                                     "cell": {
                                       "key": "0x0000000004000000000000000000000000000000000000000000000000000000",
-                                      "ty": 12
+                                      "ty": 15
                                     }
                                   },
                                   "name": "header"
@@ -905,7 +905,7 @@
                                               "layout": {
                                                 "cell": {
                                                   "key": "0x0100000005000000000000000000000000000000000000000000000000000000",
-                                                  "ty": 13
+                                                  "ty": 16
                                                 }
                                               },
                                               "len": 4294967295,
@@ -930,7 +930,7 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0200000005000000000000000000000000000000000000000000000000000000",
-                                  "ty": 15
+                                  "ty": 18
                                 }
                               },
                               "offset": "0x0100000005000000000000000000000000000000000000000000000000000000",
@@ -952,49 +952,6 @@
             }
           },
           "name": "accounts"
-        },
-        {
-          "layout": {
-            "struct": {
-              "fields": [
-                {
-                  "layout": {
-                    "struct": {
-                      "fields": [
-                        {
-                          "layout": {
-                            "cell": {
-                              "key": "0x0200000005000000000000000000000000000000000000000000000000000000",
-                              "ty": 1
-                            }
-                          },
-                          "name": "len"
-                        },
-                        {
-                          "layout": {
-                            "array": {
-                              "cellsPerElem": 1,
-                              "layout": {
-                                "cell": {
-                                  "key": "0x0200000006000000000000000000000000000000000000000000000000000000",
-                                  "ty": 20
-                                }
-                              },
-                              "len": 4294967295,
-                              "offset": "0x0300000005000000000000000000000000000000000000000000000000000000"
-                            }
-                          },
-                          "name": "elems"
-                        }
-                      ]
-                    }
-                  },
-                  "name": null
-                }
-              ]
-            }
-          },
-          "name": "flows"
         }
       ]
     }
@@ -1092,9 +1049,9 @@
               "typeName": "VNodeId"
             },
             {
-              "name": "flow_id",
-              "type": 1,
-              "typeName": "FlowId"
+              "name": "flow",
+              "type": 9,
+              "typeName": "Flow"
             }
           ]
         }
@@ -1106,6 +1063,64 @@
         "entity",
         "Deal"
       ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "from",
+              "type": 3,
+              "typeName": "AccountId"
+            },
+            {
+              "name": "schedule",
+              "type": 10,
+              "typeName": "Schedule"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "flow",
+        "Flow"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "rate",
+              "type": 11,
+              "typeName": "Balance"
+            },
+            {
+              "name": "start_ms",
+              "type": 12,
+              "typeName": "u64"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "schedule",
+        "Schedule"
+      ]
+    },
+    {
+      "def": {
+        "primitive": "u128"
+      }
+    },
+    {
+      "def": {
+        "primitive": "u64"
+      }
     },
     {
       "def": {
@@ -1167,15 +1182,10 @@
       "path": [
         "ddc_bucket",
         "ddc_bucket",
-        "service",
+        "vnode",
         "entity",
         "VNode"
       ]
-    },
-    {
-      "def": {
-        "primitive": "u128"
-      }
     },
     {
       "def": {
@@ -1213,7 +1223,7 @@
             {
               "fields": [
                 {
-                  "type": 14,
+                  "type": 17,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -1271,7 +1281,7 @@
           "fields": [
             {
               "name": "value",
-              "type": 16,
+              "type": 19,
               "typeName": "V"
             },
             {
@@ -1283,7 +1293,7 @@
         }
       },
       "params": [
-        16
+        19
       ],
       "path": [
         "ink_storage",
@@ -1298,7 +1308,7 @@
           "fields": [
             {
               "name": "deposit",
-              "type": 17,
+              "type": 20,
               "typeName": "Cash"
             },
             {
@@ -1308,7 +1318,7 @@
             },
             {
               "name": "payable_schedule",
-              "type": 18,
+              "type": 10,
               "typeName": "Schedule"
             }
           ]
@@ -1338,60 +1348,6 @@
         "ddc_bucket",
         "cash",
         "Cash"
-      ]
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "rate",
-              "type": 11,
-              "typeName": "Balance"
-            },
-            {
-              "name": "start_ms",
-              "type": 19,
-              "typeName": "u64"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_bucket",
-        "ddc_bucket",
-        "schedule",
-        "Schedule"
-      ]
-    },
-    {
-      "def": {
-        "primitive": "u64"
-      }
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "from",
-              "type": 3,
-              "typeName": "AccountId"
-            },
-            {
-              "name": "schedule",
-              "type": 18,
-              "typeName": "Schedule"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_bucket",
-        "ddc_bucket",
-        "flow",
-        "entity",
-        "BillingFlow"
       ]
     },
     {
@@ -1623,7 +1579,7 @@
             },
             {
               "name": "estimated_rent_end_ms",
-              "type": 19,
+              "type": 12,
               "typeName": "u64"
             }
           ]
@@ -1743,7 +1699,7 @@
             {
               "fields": [
                 {
-                  "type": 9,
+                  "type": 13,
                   "typeName": "T"
                 }
               ],
@@ -1762,7 +1718,7 @@
         }
       },
       "params": [
-        9,
+        13,
         22
       ],
       "path": [
@@ -1780,7 +1736,7 @@
     {
       "def": {
         "sequence": {
-          "type": 9
+          "type": 13
         }
       }
     },
@@ -1791,7 +1747,7 @@
             {
               "fields": [
                 {
-                  "type": 10,
+                  "type": 14,
                   "typeName": "T"
                 }
               ],
@@ -1810,7 +1766,7 @@
         }
       },
       "params": [
-        10,
+        14,
         22
       ],
       "path": [
@@ -1828,7 +1784,7 @@
     {
       "def": {
         "sequence": {
-          "type": 10
+          "type": 14
         }
       }
     }
