@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::cluster::Topology;
+use crate::ddc_bucket::tests::topology::Topology;
 
 use super::env_utils::*;
 
@@ -59,7 +59,7 @@ pub struct TestRequest {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Action {
-    pub routing_key: usize,
+    pub routing_key: u32,
     pub data: String,
     pub op: Op,
 }

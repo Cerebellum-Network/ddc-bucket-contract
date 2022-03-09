@@ -1,7 +1,7 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::tests::cluster::Topology;
+use crate::ddc_bucket::tests::topology::Topology;
 
 use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 
@@ -24,18 +24,13 @@ fn storage_network_works() {
         (accounts.eve, "eve-1"),
     ];
 
+    let partition_count = vnode_specs.len();
     let storage_cluster_id = {
-        let topology = Topology {
-            engine_name: STORAGE_ENGINE.to_string(),
-            partition_count: vnode_specs.len(),
-        };
+        let topology = Topology::new(STORAGE_ENGINE, partition_count);
         contract.cluster_create(topology.to_string().unwrap())?
     };
     let gateway_cluster_id = {
-        let topology = Topology {
-            engine_name: GATEWAY_ENGINE.to_string(),
-            partition_count: 1,
-        };
+        let topology = Topology::new(GATEWAY_ENGINE, 1);
         contract.cluster_create(topology.to_string().unwrap())?
     };
 
@@ -71,24 +66,28 @@ fn storage_network_works() {
     };
 
     // Simulate write requests to the gateway into different shards.
+    let routing0 = (u32::MAX / partition_count as u32) * 0 + 123;
+    let routing1 = (u32::MAX / partition_count as u32) * 1 + 123;
+    let routing4 = (u32::MAX / partition_count as u32) * 4 + 123;
+
     execute_action(
-        Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Write },
-        &[0, 1]);
+        Action { routing_key: routing0, data: "data in shard 0".to_string(), op: Op::Write },
+        &[0, 1, 2]);
     execute_action(
-        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Write },
-        &[1, 2]);
+        Action { routing_key: routing1, data: "data in shard 1".to_string(), op: Op::Write },
+        &[1, 2, 3]);
     execute_action(
-        Action { routing_key: 4, data: "data in shard 4".to_string(), op: Op::Write },
-        &[4, 5]);
+        Action { routing_key: routing4, data: "data in shard 4".to_string(), op: Op::Write },
+        &[4, 5, 0]);
 
     // Simulate read requests to the gateway.
     execute_action(
-        Action { routing_key: 0, data: "data in shard 0".to_string(), op: Op::Read },
-        &[0, 1]);
+        Action { routing_key: routing0, data: "data in shard 0".to_string(), op: Op::Read },
+        &[0, 1, 2]);
     execute_action(
-        Action { routing_key: 1, data: "data in shard 1".to_string(), op: Op::Read },
-        &[1, 2]);
+        Action { routing_key: routing1, data: "data in shard 1".to_string(), op: Op::Read },
+        &[1, 2, 3]);
     execute_action(
-        Action { routing_key: 4, data: "data in shard 4".to_string(), op: Op::Read },
-        &[4, 5]);
+        Action { routing_key: routing4, data: "data in shard 4".to_string(), op: Op::Read },
+        &[4, 5, 0]);
 }
