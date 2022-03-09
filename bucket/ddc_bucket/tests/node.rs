@@ -59,7 +59,7 @@ pub struct TestRequest {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Action {
-    pub routing_key: usize,
+    pub routing_key: u32,
     pub data: String,
     pub op: Op,
 }

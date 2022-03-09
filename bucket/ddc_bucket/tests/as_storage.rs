@@ -11,7 +11,7 @@ pub struct TestStorage {
 
 struct Row {
     bucket_id: BucketId,
-    routing_key: usize,
+    routing_key: u32,
     data: String,
 }
 

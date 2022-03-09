@@ -25,17 +25,11 @@ fn storage_network_works() {
     ];
 
     let storage_cluster_id = {
-        let topology = Topology {
-            engine_name: STORAGE_ENGINE.to_string(),
-            partition_count: vnode_specs.len(),
-        };
+        let topology = Topology::new(STORAGE_ENGINE, vnode_specs.len() as u32);
         contract.cluster_create(topology.to_string().unwrap())?
     };
     let gateway_cluster_id = {
-        let topology = Topology {
-            engine_name: GATEWAY_ENGINE.to_string(),
-            partition_count: 1,
-        };
+        let topology = Topology::new(GATEWAY_ENGINE, 1);
         contract.cluster_create(topology.to_string().unwrap())?
     };
 
