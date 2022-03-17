@@ -21,7 +21,7 @@ impl TestUser {
     }
 
     pub fn create_bucket(contract: &mut DdcBucket, account_id: AccountId, engine_name: &str) -> Result<BucketId> {
-        push_caller_value(account_id, 0);
+        push_caller_value(account_id, CONTRACT_FEE);
         let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap())?;
         pop_caller();
 

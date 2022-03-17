@@ -13,6 +13,9 @@ use crate::ddc_bucket::*;
 
 pub const CURRENCY: Balance = 10_000_000_000;
 
+/// Recommended contract fee for all operations with reasonable data amounts.
+pub const CONTRACT_FEE: Balance = 10 * CURRENCY;
+
 pub fn get_accounts() -> DefaultAccounts<DefaultEnvironment> {
     // The default account is "alice"
     default_accounts::<DefaultEnvironment>().unwrap()
@@ -32,10 +35,20 @@ pub fn push_caller_value(caller: AccountId, transferred_value: Balance) {
         transferred_value,                                          // transferred balance
         test::CallData::new(call::Selector::new([0x00; 4])), // dummy
     );
+
+    transfer(caller, callee, transferred_value);
 }
 
 pub fn pop_caller() {
     test::pop_execution_context();
+}
+
+pub fn transfer(from: AccountId, to: AccountId, amount: Balance) {
+    if amount == 0 { return; }
+    let balance_of_from = balance_of(from);
+    assert!(balance_of_from >= amount, "Insufficient balance in test account {:?}", from);
+    set_balance(from, balance_of_from - amount);
+    set_balance(to, balance_of(to) + amount);
 }
 
 pub fn balance_of(account: AccountId) -> Balance {

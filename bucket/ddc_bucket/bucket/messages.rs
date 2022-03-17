@@ -9,7 +9,8 @@ use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
 impl DdcBucket {
     pub fn message_bucket_create(&mut self, bucket_params: BucketParams) -> Result<BucketId> {
         let owner_id = Self::env().caller();
-        let bucket_id = self.buckets.create(owner_id, bucket_params);
+        let (bucket_id, record_size) = self.buckets.create(owner_id, bucket_params);
+        Self::capture_fee_and_refund(record_size)?;
         Self::env().emit_event(BucketCreated { bucket_id, owner_id });
         Ok(bucket_id)
     }

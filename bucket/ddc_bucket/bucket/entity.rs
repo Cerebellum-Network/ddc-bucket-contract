@@ -44,4 +44,8 @@ impl Bucket {
             Ok(())
         }
     }
+
+    pub fn record_size(&self) -> usize {
+        100 + self.bucket_params.len()
+    }
 }

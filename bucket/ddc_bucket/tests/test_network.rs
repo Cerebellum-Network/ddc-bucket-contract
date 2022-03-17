@@ -10,7 +10,6 @@ fn storage_network_works() {
     let accounts = get_accounts();
 
     let mut contract = DdcBucket::new();
-    set_balance(contract_id(), 1000); // For contract subsistence.
 
     // Create a storage Cluster and a gateway Cluster.
     push_caller(accounts.alice);

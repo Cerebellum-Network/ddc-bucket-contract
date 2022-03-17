@@ -1,7 +1,8 @@
 use ink_lang as ink;
-use super::env_utils::*;
 
 use crate::ddc_bucket::*;
+
+use super::env_utils::*;
 
 #[ink::test]
 fn ddc_bucket_works() {
@@ -9,9 +10,9 @@ fn ddc_bucket_works() {
     let provider_id0 = accounts.alice;
     let provider_id1 = accounts.bob;
     let consumer_id = accounts.charlie;
+    set_balance(consumer_id, 1000 * CURRENCY);
 
     let mut ddc_bucket = DdcBucket::new();
-    set_balance(contract_id(), 1000); // For contract subsistence.
 
     // Create a Cluster.
     let cluster_params = "{}";
@@ -54,7 +55,7 @@ fn ddc_bucket_works() {
     });
 
     // Create a bucket.
-    push_caller_value(consumer_id, 0);
+    push_caller_value(consumer_id, CONTRACT_FEE);
     let bucket_params = "{}".to_string();
     let bucket_id = ddc_bucket.bucket_create(bucket_params.clone())?;
     pop_caller();
@@ -169,19 +170,18 @@ fn ddc_bucket_works() {
 
 #[ink::test]
 fn bucket_list_works() {
+    let mut ddc_bucket = DdcBucket::new();
     let accounts = get_accounts();
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
     let owner_id3 = accounts.charlie;
 
-    let mut ddc_bucket = DdcBucket::new();
-
-    push_caller(owner_id1);
+    push_caller_value(owner_id1, CONTRACT_FEE);
     let bucket_id1 = ddc_bucket.bucket_create("".to_string())?;
     let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
     pop_caller();
 
-    push_caller(owner_id2);
+    push_caller_value(owner_id2, CONTRACT_FEE);
     let bucket_id2 = ddc_bucket.bucket_create("".to_string())?;
     let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
     pop_caller();
@@ -226,13 +226,12 @@ fn bucket_list_works() {
 
 #[ink::test]
 fn vnode_list_works() {
+    let mut ddc_bucket = DdcBucket::new();
     let accounts = get_accounts();
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
     let owner_id3 = accounts.charlie;
     let rent_per_month: Balance = 10 * CURRENCY;
-
-    let mut ddc_bucket = DdcBucket::new();
 
     // Create a Cluster.
     push_caller(owner_id1);
@@ -300,4 +299,22 @@ fn vnode_list_works() {
     assert_eq!(
         ddc_bucket.vnode_list(0, 100, Some(owner_id3)),
         (vec![], count));
+}
+
+#[ink::test]
+fn contract_fee_works() {
+    let mut ddc_bucket = DdcBucket::new();
+    let accounts = get_accounts();
+    let owner_id = accounts.alice;
+    let alice_before = balance_of(accounts.alice);
+
+    push_caller_value(owner_id, CONTRACT_FEE);
+    ddc_bucket.bucket_create("".to_string())?;
+
+    let got_fee = balance_of(contract_id());
+    println!("Got fee {}", got_fee);
+    assert!(got_fee > 0, "A contract fee should be taken.");
+    assert!(got_fee < CONTRACT_FEE, "Value beyond the contract fee should be refunded.");
+    let alice_after = balance_of(accounts.alice);
+    assert_eq!(alice_after + got_fee, alice_before, "Accounts should be balanced.");
 }

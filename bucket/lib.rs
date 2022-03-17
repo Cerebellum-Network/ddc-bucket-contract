@@ -25,6 +25,7 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod deal;
     pub mod cluster;
+    pub mod contract_fee;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -83,7 +84,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn bucket_create(&mut self, bucket_params: BucketParams) -> Result<BucketId> {
             self.message_bucket_create(bucket_params)
         }
