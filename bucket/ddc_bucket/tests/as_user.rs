@@ -29,7 +29,7 @@ impl TestUser {
         let cluster_id = find_cluster(contract, engine_name)?.cluster_id;
 
         // Allocate the bucket to the cluster, also depositing some value.
-        push_caller_value(account_id, 10 * CURRENCY);
+        push_caller_value(account_id, 10 * TOKEN);
         contract.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
         pop_caller();
 

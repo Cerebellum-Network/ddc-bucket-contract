@@ -11,10 +11,8 @@ use scale::Decode;
 
 use crate::ddc_bucket::*;
 
-pub const CURRENCY: Balance = 10_000_000_000;
-
 /// Recommended contract fee for all operations with reasonable data amounts.
-pub const CONTRACT_FEE: Balance = 10 * CURRENCY;
+pub const CONTRACT_FEE: Balance = 10 * TOKEN;
 
 pub fn get_accounts() -> DefaultAccounts<DefaultEnvironment> {
     // The default account is "alice"

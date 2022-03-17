@@ -1,9 +1,9 @@
 use ink_lang::StaticEnv;
 
-use crate::ddc_bucket::{Balance, DdcBucket, Result};
+use crate::ddc_bucket::{Balance, DdcBucket, Result, TOKEN};
 use crate::ddc_bucket::cash::Payable;
 
-pub const FEE_PER_BYTE: Balance = 1;
+pub const FEE_PER_BYTE: Balance = TOKEN / 100;
 
 impl DdcBucket {
     pub fn capture_fee_and_refund(record_size: usize) -> Result<()> {

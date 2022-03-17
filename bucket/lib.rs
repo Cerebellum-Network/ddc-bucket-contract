@@ -219,6 +219,9 @@ pub mod ddc_bucket {
 
 
     // ---- Utils ----
+    /// One token with 10 decimals.
+    pub const TOKEN: Balance = 10_000_000_000;
+
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {

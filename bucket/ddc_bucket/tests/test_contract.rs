@@ -10,7 +10,7 @@ fn ddc_bucket_works() {
     let provider_id0 = accounts.alice;
     let provider_id1 = accounts.bob;
     let consumer_id = accounts.charlie;
-    set_balance(consumer_id, 1000 * CURRENCY);
+    set_balance(consumer_id, 1000 * TOKEN);
 
     let mut ddc_bucket = DdcBucket::new();
 
@@ -21,7 +21,7 @@ fn ddc_bucket_works() {
     pop_caller();
 
     // Provide a VNode.
-    let rent_per_month: Balance = 10 * CURRENCY;
+    let rent_per_month: Balance = 10 * TOKEN;
     let vnode_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     let vnode_id0 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params0.to_string())?;
 
@@ -61,7 +61,7 @@ fn ddc_bucket_works() {
     pop_caller();
 
     // Allocate the bucket to the cluster, also depositing some value.
-    push_caller_value(consumer_id, 10 * CURRENCY);
+    push_caller_value(consumer_id, 10 * TOKEN);
     ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
     pop_caller();
 
@@ -84,7 +84,7 @@ fn ddc_bucket_works() {
     });
 
     // Deposit more value into the account.
-    push_caller_value(consumer_id, 100 * CURRENCY);
+    push_caller_value(consumer_id, 100 * TOKEN);
     ddc_bucket.deposit()?;
     pop_caller();
 
@@ -148,7 +148,7 @@ fn ddc_bucket_works() {
 
     // Add a cluster with 2 deals and an initial deposit.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: 10 * CURRENCY }));
+        Deposit { account_id: consumer_id, value: 10 * TOKEN }));
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
         BucketAllocated { bucket_id, cluster_id }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
@@ -158,7 +158,7 @@ fn ddc_bucket_works() {
 
     // Deposit more.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: 100 * CURRENCY }));
+        Deposit { account_id: consumer_id, value: 100 * TOKEN }));
 
     // Provider withdrawals.
     assert!(matches!(evs.pop().unwrap(), Event::ProviderWithdraw(ev) if ev ==
@@ -231,7 +231,7 @@ fn vnode_list_works() {
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
     let owner_id3 = accounts.charlie;
-    let rent_per_month: Balance = 10 * CURRENCY;
+    let rent_per_month: Balance = 10 * TOKEN;
 
     // Create a Cluster.
     push_caller(owner_id1);
