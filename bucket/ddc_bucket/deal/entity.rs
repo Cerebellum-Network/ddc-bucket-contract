@@ -2,9 +2,10 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
+    contract_fee::{SIZE_INDEX, SIZE_PER_RECORD},
+    flow::Flow,
     vnode::entity::VNodeId,
 };
-use crate::ddc_bucket::flow::Flow;
 
 pub type DealId = u32;
 
@@ -20,4 +21,8 @@ pub struct Deal {
 pub struct DealStatus {
     pub vnode_id: VNodeId,
     pub estimated_rent_end_ms: u64,
+}
+
+impl Deal {
+    pub const RECORD_SIZE: usize = SIZE_PER_RECORD + SIZE_INDEX + 8;
 }

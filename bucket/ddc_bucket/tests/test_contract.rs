@@ -58,14 +58,19 @@ fn ddc_bucket_works() {
         vnode_params: vnode_params1.to_string(),
     });
 
+    // Deposit some value to pay for buckets.
+    push_caller_value(consumer_id, 10 * TOKEN);
+    ddc_bucket.deposit()?;
+    pop_caller();
+
     // Create a bucket.
     push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
     let bucket_params = "{}".to_string();
     let bucket_id = ddc_bucket.bucket_create(bucket_params.clone())?;
     pop_caller();
 
-    // Allocate the bucket to the cluster, also depositing some value.
-    push_caller_value(consumer_id, 10 * TOKEN);
+    // Allocate the bucket to the cluster.
+    push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
     ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
     pop_caller();
 
@@ -146,15 +151,17 @@ fn ddc_bucket_works() {
     assert!(matches!(evs.pop().unwrap(), Event::VNodeCreated(ev) if ev ==
         VNodeCreated { vnode_id: vnode_id1, provider_id: provider_id1, rent_per_month, vnode_params: vnode_params1.to_string() }));
 
+    // Deposit.
+    let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
+    let net_deposit = 10 * TOKEN - deposit_contract_fee;
+    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
+        Deposit { account_id: consumer_id, value: net_deposit }));
+
     // Create bucket.
     assert!(matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
         BucketCreated {  bucket_id, owner_id: consumer_id }));
 
     // Add a cluster with 2 deals and an initial deposit.
-    let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
-    let net_deposit = 10 * TOKEN - deposit_contract_fee;
-    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: net_deposit }));
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
         BucketAllocated { bucket_id, cluster_id }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
