@@ -8,6 +8,9 @@ use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 #[ink::test]
 fn storage_network_works() {
     let accounts = get_accounts();
+    set_balance(accounts.charlie, 1000 * TOKEN);
+    set_balance(accounts.django, 1000 * TOKEN);
+    set_balance(accounts.eve, 1000 * TOKEN);
 
     let mut contract = DdcBucket::new();
 

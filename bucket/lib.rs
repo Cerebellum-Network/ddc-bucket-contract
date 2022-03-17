@@ -181,7 +181,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
             self.message_vnode_create(cluster_id, rent_per_month, vnode_params)
         }

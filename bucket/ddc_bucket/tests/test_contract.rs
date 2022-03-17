@@ -9,10 +9,10 @@ use super::env_utils::*;
 #[ink::test]
 fn ddc_bucket_works() {
     let accounts = get_accounts();
+    set_balance(accounts.charlie, 1000 * TOKEN);
     let provider_id0 = accounts.alice;
     let provider_id1 = accounts.bob;
     let consumer_id = accounts.charlie;
-    set_balance(consumer_id, 1000 * TOKEN);
 
     let mut ddc_bucket = DdcBucket::new();
 
@@ -25,11 +25,13 @@ fn ddc_bucket_works() {
     // Provide a VNode.
     let rent_per_month: Balance = 10 * TOKEN;
     let vnode_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
     let vnode_id0 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params0.to_string())?;
+    pop_caller();
 
     // Provide another VNode.
-    push_caller(provider_id1);
     let vnode_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
     let vnode_id1 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params1.to_string())?;
     pop_caller();
     assert_ne!(vnode_id0, vnode_id1);
@@ -245,13 +247,13 @@ fn vnode_list_works() {
     pop_caller();
 
     // Create two VNodes.
-    push_caller(owner_id1);
     let vnode_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let vnode_id1 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params1.to_string())?;
     pop_caller();
 
-    push_caller(owner_id2);
     let vnode_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
     let vnode_id2 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params2.to_string())?;
     pop_caller();
 

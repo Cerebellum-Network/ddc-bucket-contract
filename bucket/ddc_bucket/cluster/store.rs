@@ -7,6 +7,7 @@ use ink_storage::{
 use crate::ddc_bucket::{Error::*, Result, VNodeId};
 
 use super::entity::{Cluster, ClusterId, ClusterParams};
+use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
@@ -25,10 +26,10 @@ impl ClusterStore {
         (cluster_id, record_size)
     }
 
-    pub fn add_vnode(&mut self, cluster_id: ClusterId, vnode_id: VNodeId) -> Result<()> {
+    pub fn add_vnode(&mut self, cluster_id: ClusterId, vnode_id: VNodeId) -> Result<usize> {
         let cluster = self.get_mut(cluster_id)?;
         cluster.vnode_ids.push(vnode_id);
-        Ok(())
+        Ok(SIZE_INDEX)
     }
 
     pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {

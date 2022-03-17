@@ -21,16 +21,15 @@ impl TestNode {
     }
 
     pub fn join_cluster(&mut self, contract: &mut DdcBucket, cluster_id: ClusterId) -> Result<()> {
-        push_caller(self.provider_id);
-
         let rent_per_month: Balance = 10 * TOKEN;
         let vnode_params = self.url.clone();
 
+        push_caller_value(self.provider_id, CONTRACT_FEE_LIMIT);
         let vnode_id = contract.vnode_create(cluster_id, rent_per_month, vnode_params)?;
+        pop_caller();
+
         self.vnode_ids.insert(vnode_id);
         self.cluster_ids.insert(cluster_id);
-
-        pop_caller();
         Ok(())
     }
 }

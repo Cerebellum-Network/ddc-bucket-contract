@@ -5,6 +5,7 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_VEC};
 
 pub type ProviderId = AccountId;
 pub type VNodeId = u32;
@@ -20,6 +21,13 @@ pub struct VNode {
 }
 
 impl VNode {
+    pub fn new_size(&self) -> usize {
+        SIZE_PER_RECORD
+            + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE + SIZE_VEC
+            + self.vnode_params.len()
+        // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
+    }
+
     pub fn revenue_account_id(&self) -> AccountId {
         self.provider_id
     }
