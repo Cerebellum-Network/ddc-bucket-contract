@@ -1,7 +1,8 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
-use crate::ddc_bucket::contract_fee::{FEE_PER_BYTE, SIZE_PER_RECORD};
+use crate::ddc_bucket::account::entity::Account;
+use crate::ddc_bucket::contract_fee::{calculate_contract_fee, FEE_PER_BYTE, SIZE_PER_RECORD};
 
 use super::env_utils::*;
 
@@ -81,7 +82,7 @@ fn ddc_bucket_works() {
     let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
     assert_eq!(deal_status0, DealStatus {
         vnode_id: vnode_id0,
-        estimated_rent_end_ms: 1339200000, // TODO: calculate this value.
+        estimated_rent_end_ms: 1167782400, // TODO: calculate this value.
     });
 
     // Deposit more value into the account.
@@ -93,14 +94,14 @@ fn ddc_bucket_works() {
     let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
     assert_eq!(deal_status0, DealStatus {
         vnode_id: vnode_id0,
-        estimated_rent_end_ms: 14731200000, // TODO: calculate this value.
+        estimated_rent_end_ms: 14388364800, // TODO: calculate this value.
     });
 
     // The end time of the second deal is the same because it is paid from the same account.
     let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
     assert_eq!(deal_status1, DealStatus {
         vnode_id: vnode_id1,
-        estimated_rent_end_ms: 14731200000, // TODO: calculate this value.
+        estimated_rent_end_ms: 14388364800, // TODO: calculate this value.
     });
 
     // Check the status of the bucket recursively including all deal statuses.
@@ -148,8 +149,10 @@ fn ddc_bucket_works() {
         BucketCreated {  bucket_id, owner_id: consumer_id }));
 
     // Add a cluster with 2 deals and an initial deposit.
+    let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
+    let net_deposit = 10 * TOKEN - deposit_contract_fee;
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: 10 * TOKEN }));
+        Deposit { account_id: consumer_id, value: net_deposit }));
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
         BucketAllocated { bucket_id, cluster_id }));
     assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
@@ -158,8 +161,9 @@ fn ddc_bucket_works() {
         DealCreated { deal_id: deal_id1, bucket_id, vnode_id: vnode_id1 }));
 
     // Deposit more.
+    let net_deposit = 100 * TOKEN - deposit_contract_fee;
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: 100 * TOKEN }));
+        Deposit { account_id: consumer_id, value: net_deposit }));
 
     // Provider withdrawals.
     assert!(matches!(evs.pop().unwrap(), Event::ProviderWithdraw(ev) if ev ==

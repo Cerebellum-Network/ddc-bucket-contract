@@ -10,6 +10,7 @@ use crate::ddc_bucket::{
     deal::entity::{DealId, DealStatus}, Error::*,
     Result,
 };
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -33,6 +34,13 @@ pub struct BucketStatus {
 }
 
 impl Bucket {
+    pub fn new_size(&self) -> usize {
+        SIZE_PER_RECORD
+            + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC + SIZE_VEC
+            + self.bucket_params.len()
+        // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
+    }
+
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
     }
@@ -44,10 +52,5 @@ impl Bucket {
             self.cluster_ids.push(cluster_id);
             Ok(())
         }
-    }
-
-    pub fn record_size(&self) -> usize {
-        SIZE_PER_RECORD + 32 + 4 + 4 + self.bucket_params.len()
-        // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 }

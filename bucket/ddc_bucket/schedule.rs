@@ -2,6 +2,7 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::Balance;
+use crate::ddc_bucket::contract_fee::SIZE_BALANCE;
 
 #[must_use]
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
@@ -12,6 +13,8 @@ pub struct Schedule {
 }
 
 impl Schedule {
+    pub const RECORD_SIZE: usize = SIZE_BALANCE + 8;
+
     pub fn new(start_ms: u64, rate: Balance) -> Schedule {
         Schedule { rate, start_ms }
     }

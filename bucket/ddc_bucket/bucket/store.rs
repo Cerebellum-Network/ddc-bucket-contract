@@ -22,7 +22,7 @@ impl BucketStore {
             bucket_params,
         };
 
-        let record_size = bucket.record_size();
+        let record_size = bucket.new_size();
         let bucket_id = self.0.len();
         self.0.push(bucket);
 
