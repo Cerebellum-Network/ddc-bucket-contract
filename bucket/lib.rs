@@ -149,7 +149,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<VNodeId> {
             self.message_cluster_create(cluster_params)
         }

@@ -12,7 +12,6 @@ fn storage_network_works() {
     let mut contract = DdcBucket::new();
 
     // Create a storage Cluster and a gateway Cluster.
-    push_caller(accounts.alice);
 
     let vnode_specs = vec![
         (accounts.charlie, "charlie-0"),
@@ -26,13 +25,15 @@ fn storage_network_works() {
     let partition_count = vnode_specs.len();
     let storage_cluster_id = {
         let topology = Topology::new(STORAGE_ENGINE, partition_count);
+        push_caller_value(accounts.alice, CONTRACT_FEE_LIMIT);
         contract.cluster_create(topology.to_string().unwrap())?
     };
     let gateway_cluster_id = {
         let topology = Topology::new(GATEWAY_ENGINE, 1);
+        push_caller_value(accounts.alice, CONTRACT_FEE_LIMIT);
         contract.cluster_create(topology.to_string().unwrap())?
     };
-
+    pop_caller();
     pop_caller();
 
     // Provide one gateway VNode.

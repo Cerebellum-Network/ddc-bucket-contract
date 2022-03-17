@@ -18,7 +18,7 @@ fn ddc_bucket_works() {
 
     // Create a Cluster.
     let cluster_params = "{}";
-    push_caller(provider_id0);
+    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
     let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
     pop_caller();
 
@@ -239,7 +239,7 @@ fn vnode_list_works() {
     let rent_per_month: Balance = 10 * TOKEN;
 
     // Create a Cluster.
-    push_caller(owner_id1);
+    push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let cluster_params = "{}";
     let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
     pop_caller();
