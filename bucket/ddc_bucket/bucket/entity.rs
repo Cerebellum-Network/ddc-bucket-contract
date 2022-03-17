@@ -6,8 +6,9 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    AccountId, ClusterId, deal::entity::{DealId, DealStatus},
-    Error::*, Result,
+    AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
+    deal::entity::{DealId, DealStatus}, Error::*,
+    Result,
 };
 
 pub type BucketId = u32;
@@ -46,6 +47,7 @@ impl Bucket {
     }
 
     pub fn record_size(&self) -> usize {
-        100 + self.bucket_params.len()
+        SIZE_PER_RECORD + 32 + 4 + 4 + self.bucket_params.len()
+        // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 }

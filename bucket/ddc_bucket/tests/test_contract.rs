@@ -1,6 +1,7 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
+use crate::ddc_bucket::contract_fee::{FEE_PER_BYTE, SIZE_PER_RECORD};
 
 use super::env_utils::*;
 
@@ -55,7 +56,7 @@ fn ddc_bucket_works() {
     });
 
     // Create a bucket.
-    push_caller_value(consumer_id, CONTRACT_FEE);
+    push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
     let bucket_params = "{}".to_string();
     let bucket_id = ddc_bucket.bucket_create(bucket_params.clone())?;
     pop_caller();
@@ -176,12 +177,12 @@ fn bucket_list_works() {
     let owner_id2 = accounts.bob;
     let owner_id3 = accounts.charlie;
 
-    push_caller_value(owner_id1, CONTRACT_FEE);
+    push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let bucket_id1 = ddc_bucket.bucket_create("".to_string())?;
     let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
     pop_caller();
 
-    push_caller_value(owner_id2, CONTRACT_FEE);
+    push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
     let bucket_id2 = ddc_bucket.bucket_create("".to_string())?;
     let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
     pop_caller();
@@ -308,13 +309,15 @@ fn contract_fee_works() {
     let owner_id = accounts.alice;
     let alice_before = balance_of(accounts.alice);
 
-    push_caller_value(owner_id, CONTRACT_FEE);
-    ddc_bucket.bucket_create("".to_string())?;
+    push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
+    let bucket_id = ddc_bucket.bucket_create("123".to_string())?;
 
+    let bucket = ddc_bucket.bucket_get(bucket_id)?;
+    let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size()) as Balance;
     let got_fee = balance_of(contract_id());
-    println!("Got fee {}", got_fee);
-    assert!(got_fee > 0, "A contract fee should be taken.");
-    assert!(got_fee < CONTRACT_FEE, "Value beyond the contract fee should be refunded.");
+    assert!(expect_fee <= got_fee, "A sufficient contract fee should be taken.");
+    assert!(got_fee <= 2 * expect_fee, "The contract fee should not be excessive.");
+    assert!(got_fee < CONTRACT_FEE_LIMIT, "Value beyond the contract fee should be refunded.");
     let alice_after = balance_of(accounts.alice);
     assert_eq!(alice_after + got_fee, alice_before, "Accounts should be balanced.");
 }
