@@ -145,6 +145,7 @@ pub mod ddc_bucket {
     pub struct ClusterCreated {
         #[ink(topic)]
         cluster_id: ClusterId,
+        #[ink(topic)]
         manager: AccountId,
         cluster_params: ClusterParams,
     }
@@ -161,8 +162,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, manager: AccountId, cluster_params: ClusterParams) -> Result<VNodeId> {
-            self.message_cluster_create(manager, cluster_params)
+        pub fn cluster_create(&mut self, manager: AccountId, partition_count: u32, node_ids: Vec<VNodeId>, cluster_params: ClusterParams) -> Result<VNodeId> {
+            self.message_cluster_create(manager, partition_count, node_ids, cluster_params)
         }
 
         #[ink(message)]
@@ -198,8 +199,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
-            self.message_vnode_create(cluster_id, rent_per_month, vnode_params)
+        pub fn vnode_create(&mut self, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
+            self.message_vnode_create(rent_per_month, vnode_params)
         }
 
         #[ink(message)]

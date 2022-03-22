@@ -16,9 +16,9 @@ struct Row {
 }
 
 impl TestStorage {
-    pub fn new(provider_id: AccountId, node_name: &str) -> Self {
+    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, node_name: &str) -> Self {
         Self {
-            vnode: TestNode::new(provider_id, STORAGE_ENGINE, node_name),
+            vnode: TestNode::new(contract, provider_id, STORAGE_ENGINE, node_name),
             stored_data: Default::default(),
         }
     }

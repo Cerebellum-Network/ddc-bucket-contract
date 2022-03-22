@@ -8,8 +8,14 @@ use crate::ddc_bucket::vnode::entity::VNodeId;
 use super::entity::{ClusterId, ClusterParams};
 
 impl DdcBucket {
-    pub fn message_cluster_create(&mut self, manager: AccountId, cluster_params: ClusterParams) -> Result<ClusterId> {
-        let (cluster_id, record_size) = self.clusters.create(manager, cluster_params.clone());
+    pub fn message_cluster_create(
+        &mut self,
+        manager: AccountId,
+        partition_count: u32,
+        node_ids: Vec<VNodeId>,
+        cluster_params: ClusterParams,
+    ) -> Result<ClusterId> {
+        let (cluster_id, record_size) = self.clusters.create(manager, partition_count, node_ids, cluster_params.clone());
         Self::capture_fee_and_refund(record_size)?;
         Self::env().emit_event(ClusterCreated { cluster_id, manager, cluster_params });
         Ok(cluster_id)

@@ -13,34 +13,35 @@ fn ddc_bucket_works() {
     let provider_id0 = accounts.alice;
     let provider_id1 = accounts.bob;
     let consumer_id = accounts.charlie;
+    let cluster_manager = provider_id0;
 
     let mut ddc_bucket = DdcBucket::new();
-
-    // Create a Cluster.
-    let cluster_params = "{}";
-    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let cluster_id = ddc_bucket.cluster_create(provider_id0, cluster_params.to_string())?;
-    pop_caller();
 
     // Provide a VNode.
     let rent_per_month: Balance = 10 * TOKEN;
     let vnode_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let vnode_id0 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params0.to_string())?;
+    let vnode_id0 = ddc_bucket.vnode_create(rent_per_month, vnode_params0.to_string())?;
     pop_caller();
 
     // Provide another VNode.
     let vnode_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let vnode_id1 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params1.to_string())?;
+    let vnode_id1 = ddc_bucket.vnode_create(rent_per_month, vnode_params1.to_string())?;
     pop_caller();
     assert_ne!(vnode_id0, vnode_id1);
+
+    // Create a Cluster.
+    let cluster_params = "{}";
+    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    let cluster_id = ddc_bucket.cluster_create(cluster_manager, 2, vec![vnode_id0, vnode_id1], cluster_params.to_string())?;
+    pop_caller();
 
     // Consumer discovers the Cluster with the 2 VNodes.
     let cluster = ddc_bucket.cluster_get(cluster_id)?;
     assert_eq!(cluster, Cluster {
         cluster_id,
-        manager: provider_id0,
+        manager: cluster_manager,
         cluster_params: cluster_params.to_string(),
         vnode_ids: vec![vnode_id0, vnode_id1],
     });
@@ -140,10 +141,6 @@ fn ddc_bucket_works() {
     let mut evs = get_events(11);
     evs.reverse();
 
-    // Cluster setup.
-    assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
-        ClusterCreated { cluster_id, manager: provider_id0, cluster_params: cluster_params.to_string() }));
-
     // Provider setup.
     assert!(matches!(evs.pop().unwrap(), Event::VNodeCreated(ev) if ev ==
         VNodeCreated { vnode_id: vnode_id0, provider_id: provider_id0, rent_per_month, vnode_params: vnode_params0.to_string() }));
@@ -151,6 +148,10 @@ fn ddc_bucket_works() {
     // Provider setup 2.
     assert!(matches!(evs.pop().unwrap(), Event::VNodeCreated(ev) if ev ==
         VNodeCreated { vnode_id: vnode_id1, provider_id: provider_id1, rent_per_month, vnode_params: vnode_params1.to_string() }));
+
+    // Cluster setup.
+    assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
+        ClusterCreated { cluster_id, manager: cluster_manager, cluster_params: cluster_params.to_string() }));
 
     // Deposit.
     let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
@@ -248,21 +249,15 @@ fn vnode_list_works() {
     let owner_id3 = accounts.charlie;
     let rent_per_month: Balance = 10 * TOKEN;
 
-    // Create a Cluster.
-    push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let cluster_params = "{}";
-    let cluster_id = ddc_bucket.cluster_create(owner_id1, cluster_params.to_string())?;
-    pop_caller();
-
     // Create two VNodes.
     let vnode_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let vnode_id1 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params1.to_string())?;
+    let vnode_id1 = ddc_bucket.vnode_create(rent_per_month, vnode_params1.to_string())?;
     pop_caller();
 
     let vnode_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let vnode_id2 = ddc_bucket.vnode_create(cluster_id, rent_per_month, vnode_params2.to_string())?;
+    let vnode_id2 = ddc_bucket.vnode_create(rent_per_month, vnode_params2.to_string())?;
     pop_caller();
 
     assert_ne!(vnode_id1, vnode_id2);

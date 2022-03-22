@@ -24,8 +24,10 @@ pub struct Cluster {
 impl Cluster {
     pub fn new_size(&self) -> usize {
         SIZE_PER_RECORD
-            + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC
-            + self.cluster_params.len()
+            + SIZE_INDEX
+            + SIZE_ACCOUNT_ID
+            + SIZE_VEC + self.cluster_params.len()
+            + SIZE_VEC + self.vnode_ids.len() * SIZE_INDEX
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 }

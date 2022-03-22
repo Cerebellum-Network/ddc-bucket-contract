@@ -14,17 +14,32 @@ use super::entity::{Cluster, ClusterId, ClusterParams};
 pub struct ClusterStore(pub InkVec<Cluster>);
 
 impl ClusterStore {
-    pub fn create(&mut self, manager: AccountId, cluster_params: ClusterParams) -> (ClusterId, usize) {
+    pub fn create(
+        &mut self,
+        manager: AccountId,
+        partition_count: u32,
+        node_ids: Vec<VNodeId>,
+        cluster_params: ClusterParams,
+    ) -> (ClusterId, usize) {
         let cluster_id = self.0.len();
         let cluster = Cluster {
             cluster_id,
             manager,
             cluster_params,
-            vnode_ids: Vec::new(),
+            vnode_ids: Self::new_partitions(partition_count as usize, node_ids),
         };
         let record_size = cluster.new_size();
         self.0.push(cluster);
         (cluster_id, record_size)
+    }
+
+    fn new_partitions(partition_count: usize, node_ids: Vec<VNodeId>) -> Vec<VNodeId> {
+        let node_count = node_ids.len();
+        let mut vnode_ids = Vec::with_capacity(partition_count);
+        for i in 0..partition_count {
+            vnode_ids.push(node_ids[i % node_count]);
+        }
+        vnode_ids
     }
 
     pub fn add_vnode(&mut self, cluster_id: ClusterId, vnode_id: VNodeId) -> Result<usize> {
