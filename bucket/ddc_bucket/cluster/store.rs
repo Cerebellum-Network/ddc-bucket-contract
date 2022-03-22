@@ -4,20 +4,21 @@ use ink_storage::{
     traits,
 };
 
-use crate::ddc_bucket::{Error::*, Result, VNodeId};
+use crate::ddc_bucket::{AccountId, Error::*, Result, VNodeId};
+use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 
 use super::entity::{Cluster, ClusterId, ClusterParams};
-use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct ClusterStore(pub InkVec<Cluster>);
 
 impl ClusterStore {
-    pub fn create(&mut self, cluster_params: ClusterParams) -> (ClusterId, usize) {
+    pub fn create(&mut self, manager: AccountId, cluster_params: ClusterParams) -> (ClusterId, usize) {
         let cluster_id = self.0.len();
         let cluster = Cluster {
             cluster_id,
+            manager,
             cluster_params,
             vnode_ids: Vec::new(),
         };

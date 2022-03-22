@@ -29,12 +29,12 @@ fn storage_network_works() {
     let storage_cluster_id = {
         let topology = Topology::new(STORAGE_ENGINE, partition_count);
         push_caller_value(accounts.alice, CONTRACT_FEE_LIMIT);
-        contract.cluster_create(topology.to_string().unwrap())?
+        contract.cluster_create(accounts.alice, topology.to_string().unwrap())?
     };
     let gateway_cluster_id = {
         let topology = Topology::new(GATEWAY_ENGINE, 1);
         push_caller_value(accounts.alice, CONTRACT_FEE_LIMIT);
-        contract.cluster_create(topology.to_string().unwrap())?
+        contract.cluster_create(accounts.alice, topology.to_string().unwrap())?
     };
     pop_caller();
     pop_caller();

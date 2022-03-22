@@ -19,7 +19,7 @@ fn ddc_bucket_works() {
     // Create a Cluster.
     let cluster_params = "{}";
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
+    let cluster_id = ddc_bucket.cluster_create(provider_id0, cluster_params.to_string())?;
     pop_caller();
 
     // Provide a VNode.
@@ -40,6 +40,7 @@ fn ddc_bucket_works() {
     let cluster = ddc_bucket.cluster_get(cluster_id)?;
     assert_eq!(cluster, Cluster {
         cluster_id,
+        manager: provider_id0,
         cluster_params: cluster_params.to_string(),
         vnode_ids: vec![vnode_id0, vnode_id1],
     });
@@ -141,7 +142,7 @@ fn ddc_bucket_works() {
 
     // Cluster setup.
     assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
-        ClusterCreated { cluster_id, cluster_params: cluster_params.to_string() }));
+        ClusterCreated { cluster_id, manager: provider_id0, cluster_params: cluster_params.to_string() }));
 
     // Provider setup.
     assert!(matches!(evs.pop().unwrap(), Event::VNodeCreated(ev) if ev ==
@@ -250,7 +251,7 @@ fn vnode_list_works() {
     // Create a Cluster.
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let cluster_params = "{}";
-    let cluster_id = ddc_bucket.cluster_create(cluster_params.to_string())?;
+    let cluster_id = ddc_bucket.cluster_create(owner_id1, cluster_params.to_string())?;
     pop_caller();
 
     // Create two VNodes.

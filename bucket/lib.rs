@@ -145,13 +145,29 @@ pub mod ddc_bucket {
     pub struct ClusterCreated {
         #[ink(topic)]
         cluster_id: ClusterId,
+        manager: AccountId,
         cluster_params: ClusterParams,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterVNodeReplaced {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        vnode_id: VNodeId,
+        partition_index: PartitionIndex,
     }
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<VNodeId> {
-            self.message_cluster_create(cluster_params)
+        pub fn cluster_create(&mut self, manager: AccountId, cluster_params: ClusterParams) -> Result<VNodeId> {
+            self.message_cluster_create(manager, cluster_params)
+        }
+
+        #[ink(message)]
+        pub fn cluster_replace_vnode(&mut self, cluster_id: ClusterId, partition_id: PartitionIndex, new_vnode_id: VNodeId) -> Result<()> {
+            self.message_cluster_replace_vnode(cluster_id, partition_id, new_vnode_id)
         }
 
         #[ink(message)]
@@ -228,12 +244,14 @@ pub mod ddc_bucket {
         BucketDoesNotExist,
         DealDoesNotExist,
         ClusterDoesNotExist,
+        PartitionDoesNotExist,
         BucketClusterAlreadyConnected,
         VNodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
         UnauthorizedProvider,
         UnauthorizedOwner,
+        UnauthorizedClusterManager,
         TransferFailed,
         InsufficientBalance,
     }
