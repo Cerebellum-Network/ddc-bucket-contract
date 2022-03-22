@@ -1,7 +1,7 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::Balance;
+use crate::ddc_bucket::{Balance, InsufficientBalance, Result};
 
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
@@ -30,12 +30,25 @@ impl Cash {
         self.0 += cash.consume();
     }
 
+    pub fn pay(&mut self, payable: Payable) -> Result<()> {
+        if self.peek() >= payable.peek() {
+            self.pay_unchecked(payable);
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
+    }
+
     pub fn pay_unchecked(&mut self, payable: Payable) {
         self.0 -= payable.consume();
     }
 }
 
 impl Payable {
+    pub fn new(amount: Balance) -> Self {
+        Self(amount)
+    }
+
     #[must_use]
     pub fn consume(self) -> Balance { self.0 }
 

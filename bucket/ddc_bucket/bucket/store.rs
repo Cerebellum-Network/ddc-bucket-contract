@@ -13,16 +13,20 @@ use super::entity::{Bucket, BucketId, BucketParams};
 pub struct BucketStore(pub InkVec<Bucket>);
 
 impl BucketStore {
-    pub fn create(&mut self, owner_id: AccountId, bucket_params: BucketParams) -> BucketId {
+    #[must_use]
+    pub fn create(&mut self, owner_id: AccountId, bucket_params: BucketParams) -> (BucketId, usize) {
         let bucket = Bucket {
             owner_id,
             cluster_ids: Vec::new(),
             deal_ids: Vec::new(),
             bucket_params,
         };
+
+        let record_size = bucket.new_size();
         let bucket_id = self.0.len();
         self.0.push(bucket);
-        bucket_id
+
+        (bucket_id, record_size)
     }
 
     pub fn get(&self, bucket_id: BucketId) -> Result<&Bucket> {

@@ -1,14 +1,20 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, InsufficientBalance, Payable, Result};
+use crate::ddc_bucket::{
+    account::entity::Account,
+    AccountId, Balance, Cash,
+    contract_fee::calculate_contract_fee,
+    DdcBucket, Deposit, InsufficientBalance, Payable, Result,
+};
 
 impl DdcBucket {
     pub fn message_deposit(&mut self) -> Result<()> {
-        // Receive the payable value.
-        let cash = Self::receive_cash();
+        // Receive the payable value, minus the contract fee.
+        let mut cash = Self::receive_cash();
+        cash.pay(calculate_contract_fee(Account::RECORD_SIZE))?;
         let value = cash.peek();
-        let account_id = Self::env().caller();
 
+        let account_id = Self::env().caller();
         self.accounts.deposit(account_id, cash);
         Self::env().emit_event(Deposit { account_id, value });
         Ok(())
@@ -19,6 +25,7 @@ impl DdcBucket {
     }
 
     pub fn send_cash(destination: AccountId, cash: Cash) -> Result<()> {
+        if cash.peek() == 0 { return Ok(()); }
         match Self::env().transfer(destination, cash.consume()) {
             Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
             Ok(_v) => Ok(()),

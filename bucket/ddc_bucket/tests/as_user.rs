@@ -15,21 +15,26 @@ pub struct TestUser {
 
 impl TestUser {
     pub fn new(contract: &mut DdcBucket, account_id: AccountId) -> Result<Self> {
+        // Deposit some value.
+        push_caller_value(account_id, 10 * TOKEN);
+        contract.deposit()?;
+        pop_caller();
+
         let storage_bucket_id = Self::create_bucket(contract, account_id, STORAGE_ENGINE)?;
 
         Ok(Self { account_id, storage_bucket_id })
     }
 
     pub fn create_bucket(contract: &mut DdcBucket, account_id: AccountId, engine_name: &str) -> Result<BucketId> {
-        push_caller_value(account_id, 0);
+        push_caller_value(account_id, CONTRACT_FEE_LIMIT);
         let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap())?;
         pop_caller();
 
         // Choose a cluster.
         let cluster_id = find_cluster(contract, engine_name)?.cluster_id;
 
-        // Allocate the bucket to the cluster, also depositing some value.
-        push_caller_value(account_id, 10 * CURRENCY);
+        // Allocate the bucket to the cluster.
+        push_caller_value(account_id, CONTRACT_FEE_LIMIT);
         contract.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
         pop_caller();
 

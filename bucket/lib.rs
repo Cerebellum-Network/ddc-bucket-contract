@@ -25,6 +25,7 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod deal;
     pub mod cluster;
+    pub mod contract_fee;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -83,7 +84,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn bucket_create(&mut self, bucket_params: BucketParams) -> Result<BucketId> {
             self.message_bucket_create(bucket_params)
         }
@@ -148,7 +149,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<VNodeId> {
             self.message_cluster_create(cluster_params)
         }
@@ -180,7 +181,7 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
             self.message_vnode_create(cluster_id, rent_per_month, vnode_params)
         }
@@ -218,6 +219,9 @@ pub mod ddc_bucket {
 
 
     // ---- Utils ----
+    /// One token with 10 decimals.
+    pub const TOKEN: Balance = 10_000_000_000;
+
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {

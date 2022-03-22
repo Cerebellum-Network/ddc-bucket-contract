@@ -6,6 +6,7 @@ use crate::ddc_bucket::{
     Error::*, Result,
     schedule::Schedule,
 };
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_HASHMAP, SIZE_PER_RECORD};
 
 #[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -16,6 +17,10 @@ pub struct Account {
 }
 
 impl Account {
+    pub const RECORD_SIZE: usize =
+        SIZE_PER_RECORD + SIZE_HASHMAP + SIZE_ACCOUNT_ID
+            + SIZE_BALANCE + SIZE_BALANCE + Schedule::RECORD_SIZE;
+
     pub fn new() -> Account {
         Account {
             deposit: Cash(0),

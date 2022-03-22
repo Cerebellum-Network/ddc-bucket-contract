@@ -6,9 +6,11 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    AccountId, ClusterId, deal::entity::{DealId, DealStatus},
-    Error::*, Result,
+    AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
+    deal::entity::{DealId, DealStatus}, Error::*,
+    Result,
 };
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -32,6 +34,13 @@ pub struct BucketStatus {
 }
 
 impl Bucket {
+    pub fn new_size(&self) -> usize {
+        SIZE_PER_RECORD
+            + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC + SIZE_VEC
+            + self.bucket_params.len()
+        // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
+    }
+
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
     }

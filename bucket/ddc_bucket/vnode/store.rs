@@ -5,6 +5,7 @@ use ink_storage::{
 };
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+
 use super::entity::{VNode, VNodeId, VNodeParams};
 
 #[derive(traits::SpreadLayout, Default)]
@@ -12,7 +13,7 @@ use super::entity::{VNode, VNodeId, VNodeParams};
 pub struct VNodeStore(pub InkVec<VNode>);
 
 impl VNodeStore {
-    pub fn create(&mut self, provider_id: AccountId, rent_per_month: Balance, vnode_params: VNodeParams) -> VNodeId {
+    pub fn create(&mut self, provider_id: AccountId, rent_per_month: Balance, vnode_params: VNodeParams) -> (VNodeId, usize) {
         let vnode_id = self.0.len();
         let vnode = VNode {
             vnode_id,
@@ -20,8 +21,10 @@ impl VNodeStore {
             rent_per_month,
             vnode_params,
         };
+
+        let record_size = vnode.new_size();
         self.0.push(vnode);
-        vnode_id
+        (vnode_id, record_size)
     }
 
     pub fn get(&self, vnode_id: VNodeId) -> Result<&VNode> {
