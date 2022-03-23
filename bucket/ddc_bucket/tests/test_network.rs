@@ -4,6 +4,7 @@ use crate::ddc_bucket::*;
 use crate::ddc_bucket::tests::topology::Topology;
 
 use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
+use crate::ddc_bucket::tests::as_cluster_manager::replace_node;
 
 #[ink::test]
 fn storage_network_works() {
@@ -103,4 +104,9 @@ fn storage_network_works() {
     execute_action(
         Action { routing_key: routing4, data: "data in shard 4".to_string(), op: Op::Read },
         &[4, 5, 0]);
+
+    // Replace a node.
+    let old_vnode_id = storage_nodes.first().unwrap().vnode.vnode_id;
+    let new_vnode_id = storage_nodes.last().unwrap().vnode.vnode_id;
+    replace_node(&mut contract, old_vnode_id, new_vnode_id);
 }

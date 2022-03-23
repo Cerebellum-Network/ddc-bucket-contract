@@ -11,6 +11,7 @@ use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_PER_RECO
 pub type ClusterId = u32;
 pub type ClusterParams = String;
 pub type PartitionIndex = u32;
+pub type PartitionId = (ClusterId, PartitionIndex);
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]

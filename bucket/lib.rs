@@ -167,8 +167,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn cluster_replace_vnode(&mut self, cluster_id: ClusterId, partition_id: PartitionIndex, new_vnode_id: VNodeId) -> Result<()> {
-            self.message_cluster_replace_vnode(cluster_id, partition_id, new_vnode_id)
+        pub fn cluster_replace_vnode(&mut self, cluster_id: ClusterId, partition_i: PartitionIndex, new_vnode_id: VNodeId) -> Result<()> {
+            self.message_cluster_replace_vnode(cluster_id, partition_i, new_vnode_id)
         }
 
         #[ink(message)]

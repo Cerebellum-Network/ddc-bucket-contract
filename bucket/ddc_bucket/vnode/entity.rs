@@ -23,8 +23,8 @@ pub struct VNode {
 impl VNode {
     pub fn new_size(&self) -> usize {
         SIZE_PER_RECORD
-            + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE + SIZE_VEC
-            + self.vnode_params.len()
+            + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE
+            + SIZE_VEC + self.vnode_params.len()
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 
