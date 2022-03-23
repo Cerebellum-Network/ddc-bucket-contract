@@ -2,16 +2,16 @@ use std::collections::HashMap;
 
 use crate::ddc_bucket::{AccountId, DdcBucket};
 use crate::ddc_bucket::cluster::entity::{PartitionId, PartitionIndex};
-use crate::ddc_bucket::vnode::entity::VNodeId;
+use crate::ddc_bucket::node::entity::NodeId;
 
 pub struct ClusterManager {
     pub account_id: AccountId,
 
-    node_states: HashMap<VNodeId, NodeState>,
+    node_states: HashMap<NodeId, NodeState>,
 }
 
 enum NodeState {
-    Default,
+    _Default,
     Dead,
 }
 
@@ -20,19 +20,19 @@ impl ClusterManager {
         Self { account_id, node_states: Default::default() }
     }
 
-    pub fn replace_node(&mut self, contract: &mut DdcBucket, old_vnode_id: VNodeId) {
-        self.node_states.insert(old_vnode_id, NodeState::Dead);
+    pub fn replace_node(&mut self, contract: &mut DdcBucket, old_node_id: NodeId) {
+        self.node_states.insert(old_node_id, NodeState::Dead);
 
-        let new_vnode_id = self.find_a_free_node(contract);
+        let new_node_id = self.find_a_free_node(contract);
 
-        let partition_ids = self.find_partitions_of_node(contract, old_vnode_id);
+        let partition_ids = self.find_partitions_of_node(contract, old_node_id);
 
         for (cluster_id, partition_i) in partition_ids.iter() {
-            contract.cluster_replace_vnode(*cluster_id, *partition_i, new_vnode_id).unwrap();
+            contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id).unwrap();
         }
     }
 
-    pub fn find_partitions_of_node(&self, contract: &DdcBucket, vnode_id: VNodeId) -> Vec<PartitionId> {
+    pub fn find_partitions_of_node(&self, contract: &DdcBucket, node_id: NodeId) -> Vec<PartitionId> {
         let mut partition_ids = Vec::new();
 
         // Discover the available clusters.
@@ -44,8 +44,8 @@ impl ClusterManager {
                 continue; // Not our cluster, skip.
             }
 
-            for (index, &some_vnode_id) in cluster.vnode_ids.iter().enumerate() {
-                if some_vnode_id == vnode_id {
+            for (index, &some_node_id) in cluster.vnodes.iter().enumerate() {
+                if some_node_id == node_id {
                     let partition_id = (cluster.cluster_id, index as PartitionIndex);
                     partition_ids.push(partition_id);
                 }
@@ -55,19 +55,19 @@ impl ClusterManager {
         partition_ids
     }
 
-    pub fn find_a_free_node(&self, contract: &DdcBucket) -> VNodeId {
+    pub fn find_a_free_node(&self, contract: &DdcBucket) -> NodeId {
         // Discover the nodes
-        let (vnodes, _count) = contract.vnode_list(0, 20, None);
+        let (nodes, _count) = contract.node_list(0, 20, None);
         if _count > 20 { unimplemented!("full iteration of contract entities") }
 
-        let vnode = vnodes.iter().find(|n| {
-            let node_state = self.node_states.get(&n.vnode_id);
+        let node = nodes.iter().find(|n| {
+            let node_state = self.node_states.get(&n.node_id);
             match node_state {
                 Some(&NodeState::Dead) => false,
                 _ => true,
             }
         }).expect("no good nodes available");
 
-        vnode.vnode_id
+        node.node_id
     }
 }

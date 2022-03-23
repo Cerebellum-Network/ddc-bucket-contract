@@ -7,7 +7,7 @@ use super::env_utils::*;
 
 pub struct TestNode {
     pub provider_id: AccountId,
-    pub vnode_id: VNodeId,
+    pub node_id: NodeId,
     pub cluster_ids: HashSet<ClusterId>,
     pub engine_name: String,
     pub url: String,
@@ -16,14 +16,14 @@ pub struct TestNode {
 impl TestNode {
     pub fn new(contract: &mut DdcBucket, provider_id: AccountId, engine_name: &str, node_name: &str) -> Self {
         let url = format!("https://node-{}.ddc.cere.network/{}/", node_name, engine_name);
-        let vnode_params = url.clone();
+        let node_params = url.clone();
         let rent_per_month: Balance = 10 * TOKEN;
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
-        let vnode_id = contract.vnode_create(rent_per_month, vnode_params).unwrap();
+        let node_id = contract.node_create(rent_per_month, node_params).unwrap();
         pop_caller();
 
-        Self { provider_id, vnode_id, cluster_ids: Default::default(), engine_name: engine_name.into(), url }
+        Self { provider_id, node_id, cluster_ids: Default::default(), engine_name: engine_name.into(), url }
     }
 
     pub fn join_cluster(&mut self, cluster_id: ClusterId) {

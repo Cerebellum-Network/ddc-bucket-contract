@@ -4,7 +4,7 @@ use ink_storage::{
     traits,
 };
 
-use crate::ddc_bucket::{AccountId, Error::*, Result, VNodeId};
+use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
 use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 
 use super::entity::{Cluster, ClusterId, ClusterParams};
@@ -18,7 +18,7 @@ impl ClusterStore {
         &mut self,
         manager: AccountId,
         partition_count: u32,
-        node_ids: Vec<VNodeId>,
+        node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> (ClusterId, usize) {
         let cluster_id = self.0.len();
@@ -26,14 +26,14 @@ impl ClusterStore {
             cluster_id,
             manager,
             cluster_params,
-            vnode_ids: Self::new_partitions(partition_count as usize, node_ids),
+            vnodes: Self::new_vnodes(partition_count as usize, node_ids),
         };
         let record_size = cluster.new_size();
         self.0.push(cluster);
         (cluster_id, record_size)
     }
 
-    fn new_partitions(partition_count: usize, node_ids: Vec<VNodeId>) -> Vec<VNodeId> {
+    fn new_vnodes(partition_count: usize, node_ids: Vec<NodeId>) -> Vec<NodeId> {
         let node_count = node_ids.len();
         let mut vnode_ids = Vec::with_capacity(partition_count);
         for i in 0..partition_count {
@@ -42,9 +42,9 @@ impl ClusterStore {
         vnode_ids
     }
 
-    pub fn add_vnode(&mut self, cluster_id: ClusterId, vnode_id: VNodeId) -> Result<usize> {
+    pub fn add_node(&mut self, cluster_id: ClusterId, node_id: NodeId) -> Result<usize> {
         let cluster = self.get_mut(cluster_id)?;
-        cluster.vnode_ids.push(vnode_id);
+        cluster.vnodes.push(node_id);
         Ok(SIZE_INDEX)
     }
 

@@ -45,10 +45,10 @@ impl TestUser {
         // Find a gateway cluster.
         let cluster = find_cluster(contract, GATEWAY_ENGINE)?;
         // Pick a gateway node.
-        let vnode_id = *cluster.vnode_ids.first().expect("empty cluster");
-        let vnode = contract.vnode_get(vnode_id)?;
+        let node_id = *cluster.vnodes.first().expect("empty cluster");
+        let node = contract.node_get(node_id)?;
         // Get the URL of the gateway.
-        let url = vnode.vnode_params;
+        let url = node.node_params;
         // Prepare a request.
         let request = TestRequest {
             url,

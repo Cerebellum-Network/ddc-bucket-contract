@@ -15,7 +15,7 @@ fn storage_network_works() {
 
     let mut contract = DdcBucket::new();
 
-    let vnode_specs = vec![
+    let node_specs = vec![
         (accounts.charlie, "charlie-0"),
         (accounts.django, "django-0"),
         (accounts.eve, "eve-0"),
@@ -23,14 +23,14 @@ fn storage_network_works() {
         (accounts.django, "django-1"),
         (accounts.eve, "eve-1"),
     ];
-    let partition_count = vnode_specs.len() as u32;
+    let partition_count = node_specs.len() as u32;
 
-    // Provide storage VNodes.
+    // Provide storage Nodes.
     let mut storage_nodes: Vec<TestStorage> =
-        vnode_specs.iter().map(|spec| {
+        node_specs.iter().map(|spec| {
             TestStorage::new(&mut contract, spec.0, spec.1)
         }).collect();
-    assert_ne!(storage_nodes[0].vnode.url, storage_nodes[1].vnode.url, "nodes must have different URLs");
+    assert_ne!(storage_nodes[0].node.url, storage_nodes[1].node.url, "nodes must have different URLs");
 
 
     let mut cluster_manager = ClusterManager::new(accounts.alice);
@@ -38,7 +38,7 @@ fn storage_network_works() {
     // Create a storage Cluster.
     {
         let node_ids = storage_nodes.iter().map(|node|
-            node.vnode.vnode_id).collect();
+            node.node.node_id).collect();
 
         let topology = Topology::new(STORAGE_ENGINE, partition_count);
 
@@ -47,16 +47,16 @@ fn storage_network_works() {
         pop_caller();
 
         for node in &mut storage_nodes {
-            node.vnode.join_cluster(storage_cluster_id);
+            node.node.join_cluster(storage_cluster_id);
         }
     }
 
-    // Provide one gateway VNode.
+    // Provide one gateway Node.
     let mut gateway_node = TestGateway::new(&mut contract, accounts.alice, "alice");
 
     // Create a gateway Cluster.
     {
-        let node_ids = vec![gateway_node.vnode.vnode_id];
+        let node_ids = vec![gateway_node.node.node_id];
 
         let topology = Topology::new(GATEWAY_ENGINE, 1);
 
@@ -64,7 +64,7 @@ fn storage_network_works() {
         let gateway_cluster_id = contract.cluster_create(cluster_manager.account_id, partition_count, node_ids, topology.to_string().unwrap())?;
         pop_caller();
 
-        gateway_node.vnode.join_cluster(gateway_cluster_id);
+        gateway_node.node.join_cluster(gateway_cluster_id);
     }
 
     // Create a user with a storage bucket.
@@ -108,6 +108,6 @@ fn storage_network_works() {
         &[4, 5, 0]);
 
     // Replace a node.
-    let old_vnode_id = storage_nodes.first().unwrap().vnode.vnode_id;
-    cluster_manager.replace_node(&mut contract, old_vnode_id);
+    let old_node_id = storage_nodes.first().unwrap().node.node_id;
+    cluster_manager.replace_node(&mut contract, old_node_id);
 }

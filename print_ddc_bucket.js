@@ -17,8 +17,8 @@ async function main() {
 
     const contract = getContract(CONTRACT_NAME, chainName, api);
 
-    const vnodes = await ddcBucketQuery.vnodeList(contract, ACCOUNT_FILTER);
-    log("\nVNodes", JSON.stringify(vnodes, null, 4));
+    const nodes = await ddcBucketQuery.nodeList(contract, ACCOUNT_FILTER);
+    log("\nNodes", JSON.stringify(nodes, null, 4));
 
     const buckets = await ddcBucketQuery.bucketListStatuses(contract, ACCOUNT_FILTER);
     log("\nBuckets", JSON.stringify(buckets, null, 4));

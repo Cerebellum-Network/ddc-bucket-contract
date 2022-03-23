@@ -1,6 +1,6 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{DdcBucket, ProviderWithdraw, Result, VNodeId};
+use crate::ddc_bucket::{DdcBucket, ProviderWithdraw, Result, NodeId};
 
 use super::entity::{DealId, DealStatus};
 
@@ -12,10 +12,10 @@ impl DdcBucket {
 
         // Find where to distribute the revenues.
         let revenue_account_id = {
-            let vnode = self.vnodes.get(deal.vnode_id)?;
-            // Authorize only the vnode owner to trigger the distribution.
-            vnode.only_owner(caller)?;
-            vnode.revenue_account_id()
+            let node = self.nodes.get(deal.node_id)?;
+            // Authorize only the node owner to trigger the distribution.
+            node.only_owner(caller)?;
+            node.revenue_account_id()
         };
 
         let now_ms = Self::env().block_timestamp();
@@ -31,19 +31,19 @@ impl DdcBucket {
         let estimated_rent_end_ms = self.accounts.flow_covered_until(&deal.flow)?;
 
         Ok(DealStatus {
-            vnode_id: deal.vnode_id,
+            node_id: deal.node_id,
             estimated_rent_end_ms,
         })
     }
 
-    pub fn deal_create(&mut self, vnode_id: VNodeId) -> Result<DealId> {
+    pub fn deal_create(&mut self, node_id: NodeId) -> Result<DealId> {
         let payer_id = Self::env().caller();
 
         // Start the payment flow for a deal.
-        let rent_per_month = self.vnodes.get(vnode_id)?.rent_per_month;
+        let rent_per_month = self.nodes.get(node_id)?.rent_per_month;
         let start_ms = Self::env().block_timestamp();
         let flow = self.accounts.start_flow(start_ms, payer_id, rent_per_month)?;
-        let deal_id = self.deals.create(vnode_id, flow);
+        let deal_id = self.deals.create(node_id, flow);
 
         Ok(deal_id)
     }

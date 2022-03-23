@@ -22,11 +22,11 @@ impl DdcBucket {
 
         Self::env().emit_event(BucketAllocated { bucket_id, cluster_id });
 
-        let vnode_ids = self.clusters.get(cluster_id)?.vnode_ids.clone();
-        let mut deal_ids = Vec::with_capacity(vnode_ids.len());
+        let node_ids = self.clusters.get(cluster_id)?.vnodes.clone();
+        let mut deal_ids = Vec::with_capacity(node_ids.len());
 
-        for vnode_id in vnode_ids.iter() {
-            let deal_id = self.deal_create(*vnode_id)?;
+        for node_id in node_ids.iter() {
+            let deal_id = self.deal_create(*node_id)?;
             deal_ids.push(deal_id);
         }
 
@@ -34,13 +34,13 @@ impl DdcBucket {
         bucket.only_owner(owner_id)?;
         bucket.connect_cluster(cluster_id)?;
 
-        for (&vnode_id, deal_id) in vnode_ids.iter().zip(deal_ids) {
+        for (&node_id, deal_id) in node_ids.iter().zip(deal_ids) {
             bucket.deal_ids.push(deal_id);
-            Self::env().emit_event(DealCreated { deal_id, bucket_id, vnode_id: vnode_id });
+            Self::env().emit_event(DealCreated { deal_id, bucket_id, node_id: node_id });
         }
 
         // Capture the contract storage fee.
-        let record_size = vnode_ids.len() * (Deal::RECORD_SIZE + SIZE_INDEX) + SIZE_INDEX;
+        let record_size = node_ids.len() * (Deal::RECORD_SIZE + SIZE_INDEX) + SIZE_INDEX;
         Self::capture_fee_and_refund(record_size)?;
         Ok(())
     }
