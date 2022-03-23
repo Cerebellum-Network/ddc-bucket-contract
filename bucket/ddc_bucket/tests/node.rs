@@ -7,30 +7,27 @@ use super::env_utils::*;
 
 pub struct TestNode {
     pub provider_id: AccountId,
-    pub vnode_ids: HashSet<VNodeId>,
+    pub node_id: NodeId,
     pub cluster_ids: HashSet<ClusterId>,
     pub engine_name: String,
     pub url: String,
 }
 
 impl TestNode {
-    pub fn new(provider_id: AccountId, engine_name: &str, node_name: &str) -> Self {
+    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, engine_name: &str, node_name: &str) -> Self {
         let url = format!("https://node-{}.ddc.cere.network/{}/", node_name, engine_name);
-
-        Self { provider_id, vnode_ids: Default::default(), cluster_ids: Default::default(), engine_name: engine_name.into(), url }
-    }
-
-    pub fn join_cluster(&mut self, contract: &mut DdcBucket, cluster_id: ClusterId) -> Result<()> {
+        let node_params = url.clone();
         let rent_per_month: Balance = 10 * TOKEN;
-        let vnode_params = self.url.clone();
 
-        push_caller_value(self.provider_id, CONTRACT_FEE_LIMIT);
-        let vnode_id = contract.vnode_create(cluster_id, rent_per_month, vnode_params)?;
+        push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
+        let node_id = contract.node_create(rent_per_month, node_params).unwrap();
         pop_caller();
 
-        self.vnode_ids.insert(vnode_id);
+        Self { provider_id, node_id, cluster_ids: Default::default(), engine_name: engine_name.into(), url }
+    }
+
+    pub fn join_cluster(&mut self, cluster_id: ClusterId) {
         self.cluster_ids.insert(cluster_id);
-        Ok(())
     }
 }
 

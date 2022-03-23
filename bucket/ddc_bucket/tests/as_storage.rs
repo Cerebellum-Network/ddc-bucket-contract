@@ -5,7 +5,7 @@ use super::node::{Op, TestNode, TestRequest};
 pub const STORAGE_ENGINE: &str = "storage";
 
 pub struct TestStorage {
-    pub vnode: TestNode,
+    pub node: TestNode,
     stored_data: Vec<Row>,
 }
 
@@ -16,22 +16,22 @@ struct Row {
 }
 
 impl TestStorage {
-    pub fn new(provider_id: AccountId, node_name: &str) -> Self {
+    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, node_name: &str) -> Self {
         Self {
-            vnode: TestNode::new(provider_id, STORAGE_ENGINE, node_name),
+            node: TestNode::new(contract, provider_id, STORAGE_ENGINE, node_name),
             stored_data: Default::default(),
         }
     }
 
     pub fn handle_request(&mut self, contract: &DdcBucket, request: &TestRequest) -> Result<()> {
-        assert_eq!(request.url, self.vnode.url, "wrong storage URL");
+        assert_eq!(request.url, self.node.url, "wrong storage URL");
 
         // Fetch the status of this bucket.
         let status = contract.bucket_get_status(request.bucket_id)?;
         let cluster_id = status.bucket.cluster_ids.first().expect("bucket has no clusters");
 
         // Check that this bucket is allocated in the storage cluster of this node.
-        let allocated = self.vnode.cluster_ids.contains(cluster_id);
+        let allocated = self.node.cluster_ids.contains(cluster_id);
         assert!(allocated, "bucket is not allocated on this node");
 
         let bucket_id = request.bucket_id;

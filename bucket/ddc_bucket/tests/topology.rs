@@ -8,14 +8,14 @@ pub struct Topology {
 }
 
 impl Topology {
-    pub fn new(engine_name: &str, partition_count: usize) -> Self {
+    pub fn new(engine_name: &str, partition_count: u32) -> Self {
         let ring_tokens = (1..1 + partition_count).map(|i| {
-            (u32::MAX / partition_count as u32) * i as u32
+            (u32::MAX / partition_count) * i as u32
         }).collect();
 
         Self {
             engine_name: engine_name.to_string(),
-            partition_count,
+            partition_count: partition_count as usize,
             ring_tokens,
         }
     }

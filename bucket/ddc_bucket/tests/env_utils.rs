@@ -79,7 +79,8 @@ fn _print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
-            Event::VNodeCreated(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeReplaced(ev) => println!("EVENT {:?}", ev),
+            Event::NodeCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
             Event::DealCreated(ev) => println!("EVENT {:?}", ev),

@@ -15,13 +15,13 @@ pub mod ddc_bucket {
     use cluster::{entity::*, store::*};
     use deal::{entity::*, store::*};
     use Error::*;
-    use vnode::{entity::*, store::*};
+    use node::{entity::*, store::*};
 
     pub mod account;
     pub mod flow;
     pub mod schedule;
     pub mod cash;
-    pub mod vnode;
+    pub mod node;
     pub mod bucket;
     pub mod deal;
     pub mod cluster;
@@ -33,7 +33,7 @@ pub mod ddc_bucket {
         buckets: BucketStore,
         deals: DealStore,
         clusters: ClusterStore,
-        vnodes: VNodeStore,
+        nodes: NodeStore,
         accounts: AccountStore,
     }
 
@@ -44,7 +44,7 @@ pub mod ddc_bucket {
                 buckets: BucketStore::default(),
                 deals: DealStore::default(),
                 clusters: ClusterStore::default(),
-                vnodes: VNodeStore::default(),
+                nodes: NodeStore::default(),
                 accounts: AccountStore::default(),
             }
         }
@@ -80,7 +80,7 @@ pub mod ddc_bucket {
         #[ink(topic)]
         bucket_id: BucketId,
         #[ink(topic)]
-        vnode_id: VNodeId,
+        node_id: NodeId,
     }
 
     impl DdcBucket {
@@ -145,13 +145,30 @@ pub mod ddc_bucket {
     pub struct ClusterCreated {
         #[ink(topic)]
         cluster_id: ClusterId,
+        #[ink(topic)]
+        manager: AccountId,
         cluster_params: ClusterParams,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeReplaced {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_id: NodeId,
+        partition_index: PartitionIndex,
     }
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, cluster_params: ClusterParams) -> Result<VNodeId> {
-            self.message_cluster_create(cluster_params)
+        pub fn cluster_create(&mut self, manager: AccountId, partition_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> Result<NodeId> {
+            self.message_cluster_create(manager, partition_count, node_ids, cluster_params)
+        }
+
+        #[ink(message)]
+        pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, partition_i: PartitionIndex, new_node_id: NodeId) -> Result<()> {
+            self.message_cluster_replace_node(cluster_id, partition_i, new_node_id)
         }
 
         #[ink(message)]
@@ -167,36 +184,37 @@ pub mod ddc_bucket {
     // ---- End Cluster ----
 
 
-    // ---- VNode ----
+    // ---- Node ----
 
     #[ink(event)]
+
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct VNodeCreated {
+    pub struct NodeCreated {
         #[ink(topic)]
-        vnode_id: VNodeId,
+        node_id: NodeId,
         #[ink(topic)]
         provider_id: AccountId,
         rent_per_month: Balance,
-        vnode_params: VNodeParams,
+        node_params: NodeParams,
     }
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn vnode_create(&mut self, cluster_id: ClusterId, rent_per_month: Balance, vnode_params: VNodeParams) -> Result<VNodeId> {
-            self.message_vnode_create(cluster_id, rent_per_month, vnode_params)
+        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams) -> Result<NodeId> {
+            self.message_node_create(rent_per_month, node_params)
         }
 
         #[ink(message)]
-        pub fn vnode_get(&self, vnode_id: VNodeId) -> Result<VNode> {
-            Ok(self.vnodes.get(vnode_id)?.clone())
+        pub fn node_get(&self, node_id: NodeId) -> Result<Node> {
+            Ok(self.nodes.get(node_id)?.clone())
         }
 
         #[ink(message)]
-        pub fn vnode_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<VNode>, u32) {
-            self.vnodes.list(offset, limit, filter_provider_id)
+        pub fn node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Node>, u32) {
+            self.nodes.list(offset, limit, filter_provider_id)
         }
     }
-    // ---- End VNode ----
+    // ---- End Node ----
 
 
     // ---- Billing ----
@@ -228,12 +246,14 @@ pub mod ddc_bucket {
         BucketDoesNotExist,
         DealDoesNotExist,
         ClusterDoesNotExist,
+        PartitionDoesNotExist,
         BucketClusterAlreadyConnected,
-        VNodeDoesNotExist,
+        NodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
         UnauthorizedProvider,
         UnauthorizedOwner,
+        UnauthorizedClusterManager,
         TransferFailed,
         InsufficientBalance,
     }

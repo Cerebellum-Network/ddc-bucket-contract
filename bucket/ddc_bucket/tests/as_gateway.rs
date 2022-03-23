@@ -7,16 +7,16 @@ use super::topology::{BucketParams, Topology};
 pub const GATEWAY_ENGINE: &str = "gateway";
 
 pub struct TestGateway {
-    pub vnode: TestNode,
+    pub node: TestNode,
 }
 
 impl TestGateway {
-    pub fn new(provider_id: AccountId, node_name: &str) -> Self {
-        Self { vnode: TestNode::new(provider_id, GATEWAY_ENGINE, node_name) }
+    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, node_name: &str) -> Self {
+        Self { node: TestNode::new(contract, provider_id, GATEWAY_ENGINE, node_name) }
     }
 
     pub fn handle_request(&self, contract: &DdcBucket, client_request: TestRequest) -> Result<Vec<TestRequest>> {
-        assert_eq!(client_request.url, self.vnode.url, "wrong gateway URL");
+        assert_eq!(client_request.url, self.node.url, "wrong gateway URL");
 
         let mut storage_requests = vec![];
 
@@ -33,10 +33,10 @@ impl TestGateway {
 
         // Make a request to the right storage nodes.
         for index in replica_indices {
-            let vnode_id = cluster.vnode_ids.get(index).expect("Not enough vnodes");
-            let storage_vnode = contract.vnode_get(*vnode_id)?;
+            let node_id = cluster.vnodes.get(index).expect("Not enough nodes");
+            let storage_node = contract.node_get(*node_id)?;
             // Get the URL of the storage node.
-            let storage_url = storage_vnode.vnode_params;
+            let storage_url = storage_node.node_params;
             // Prepare a request.
             let storage_request = TestRequest {
                 url: storage_url,

@@ -102,7 +102,7 @@ async function main() {
     const ownerId = account.address;
     const anyAccountId = account.address;
     const rent_per_month = 10n * CERE;
-    const vnode_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
+    const node_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
     const bucket_params = "{}";
 
     let cluster_id;
@@ -120,33 +120,33 @@ async function main() {
         log("New Cluster", cluster_id);
     }
 
-    let vnode_id;
+    let node_id;
     {
-        log("Setup a vnode…");
+        log("Setup a node…");
         const tx = contract.tx
-            .vnodeCreate(txOptions, cluster_id, rent_per_month, vnode_params);
+            .nodeCreate(txOptions, cluster_id, rent_per_month, node_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
-        vnode_id = ddcBucket.findCreatedVNodeId(events);
-        log("New VNode", vnode_id);
+        node_id = ddcBucket.findCreatedNodeId(events);
+        log("New Node", node_id);
     }
     {
-        log("\nRead vnode info…");
+        log("\nRead node info…");
         const {result, output} = await contract.query
-            .vnodeGet(anyAccountId, txOptions, vnode_id);
+            .nodeGet(anyAccountId, txOptions, node_id);
 
         if (!result.isOk) assert.fail(result.asErr);
 
         log('OUTPUT', output.toHuman());
         assert.deepEqual(output.toJSON(), {
             "ok": {
-                vnode_id,
+                node_id,
                 provider_id,
                 rent_per_month,
-                vnode_params,
+                node_params,
             },
         });
     }
@@ -196,7 +196,7 @@ async function main() {
         output = output.toJSON();
         log('OUTPUT', output);
 
-        assert.deepEqual(output.ok.vnode_id, vnode_id);
+        assert.deepEqual(output.ok.node_id, node_id);
         assert(output.ok.estimated_rent_end_ms > 0);
     }
     {
@@ -209,7 +209,7 @@ async function main() {
         log('OUTPUT', output);
 
         /* TODO
-        assert.deepEqual(output.ok.vnode_id, vnode_id);
+        assert.deepEqual(output.ok.node_id, node_id);
         assert(output.ok.estimated_rent_end_ms > 0);
         assert.deepEqual(output.ok.writer_ids, [ownerId]);
         */
