@@ -33,7 +33,7 @@ fn storage_network_works() {
     assert_ne!(storage_nodes[0].vnode.url, storage_nodes[1].vnode.url, "nodes must have different URLs");
 
 
-    let cluster_manager = ClusterManager { account_id: accounts.alice };
+    let mut cluster_manager = ClusterManager::new(accounts.alice);
 
     // Create a storage Cluster.
     {
