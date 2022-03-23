@@ -1,10 +1,10 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::*;
+use crate::ddc_bucket::tests::as_cluster_manager::ClusterManager;
 use crate::ddc_bucket::tests::topology::Topology;
 
 use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
-use crate::ddc_bucket::tests::as_cluster_manager::replace_node;
 
 #[ink::test]
 fn storage_network_works() {
@@ -12,7 +12,6 @@ fn storage_network_works() {
     set_balance(accounts.charlie, 1000 * TOKEN);
     set_balance(accounts.django, 1000 * TOKEN);
     set_balance(accounts.eve, 1000 * TOKEN);
-    let cluster_manager = accounts.alice;
 
     let mut contract = DdcBucket::new();
 
@@ -33,6 +32,9 @@ fn storage_network_works() {
         }).collect();
     assert_ne!(storage_nodes[0].vnode.url, storage_nodes[1].vnode.url, "nodes must have different URLs");
 
+
+    let cluster_manager = ClusterManager { account_id: accounts.alice };
+
     // Create a storage Cluster.
     {
         let node_ids = storage_nodes.iter().map(|node|
@@ -40,8 +42,8 @@ fn storage_network_works() {
 
         let topology = Topology::new(STORAGE_ENGINE, partition_count);
 
-        push_caller_value(cluster_manager, CONTRACT_FEE_LIMIT);
-        let storage_cluster_id = contract.cluster_create(cluster_manager, partition_count, node_ids, topology.to_string().unwrap())?;
+        push_caller_value(cluster_manager.account_id, CONTRACT_FEE_LIMIT);
+        let storage_cluster_id = contract.cluster_create(cluster_manager.account_id, partition_count, node_ids, topology.to_string().unwrap())?;
         pop_caller();
 
         for node in &mut storage_nodes {
@@ -58,8 +60,8 @@ fn storage_network_works() {
 
         let topology = Topology::new(GATEWAY_ENGINE, 1);
 
-        push_caller_value(cluster_manager, CONTRACT_FEE_LIMIT);
-        let gateway_cluster_id = contract.cluster_create(cluster_manager, partition_count, node_ids, topology.to_string().unwrap())?;
+        push_caller_value(cluster_manager.account_id, CONTRACT_FEE_LIMIT);
+        let gateway_cluster_id = contract.cluster_create(cluster_manager.account_id, partition_count, node_ids, topology.to_string().unwrap())?;
         pop_caller();
 
         gateway_node.vnode.join_cluster(gateway_cluster_id);
@@ -107,6 +109,5 @@ fn storage_network_works() {
 
     // Replace a node.
     let old_vnode_id = storage_nodes.first().unwrap().vnode.vnode_id;
-    let new_vnode_id = storage_nodes.last().unwrap().vnode.vnode_id;
-    replace_node(&mut contract, old_vnode_id, new_vnode_id);
+    cluster_manager.replace_node(&mut contract, old_vnode_id);
 }
