@@ -6,6 +6,83 @@ use crate::ddc_bucket::contract_fee::{calculate_contract_fee, FEE_PER_BYTE, SIZE
 
 use super::env_utils::*;
 
+struct Context {
+    contract: DdcBucket,
+    manager: AccountId,
+    cluster_id: ClusterId,
+    provider_id0: AccountId,
+    node_id0: NodeId,
+    node_id1: NodeId,
+}
+
+fn new_cluster() -> Result<Context> {
+    let accounts = get_accounts();
+    set_balance(accounts.charlie, 1000 * TOKEN);
+    let provider_id0 = accounts.alice;
+    let provider_id1 = accounts.bob;
+    let manager = accounts.charlie;
+
+    let mut contract = DdcBucket::new();
+
+    // Provide a Node.
+    let rent_per_month: Balance = 10 * TOKEN;
+    let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string())?;
+    pop_caller();
+
+    // Provide another Node.
+    let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string())?;
+    pop_caller();
+    assert_ne!(node_id0, node_id1);
+
+    // Create a Cluster.
+    let cluster_params = "{}";
+    push_caller_value(manager, CONTRACT_FEE_LIMIT);
+    let cluster_id = contract.cluster_create(manager, 5, vec![node_id0, node_id1], cluster_params.to_string())?;
+    pop_caller();
+
+    Ok(Context { contract, manager, cluster_id, provider_id0, node_id0, node_id1 })
+}
+
+#[ink::test]
+fn cluster_management_works() {
+    let mut ctx = new_cluster()?;
+    push_caller_value(ctx.manager, 0);
+
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert_eq!(&cluster.vnodes,
+               &[ctx.node_id0, ctx.node_id1, ctx.node_id0, ctx.node_id1, ctx.node_id0],
+               "cluster setup with nodes");
+
+    let bad_node_id = 2;
+    assert_eq!(
+        ctx.contract.cluster_create(ctx.manager, 2, vec![bad_node_id], "".to_string()),
+        Err(NodeDoesNotExist), "cluster nodes must exist");
+
+    assert_eq!(
+        ctx.contract.cluster_replace_node(ctx.cluster_id, 0, bad_node_id),
+        Err(NodeDoesNotExist), "cluster replacement node must exist");
+
+    let not_manager = ctx.provider_id0;
+    push_caller_value(not_manager, 0);
+    assert_eq!(
+        ctx.contract.cluster_replace_node(ctx.cluster_id, 0, 1),
+        Err(UnauthorizedClusterManager), "only the manager can modify the cluster");
+    pop_caller();
+
+    // Reassign a vnode.
+    ctx.contract.cluster_replace_node(ctx.cluster_id, 2, ctx.node_id1)?;
+
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert_eq!(&cluster.vnodes,
+               &[ctx.node_id0, ctx.node_id1, /* changed */ ctx.node_id1, ctx.node_id1, ctx.node_id0],
+               "a vnode must be replaced");
+}
+
+
 #[ink::test]
 fn ddc_bucket_works() {
     let accounts = get_accounts();

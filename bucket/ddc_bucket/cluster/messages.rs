@@ -16,6 +16,9 @@ impl DdcBucket {
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
+        for node_id in &node_ids {
+            let _ = self.nodes.get(*node_id)?;
+        }
         let (cluster_id, record_size) = self.clusters.create(manager, partition_count, node_ids, cluster_params.clone());
         Self::capture_fee_and_refund(record_size)?;
         Self::env().emit_event(ClusterCreated { cluster_id, manager, cluster_params });
@@ -25,6 +28,7 @@ impl DdcBucket {
     pub fn message_cluster_replace_node(&mut self, cluster_id: ClusterId, partition_index: PartitionIndex, new_node_id: NodeId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
         Self::only_cluster_manager(cluster)?;
+        let _ = self.nodes.get(new_node_id)?;
         let node_id = cluster.vnodes.get_mut(partition_index as usize).ok_or(PartitionDoesNotExist)?;
         *node_id = new_node_id;
         Self::env().emit_event(ClusterNodeReplaced { cluster_id, node_id: new_node_id, partition_index });
