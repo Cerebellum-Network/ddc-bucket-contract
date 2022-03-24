@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::ddc_bucket::{AccountId, DdcBucket};
 use crate::ddc_bucket::cluster::entity::{PartitionId, PartitionIndex};
 use crate::ddc_bucket::node::entity::{NodeId, Resource};
+use crate::ddc_bucket::tests::as_storage::STORAGE_ENGINE;
 use crate::ddc_bucket::tests::env_utils::{CONTRACT_FEE_LIMIT, pop_caller, push_caller_value};
 use crate::ddc_bucket::tests::topology::Topology;
 
@@ -41,6 +42,13 @@ impl ClusterManager {
             topology.to_string().unwrap(),
         ).unwrap();
         pop_caller();
+
+        push_caller_value(self.account_id, 0);
+        // Reserve some resources.
+        contract.cluster_reserve_resource(_id, 5).unwrap();
+        // Later, reserve more.
+        contract.cluster_reserve_resource(_id, 10).unwrap();
+        pop_caller();
     }
 
     pub fn replace_node(&mut self, contract: &mut DdcBucket, old_node_id: NodeId) {
@@ -50,7 +58,7 @@ impl ClusterManager {
 
         for (cluster_id, partition_i) in partition_ids.iter() {
             let resource_needed = contract.cluster_get(*cluster_id).unwrap().resource_per_vnode;
-            let new_node_id = self.find_a_free_node(contract, resource_needed);
+            let new_node_id = self.find_best_storage_node(contract, resource_needed);
             contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id).unwrap();
         }
     }
@@ -78,20 +86,24 @@ impl ClusterManager {
         partition_ids
     }
 
-    pub fn find_a_free_node(&self, contract: &DdcBucket, resource_needed: Resource) -> NodeId {
+    pub fn find_best_storage_node(&self, contract: &DdcBucket, resource_needed: Resource) -> NodeId {
         // Discover the nodes
         let (nodes, count) = contract.node_list(0, 20, None);
         if count > 20 { unimplemented!("full iteration of contract entities") }
 
-        let node = nodes.iter().find(|node| {
-            if node.free_resource < resource_needed { return false; }
-
-            let node_state = self.node_states.get(&node.node_id);
-            if node_state == Some(&NodeState::Dead) { return false; }
-
-            return true;
-        }).expect("no good nodes available");
-
-        node.node_id
+        // Return the ID of the best available node.
+        nodes.iter()
+            .filter(|n| n.node_params.contains(STORAGE_ENGINE))
+            .filter(|n| n.free_resource >= resource_needed)
+            .filter(|n| {
+                let node_state = self.node_states.get(&n.node_id);
+                match node_state {
+                    Some(&NodeState::Dead) => false,
+                    _ => true,
+                }
+            })
+            .max_by_key(|n| n.free_resource)
+            .map(|n| n.node_id)
+            .expect("no node available")
     }
 }
