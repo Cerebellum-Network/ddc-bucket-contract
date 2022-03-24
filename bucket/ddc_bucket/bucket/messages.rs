@@ -47,12 +47,16 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
-        let bucket = self.buckets.get(bucket_id)?;
-        let cluster_id = *bucket.cluster_ids.first().ok_or(ClusterDoesNotExist)?;
+    fn _message_bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster_id = *bucket.cluster_ids.last().ok_or(ClusterDoesNotExist)?;
         let cluster = self.clusters.get_mut(cluster_id)?;
 
-        cluster.use_resource(amount)?;
+        let owner_id = Self::env().caller();
+        bucket.only_owner(owner_id)?;
+
+        cluster.take_resource(amount)?;
+        bucket.put_resource(amount);
         Ok(())
     }
 

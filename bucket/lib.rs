@@ -94,10 +94,11 @@ pub mod ddc_bucket {
             self.message_bucket_alloc_into_cluster(bucket_id, cluster_id)
         }
 
+        /* Not allowed to reserve because it is not connected to payments yet.
         #[ink(message)]
         pub fn bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
-            self.message_bucket_reserve_resource(bucket_id, amount)
-        }
+            self._message_bucket_reserve_resource(bucket_id, amount)
+        }*/
 
         #[ink(message)]
         pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
@@ -172,8 +173,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn cluster_reserve(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
-            self.message_cluster_reserve(cluster_id, amount)
+        pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
+            self.message_cluster_reserve_resource(cluster_id, amount)
         }
 
         #[ink(message)]

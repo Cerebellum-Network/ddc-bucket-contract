@@ -25,7 +25,7 @@ impl DdcBucket {
         Ok(cluster_id)
     }
 
-    pub fn message_cluster_reserve(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
+    pub fn message_cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
         cluster.put_resource(amount);
 

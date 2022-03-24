@@ -11,6 +11,7 @@ use crate::ddc_bucket::{
     Result,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
+use crate::ddc_bucket::node::entity::Resource;
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -22,6 +23,7 @@ pub struct Bucket {
     pub cluster_ids: Vec<ClusterId>,
     pub deal_ids: Vec<DealId>,
     pub bucket_params: BucketParams,
+    pub resource_reserved: Resource,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -46,12 +48,15 @@ impl Bucket {
     }
 
     pub fn connect_cluster(&mut self, cluster_id: ClusterId) -> Result<()> {
-        if self.cluster_ids.len() > 0 {
-            // Only one cluster is supported at the moment.
+        if self.cluster_ids.contains(&cluster_id) {
             Err(BucketClusterAlreadyConnected)
         } else {
             self.cluster_ids.push(cluster_id);
             Ok(())
         }
+    }
+
+    pub fn put_resource(&mut self, amount: Resource) {
+        self.resource_reserved += amount;
     }
 }

@@ -40,7 +40,7 @@ impl Cluster {
         self.resource_per_vnode += amount;
     }
 
-    pub fn use_resource(&mut self, amount: Resource) -> Result<()> {
+    pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
         let used = self.resource_used + amount;
         if used > self.resource_per_vnode {
             return Err(InsufficientResources);
