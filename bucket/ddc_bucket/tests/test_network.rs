@@ -50,6 +50,7 @@ fn storage_network_works() {
             node.node.join_cluster(storage_cluster_id);
         }
     }
+    let failed_node_id = storage_nodes.first().unwrap().node.node_id;
 
     // Provide one gateway Node.
     let mut gateway_node = TestGateway::new(&mut contract, accounts.alice, "alice");
@@ -108,6 +109,5 @@ fn storage_network_works() {
         &[4, 5, 0]);
 
     // Replace a node.
-    let old_node_id = storage_nodes.first().unwrap().node.node_id;
-    cluster_manager.replace_node(&mut contract, old_node_id);
+    cluster_manager.replace_node(&mut contract, failed_node_id);
 }

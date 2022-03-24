@@ -27,6 +27,7 @@ impl ClusterStore {
             manager,
             cluster_params,
             vnodes: Self::new_vnodes(partition_count as usize, node_ids),
+            resource_per_vnode: 0,
         };
         let record_size = cluster.new_size();
         self.0.push(cluster);

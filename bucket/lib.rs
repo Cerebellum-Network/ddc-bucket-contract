@@ -167,6 +167,11 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn cluster_reserve(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
+            self.message_cluster_reserve(cluster_id, amount)
+        }
+
+        #[ink(message)]
         pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, partition_i: PartitionIndex, new_node_id: NodeId) -> Result<()> {
             self.message_cluster_replace_node(cluster_id, partition_i, new_node_id)
         }
@@ -187,7 +192,6 @@ pub mod ddc_bucket {
     // ---- Node ----
 
     #[ink(event)]
-
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct NodeCreated {
         #[ink(topic)]
@@ -200,8 +204,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams) -> Result<NodeId> {
-            self.message_node_create(rent_per_month, node_params)
+        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> Result<NodeId> {
+            self.message_node_create(rent_per_month, node_params, capacity)
         }
 
         #[ink(message)]
@@ -256,6 +260,7 @@ pub mod ddc_bucket {
         UnauthorizedClusterManager,
         TransferFailed,
         InsufficientBalance,
+        InsufficientNodeResources,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

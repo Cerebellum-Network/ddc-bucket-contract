@@ -6,6 +6,166 @@ use crate::ddc_bucket::contract_fee::{calculate_contract_fee, FEE_PER_BYTE, SIZE
 
 use super::env_utils::*;
 
+struct Context {
+    contract: DdcBucket,
+    manager: AccountId,
+    cluster_id: ClusterId,
+    provider_id0: AccountId,
+    node_id0: NodeId,
+    node_id1: NodeId,
+    node_id2: NodeId,
+}
+
+fn new_cluster() -> Result<Context> {
+    let accounts = get_accounts();
+    set_balance(accounts.charlie, 1000 * TOKEN);
+    let provider_id0 = accounts.alice;
+    let provider_id1 = accounts.bob;
+    let provider_id2 = accounts.charlie;
+    let manager = accounts.charlie;
+
+    let mut contract = DdcBucket::new();
+
+    // Provide a Node.
+    let rent_per_month: Balance = 10 * TOKEN;
+    let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
+    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string(), capacity)?;
+    pop_caller();
+
+    // Provide another Node.
+    let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string(), capacity)?;
+    pop_caller();
+
+    // Provide another Node.
+    let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    push_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+    let node_id2 = contract.node_create(rent_per_month, node_params2.to_string(), capacity)?;
+    pop_caller();
+
+    // Create a Cluster.
+    let cluster_params = "{}";
+    push_caller_value(manager, CONTRACT_FEE_LIMIT);
+    let cluster_id = contract.cluster_create(manager, 6, vec![node_id0, node_id1, node_id2], cluster_params.to_string())?;
+    pop_caller();
+
+    push_caller_value(manager, 0);
+    contract.cluster_reserve(cluster_id, 10).unwrap();
+    pop_caller();
+
+    Ok(Context { contract, manager, cluster_id, provider_id0, node_id0, node_id1, node_id2 })
+}
+
+#[ink::test]
+fn cluster_create_works() {
+    let ctx = new_cluster()?;
+    push_caller_value(ctx.manager, 0);
+
+    assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
+
+    // Check the initial state of the cluster.
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let expected_vnodes = &[
+        ctx.node_id0, ctx.node_id1, ctx.node_id2,
+        ctx.node_id0, ctx.node_id1, ctx.node_id2];
+    assert_eq!(&cluster.vnodes, expected_vnodes, "cluster setup with nodes");
+    assert_eq!(cluster.resource_per_vnode, 10);
+
+    // Check the initial state of the nodes. 2 vnodes of size 10 are reserved from each.
+    let expected_resources = [
+        (ctx.node_id0, 100 - 10 - 10),
+        (ctx.node_id1, 100 - 10 - 10),
+        (ctx.node_id2, 100 - 10 - 10),
+    ];
+    for (node_id, available) in expected_resources {
+        assert_eq!(
+            ctx.contract.node_get(node_id)?.free_resource,
+            available, "resources must be reserved from the nodes");
+    }
+}
+
+
+#[ink::test]
+fn cluster_replace_node_works() {
+    let mut ctx = new_cluster()?;
+    push_caller_value(ctx.manager, 0);
+
+    // Reassign a vnode from node1 to node2.
+    ctx.contract.cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2)?;
+
+    // Check the changed state of the cluster.
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert_eq!(&cluster.vnodes,
+               &[ctx.node_id0, /* changed */ ctx.node_id2, ctx.node_id2, ctx.node_id0, ctx.node_id1, ctx.node_id2],
+               "a vnode must be replaced");
+
+    // Check the changed state of the nodes.
+    let expected_resources = [
+        (ctx.node_id0, 100 - 10 - 10),
+        (ctx.node_id1, 100 - 10 - 10 + 10),
+        (ctx.node_id2, 100 - 10 - 10 - 10),
+    ];
+    for (node_id, available) in expected_resources {
+        assert_eq!(
+            ctx.contract.node_get(node_id)?.free_resource,
+            available, "resources must have shifted between nodes");
+    }
+}
+
+
+#[ink::test]
+fn cluster_reserve_works() {
+    let mut ctx = new_cluster()?;
+    push_caller_value(ctx.manager, 0);
+
+    // Reserve more resources.
+    ctx.contract.cluster_reserve(ctx.cluster_id, 5)?;
+
+    // Check the changed state of the cluster.
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert_eq!(cluster.resource_per_vnode, 10 + 5);
+
+    // Check the changed state of the nodes.
+    let expected_resources = [
+        (ctx.node_id0, 100 - 10 - 10 - 5 - 5),
+        (ctx.node_id1, 100 - 10 - 10 - 5 - 5),
+        (ctx.node_id2, 100 - 10 - 10 - 5 - 5),
+    ];
+    for (node_id, available) in expected_resources {
+        assert_eq!(
+            ctx.contract.node_get(node_id)?.free_resource,
+            available, "more resources must be reserved from the nodes");
+    }
+}
+
+
+#[ink::test]
+fn cluster_management_validation_works() {
+    let mut ctx = new_cluster()?;
+
+    let not_manager = ctx.provider_id0;
+    push_caller_value(not_manager, 0);
+    assert_eq!(
+        ctx.contract.cluster_replace_node(ctx.cluster_id, 0, 1),
+        Err(UnauthorizedClusterManager), "only the manager can modify the cluster");
+    pop_caller();
+
+    push_caller_value(ctx.manager, 0);
+
+    let bad_node_id = ctx.node_id2 + 1;
+    assert_eq!(
+        ctx.contract.cluster_replace_node(ctx.cluster_id, 0, bad_node_id),
+        Err(NodeDoesNotExist), "cluster replacement node must exist");
+
+    assert_eq!(
+        ctx.contract.cluster_create(ctx.manager, 2, vec![bad_node_id], "".to_string()),
+        Err(NodeDoesNotExist), "cluster initial nodes must exist");
+}
+
+
 #[ink::test]
 fn ddc_bucket_works() {
     let accounts = get_accounts();
@@ -20,14 +180,15 @@ fn ddc_bucket_works() {
     // Provide a Node.
     let rent_per_month: Balance = 10 * TOKEN;
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string())?;
+    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string(), capacity)?;
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string())?;
+    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity)?;
     pop_caller();
     assert_ne!(node_id0, node_id1);
 
@@ -44,6 +205,7 @@ fn ddc_bucket_works() {
         manager: cluster_manager,
         cluster_params: cluster_params.to_string(),
         vnodes: vec![node_id0, node_id1],
+        resource_per_vnode: 0,
     });
     let node0 = ddc_bucket.node_get(node_id0)?;
     assert_eq!(node0, Node {
@@ -51,6 +213,7 @@ fn ddc_bucket_works() {
         provider_id: provider_id0,
         rent_per_month,
         node_params: node_params0.to_string(),
+        free_resource: capacity,
     });
     let node1 = ddc_bucket.node_get(node_id1)?;
     assert_eq!(node1, Node {
@@ -58,6 +221,7 @@ fn ddc_bucket_works() {
         provider_id: provider_id1,
         rent_per_month,
         node_params: node_params1.to_string(),
+        free_resource: capacity,
     });
 
     // Deposit some value to pay for buckets.
@@ -251,13 +415,14 @@ fn node_list_works() {
 
     // Create two Nodes.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string())?;
+    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity)?;
     pop_caller();
 
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let node_id2 = ddc_bucket.node_create(rent_per_month, node_params2.to_string())?;
+    let node_id2 = ddc_bucket.node_create(rent_per_month, node_params2.to_string(), capacity)?;
     pop_caller();
 
     assert_ne!(node_id1, node_id2);
@@ -268,6 +433,7 @@ fn node_list_works() {
         provider_id: owner_id1,
         rent_per_month,
         node_params: node_params1.to_string(),
+        free_resource: capacity,
     };
 
     let node2 = Node {
@@ -275,6 +441,7 @@ fn node_list_works() {
         provider_id: owner_id2,
         rent_per_month,
         node_params: node_params2.to_string(),
+        free_resource: capacity,
     };
 
     assert_eq!(
