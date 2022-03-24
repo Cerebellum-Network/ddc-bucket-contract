@@ -206,6 +206,7 @@ fn ddc_bucket_works() {
         cluster_params: cluster_params.to_string(),
         vnodes: vec![node_id0, node_id1],
         resource_per_vnode: 0,
+        resource_used: 0,
     });
     let node0 = ddc_bucket.node_get(node_id0)?;
     assert_eq!(node0, Node {

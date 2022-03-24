@@ -95,6 +95,11 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
+            self.message_bucket_reserve_resource(bucket_id, amount)
+        }
+
+        #[ink(message)]
         pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
             self.message_bucket_list_statuses(offset, limit, filter_owner_id)
         }
@@ -260,7 +265,7 @@ pub mod ddc_bucket {
         UnauthorizedClusterManager,
         TransferFailed,
         InsufficientBalance,
-        InsufficientNodeResources,
+        InsufficientResources,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

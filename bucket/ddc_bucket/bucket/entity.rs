@@ -46,7 +46,8 @@ impl Bucket {
     }
 
     pub fn connect_cluster(&mut self, cluster_id: ClusterId) -> Result<()> {
-        if self.cluster_ids.contains(&cluster_id) {
+        if self.cluster_ids.len() > 0 {
+            // Only one cluster is supported at the moment.
             Err(BucketClusterAlreadyConnected)
         } else {
             self.cluster_ids.push(cluster_id);
