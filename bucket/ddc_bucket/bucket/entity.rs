@@ -11,6 +11,7 @@ use crate::ddc_bucket::{
     Result,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
+use crate::ddc_bucket::node::entity::Resource;
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -22,6 +23,7 @@ pub struct Bucket {
     pub cluster_ids: Vec<ClusterId>,
     pub deal_ids: Vec<DealId>,
     pub bucket_params: BucketParams,
+    pub resource_reserved: Resource,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -52,5 +54,9 @@ impl Bucket {
             self.cluster_ids.push(cluster_id);
             Ok(())
         }
+    }
+
+    pub fn put_resource(&mut self, amount: Resource) {
+        self.resource_reserved += amount;
     }
 }

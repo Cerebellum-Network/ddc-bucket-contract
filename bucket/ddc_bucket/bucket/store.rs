@@ -20,6 +20,7 @@ impl BucketStore {
             cluster_ids: Vec::new(),
             deal_ids: Vec::new(),
             bucket_params,
+            resource_reserved: 0,
         };
 
         let record_size = bucket.new_size();

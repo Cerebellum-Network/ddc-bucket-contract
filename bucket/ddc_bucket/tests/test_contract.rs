@@ -53,7 +53,7 @@ fn new_cluster() -> Result<Context> {
     pop_caller();
 
     push_caller_value(manager, 0);
-    contract.cluster_reserve(cluster_id, 10).unwrap();
+    contract.cluster_reserve_resource(cluster_id, 10).unwrap();
     pop_caller();
 
     Ok(Context { contract, manager, cluster_id, provider_id0, node_id0, node_id1, node_id2 })
@@ -122,7 +122,7 @@ fn cluster_reserve_works() {
     push_caller_value(ctx.manager, 0);
 
     // Reserve more resources.
-    ctx.contract.cluster_reserve(ctx.cluster_id, 5)?;
+    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5)?;
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
@@ -206,6 +206,7 @@ fn ddc_bucket_works() {
         cluster_params: cluster_params.to_string(),
         vnodes: vec![node_id0, node_id1],
         resource_per_vnode: 0,
+        resource_used: 0,
     });
     let node0 = ddc_bucket.node_get(node_id0)?;
     assert_eq!(node0, Node {
@@ -249,6 +250,7 @@ fn ddc_bucket_works() {
         cluster_ids: vec![cluster_id],
         deal_ids: vec![deal_id0, deal_id1],
         bucket_params: bucket_params.to_string(),
+        resource_reserved: 0,
     });
 
     // Check the status of the deal.

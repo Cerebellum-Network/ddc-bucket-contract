@@ -5,6 +5,8 @@ use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, De
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 use crate::ddc_bucket::deal::entity::Deal;
+use crate::ddc_bucket::Error::ClusterDoesNotExist;
+use crate::ddc_bucket::node::entity::Resource;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
 
@@ -42,6 +44,19 @@ impl DdcBucket {
         // Capture the contract storage fee.
         let record_size = node_ids.len() * (Deal::RECORD_SIZE + SIZE_INDEX) + SIZE_INDEX;
         Self::capture_fee_and_refund(record_size)?;
+        Ok(())
+    }
+
+    fn _message_bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster_id = *bucket.cluster_ids.last().ok_or(ClusterDoesNotExist)?;
+        let cluster = self.clusters.get_mut(cluster_id)?;
+
+        let owner_id = Self::env().caller();
+        bucket.only_owner(owner_id)?;
+
+        cluster.take_resource(amount)?;
+        bucket.put_resource(amount);
         Ok(())
     }
 
