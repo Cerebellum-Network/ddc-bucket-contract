@@ -27,14 +27,15 @@ fn new_cluster() -> Result<Context> {
     // Provide a Node.
     let rent_per_month: Balance = 10 * TOKEN;
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string())?;
+    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string(), capacity)?;
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string())?;
+    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string(), capacity)?;
     pop_caller();
     assert_ne!(node_id0, node_id1);
 
@@ -97,14 +98,15 @@ fn ddc_bucket_works() {
     // Provide a Node.
     let rent_per_month: Balance = 10 * TOKEN;
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string())?;
+    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string(), capacity)?;
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string())?;
+    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity)?;
     pop_caller();
     assert_ne!(node_id0, node_id1);
 
@@ -128,6 +130,8 @@ fn ddc_bucket_works() {
         provider_id: provider_id0,
         rent_per_month,
         node_params: node_params0.to_string(),
+        usage: 0,
+        capacity,
     });
     let node1 = ddc_bucket.node_get(node_id1)?;
     assert_eq!(node1, Node {
@@ -135,6 +139,8 @@ fn ddc_bucket_works() {
         provider_id: provider_id1,
         rent_per_month,
         node_params: node_params1.to_string(),
+        usage: 0,
+        capacity,
     });
 
     // Deposit some value to pay for buckets.
@@ -328,13 +334,14 @@ fn node_list_works() {
 
     // Create two Nodes.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string())?;
+    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity)?;
     pop_caller();
 
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let node_id2 = ddc_bucket.node_create(rent_per_month, node_params2.to_string())?;
+    let node_id2 = ddc_bucket.node_create(rent_per_month, node_params2.to_string(), capacity)?;
     pop_caller();
 
     assert_ne!(node_id1, node_id2);
@@ -345,6 +352,8 @@ fn node_list_works() {
         provider_id: owner_id1,
         rent_per_month,
         node_params: node_params1.to_string(),
+        usage: 0,
+        capacity,
     };
 
     let node2 = Node {
@@ -352,6 +361,8 @@ fn node_list_works() {
         provider_id: owner_id2,
         rent_per_month,
         node_params: node_params2.to_string(),
+        usage: 0,
+        capacity,
     };
 
     assert_eq!(

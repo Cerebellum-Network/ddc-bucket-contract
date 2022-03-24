@@ -10,6 +10,7 @@ use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX,
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
 pub type NodeParams = String;
+pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -18,6 +19,8 @@ pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub node_params: NodeParams,
+    pub usage: Resource,
+    pub capacity: Resource,
 }
 
 impl Node {
@@ -25,6 +28,7 @@ impl Node {
         SIZE_PER_RECORD
             + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE
             + SIZE_VEC + self.node_params.len()
+            + 4 + 4
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 

@@ -187,7 +187,6 @@ pub mod ddc_bucket {
     // ---- Node ----
 
     #[ink(event)]
-
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct NodeCreated {
         #[ink(topic)]
@@ -200,8 +199,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams) -> Result<NodeId> {
-            self.message_node_create(rent_per_month, node_params)
+        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> Result<NodeId> {
+            self.message_node_create(rent_per_month, node_params, capacity)
         }
 
         #[ink(message)]

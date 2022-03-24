@@ -18,9 +18,10 @@ impl TestNode {
         let url = format!("https://node-{}.ddc.cere.network/{}/", node_name, engine_name);
         let node_params = url.clone();
         let rent_per_month: Balance = 10 * TOKEN;
+        let capacity = 100;
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
-        let node_id = contract.node_create(rent_per_month, node_params).unwrap();
+        let node_id = contract.node_create(rent_per_month, node_params, capacity).unwrap();
         pop_caller();
 
         Self { provider_id, node_id, cluster_ids: Default::default(), engine_name: engine_name.into(), url }
