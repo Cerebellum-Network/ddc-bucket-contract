@@ -2,7 +2,6 @@ use ink_lang as ink;
 
 use crate::ddc_bucket::*;
 use crate::ddc_bucket::tests::as_cluster_manager::ClusterManager;
-use crate::ddc_bucket::tests::topology::Topology;
 
 use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 
@@ -32,41 +31,17 @@ fn storage_network_works() {
         }).collect();
     assert_ne!(storage_nodes[0].node.url, storage_nodes[1].node.url, "nodes must have different URLs");
 
+    // Provide one gateway Node.
+    let gateway_node = TestGateway::new(&mut contract, accounts.alice, "alice");
 
     let mut cluster_manager = ClusterManager::new(accounts.alice);
 
     // Create a storage Cluster.
-    {
-        let node_ids = storage_nodes.iter().map(|node|
-            node.node.node_id).collect();
+    cluster_manager.create_cluster(&mut contract, STORAGE_ENGINE, partition_count);
 
-        let topology = Topology::new(STORAGE_ENGINE, partition_count);
+    cluster_manager.create_cluster(&mut contract, GATEWAY_ENGINE, 1);
 
-        push_caller_value(cluster_manager.account_id, CONTRACT_FEE_LIMIT);
-        let storage_cluster_id = contract.cluster_create(cluster_manager.account_id, partition_count, node_ids, topology.to_string().unwrap())?;
-        pop_caller();
-
-        for node in &mut storage_nodes {
-            node.node.join_cluster(storage_cluster_id);
-        }
-    }
     let failed_node_id = storage_nodes.first().unwrap().node.node_id;
-
-    // Provide one gateway Node.
-    let mut gateway_node = TestGateway::new(&mut contract, accounts.alice, "alice");
-
-    // Create a gateway Cluster.
-    {
-        let node_ids = vec![gateway_node.node.node_id];
-
-        let topology = Topology::new(GATEWAY_ENGINE, 1);
-
-        push_caller_value(cluster_manager.account_id, CONTRACT_FEE_LIMIT);
-        let gateway_cluster_id = contract.cluster_create(cluster_manager.account_id, partition_count, node_ids, topology.to_string().unwrap())?;
-        pop_caller();
-
-        gateway_node.node.join_cluster(gateway_cluster_id);
-    }
 
     // Create a user with a storage bucket.
     let user = TestUser::new(&mut contract, accounts.bob)?;
