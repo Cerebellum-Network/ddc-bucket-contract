@@ -16,6 +16,7 @@ pub const SIZE_ACCOUNT_ID: usize = 32;
 pub const SIZE_VEC: usize = 4;
 pub const SIZE_BALANCE: usize = 8;
 pub const SIZE_INDEX: usize = 4;
+pub const SIZE_RESOURCE: usize = 4;
 
 impl DdcBucket {
     pub fn capture_fee_and_refund(record_size: usize) -> Result<()> {

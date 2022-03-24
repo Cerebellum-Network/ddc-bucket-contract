@@ -5,7 +5,7 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_VEC};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
@@ -19,8 +19,7 @@ pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub node_params: NodeParams,
-    pub usage: Resource,
-    pub capacity: Resource,
+    pub free_resource: Resource,
 }
 
 impl Node {
@@ -28,7 +27,7 @@ impl Node {
         SIZE_PER_RECORD
             + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE
             + SIZE_VEC + self.node_params.len()
-            + 4 + 4
+            + SIZE_RESOURCE
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 
@@ -38,5 +37,18 @@ impl Node {
 
     pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
         if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+    }
+
+    pub fn put_resource(&mut self, amount: Resource) {
+        self.free_resource += amount;
+    }
+
+    pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
+        if self.free_resource >= amount {
+            self.free_resource -= amount;
+            Ok(())
+        } else {
+            Err(InsufficientNodeResources)
+        }
     }
 }

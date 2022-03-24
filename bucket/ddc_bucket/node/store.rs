@@ -21,7 +21,7 @@ impl NodeStore {
                   capacity: Resource,
     ) -> (NodeId, usize) {
         let node_id = self.0.len();
-        let node = Node { node_id, provider_id, rent_per_month, node_params, usage: 0, capacity };
+        let node = Node { node_id, provider_id, rent_per_month, node_params, free_resource: capacity };
 
         let record_size = node.new_size();
         self.0.push(node);
@@ -30,6 +30,10 @@ impl NodeStore {
 
     pub fn get(&self, node_id: NodeId) -> Result<&Node> {
         self.0.get(node_id).ok_or(NodeDoesNotExist)
+    }
+
+    pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
+        self.0.get_mut(node_id).ok_or(NodeDoesNotExist)
     }
 
     pub fn list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Node>, u32) {

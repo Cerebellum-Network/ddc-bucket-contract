@@ -6,7 +6,8 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, NodeId};
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_PER_RECORD, SIZE_VEC};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
+use crate::ddc_bucket::node::entity::Resource;
 
 pub type ClusterId = u32;
 pub type ClusterParams = String;
@@ -20,6 +21,7 @@ pub struct Cluster {
     pub manager: AccountId,
     pub cluster_params: ClusterParams,
     pub vnodes: Vec<NodeId>,
+    pub resource_per_vnode: Resource,
 }
 
 impl Cluster {
@@ -29,6 +31,11 @@ impl Cluster {
             + SIZE_ACCOUNT_ID
             + SIZE_VEC + self.cluster_params.len()
             + SIZE_VEC + self.vnodes.len() * SIZE_INDEX
+            + SIZE_RESOURCE
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
+    }
+
+    pub fn put_resource(&mut self, amount: Resource) {
+        self.resource_per_vnode += amount;
     }
 }
