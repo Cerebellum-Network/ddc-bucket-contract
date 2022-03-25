@@ -163,6 +163,16 @@ async function main() {
         log('Cluster', output.toHuman());
     }
 
+    {
+        log("Topup the account…");
+        const tx = contract.tx
+            .deposit(txOptionsPay);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+    }
     let bucketId;
     {
         log("Create a bucket…");
@@ -188,16 +198,6 @@ async function main() {
         log("EVENTS", JSON.stringify(events, null, 4));
         dealId = ddcBucket.findCreatedDealId(events);
         log("New dealId", dealId);
-    }
-    {
-        log("Topup the account…");
-        const tx = contract.tx
-            .deposit(txOptionsPay);
-
-        const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
-        log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
     }
     {
         log("\nRead deal status…");
