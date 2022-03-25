@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0x0dc5d591b1b0288043b6c0ec3e28e82093e68cf5af8703c0c5e8208f3db93570";
-const REUSE_CONTRACT_ADDRESS = "5Coq3eUWxvc8MvEb151m8ymnNhLrUE32hC7zLGf1NLXPpLyN";
+const REUSE_CODE_HASH = "0x26d05a5e69024ef58d014c92ae805fbe9c7302a637d56e60013f042ebd9ee7f6";
+const REUSE_CONTRACT_ADDRESS = "5FeGRnfvoBS2kb2wqrwvDYZWPiehErvEdZC14uPwfp9upcgE";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;

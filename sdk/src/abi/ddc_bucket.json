@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x0dc5d591b1b0288043b6c0ec3e28e82093e68cf5af8703c0c5e8208f3db93570",
+    "hash": "0x26d05a5e69024ef58d014c92ae805fbe9c7302a637d56e60013f042ebd9ee7f6",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -700,6 +700,15 @@
                 "u32"
               ],
               "type": 1
+            }
+          },
+          {
+            "name": "filter_manager_id",
+            "type": {
+              "displayName": [
+                "Option"
+              ],
+              "type": 25
             }
           }
         ],

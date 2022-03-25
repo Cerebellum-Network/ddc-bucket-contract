@@ -188,8 +188,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn cluster_list(&self, offset: u32, limit: u32) -> (Vec<Cluster>, u32) {
-            self.clusters.list(offset, limit)
+        pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<Cluster>, u32) {
+            self.clusters.list(offset, limit, filter_manager_id)
         }
     }
     // ---- End Cluster ----

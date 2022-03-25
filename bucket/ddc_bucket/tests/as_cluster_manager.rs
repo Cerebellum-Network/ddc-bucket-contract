@@ -67,7 +67,7 @@ impl ClusterManager {
         let mut partition_ids = Vec::new();
 
         // Discover the available clusters.
-        let (clusters, count) = contract.cluster_list(0, 20);
+        let (clusters, count) = contract.cluster_list(0, 20, None);
         if count > 20 { unimplemented!("full iteration of contract entities") }
 
         for cluster in clusters.iter() {
