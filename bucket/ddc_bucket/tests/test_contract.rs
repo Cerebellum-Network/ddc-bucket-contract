@@ -202,7 +202,7 @@ fn ddc_bucket_works() {
     let cluster = ddc_bucket.cluster_get(cluster_id)?;
     assert_eq!(cluster, Cluster {
         cluster_id,
-        manager: cluster_manager,
+        manager_id: cluster_manager,
         cluster_params: cluster_params.to_string(),
         vnodes: vec![node_id0, node_id1],
         resource_per_vnode: 0,

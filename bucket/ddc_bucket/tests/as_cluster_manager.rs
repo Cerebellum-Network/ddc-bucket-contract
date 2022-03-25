@@ -71,7 +71,7 @@ impl ClusterManager {
         if count > 20 { unimplemented!("full iteration of contract entities") }
 
         for cluster in clusters.iter() {
-            if cluster.manager != self.account_id {
+            if cluster.manager_id != self.account_id {
                 continue; // Not our cluster, skip.
             }
 

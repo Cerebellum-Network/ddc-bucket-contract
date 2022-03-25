@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x26d05a5e69024ef58d014c92ae805fbe9c7302a637d56e60013f042ebd9ee7f6",
+    "hash": "0xa4ea89841ae87268bd86e98c3c3ef7d388f25ade162dd3750067bef524d35d4d",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -1302,7 +1302,7 @@
               "typeName": "ClusterId"
             },
             {
-              "name": "manager",
+              "name": "manager_id",
               "type": 3,
               "typeName": "AccountId"
             },

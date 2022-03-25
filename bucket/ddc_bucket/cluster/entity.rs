@@ -18,7 +18,7 @@ pub type PartitionId = (ClusterId, PartitionIndex);
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
     pub cluster_id: ClusterId,
-    pub manager: AccountId,
+    pub manager_id: AccountId,
     pub cluster_params: ClusterParams,
     pub vnodes: Vec<NodeId>,
     pub resource_per_vnode: Resource,

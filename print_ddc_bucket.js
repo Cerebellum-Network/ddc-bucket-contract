@@ -52,7 +52,7 @@ function printGraph(clusters, nodes, buckets) {
         log(`Cluster_${cluster.cluster_id}((Cluster ${cluster.cluster_id}))`);
 
         // Cluster to Manager.
-        log(`Cluster_${cluster.cluster_id} -. managed by ..-> Account_${cluster.manager.substr(0, 8)}`);
+        log(`Cluster_${cluster.cluster_id} -. managed by ..-> Account_${cluster.manager_id.substr(0, 8)}`);
 
         // Cluster to Node.
         for (i = 0; i < cluster.vnodes.length; i++) {

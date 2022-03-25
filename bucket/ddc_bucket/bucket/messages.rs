@@ -22,8 +22,6 @@ impl DdcBucket {
     pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
         let owner_id = Self::env().caller();
 
-        Self::env().emit_event(BucketAllocated { bucket_id, cluster_id });
-
         let node_ids = self.clusters.get(cluster_id)?.vnodes.clone();
         let mut deal_ids = Vec::with_capacity(node_ids.len());
 
@@ -35,6 +33,8 @@ impl DdcBucket {
         let bucket = self.buckets.get_mut(bucket_id)?;
         bucket.only_owner(owner_id)?;
         bucket.connect_cluster(cluster_id)?;
+
+        Self::env().emit_event(BucketAllocated { bucket_id, cluster_id });
 
         for (&node_id, deal_id) in node_ids.iter().zip(deal_ids) {
             bucket.deal_ids.push(deal_id);

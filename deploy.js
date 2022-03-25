@@ -17,8 +17,8 @@ const assert = require("assert");
 const log = console.log;
 
 const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "0x26d05a5e69024ef58d014c92ae805fbe9c7302a637d56e60013f042ebd9ee7f6";
-const REUSE_CONTRACT_ADDRESS = "5FeGRnfvoBS2kb2wqrwvDYZWPiehErvEdZC14uPwfp9upcgE";
+const REUSE_CODE_HASH = "";
+const REUSE_CONTRACT_ADDRESS = "";
 
 const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
 const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
@@ -161,15 +161,6 @@ async function main() {
         if (!result.isOk) assert.fail(result.asErr);
 
         log('Cluster', output.toHuman());
-        /*assert.deepEqual(output.toJSON(), {
-            "ok": {
-                node_id,
-                provider_id,
-                rent_per_month,
-                node_params,
-                free_resource: capacity,
-            },
-        });*/
     }
 
     let bucketId;

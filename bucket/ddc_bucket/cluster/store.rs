@@ -16,7 +16,7 @@ pub struct ClusterStore(pub InkVec<Cluster>);
 impl ClusterStore {
     pub fn create(
         &mut self,
-        manager: AccountId,
+        manager_id: AccountId,
         partition_count: u32,
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
@@ -24,7 +24,7 @@ impl ClusterStore {
         let cluster_id = self.0.len();
         let cluster = Cluster {
             cluster_id,
-            manager,
+            manager_id,
             cluster_params,
             vnodes: Self::new_vnodes(partition_count as usize, node_ids),
             resource_per_vnode: 0,
@@ -67,7 +67,7 @@ impl ClusterStore {
             };
             // Apply the filter if given.
             if let Some(manager_id) = filter_manager_id {
-                if manager_id != cluster.manager {
+                if manager_id != cluster.manager_id {
                     continue; // Skip non-matches.
                 }
             }
