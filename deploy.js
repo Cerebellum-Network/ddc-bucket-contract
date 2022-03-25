@@ -93,38 +93,25 @@ async function main() {
         gasLimit: -1, //100_000n * MGAS,
     };
     const txOptionsPay = {
-        value: 1n * CERE,
+        value: 10n * CERE,
         gasLimit: -1, //100_000n * MGAS,
     };
 
     // Test data.
     const provider_id = account.address;
     const ownerId = account.address;
+    const managerId = account.address;
     const anyAccountId = account.address;
     const rent_per_month = 10n * CERE;
     const node_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
+    const capacity = 100;
     const bucket_params = "{}";
-
-    let cluster_id;
-    {
-        log("Setup a cluster…");
-        let cluster_params = "{}";
-        const tx = contract.tx
-            .clusterCreate(txOptions, cluster_params);
-
-        const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
-        log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
-        cluster_id = ddcBucket.findCreatedClusterId(events);
-        log("New Cluster", cluster_id);
-    }
 
     let node_id;
     {
         log("Setup a node…");
         const tx = contract.tx
-            .nodeCreate(txOptions, cluster_id, rent_per_month, node_params);
+            .nodeCreate(txOptionsPay, rent_per_month, node_params, capacity);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -140,22 +127,57 @@ async function main() {
 
         if (!result.isOk) assert.fail(result.asErr);
 
-        log('OUTPUT', output.toHuman());
+        log('Node', output.toHuman());
         assert.deepEqual(output.toJSON(), {
             "ok": {
                 node_id,
                 provider_id,
                 rent_per_month,
                 node_params,
+                free_resource: capacity,
             },
         });
     }
 
+    let cluster_id;
+    {
+        log("Setup a cluster…");
+        let cluster_params = "{}";
+        const tx = contract.tx
+            .clusterCreate(txOptionsPay, managerId, 6, [node_id], cluster_params);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        cluster_id = ddcBucket.findCreatedClusterId(events);
+        log("New Cluster", cluster_id);
+    }
+    {
+        log("\nRead cluster info…");
+        const {result, output} = await contract.query
+            .clusterGet(anyAccountId, txOptions, cluster_id);
+
+        if (!result.isOk) assert.fail(result.asErr);
+
+        log('Cluster', output.toHuman());
+    }
+
+    {
+        log("Topup the account…");
+        const tx = contract.tx
+            .deposit(txOptionsPay);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+    }
     let bucketId;
     {
         log("Create a bucket…");
         const tx = contract.tx
-            .bucketCreate(txOptions, bucket_params);
+            .bucketCreate(txOptionsPay, bucket_params);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -178,23 +200,13 @@ async function main() {
         log("New dealId", dealId);
     }
     {
-        log("Topup the account…");
-        const tx = contract.tx
-            .deposit(txOptionsPay);
-
-        const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
-        log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
-    }
-    {
         log("\nRead deal status…");
         let {result, output} = await contract.query
             .dealGetStatus(anyAccountId, txOptions, dealId);
 
         if (!result.isOk) assert.fail(result.asErr);
         output = output.toJSON();
-        log('OUTPUT', output);
+        log('Deal', output);
 
         assert.deepEqual(output.ok.node_id, node_id);
         assert(output.ok.estimated_rent_end_ms > 0);
@@ -206,7 +218,7 @@ async function main() {
 
         if (!result.isOk) assert.fail(result.asErr);
         output = output.toJSON();
-        log('OUTPUT', output);
+        log('Bucket Status', output);
 
         /* TODO
         assert.deepEqual(output.ok.node_id, node_id);

@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::ddc_bucket::*;
 use crate::ddc_bucket::tests::topology::Topology;
 
@@ -8,7 +6,6 @@ use super::env_utils::*;
 pub struct TestNode {
     pub provider_id: AccountId,
     pub node_id: NodeId,
-    pub cluster_ids: HashSet<ClusterId>,
     pub engine_name: String,
     pub url: String,
 }
@@ -24,17 +21,13 @@ impl TestNode {
         let node_id = contract.node_create(rent_per_month, node_params, capacity).unwrap();
         pop_caller();
 
-        Self { provider_id, node_id, cluster_ids: Default::default(), engine_name: engine_name.into(), url }
-    }
-
-    pub fn join_cluster(&mut self, cluster_id: ClusterId) {
-        self.cluster_ids.insert(cluster_id);
+        Self { provider_id, node_id, engine_name: engine_name.into(), url }
     }
 }
 
 pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<Cluster> {
     // Discover the available clusters.
-    let (clusters, _count) = contract.cluster_list(0, 20);
+    let (clusters, _count) = contract.cluster_list(0, 20, None);
 
     // Pick the first one that provides the right engine.
     let cluster = clusters.iter()

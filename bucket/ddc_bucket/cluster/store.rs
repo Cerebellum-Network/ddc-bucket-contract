@@ -16,7 +16,7 @@ pub struct ClusterStore(pub InkVec<Cluster>);
 impl ClusterStore {
     pub fn create(
         &mut self,
-        manager: AccountId,
+        manager_id: AccountId,
         partition_count: u32,
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
@@ -24,7 +24,7 @@ impl ClusterStore {
         let cluster_id = self.0.len();
         let cluster = Cluster {
             cluster_id,
-            manager,
+            manager_id,
             cluster_params,
             vnodes: Self::new_vnodes(partition_count as usize, node_ids),
             resource_per_vnode: 0,
@@ -58,13 +58,19 @@ impl ClusterStore {
         self.0.get_mut(cluster_id).ok_or(ClusterDoesNotExist)
     }
 
-    pub fn list(&self, offset: u32, limit: u32) -> (Vec<Cluster>, u32) {
+    pub fn list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<Cluster>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
             let cluster = match self.0.get(cluster_id) {
                 None => break, // No more items, stop.
                 Some(cluster) => cluster,
             };
+            // Apply the filter if given.
+            if let Some(manager_id) = filter_manager_id {
+                if manager_id != cluster.manager_id {
+                    continue; // Skip non-matches.
+                }
+            }
             clusters.push(cluster.clone());
         }
         (clusters, self.0.len())

@@ -29,9 +29,10 @@ impl TestStorage {
         // Fetch the status of this bucket.
         let status = contract.bucket_get_status(request.bucket_id)?;
         let cluster_id = status.bucket.cluster_ids.first().expect("bucket has no clusters");
+        let cluster = contract.cluster_get(*cluster_id).unwrap();
 
         // Check that this bucket is allocated in the storage cluster of this node.
-        let allocated = self.node.cluster_ids.contains(cluster_id);
+        let allocated = cluster.vnodes.contains(&self.node.node_id);
         assert!(allocated, "bucket is not allocated on this node");
 
         let bucket_id = request.bucket_id;

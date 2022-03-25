@@ -58,7 +58,7 @@ impl DdcBucket {
 
     fn only_cluster_manager(cluster: &Cluster) -> Result<()> {
         let caller = Self::env().caller();
-        if caller == cluster.manager {
+        if caller == cluster.manager_id {
             Ok(())
         } else {
             Err(UnauthorizedClusterManager)

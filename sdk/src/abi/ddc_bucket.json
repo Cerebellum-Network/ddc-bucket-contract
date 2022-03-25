@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xd90275a50ac34e3647c5aec6a000781b3dde58c4e1625827b5594b4974b91434",
+    "hash": "0xa4ea89841ae87268bd86e98c3c3ef7d388f25ade162dd3750067bef524d35d4d",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -108,10 +108,10 @@
           {
             "docs": [],
             "indexed": true,
-            "name": "vnode_id",
+            "name": "node_id",
             "type": {
               "displayName": [
-                "VNodeId"
+                "NodeId"
               ],
               "type": 1
             }
@@ -174,6 +174,17 @@
           },
           {
             "docs": [],
+            "indexed": true,
+            "name": "manager",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "docs": [],
             "indexed": false,
             "name": "cluster_params",
             "type": {
@@ -192,10 +203,49 @@
           {
             "docs": [],
             "indexed": true,
-            "name": "vnode_id",
+            "name": "cluster_id",
             "type": {
               "displayName": [
-                "VNodeId"
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "node_id",
+            "type": {
+              "displayName": [
+                "NodeId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "partition_index",
+            "type": {
+              "displayName": [
+                "PartitionIndex"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "name": "ClusterNodeReplaced"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "node_id",
+            "type": {
+              "displayName": [
+                "NodeId"
               ],
               "type": 1
             }
@@ -225,17 +275,17 @@
           {
             "docs": [],
             "indexed": false,
-            "name": "vnode_params",
+            "name": "node_params",
             "type": {
               "displayName": [
-                "VNodeParams"
+                "NodeParams"
               ],
               "type": 7
             }
           }
         ],
         "docs": [],
-        "name": "VNodeCreated"
+        "name": "NodeCreated"
       },
       {
         "args": [
@@ -284,7 +334,7 @@
         "name": [
           "bucket_create"
         ],
-        "payable": false,
+        "payable": true,
         "returnType": {
           "displayName": [
             "Result"
@@ -477,6 +527,33 @@
       {
         "args": [
           {
+            "name": "manager",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "name": "partition_count",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "node_ids",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 6
+            }
+          },
+          {
             "name": "cluster_params",
             "type": {
               "displayName": [
@@ -491,7 +568,7 @@
         "name": [
           "cluster_create"
         ],
-        "payable": false,
+        "payable": true,
         "returnType": {
           "displayName": [
             "Result"
@@ -499,6 +576,85 @@
           "type": 21
         },
         "selector": "0x4c0f21f6"
+      },
+      {
+        "args": [
+          {
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "amount",
+            "type": {
+              "displayName": [
+                "Resource"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "cluster_reserve_resource"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 23
+        },
+        "selector": "0xb5e38125"
+      },
+      {
+        "args": [
+          {
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "partition_i",
+            "type": {
+              "displayName": [
+                "PartitionIndex"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "new_node_id",
+            "type": {
+              "displayName": [
+                "NodeId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "cluster_replace_node"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 23
+        },
+        "selector": "0x48194ab1"
       },
       {
         "args": [
@@ -545,6 +701,15 @@
               ],
               "type": 1
             }
+          },
+          {
+            "name": "filter_manager_id",
+            "type": {
+              "displayName": [
+                "Option"
+              ],
+              "type": 25
+            }
           }
         ],
         "docs": [],
@@ -562,15 +727,6 @@
       {
         "args": [
           {
-            "name": "cluster_id",
-            "type": {
-              "displayName": [
-                "ClusterId"
-              ],
-              "type": 1
-            }
-          },
-          {
             "name": "rent_per_month",
             "type": {
               "displayName": [
@@ -580,36 +736,45 @@
             }
           },
           {
-            "name": "vnode_params",
+            "name": "node_params",
             "type": {
               "displayName": [
-                "VNodeParams"
+                "NodeParams"
               ],
               "type": 7
+            }
+          },
+          {
+            "name": "capacity",
+            "type": {
+              "displayName": [
+                "Resource"
+              ],
+              "type": 1
             }
           }
         ],
         "docs": [],
         "mutates": true,
         "name": [
-          "vnode_create"
+          "node_create"
         ],
-        "payable": false,
+        "payable": true,
         "returnType": {
           "displayName": [
             "Result"
           ],
           "type": 21
         },
-        "selector": "0x45964ffc"
+        "selector": "0xb77ac1bb"
       },
       {
         "args": [
           {
-            "name": "vnode_id",
+            "name": "node_id",
             "type": {
               "displayName": [
-                "VNodeId"
+                "NodeId"
               ],
               "type": 1
             }
@@ -618,7 +783,7 @@
         "docs": [],
         "mutates": false,
         "name": [
-          "vnode_get"
+          "node_get"
         ],
         "payable": false,
         "returnType": {
@@ -627,7 +792,7 @@
           ],
           "type": 38
         },
-        "selector": "0xfa27f50d"
+        "selector": "0x847f3997"
       },
       {
         "args": [
@@ -662,14 +827,14 @@
         "docs": [],
         "mutates": false,
         "name": [
-          "vnode_list"
+          "node_list"
         ],
         "payable": false,
         "returnType": {
           "displayName": [],
           "type": 39
         },
-        "selector": "0x502ac7bd"
+        "selector": "0x423286d6"
       },
       {
         "args": [],
@@ -862,7 +1027,7 @@
               ]
             }
           },
-          "name": "vnodes"
+          "name": "nodes"
         },
         {
           "layout": {
@@ -985,6 +1150,11 @@
               "name": "bucket_params",
               "type": 7,
               "typeName": "BucketParams"
+            },
+            {
+              "name": "resource_reserved",
+              "type": 1,
+              "typeName": "Resource"
             }
           ]
         }
@@ -1044,9 +1214,9 @@
         "composite": {
           "fields": [
             {
-              "name": "vnode_id",
+              "name": "node_id",
               "type": 1,
-              "typeName": "VNodeId"
+              "typeName": "NodeId"
             },
             {
               "name": "flow",
@@ -1132,14 +1302,29 @@
               "typeName": "ClusterId"
             },
             {
+              "name": "manager_id",
+              "type": 3,
+              "typeName": "AccountId"
+            },
+            {
               "name": "cluster_params",
               "type": 7,
               "typeName": "ClusterParams"
             },
             {
-              "name": "vnode_ids",
+              "name": "vnodes",
               "type": 6,
-              "typeName": "Vec<VNodeId>"
+              "typeName": "Vec<NodeId>"
+            },
+            {
+              "name": "resource_per_vnode",
+              "type": 1,
+              "typeName": "Resource"
+            },
+            {
+              "name": "resource_used",
+              "type": 1,
+              "typeName": "Resource"
             }
           ]
         }
@@ -1157,9 +1342,9 @@
         "composite": {
           "fields": [
             {
-              "name": "vnode_id",
+              "name": "node_id",
               "type": 1,
-              "typeName": "VNodeId"
+              "typeName": "NodeId"
             },
             {
               "name": "provider_id",
@@ -1172,9 +1357,14 @@
               "typeName": "Balance"
             },
             {
-              "name": "vnode_params",
+              "name": "node_params",
               "type": 7,
-              "typeName": "VNodeParams"
+              "typeName": "NodeParams"
+            },
+            {
+              "name": "free_resource",
+              "type": 1,
+              "typeName": "Resource"
             }
           ]
         }
@@ -1182,9 +1372,9 @@
       "path": [
         "ddc_bucket",
         "ddc_bucket",
-        "vnode",
+        "node",
         "entity",
-        "VNode"
+        "Node"
       ]
     },
     {
@@ -1401,35 +1591,47 @@
             },
             {
               "discriminant": 3,
-              "name": "BucketClusterAlreadyConnected"
+              "name": "PartitionDoesNotExist"
             },
             {
               "discriminant": 4,
-              "name": "VNodeDoesNotExist"
+              "name": "BucketClusterAlreadyConnected"
             },
             {
               "discriminant": 5,
-              "name": "FlowDoesNotExist"
+              "name": "NodeDoesNotExist"
             },
             {
               "discriminant": 6,
-              "name": "AccountDoesNotExist"
+              "name": "FlowDoesNotExist"
             },
             {
               "discriminant": 7,
-              "name": "UnauthorizedProvider"
+              "name": "AccountDoesNotExist"
             },
             {
               "discriminant": 8,
-              "name": "UnauthorizedOwner"
+              "name": "UnauthorizedProvider"
             },
             {
               "discriminant": 9,
-              "name": "TransferFailed"
+              "name": "UnauthorizedOwner"
             },
             {
               "discriminant": 10,
+              "name": "UnauthorizedClusterManager"
+            },
+            {
+              "discriminant": 11,
+              "name": "TransferFailed"
+            },
+            {
+              "discriminant": 12,
               "name": "InsufficientBalance"
+            },
+            {
+              "discriminant": 13,
+              "name": "InsufficientResources"
             }
           ]
         }
@@ -1573,9 +1775,9 @@
         "composite": {
           "fields": [
             {
-              "name": "vnode_id",
+              "name": "node_id",
               "type": 1,
-              "typeName": "VNodeId"
+              "typeName": "NodeId"
             },
             {
               "name": "estimated_rent_end_ms",
