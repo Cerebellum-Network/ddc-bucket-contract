@@ -1,3 +1,5 @@
+//! The public interface of Accounts and deposits.
+
 use ink_lang::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{

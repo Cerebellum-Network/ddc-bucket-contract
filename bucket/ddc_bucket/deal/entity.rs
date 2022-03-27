@@ -1,3 +1,5 @@
+//! The data structure of payment Deals.
+
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 

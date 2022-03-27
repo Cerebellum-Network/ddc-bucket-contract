@@ -1,3 +1,5 @@
+//! The public interface to manage Buckets.
+
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{vec, vec::Vec};
 

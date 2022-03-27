@@ -1,3 +1,5 @@
+//! The store to create and access Buckets.
+
 use ink_prelude::vec::Vec;
 use ink_storage::{
     collections::Vec as InkVec,

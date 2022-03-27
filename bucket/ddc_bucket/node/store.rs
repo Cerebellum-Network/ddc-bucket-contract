@@ -1,3 +1,5 @@
+//! The store where to create and access Nodes.
+
 use ink_prelude::vec::Vec;
 use ink_storage::{
     collections::Vec as InkVec,

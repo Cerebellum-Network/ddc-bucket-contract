@@ -1,3 +1,5 @@
+//! The store to create and access Accounts.
+
 use ink_storage::{
     collections::{HashMap, hashmap::Entry::*},
     traits,
