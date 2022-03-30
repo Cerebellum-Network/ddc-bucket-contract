@@ -33,12 +33,26 @@ impl AccountStore {
         };
     }
 
+    /// Create a record for the given account if it does not exist yet.
+    /// Return the extra contract storage used.
+    #[must_use]
+    pub fn create_if_not_exist(&mut self, account_id: AccountId) -> usize {
+        match self.0.entry(account_id) {
+            Vacant(e) => {
+                e.insert(Account::new());
+                Account::RECORD_SIZE
+            }
+            Occupied(_) => 0,
+        }
+    }
+
     pub fn balance(&self, account_id: &AccountId) -> Balance {
         match self.0.get(account_id) {
             None => 0,
             Some(account) => account.deposit.peek(),
         }
     }
+
 
     pub fn get(&self, account_id: &AccountId) -> Result<&Account> {
         self.0.get(account_id).ok_or(AccountDoesNotExist)

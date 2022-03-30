@@ -3,7 +3,6 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{
-    account::entity::Account,
     AccountId, Balance, Cash,
     contract_fee::calculate_contract_fee,
     DdcBucket, Deposit, InsufficientBalance, Payable, Result,
@@ -13,12 +12,17 @@ impl DdcBucket {
     pub fn message_deposit(&mut self) -> Result<()> {
         // Receive the payable value, minus the contract fee.
         let mut cash = Self::receive_cash();
-        cash.pay(calculate_contract_fee(Account::RECORD_SIZE))?;
-        let value = cash.peek();
-
         let account_id = Self::env().caller();
-        self.accounts.deposit(account_id, cash);
-        Self::env().emit_event(Deposit { account_id, value });
+
+        // Create the account and pay contract fee, if necessary.
+        let record_size = self.accounts.create_if_not_exist(account_id);
+        cash.pay(calculate_contract_fee(record_size))?;
+
+        Self::env().emit_event(Deposit { account_id, value: cash.peek() });
+
+        self.accounts
+            .get_mut(&account_id)?
+            .deposit(cash);
         Ok(())
     }
 
