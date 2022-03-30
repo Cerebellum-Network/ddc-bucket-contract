@@ -26,16 +26,16 @@ impl TestUser {
     }
 
     pub fn create_bucket(contract: &mut DdcBucket, account_id: AccountId, engine_name: &str) -> Result<BucketId> {
-        push_caller_value(account_id, CONTRACT_FEE_LIMIT);
-        let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap());
-        pop_caller();
-
         // Choose a cluster.
         let cluster_id = find_cluster(contract, engine_name)?.cluster_id;
 
+        push_caller_value(account_id, CONTRACT_FEE_LIMIT);
+        let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap(), cluster_id);
+        pop_caller();
+
         // Allocate the bucket to the cluster.
         push_caller_value(account_id, CONTRACT_FEE_LIMIT);
-        contract.bucket_alloc_into_cluster(bucket_id, cluster_id);
+        contract.bucket_alloc_into_cluster(bucket_id);
         pop_caller();
 
         Ok(bucket_id)

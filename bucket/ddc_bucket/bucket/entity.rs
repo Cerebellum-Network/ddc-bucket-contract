@@ -23,7 +23,7 @@ pub type BucketParams = String;
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Bucket {
     pub owner_id: AccountId,
-    pub cluster_ids: Vec<ClusterId>,
+    pub cluster_id: ClusterId,
     pub flows: Vec<Flow>,
     pub deal_ids: Vec<DealId>,
     pub bucket_params: BucketParams,
@@ -41,7 +41,7 @@ pub struct BucketStatus {
 
 impl Bucket {
     pub fn new_size(&self) -> usize {
-        // TODO: add flows.
+        // TODO: update.
         SIZE_PER_RECORD
             + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC + SIZE_VEC
             + self.bucket_params.len()
@@ -50,15 +50,6 @@ impl Bucket {
 
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
-    }
-
-    pub fn connect_cluster(&mut self, cluster_id: ClusterId) -> Result<()> {
-        if self.cluster_ids.contains(&cluster_id) {
-            Err(BucketClusterAlreadyConnected)
-        } else {
-            self.cluster_ids.push(cluster_id);
-            Ok(())
-        }
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

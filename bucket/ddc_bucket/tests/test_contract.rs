@@ -234,12 +234,12 @@ fn ddc_bucket_works() {
     // Create a bucket.
     push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
     let bucket_params = "{}".to_string();
-    let bucket_id = ddc_bucket.bucket_create(bucket_params.clone());
+    let bucket_id = ddc_bucket.bucket_create(bucket_params.clone(), cluster_id);
     pop_caller();
 
     // Allocate the bucket to the cluster.
     push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
-    ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id);
+    ddc_bucket.bucket_alloc_into_cluster(bucket_id);
     pop_caller();
 
     // Check the structure of the bucket including all deal IDs.
@@ -248,7 +248,7 @@ fn ddc_bucket_works() {
     let deal_id1 = 1;
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
-        cluster_ids: vec![cluster_id],
+        cluster_id,
         flows: vec![],
         deal_ids: vec![deal_id0, deal_id1],
         bucket_params: bucket_params.to_string(),
@@ -363,14 +363,15 @@ fn bucket_list_works() {
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
     let owner_id3 = accounts.charlie;
+    let cluster_id = 0;
 
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let bucket_id1 = ddc_bucket.bucket_create("".to_string());
+    let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id);
     let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
     pop_caller();
 
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let bucket_id2 = ddc_bucket.bucket_create("".to_string());
+    let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id);
     let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
     pop_caller();
 
@@ -492,9 +493,10 @@ fn contract_fee_works() {
     let accounts = get_accounts();
     let owner_id = accounts.alice;
     let alice_before = balance_of(accounts.alice);
+    let cluster_id = 0;
 
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    let bucket_id = ddc_bucket.bucket_create("123".to_string());
+    let bucket_id = ddc_bucket.bucket_create("123".to_string(), cluster_id);
 
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
     let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size() + Account::new().encoded_size()) as Balance;

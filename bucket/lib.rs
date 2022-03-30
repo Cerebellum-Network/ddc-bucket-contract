@@ -86,13 +86,13 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn bucket_create(&mut self, bucket_params: BucketParams) -> BucketId {
-            self.message_bucket_create(bucket_params).unwrap()
+        pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> BucketId {
+            self.message_bucket_create(bucket_params, cluster_id).unwrap()
         }
 
         #[ink(message, payable)]
-        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> () {
-            self.message_bucket_alloc_into_cluster(bucket_id, cluster_id).unwrap()
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId) -> () {
+            self.message_bucket_alloc_into_cluster(bucket_id).unwrap()
         }
 
         #[ink(message)]
