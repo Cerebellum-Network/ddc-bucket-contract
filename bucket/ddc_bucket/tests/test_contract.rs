@@ -269,14 +269,14 @@ fn ddc_bucket_works() {
     let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
     assert_eq!(deal_status0, DealStatus {
         node_id: node_id0,
-        estimated_rent_end_ms: 14388364800, // TODO: calculate this value.
+        estimated_rent_end_ms: 14559782400, // TODO: calculate this value.
     });
 
     // The end time of the second deal is the same because it is paid from the same account.
     let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
     assert_eq!(deal_status1, DealStatus {
         node_id: node_id1,
-        estimated_rent_end_ms: 14388364800, // TODO: calculate this value.
+        estimated_rent_end_ms: 14559782400, // TODO: calculate this value.
     });
 
     // Check the status of the bucket recursively including all deal statuses.
@@ -338,7 +338,7 @@ fn ddc_bucket_works() {
         DealCreated { deal_id: deal_id1, bucket_id, node_id: node_id1 }));
 
     // Deposit more.
-    let net_deposit = 100 * TOKEN - deposit_contract_fee;
+    let net_deposit = 100 * TOKEN; // No deposit_contract_fee because the account already exists.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: consumer_id, value: net_deposit }));
 
@@ -491,7 +491,7 @@ fn contract_fee_works() {
     let bucket_id = ddc_bucket.bucket_create("123".to_string());
 
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
-    let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size()) as Balance;
+    let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size() + Account::new().encoded_size()) as Balance;
     let got_fee = balance_of(contract_id());
     assert!(expect_fee <= got_fee, "A sufficient contract fee should be taken.");
     assert!(got_fee <= 2 * expect_fee, "The contract fee should not be excessive.");

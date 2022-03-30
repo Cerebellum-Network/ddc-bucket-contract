@@ -19,18 +19,17 @@ use super::entity::Account;
 pub struct AccountStore(pub HashMap<AccountId, Account>);
 
 impl AccountStore {
-    pub fn deposit(&mut self, to: AccountId, cash: Cash) {
-        match self.0.entry(to) {
+    /// Create a record for the given account if it does not exist yet.
+    /// Return the extra contract storage used.
+    #[must_use]
+    pub fn create_if_not_exist(&mut self, account_id: AccountId) -> usize {
+        match self.0.entry(account_id) {
             Vacant(e) => {
-                let mut account = Account::new();
-                account.deposit(cash);
-                e.insert(account);
+                e.insert(Account::new());
+                Account::RECORD_SIZE
             }
-            Occupied(mut e) => {
-                let account = e.get_mut();
-                account.deposit(cash);
-            }
-        };
+            Occupied(_) => 0,
+        }
     }
 
     pub fn balance(&self, account_id: &AccountId) -> Balance {
@@ -39,6 +38,7 @@ impl AccountStore {
             Some(account) => account.deposit.peek(),
         }
     }
+
 
     pub fn get(&self, account_id: &AccountId) -> Result<&Account> {
         self.0.get(account_id).ok_or(AccountDoesNotExist)
