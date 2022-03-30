@@ -3,7 +3,8 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
+use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, PartitionIndex};
 use crate::ddc_bucket::Error::{PartitionDoesNotExist, UnauthorizedClusterManager};
 use crate::ddc_bucket::node::entity::{NodeId, Resource};
@@ -60,9 +61,13 @@ impl DdcBucket {
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
+        let num_shares = cluster.vnodes.len() as Balance;
+        let per_share = cluster.revenues.peek() / num_shares;
+        cluster.revenues.pay(Payable(per_share * num_shares))?;
 
         for node_id in &cluster.vnodes {
-            let _node = self.nodes.get_mut(*node_id)?;
+            let node = self.nodes.get(*node_id)?;
+            Self::send_cash(node.provider_id, Cash(per_share))?;
         }
 
         Ok(())
