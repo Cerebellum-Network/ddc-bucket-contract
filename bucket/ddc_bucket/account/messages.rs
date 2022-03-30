@@ -59,9 +59,16 @@ impl DdcBucket {
     }
 
     fn _account_transfer(&mut self, from: AccountId, to: AccountId, amount: Balance) -> Result<()> {
-        let (payable, cash) = Cash::borrow_payable_cash(amount);
+        let (payable, mut cash) = Cash::borrow_payable_cash(amount);
         self._account_withdraw(from, payable)?;
-        self.accounts.deposit(to, cash);
+
+        // Create the account and pay contract fee, if necessary.
+        let record_size = self.accounts.create_if_not_exist(to);
+        cash.pay(calculate_contract_fee(record_size))?;
+
+        self.accounts
+            .get_mut(&to)?
+            .deposit(cash);
         Ok(())
     }
 }

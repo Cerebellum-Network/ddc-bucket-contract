@@ -19,20 +19,6 @@ use super::entity::Account;
 pub struct AccountStore(pub HashMap<AccountId, Account>);
 
 impl AccountStore {
-    pub fn deposit(&mut self, to: AccountId, cash: Cash) {
-        match self.0.entry(to) {
-            Vacant(e) => {
-                let mut account = Account::new();
-                account.deposit(cash);
-                e.insert(account);
-            }
-            Occupied(mut e) => {
-                let account = e.get_mut();
-                account.deposit(cash);
-            }
-        };
-    }
-
     /// Create a record for the given account if it does not exist yet.
     /// Return the extra contract storage used.
     #[must_use]
