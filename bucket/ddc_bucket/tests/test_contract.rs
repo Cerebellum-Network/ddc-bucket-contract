@@ -16,7 +16,7 @@ struct Context {
     node_id2: NodeId,
 }
 
-fn new_cluster() -> Result<Context> {
+fn new_cluster() -> Context {
     let accounts = get_accounts();
     set_balance(accounts.charlie, 1000 * TOKEN);
     let provider_id0 = accounts.alice;
@@ -31,37 +31,37 @@ fn new_cluster() -> Result<Context> {
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string(), capacity)?;
+    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string(), capacity)?;
+    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
-    let node_id2 = contract.node_create(rent_per_month, node_params2.to_string(), capacity)?;
+    let node_id2 = contract.node_create(rent_per_month, node_params2.to_string(), capacity);
     pop_caller();
 
     // Create a Cluster.
     let cluster_params = "{}";
     push_caller_value(manager, CONTRACT_FEE_LIMIT);
-    let cluster_id = contract.cluster_create(manager, 6, vec![node_id0, node_id1, node_id2], cluster_params.to_string())?;
+    let cluster_id = contract.cluster_create(manager, 6, vec![node_id0, node_id1, node_id2], cluster_params.to_string());
     pop_caller();
 
     push_caller_value(manager, 0);
-    contract.cluster_reserve_resource(cluster_id, 10).unwrap();
+    contract.cluster_reserve_resource(cluster_id, 10);
     pop_caller();
 
-    Ok(Context { contract, manager, cluster_id, provider_id0, node_id0, node_id1, node_id2 })
+    Context { contract, manager, cluster_id, provider_id0, node_id0, node_id1, node_id2 }
 }
 
 #[ink::test]
 fn cluster_create_works() {
-    let ctx = new_cluster()?;
+    let ctx = new_cluster();
     push_caller_value(ctx.manager, 0);
 
     assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
@@ -90,11 +90,11 @@ fn cluster_create_works() {
 
 #[ink::test]
 fn cluster_replace_node_works() {
-    let mut ctx = new_cluster()?;
+    let mut ctx = new_cluster();
     push_caller_value(ctx.manager, 0);
 
     // Reassign a vnode from node1 to node2.
-    ctx.contract.cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2)?;
+    ctx.contract.cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2);
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
@@ -118,11 +118,11 @@ fn cluster_replace_node_works() {
 
 #[ink::test]
 fn cluster_reserve_works() {
-    let mut ctx = new_cluster()?;
+    let mut ctx = new_cluster();
     push_caller_value(ctx.manager, 0);
 
     // Reserve more resources.
-    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5)?;
+    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
@@ -144,12 +144,12 @@ fn cluster_reserve_works() {
 
 #[ink::test]
 fn cluster_management_validation_works() {
-    let mut ctx = new_cluster()?;
+    let mut ctx = new_cluster();
 
     let not_manager = ctx.provider_id0;
     push_caller_value(not_manager, 0);
     assert_eq!(
-        ctx.contract.cluster_replace_node(ctx.cluster_id, 0, 1),
+        ctx.contract.message_cluster_replace_node(ctx.cluster_id, 0, 1),
         Err(UnauthorizedClusterManager), "only the manager can modify the cluster");
     pop_caller();
 
@@ -157,11 +157,11 @@ fn cluster_management_validation_works() {
 
     let bad_node_id = ctx.node_id2 + 1;
     assert_eq!(
-        ctx.contract.cluster_replace_node(ctx.cluster_id, 0, bad_node_id),
+        ctx.contract.message_cluster_replace_node(ctx.cluster_id, 0, bad_node_id),
         Err(NodeDoesNotExist), "cluster replacement node must exist");
 
     assert_eq!(
-        ctx.contract.cluster_create(ctx.manager, 2, vec![bad_node_id], "".to_string()),
+        ctx.contract.message_cluster_create(ctx.manager, 2, vec![bad_node_id], "".to_string()),
         Err(NodeDoesNotExist), "cluster initial nodes must exist");
 }
 
@@ -182,20 +182,20 @@ fn ddc_bucket_works() {
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string(), capacity)?;
+    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity)?;
+    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity);
     pop_caller();
     assert_ne!(node_id0, node_id1);
 
     // Create a Cluster.
     let cluster_params = "{}";
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let cluster_id = ddc_bucket.cluster_create(cluster_manager, 2, vec![node_id0, node_id1], cluster_params.to_string())?;
+    let cluster_id = ddc_bucket.cluster_create(cluster_manager, 2, vec![node_id0, node_id1], cluster_params.to_string());
     pop_caller();
 
     // Consumer discovers the Cluster with the 2 Nodes.
@@ -227,18 +227,18 @@ fn ddc_bucket_works() {
 
     // Deposit some value to pay for buckets.
     push_caller_value(consumer_id, 10 * TOKEN);
-    ddc_bucket.deposit()?;
+    ddc_bucket.deposit();
     pop_caller();
 
     // Create a bucket.
     push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
     let bucket_params = "{}".to_string();
-    let bucket_id = ddc_bucket.bucket_create(bucket_params.clone())?;
+    let bucket_id = ddc_bucket.bucket_create(bucket_params.clone());
     pop_caller();
 
     // Allocate the bucket to the cluster.
     push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
-    ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id)?;
+    ddc_bucket.bucket_alloc_into_cluster(bucket_id, cluster_id);
     pop_caller();
 
     // Check the structure of the bucket including all deal IDs.
@@ -262,7 +262,7 @@ fn ddc_bucket_works() {
 
     // Deposit more value into the account.
     push_caller_value(consumer_id, 100 * TOKEN);
-    ddc_bucket.deposit()?;
+    ddc_bucket.deposit();
     pop_caller();
 
     // The end time increased because there is more deposit.
@@ -297,11 +297,11 @@ fn ddc_bucket_works() {
     // Provider withdraws in the future.
     advance_block::<DefaultEnvironment>().unwrap();
     push_caller(provider_id0);
-    ddc_bucket.provider_withdraw(deal_id0)?;
+    ddc_bucket.provider_withdraw(deal_id0);
     pop_caller();
 
     push_caller(provider_id1);
-    ddc_bucket.provider_withdraw(deal_id1)?;
+    ddc_bucket.provider_withdraw(deal_id1);
     pop_caller();
 
     let mut evs = get_events(11);
@@ -359,12 +359,12 @@ fn bucket_list_works() {
     let owner_id3 = accounts.charlie;
 
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let bucket_id1 = ddc_bucket.bucket_create("".to_string())?;
+    let bucket_id1 = ddc_bucket.bucket_create("".to_string());
     let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
     pop_caller();
 
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let bucket_id2 = ddc_bucket.bucket_create("".to_string())?;
+    let bucket_id2 = ddc_bucket.bucket_create("".to_string());
     let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
     pop_caller();
 
@@ -419,12 +419,12 @@ fn node_list_works() {
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
     let capacity = 100;
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity)?;
+    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity);
     pop_caller();
 
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let node_id2 = ddc_bucket.node_create(rent_per_month, node_params2.to_string(), capacity)?;
+    let node_id2 = ddc_bucket.node_create(rent_per_month, node_params2.to_string(), capacity);
     pop_caller();
 
     assert_ne!(node_id1, node_id2);
@@ -488,7 +488,7 @@ fn contract_fee_works() {
     let alice_before = balance_of(accounts.alice);
 
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    let bucket_id = ddc_bucket.bucket_create("123".to_string())?;
+    let bucket_id = ddc_bucket.bucket_create("123".to_string());
 
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
     let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size()) as Balance;
