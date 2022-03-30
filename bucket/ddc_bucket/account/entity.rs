@@ -1,3 +1,5 @@
+//! The data structure of Accounts.
+
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 

@@ -1,3 +1,5 @@
+//! The Schedule data structure implements a value that increases over time.
+
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 

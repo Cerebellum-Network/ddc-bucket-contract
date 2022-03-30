@@ -16,6 +16,7 @@ To deploy:
 - Use the script [deploy.js](deploy.js) to deploy the contracts.
 - Update the [SDK default contracts](sdk/src/deployments.js).
 - Publish the JS SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
+- Regenerate the documentation with `cargo doc --workspace` and find it at `target/doc/ddc_bucket/index.html`
 
 # Contract Development
 
@@ -34,4 +35,4 @@ To deploy:
     cargo test
 
     # Long test
-    ./build-all.sh
+    node deploy.js

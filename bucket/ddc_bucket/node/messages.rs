@@ -1,3 +1,5 @@
+//! The public interface to manage Nodes.
+
 use ink_lang::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{Balance, DdcBucket, NodeCreated, Result};

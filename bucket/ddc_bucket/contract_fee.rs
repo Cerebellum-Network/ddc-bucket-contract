@@ -1,3 +1,5 @@
+//! This module captures fees necessary to pay for the storage of the contract state.
+
 use ink_lang::StaticEnv;
 
 use crate::ddc_bucket::{Balance, DdcBucket, Result, TOKEN};

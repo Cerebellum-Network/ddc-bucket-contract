@@ -1,3 +1,7 @@
+//! Cash and Payable represent money and debt.
+//!
+//! These data structures facilitate the correctness of money-related calculations using the Rust type system.
+
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 

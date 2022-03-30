@@ -1,3 +1,5 @@
+//! The public interface of Deals and payments.
+
 use ink_lang::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{DdcBucket, ProviderWithdraw, Result, NodeId};

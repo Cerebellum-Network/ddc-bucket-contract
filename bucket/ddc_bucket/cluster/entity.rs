@@ -1,3 +1,5 @@
+//! The data structure of Clusters.
+
 use ink_prelude::{
     string::String,
     vec::Vec,

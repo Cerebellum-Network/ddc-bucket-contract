@@ -1,3 +1,5 @@
+//! The Flow data structure represents an outgoing stream of payments from an account.
+
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 

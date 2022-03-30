@@ -1,3 +1,5 @@
+//! The data structure of Nodes.
+
 use ink_prelude::{
     string::String,
 };

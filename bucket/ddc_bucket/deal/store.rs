@@ -1,3 +1,5 @@
+//! The store where to create and access Deals.
+
 use ink_storage::{
     collections::Vec as InkVec,
     traits,
