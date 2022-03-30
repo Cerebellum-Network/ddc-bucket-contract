@@ -51,7 +51,6 @@ pub mod ddc_bucket {
     }
     // ---- End global state ----
 
-
     // ---- Bucket ----
 
     #[ink(event)]
@@ -85,19 +84,19 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn bucket_create(&mut self, bucket_params: BucketParams) -> Result<BucketId> {
-            self.message_bucket_create(bucket_params)
+        pub fn bucket_create(&mut self, bucket_params: BucketParams) -> BucketId {
+            self.message_bucket_create(bucket_params).unwrap()
         }
 
         #[ink(message, payable)]
-        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
-            self.message_bucket_alloc_into_cluster(bucket_id, cluster_id)
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> () {
+            self.message_bucket_alloc_into_cluster(bucket_id, cluster_id).unwrap()
         }
 
         /* Not allowed to reserve because it is not connected to payments yet.
         #[ink(message)]
         pub fn bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
-            self._message_bucket_reserve_resource(bucket_id, amount)
+            self._message_bucket_reserve_resource(bucket_id, amount).unwrap()
         }*/
 
         #[ink(message)]
@@ -132,8 +131,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn provider_withdraw(&mut self, deal_id: DealId) -> Result<()> {
-            self.message_provider_withdraw(deal_id)
+        pub fn provider_withdraw(&mut self, deal_id: DealId) -> () {
+            self.message_provider_withdraw(deal_id).unwrap()
         }
 
         #[ink(message)]
@@ -168,18 +167,18 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, manager: AccountId, partition_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> Result<NodeId> {
-            self.message_cluster_create(manager, partition_count, node_ids, cluster_params)
+        pub fn cluster_create(&mut self, manager: AccountId, partition_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> NodeId {
+            self.message_cluster_create(manager, partition_count, node_ids, cluster_params).unwrap()
         }
 
         #[ink(message)]
-        pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
-            self.message_cluster_reserve_resource(cluster_id, amount)
+        pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
+            self.message_cluster_reserve_resource(cluster_id, amount).unwrap()
         }
 
         #[ink(message)]
-        pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, partition_i: PartitionIndex, new_node_id: NodeId) -> Result<()> {
-            self.message_cluster_replace_node(cluster_id, partition_i, new_node_id)
+        pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, partition_i: PartitionIndex, new_node_id: NodeId) -> () {
+            self.message_cluster_replace_node(cluster_id, partition_i, new_node_id).unwrap()
         }
 
         #[ink(message)]
@@ -210,8 +209,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> Result<NodeId> {
-            self.message_node_create(rent_per_month, node_params, capacity)
+        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> NodeId {
+            self.message_node_create(rent_per_month, node_params, capacity).unwrap()
         }
 
         #[ink(message)]
@@ -239,8 +238,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn deposit(&mut self) -> Result<()> {
-            self.message_deposit()
+        pub fn deposit(&mut self) -> () {
+            self.message_deposit().unwrap()
         }
     }
     // ---- End Billing ----

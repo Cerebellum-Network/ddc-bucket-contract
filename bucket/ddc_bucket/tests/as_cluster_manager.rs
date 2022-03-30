@@ -40,14 +40,14 @@ impl ClusterManager {
             partition_count,
             node_ids,
             topology.to_string().unwrap(),
-        ).unwrap();
+        );
         pop_caller();
 
         push_caller_value(self.account_id, 0);
         // Reserve some resources.
-        contract.cluster_reserve_resource(_id, 5).unwrap();
+        contract.cluster_reserve_resource(_id, 5);
         // Later, reserve more.
-        contract.cluster_reserve_resource(_id, 10).unwrap();
+        contract.cluster_reserve_resource(_id, 10);
         pop_caller();
     }
 
@@ -59,7 +59,7 @@ impl ClusterManager {
         for (cluster_id, partition_i) in partition_ids.iter() {
             let resource_needed = contract.cluster_get(*cluster_id).unwrap().resource_per_vnode;
             let new_node_id = self.find_best_storage_node(contract, resource_needed);
-            contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id).unwrap();
+            contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id);
         }
     }
 
