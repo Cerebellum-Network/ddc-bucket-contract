@@ -58,6 +58,16 @@ impl DdcBucket {
         Ok(())
     }
 
+    pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
+        let cluster = self.clusters.get_mut(cluster_id)?;
+
+        for node_id in &cluster.vnodes {
+            let _node = self.nodes.get_mut(*node_id)?;
+        }
+
+        Ok(())
+    }
+
     fn only_cluster_manager(cluster: &Cluster) -> Result<()> {
         let caller = Self::env().caller();
         if caller == cluster.manager_id {

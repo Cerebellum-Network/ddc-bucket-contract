@@ -7,7 +7,7 @@ use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, De
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 use crate::ddc_bucket::deal::entity::Deal;
-use crate::ddc_bucket::Error::ClusterDoesNotExist;
+use crate::ddc_bucket::Error::BucketClusterNotSetup;
 use crate::ddc_bucket::node::entity::Resource;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
@@ -50,9 +50,45 @@ impl DdcBucket {
         Ok(())
     }
 
+    pub fn message_bucket_alloc_into_cluster2(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> Result<()> {
+        let owner_id = Self::env().caller();
+
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        bucket.only_owner(owner_id)?;
+        bucket.connect_cluster(cluster_id)?;
+
+        let rent = self.clusters.get(cluster_id)?.get_rent();
+
+        // Start the payment flow to the cluster.
+        let start_ms = Self::env().block_timestamp();
+        let flow = self.accounts.start_flow(start_ms, owner_id, rent)?;
+        bucket.flows.push(flow);
+
+        Self::env().emit_event(BucketAllocated { bucket_id, cluster_id });
+
+        // Capture the contract storage fee.
+        let record_size = 0; // TODO.
+        Self::capture_fee_and_refund(record_size)?;
+        Ok(())
+    }
+
+    pub fn message_bucket_settle_payment(&mut self, bucket_id: BucketId) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let flow = bucket.flows.get_mut(0).ok_or(BucketClusterNotSetup)?;
+        let cluster_id = bucket.cluster_ids.first().ok_or(BucketClusterNotSetup)?;
+
+        let now_ms = Self::env().block_timestamp();
+        let cash = self.accounts.settle_flow(now_ms, flow)?;
+
+        let cluster = self.clusters.get_mut(*cluster_id)?;
+        cluster.revenues.increase(cash);
+
+        Ok(())
+    }
+
     fn _message_bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster_id = *bucket.cluster_ids.last().ok_or(ClusterDoesNotExist)?;
+        let cluster_id = *bucket.cluster_ids.last().ok_or(BucketClusterNotSetup)?;
         let cluster = self.clusters.get_mut(cluster_id)?;
 
         let owner_id = Self::env().caller();

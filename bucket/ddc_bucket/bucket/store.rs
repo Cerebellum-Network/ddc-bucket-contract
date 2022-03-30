@@ -20,6 +20,7 @@ impl BucketStore {
         let bucket = Bucket {
             owner_id,
             cluster_ids: Vec::new(),
+            flows: Vec::new(),
             deal_ids: Vec::new(),
             bucket_params,
             resource_reserved: 0,

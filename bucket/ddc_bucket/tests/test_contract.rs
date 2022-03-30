@@ -207,6 +207,7 @@ fn ddc_bucket_works() {
         vnodes: vec![node_id0, node_id1],
         resource_per_vnode: 0,
         resource_used: 0,
+        revenues: Cash(0),
     });
     let node0 = ddc_bucket.node_get(node_id0)?;
     assert_eq!(node0, Node {
@@ -248,6 +249,7 @@ fn ddc_bucket_works() {
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         cluster_ids: vec![cluster_id],
+        flows: vec![],
         deal_ids: vec![deal_id0, deal_id1],
         bucket_params: bucket_params.to_string(),
         resource_reserved: 0,
@@ -294,8 +296,12 @@ fn ddc_bucket_works() {
         deal.node_id == node_id1);
     assert!(deal_of_provider.is_some());
 
-    // Provider withdraws in the future.
+    // Go to the future when some revenues are due.
     advance_block::<DefaultEnvironment>().unwrap();
+
+    ddc_bucket.cluster_distribute_revenues(cluster_id);
+
+    // Provider withdraws.
     push_caller(provider_id0);
     ddc_bucket.provider_withdraw(deal_id0);
     pop_caller();

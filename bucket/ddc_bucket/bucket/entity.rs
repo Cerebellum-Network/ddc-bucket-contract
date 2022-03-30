@@ -14,6 +14,7 @@ use crate::ddc_bucket::{
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
 use crate::ddc_bucket::node::entity::Resource;
+use crate::ddc_bucket::flow::Flow;
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -23,6 +24,7 @@ pub type BucketParams = String;
 pub struct Bucket {
     pub owner_id: AccountId,
     pub cluster_ids: Vec<ClusterId>,
+    pub flows: Vec<Flow>,
     pub deal_ids: Vec<DealId>,
     pub bucket_params: BucketParams,
     pub resource_reserved: Resource,
@@ -39,6 +41,7 @@ pub struct BucketStatus {
 
 impl Bucket {
     pub fn new_size(&self) -> usize {
+        // TODO: add flows.
         SIZE_PER_RECORD
             + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC + SIZE_VEC
             + self.bucket_params.len()

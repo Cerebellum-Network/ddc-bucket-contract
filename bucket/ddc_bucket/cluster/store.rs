@@ -10,6 +10,7 @@ use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
 use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 
 use super::entity::{Cluster, ClusterId, ClusterParams};
+use crate::ddc_bucket::cash::Cash;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
@@ -31,6 +32,7 @@ impl ClusterStore {
             vnodes: Self::new_vnodes(partition_count as usize, node_ids),
             resource_per_vnode: 0,
             resource_used: 0,
+            revenues: Cash(0),
         };
         let record_size = cluster.new_size();
         self.0.push(cluster);

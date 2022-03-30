@@ -95,6 +95,11 @@ pub mod ddc_bucket {
             self.message_bucket_alloc_into_cluster(bucket_id, cluster_id).unwrap()
         }
 
+        #[ink(message)]
+        pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) {
+            self.message_bucket_settle_payment(bucket_id).unwrap()
+        }
+
         /* Not allowed to reserve because it is not connected to payments yet.
         #[ink(message)]
         pub fn bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
@@ -192,6 +197,11 @@ pub mod ddc_bucket {
         pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<Cluster>, u32) {
             self.clusters.list(offset, limit, filter_manager_id)
         }
+
+        #[ink(message)]
+        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
+            self.message_cluster_distribute_revenues(cluster_id).unwrap()
+        }
     }
     // ---- End Cluster ----
 
@@ -259,6 +269,7 @@ pub mod ddc_bucket {
         ClusterDoesNotExist,
         PartitionDoesNotExist,
         BucketClusterAlreadyConnected,
+        BucketClusterNotSetup,
         NodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,

@@ -7,9 +7,10 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{Balance, InsufficientBalance, Result};
 
+// TODO: remove Clone.
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
-#[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cash(pub Balance);
 
