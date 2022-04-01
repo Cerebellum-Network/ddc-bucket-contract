@@ -20,6 +20,11 @@ struct TestCluster {
     node_id2: NodeId,
     rent_per_vnode: Balance,
     partition_count: u32,
+    node_params0: &'static str,
+    node_params1: &'static str,
+    node_params2: &'static str,
+    capacity: u32,
+    reserved: u32,
 }
 
 fn new_cluster() -> TestCluster {
@@ -41,7 +46,7 @@ fn new_cluster() -> TestCluster {
     pop_caller();
 
     // Provide another Node.
-    let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
     let node_id1 = contract.node_create(rent_per_vnode, node_params1.to_string(), capacity);
     pop_caller();
@@ -60,16 +65,18 @@ fn new_cluster() -> TestCluster {
     pop_caller();
 
     push_caller_value(manager, 0);
-    contract.cluster_reserve_resource(cluster_id, 10);
+    let reserved = 10;
+    contract.cluster_reserve_resource(cluster_id, reserved);
     pop_caller();
 
-    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2, rent_per_vnode, partition_count }
+    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2, rent_per_vnode, partition_count, node_params0, node_params1, node_params2, capacity, reserved }
 }
 
 
 struct TestBucket {
     bucket_id: BucketId,
     owner_id: AccountId,
+    resource: u32,
 }
 
 fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
@@ -92,36 +99,82 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     ctx.contract.account_deposit();
     pop_caller();
 
-    TestBucket { bucket_id, owner_id }
+    TestBucket { bucket_id, owner_id, resource }
 }
 
 
 #[ink::test]
 fn cluster_create_works() {
     let ctx = new_cluster();
-    push_caller_value(ctx.manager, 0);
 
     assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
 
-    // Check the initial state of the cluster.
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
-    let expected_vnodes = &[
-        ctx.node_id0, ctx.node_id1, ctx.node_id2,
-        ctx.node_id0, ctx.node_id1, ctx.node_id2];
-    assert_eq!(&cluster.vnodes, expected_vnodes, "cluster setup with nodes");
-    assert_eq!(cluster.resource_per_vnode, 10);
+    // Check the nodes.
+    {
+        let node0 = ctx.contract.node_get(ctx.node_id0)?;
+        assert_eq!(node0, Node {
+            node_id: ctx.node_id0,
+            provider_id: ctx.provider_id0,
+            rent_per_month: ctx.rent_per_vnode,
+            node_params: ctx.node_params0.to_string(),
+            free_resource: ctx.capacity - ctx.reserved * 2,
+        });
 
-    // Check the initial state of the nodes. 2 vnodes of size 10 are reserved from each.
-    let expected_resources = [
-        (ctx.node_id0, 100 - 10 - 10),
-        (ctx.node_id1, 100 - 10 - 10),
-        (ctx.node_id2, 100 - 10 - 10),
-    ];
-    for (node_id, available) in expected_resources {
-        assert_eq!(
-            ctx.contract.node_get(node_id)?.free_resource,
-            available, "resources must be reserved from the nodes");
+        let node1 = ctx.contract.node_get(ctx.node_id1)?;
+        assert_eq!(node1, Node {
+            node_id: ctx.node_id1,
+            provider_id: ctx.provider_id1,
+            rent_per_month: ctx.rent_per_vnode,
+            node_params: ctx.node_params1.to_string(),
+            free_resource: ctx.capacity - ctx.reserved * 2,
+        });
+
+        let node2 = ctx.contract.node_get(ctx.node_id2)?;
+        assert_eq!(node2, Node {
+            node_id: ctx.node_id2,
+            provider_id: ctx.provider_id2,
+            rent_per_month: ctx.rent_per_vnode,
+            node_params: ctx.node_params2.to_string(),
+            free_resource: ctx.capacity - ctx.reserved * 2,
+        });
     }
+
+    // Check the initial state of the cluster.
+    {
+        let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+        assert_eq!(cluster, Cluster {
+            cluster_id: ctx.cluster_id,
+            manager_id: ctx.manager,
+            cluster_params: "{}".to_string(),
+            vnodes: vec![
+                ctx.node_id0, ctx.node_id1, ctx.node_id2,
+                ctx.node_id0, ctx.node_id1, ctx.node_id2],
+            resource_per_vnode: ctx.reserved,
+            resource_used: 0,
+            revenues: Cash(0),
+            total_rent: ctx.rent_per_vnode * ctx.partition_count as Balance,
+        });
+    }
+
+    // Check the events.
+    let mut evs = get_events(4);
+    evs.reverse(); // Work with pop().
+
+    // Node created 0.
+    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
+        NodeCreated { node_id: ctx.node_id0, provider_id: ctx.provider_id0, rent_per_month: ctx.rent_per_vnode, node_params: ctx.node_params0.to_string() }));
+
+    // Node created 1.
+    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
+        NodeCreated { node_id: ctx.node_id1, provider_id: ctx.provider_id1, rent_per_month: ctx.rent_per_vnode, node_params: ctx.node_params1.to_string() }));
+
+    // Node created 2.
+    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
+        NodeCreated { node_id: ctx.node_id2, provider_id: ctx.provider_id2, rent_per_month: ctx.rent_per_vnode, node_params: ctx.node_params2.to_string() }));
+
+    // Cluster setup.
+    assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
+        ClusterCreated { cluster_id: ctx.cluster_id, manager: ctx.manager, cluster_params: "{}".to_string() }));
 }
 
 
@@ -287,149 +340,99 @@ fn cluster_pays_providers() {
 
 
 #[ink::test]
-fn ddc_bucket_works() {
-    let accounts = get_accounts();
-    set_balance(accounts.charlie, 1000 * TOKEN);
-    let provider_id0 = accounts.alice;
-    let provider_id1 = accounts.bob;
-    let consumer_id = accounts.charlie;
-    let cluster_manager = provider_id0;
-
-    let mut ddc_bucket = DdcBucket::new();
-
-    // Provide a Node.
-    let rent_per_month: Balance = 10 * TOKEN;
-    let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
-    let capacity = 100;
-    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = ddc_bucket.node_create(rent_per_month, node_params0.to_string(), capacity);
-    pop_caller();
-
-    // Provide another Node.
-    let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = ddc_bucket.node_create(rent_per_month, node_params1.to_string(), capacity);
-    pop_caller();
-    assert_ne!(node_id0, node_id1);
-
-    // Create a Cluster.
-    let cluster_params = "{}";
-    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let cluster_id = ddc_bucket.cluster_create(cluster_manager, 2, vec![node_id0, node_id1], cluster_params.to_string());
-    pop_caller();
-
-    push_caller_value(cluster_manager, 0);
-    ddc_bucket.cluster_reserve_resource(cluster_id, 10);
-    pop_caller();
-
-    // Consumer discovers the Cluster with the 2 Nodes.
-    let cluster = ddc_bucket.cluster_get(cluster_id)?;
-    let total_rent = rent_per_month * 2;
-    assert_eq!(cluster, Cluster {
-        cluster_id,
-        manager_id: cluster_manager,
-        cluster_params: cluster_params.to_string(),
-        vnodes: vec![node_id0, node_id1],
-        resource_per_vnode: 10,
-        resource_used: 0,
-        revenues: Cash(0),
-        total_rent,
-    });
-    let node0 = ddc_bucket.node_get(node_id0)?;
-    assert_eq!(node0, Node {
-        node_id: node_id0,
-        provider_id: provider_id0,
-        rent_per_month,
-        node_params: node_params0.to_string(),
-        free_resource: capacity - cluster.resource_per_vnode,
-    });
-    let node1 = ddc_bucket.node_get(node_id1)?;
-    assert_eq!(node1, Node {
-        node_id: node_id1,
-        provider_id: provider_id1,
-        rent_per_month,
-        node_params: node_params1.to_string(),
-        free_resource: capacity - cluster.resource_per_vnode,
-    });
-
-    // Deposit some value to pay for buckets.
-    push_caller_value(consumer_id, 10 * TOKEN);
-    ddc_bucket.account_deposit();
-    pop_caller();
-
-    // Create a bucket.
-    push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
-    let bucket_params = "{}".to_string();
-    let bucket_id = ddc_bucket.bucket_create(bucket_params.clone(), cluster_id);
-    pop_caller();
-
-    // Allocate the bucket to the cluster.
-    push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
-    let resource_reserved = 1;
-    ddc_bucket.bucket_alloc_into_cluster(bucket_id, resource_reserved);
-    pop_caller();
+fn bucket_create_works() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
 
     // Check the structure of the bucket including the payment flow.
-    let bucket = ddc_bucket.bucket_get(bucket_id)?;
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    let total_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
     assert_eq!(bucket, Bucket {
-        owner_id: consumer_id,
-        cluster_id,
-        flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, total_rent) }],
-        bucket_params: bucket_params.to_string(),
-        resource_reserved,
+        owner_id: test_bucket.owner_id,
+        cluster_id: ctx.cluster_id,
+        flows: vec![Flow {
+            from: test_bucket.owner_id,
+            schedule: Schedule::new(0, total_rent),
+        }],
+        bucket_params: "".to_string(),
+        resource_reserved: test_bucket.resource,
     });
-
-    // Deposit more value into the account.
-    push_caller_value(consumer_id, 100 * TOKEN);
-    ddc_bucket.account_deposit();
-    pop_caller();
 
     // Check the status of the bucket.
-    let bucket_status = ddc_bucket.bucket_get_status(bucket_id)?;
+    let bucket_status = ctx.contract.bucket_get_status(test_bucket.bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
-        bucket_id,
+        bucket_id: test_bucket.bucket_id,
         bucket,
-        writer_ids: vec![consumer_id],
-        rent_covered_until_ms: 14559782400, // TODO: check this value.
+        writer_ids: vec![test_bucket.owner_id],
+        rent_covered_until_ms: 446400000, // TODO: check this value.
     });
-
-    // Go to the future when some revenues are due.
-    advance_block::<DefaultEnvironment>().unwrap();
-
-    ddc_bucket.cluster_distribute_revenues(cluster_id);
 
     let mut evs = get_events(7);
     evs.reverse(); // Work with pop().
-
-    // Provider setup.
-    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
-        NodeCreated { node_id: node_id0, provider_id: provider_id0, rent_per_month, node_params: node_params0.to_string() }));
-
-    // Provider setup 2.
-    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
-        NodeCreated { node_id: node_id1, provider_id: provider_id1, rent_per_month, node_params: node_params1.to_string() }));
-
-    // Cluster setup.
-    assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
-        ClusterCreated { cluster_id, manager: cluster_manager, cluster_params: cluster_params.to_string() }));
-
-    // Deposit.
-    let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
-    let net_deposit = 10 * TOKEN - deposit_contract_fee;
-    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: net_deposit }));
+    evs.truncate(7 - 3 - 1); // Skip 3 NodeCreated and 1 ClusterCreated events.
 
     // Create bucket.
     assert!(matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
-        BucketCreated {  bucket_id, owner_id: consumer_id }));
+        BucketCreated {  bucket_id: test_bucket.bucket_id, owner_id: test_bucket.owner_id }));
 
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
-        BucketAllocated { bucket_id, cluster_id }));
+        BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id }));
 
     // Deposit more.
-    let net_deposit = 100 * TOKEN; // No deposit_contract_fee because the account already exists.
+    let net_deposit = 10 * TOKEN;
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: consumer_id, value: net_deposit }));
+        Deposit { account_id: test_bucket.owner_id, value: net_deposit }));
+}
+
+
+#[ink::test]
+fn account_deposit_works() {
+    let account_id = get_accounts().alice;
+    let mut contract = DdcBucket::new();
+
+    assert_eq!(
+        contract.account_get(account_id),
+        Err(AccountDoesNotExist), "must not get a non-existent account");
+
+    let deposit = 10 * TOKEN;
+    let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
+    let deposit_after_fee = deposit - deposit_contract_fee;
+
+    // Deposit some value.
+    push_caller_value(account_id, deposit);
+    contract.account_deposit();
+    pop_caller();
+
+    let account = contract.account_get(account_id)?;
+    assert_eq!(account, Account {
+        deposit: Cash(deposit_after_fee),
+        payable_locked: 0,
+        payable_schedule: Schedule::empty(),
+    }, "must take deposit minus creation fee");
+
+    // Deposit more value.
+    push_caller_value(account_id, deposit);
+    contract.account_deposit();
+    pop_caller();
+
+    let account = contract.account_get(account_id)?;
+    assert_eq!(account, Account {
+        deposit: Cash(deposit_after_fee + deposit),
+        payable_locked: 0,
+        payable_schedule: Schedule::empty(),
+    }, "must take more deposits without creation fee");
+
+    // Check events.
+    let mut evs = get_events(2);
+    evs.reverse(); // Work with pop().
+
+    // First deposit event.
+    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
+        Deposit { account_id, value: deposit_after_fee }));
+
+    // Second deposit event. No deposit_contract_fee because the account already exists.
+    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
+        Deposit { account_id, value: deposit }));
 }
 
 
