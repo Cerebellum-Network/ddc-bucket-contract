@@ -7,7 +7,7 @@ use ink_prelude::{
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result, TOKEN};
+use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
 use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::node::entity::Resource;
@@ -27,6 +27,7 @@ pub struct Cluster {
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
+    pub total_rent: Balance,
 }
 
 impl Cluster {
@@ -42,7 +43,7 @@ impl Cluster {
     }
 
     pub fn get_rent(&self) -> Balance {
-        return 1 * TOKEN; // TODO.
+        return self.total_rent;
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

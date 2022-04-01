@@ -18,6 +18,8 @@ struct TestCluster {
     node_id0: NodeId,
     node_id1: NodeId,
     node_id2: NodeId,
+    rent_per_vnode: Balance,
+    partition_count: u32,
 }
 
 fn new_cluster() -> TestCluster {
@@ -31,36 +33,37 @@ fn new_cluster() -> TestCluster {
     let mut contract = DdcBucket::new();
 
     // Provide a Node.
-    let rent_per_month: Balance = 10 * TOKEN;
+    let rent_per_vnode: Balance = 10 * TOKEN;
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
-    let node_id0 = contract.node_create(rent_per_month, node_params0.to_string(), capacity);
+    let node_id0 = contract.node_create(rent_per_vnode, node_params0.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
-    let node_id1 = contract.node_create(rent_per_month, node_params1.to_string(), capacity);
+    let node_id1 = contract.node_create(rent_per_vnode, node_params1.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
-    let node_id2 = contract.node_create(rent_per_month, node_params2.to_string(), capacity);
+    let node_id2 = contract.node_create(rent_per_vnode, node_params2.to_string(), capacity);
     pop_caller();
 
     // Create a Cluster.
     let cluster_params = "{}";
+    let partition_count = 6;
     push_caller_value(manager, CONTRACT_FEE_LIMIT);
-    let cluster_id = contract.cluster_create(manager, 6, vec![node_id0, node_id1, node_id2], cluster_params.to_string());
+    let cluster_id = contract.cluster_create(manager, partition_count, vec![node_id0, node_id1, node_id2], cluster_params.to_string());
     pop_caller();
 
     push_caller_value(manager, 0);
     contract.cluster_reserve_resource(cluster_id, 10);
     pop_caller();
 
-    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2 }
+    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2, rent_per_vnode, partition_count }
 }
 
 
@@ -215,6 +218,8 @@ fn bucket_pays_cluster() {
     let ctx = &mut new_cluster();
     let test_bucket = &new_bucket(ctx);
 
+    let expected_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
+
     // Check the state before payment.
     let before = ctx.contract
         .account_get(test_bucket.owner_id)?
@@ -224,7 +229,7 @@ fn bucket_pays_cluster() {
     assert_eq!(bucket.flows[0],
                Flow {
                    from: test_bucket.owner_id,
-                   schedule: Schedule::new(0, 1 * TOKEN),
+                   schedule: Schedule::new(0, expected_rent),
                });
 
     bucket_settle_payment(ctx, &test_bucket);
@@ -238,10 +243,10 @@ fn bucket_pays_cluster() {
     assert_eq!(bucket.flows[0],
                Flow {
                    from: test_bucket.owner_id,
-                   schedule: Schedule::new(BLOCK_TIME, 1 * TOKEN),
+                   schedule: Schedule::new(BLOCK_TIME, expected_rent),
                });
 
-    let expect_revenues = 1 * TOKEN * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
+    let expect_revenues = expected_rent * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
     assert!(expect_revenues > 0);
     assert_eq!(expect_revenues, spent, "revenues must come from the bucket owner");
 
@@ -272,11 +277,11 @@ fn cluster_pays_providers() {
     let earned2 = balance_of(ctx.provider_id2) - before2;
 
     assert!(to_distribute > 0);
-    assert_eq!(left_after_distribution, 0, "revenues must go out of the cluster");
+    assert!(left_after_distribution < 10, "revenues must go out of the cluster (besides rounding)");
     assert!(earned0 > 0, "provider must earn something");
     assert_eq!(earned0, earned1, "providers must earn the same amount");
     assert_eq!(earned0, earned2, "providers must earn the same amount");
-    assert_eq!(earned0 + earned1 + earned2, to_distribute, "all revenues must go to providers");
+    assert_eq!(earned0 + earned1 + earned2 + left_after_distribution, to_distribute, "all revenues must go to providers");
 }
 
 
@@ -314,6 +319,7 @@ fn ddc_bucket_works() {
 
     // Consumer discovers the Cluster with the 2 Nodes.
     let cluster = ddc_bucket.cluster_get(cluster_id)?;
+    let total_rent = rent_per_month * 2;
     assert_eq!(cluster, Cluster {
         cluster_id,
         manager_id: cluster_manager,
@@ -322,6 +328,7 @@ fn ddc_bucket_works() {
         resource_per_vnode: 0,
         resource_used: 0,
         revenues: Cash(0),
+        total_rent,
     });
     let node0 = ddc_bucket.node_get(node_id0)?;
     assert_eq!(node0, Node {
@@ -361,7 +368,7 @@ fn ddc_bucket_works() {
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         cluster_id,
-        flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, 1 * TOKEN) }],
+        flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, total_rent) }],
         bucket_params: bucket_params.to_string(),
         resource_reserved: 0,
     });
@@ -377,7 +384,7 @@ fn ddc_bucket_works() {
         bucket_id,
         bucket,
         writer_ids: vec![consumer_id],
-        rent_covered_until_ms: 291195648000, // TODO: check this value.
+        rent_covered_until_ms: 14559782400, // TODO: check this value.
     });
 
     // Go to the future when some revenues are due.

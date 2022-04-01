@@ -19,10 +19,12 @@ impl DdcBucket {
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
+        let mut nodes = Vec::new();
         for node_id in &node_ids {
-            let _ = self.nodes.get(*node_id)?;
+            let node = self.nodes.get(*node_id)?;
+            nodes.push(node);
         }
-        let (cluster_id, record_size) = self.clusters.create(manager, partition_count, node_ids, cluster_params.clone());
+        let (cluster_id, record_size) = self.clusters.create(manager, partition_count, &nodes, cluster_params.clone());
         Self::capture_fee_and_refund(record_size)?;
         Self::env().emit_event(ClusterCreated { cluster_id, manager, cluster_params });
         Ok(cluster_id)
