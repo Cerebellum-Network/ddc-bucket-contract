@@ -3,20 +3,24 @@ use ink_lang as ink;
 use crate::ddc_bucket::*;
 use crate::ddc_bucket::account::entity::Account;
 use crate::ddc_bucket::contract_fee::{calculate_contract_fee, FEE_PER_BYTE, SIZE_PER_RECORD};
+use crate::ddc_bucket::flow::Flow;
+use crate::ddc_bucket::schedule::{MS_PER_MONTH, Schedule};
 
 use super::env_utils::*;
 
-struct Context {
+struct TestCluster {
     contract: DdcBucket,
     manager: AccountId,
     cluster_id: ClusterId,
     provider_id0: AccountId,
+    provider_id1: AccountId,
+    provider_id2: AccountId,
     node_id0: NodeId,
     node_id1: NodeId,
     node_id2: NodeId,
 }
 
-fn new_cluster() -> Context {
+fn new_cluster() -> TestCluster {
     let accounts = get_accounts();
     set_balance(accounts.charlie, 1000 * TOKEN);
     let provider_id0 = accounts.alice;
@@ -56,8 +60,36 @@ fn new_cluster() -> Context {
     contract.cluster_reserve_resource(cluster_id, 10);
     pop_caller();
 
-    Context { contract, manager, cluster_id, provider_id0, node_id0, node_id1, node_id2 }
+    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2 }
 }
+
+
+struct TestBucket {
+    bucket_id: BucketId,
+    owner_id: AccountId,
+}
+
+fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
+    let accounts = get_accounts();
+    let owner_id = accounts.charlie;
+
+    push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
+    let bucket_id = ctx.contract.bucket_create("".to_string(), ctx.cluster_id);
+    pop_caller();
+
+    // Reserve some resources for the bucket from the cluster.
+    push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.bucket_alloc_into_cluster(bucket_id);
+    pop_caller();
+
+    // Deposit some value to pay for buckets.
+    push_caller_value(owner_id, 10 * TOKEN);
+    ctx.contract.deposit();
+    pop_caller();
+
+    TestBucket { bucket_id, owner_id }
+}
+
 
 #[ink::test]
 fn cluster_create_works() {
@@ -167,6 +199,78 @@ fn cluster_management_validation_works() {
 
 
 #[ink::test]
+fn bucket_pays_cluster() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+
+    // Check the state before payment.
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    assert_eq!(bucket.flows[0],
+               Flow {
+                   from: test_bucket.owner_id,
+                   schedule: Schedule::new(0, 1 * TOKEN),
+               });
+
+    bucket_settle_payment(ctx, &test_bucket);
+
+    // Check the state after payment.
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    assert_eq!(bucket.flows[0],
+               Flow {
+                   from: test_bucket.owner_id,
+                   schedule: Schedule::new(BLOCK_TIME, 1 * TOKEN),
+               });
+
+    let expect_revenues = 1 * TOKEN * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
+    assert!(expect_revenues > 0);
+
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert_eq!(cluster.revenues.peek(), expect_revenues, "must get revenues into the cluster");
+}
+
+
+fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
+    // Go to the future when some revenues are due.
+    advance_block::<DefaultEnvironment>().unwrap();
+
+    // Pay the due thus far.
+    push_caller_value(test_bucket.owner_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
+    pop_caller();
+}
+
+
+#[ink::test]
+fn cluster_pays_providers() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+    bucket_settle_payment(ctx, &test_bucket);
+
+    // Get state before the distribution.
+    let to_distribute = ctx.contract.cluster_get(ctx.cluster_id)?.revenues.peek();
+    let before0 = balance_of(ctx.provider_id0);
+    let before1 = balance_of(ctx.provider_id1);
+    let before2 = balance_of(ctx.provider_id2);
+
+    // Distribute the revenues of the cluster to providers.
+    ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
+
+    // Get state after the distribution.
+    let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?.revenues.peek();
+    let earned0 = balance_of(ctx.provider_id0) - before0;
+    let earned1 = balance_of(ctx.provider_id1) - before1;
+    let earned2 = balance_of(ctx.provider_id2) - before2;
+
+    assert!(to_distribute > 0);
+    assert_eq!(left_after_distribution, 0, "revenues must go out of the cluster");
+    assert!(earned0 > 0, "provider must earn something");
+    assert_eq!(earned0, earned1, "providers must earn the same amount");
+    assert_eq!(earned0, earned2, "providers must earn the same amount");
+    assert_eq!(earned0 + earned1 + earned2, to_distribute, "all revenues must go to providers");
+}
+
+
+#[ink::test]
 fn ddc_bucket_works() {
     let accounts = get_accounts();
     set_balance(accounts.charlie, 1000 * TOKEN);
@@ -244,22 +348,13 @@ fn ddc_bucket_works() {
 
     // Check the structure of the bucket including all deal IDs.
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
-    let deal_id0 = 0;
-    let deal_id1 = 1;
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         cluster_id,
-        flows: vec![],
-        deal_ids: vec![deal_id0, deal_id1],
+        flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, 1) }],
+        deal_ids: vec![],
         bucket_params: bucket_params.to_string(),
         resource_reserved: 0,
-    });
-
-    // Check the status of the deal.
-    let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
-    assert_eq!(deal_status0, DealStatus {
-        node_id: node_id0,
-        estimated_rent_end_ms: 1167782400, // TODO: calculate this value.
     });
 
     // Deposit more value into the account.
@@ -267,51 +362,22 @@ fn ddc_bucket_works() {
     ddc_bucket.deposit();
     pop_caller();
 
-    // The end time increased because there is more deposit.
-    let deal_status0 = ddc_bucket.deal_get_status(deal_id0)?;
-    assert_eq!(deal_status0, DealStatus {
-        node_id: node_id0,
-        estimated_rent_end_ms: 14559782400, // TODO: calculate this value.
-    });
-
-    // The end time of the second deal is the same because it is paid from the same account.
-    let deal_status1 = ddc_bucket.deal_get_status(deal_id1)?;
-    assert_eq!(deal_status1, DealStatus {
-        node_id: node_id1,
-        estimated_rent_end_ms: 14559782400, // TODO: calculate this value.
-    });
-
     // Check the status of the bucket recursively including all deal statuses.
     let bucket_status = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
         bucket_id,
         bucket,
         writer_ids: vec![consumer_id],
-        deal_statuses: vec![deal_status0, deal_status1],
+        deal_statuses: vec![],
     });
-
-    // A provider is looking for the status of his deal with a bucket.
-    let deal_of_provider = bucket_status.deal_statuses
-        .iter().find(|deal|
-        deal.node_id == node_id1);
-    assert!(deal_of_provider.is_some());
 
     // Go to the future when some revenues are due.
     advance_block::<DefaultEnvironment>().unwrap();
 
     ddc_bucket.cluster_distribute_revenues(cluster_id);
 
-    // Provider withdraws.
-    push_caller(provider_id0);
-    ddc_bucket.provider_withdraw(deal_id0);
-    pop_caller();
-
-    push_caller(provider_id1);
-    ddc_bucket.provider_withdraw(deal_id1);
-    pop_caller();
-
-    let mut evs = get_events(11);
-    evs.reverse();
+    let mut evs = get_events(7);
+    evs.reverse(); // Work with pop().
 
     // Provider setup.
     assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
@@ -338,21 +404,11 @@ fn ddc_bucket_works() {
     // Add a cluster with 2 deals and an initial deposit.
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
         BucketAllocated { bucket_id, cluster_id }));
-    assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
-        DealCreated { deal_id: deal_id0, bucket_id, node_id: node_id0 }));
-    assert!(matches!(evs.pop().unwrap(), Event::DealCreated(ev) if ev ==
-        DealCreated { deal_id: deal_id1, bucket_id, node_id: node_id1 }));
 
     // Deposit more.
     let net_deposit = 100 * TOKEN; // No deposit_contract_fee because the account already exists.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: consumer_id, value: net_deposit }));
-
-    // Provider withdrawals.
-    assert!(matches!(evs.pop().unwrap(), Event::ProviderWithdraw(ev) if ev ==
-        ProviderWithdraw { provider_id: provider_id0, deal_id: deal_id0, value: 186 }));
-    assert!(matches!(evs.pop().unwrap(), Event::ProviderWithdraw(ev) if ev ==
-        ProviderWithdraw { provider_id: provider_id1, deal_id: deal_id1, value: 186 }));
 }
 
 
