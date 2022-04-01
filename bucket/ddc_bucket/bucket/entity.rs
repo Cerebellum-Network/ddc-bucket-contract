@@ -9,10 +9,10 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
     AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
-    deal::entity::{DealId, DealStatus}, Error::*,
-    Result,
+    Error::*, Result,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
+use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::node::entity::Resource;
 
 pub type BucketId = u32;
@@ -22,8 +22,9 @@ pub type BucketParams = String;
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Bucket {
     pub owner_id: AccountId,
-    pub cluster_ids: Vec<ClusterId>,
-    pub deal_ids: Vec<DealId>,
+    pub cluster_id: ClusterId,
+    pub flows: Vec<Flow>,
+    // TODO: make it simple Flow always init.
     pub bucket_params: BucketParams,
     pub resource_reserved: Resource,
 }
@@ -34,11 +35,12 @@ pub struct BucketStatus {
     pub bucket_id: BucketId,
     pub bucket: Bucket,
     pub writer_ids: Vec<AccountId>,
-    pub deal_statuses: Vec<DealStatus>,
+    pub rent_covered_until_ms: u64,
 }
 
 impl Bucket {
     pub fn new_size(&self) -> usize {
+        // TODO: update.
         SIZE_PER_RECORD
             + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC + SIZE_VEC
             + self.bucket_params.len()
@@ -47,15 +49,6 @@ impl Bucket {
 
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
-    }
-
-    pub fn connect_cluster(&mut self, cluster_id: ClusterId) -> Result<()> {
-        if self.cluster_ids.contains(&cluster_id) {
-            Err(BucketClusterAlreadyConnected)
-        } else {
-            self.cluster_ids.push(cluster_id);
-            Ok(())
-        }
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

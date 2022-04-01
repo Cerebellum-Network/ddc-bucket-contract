@@ -14,6 +14,8 @@ use crate::ddc_bucket::*;
 /// Recommended contract fee for all operations with reasonable data amounts.
 pub const CONTRACT_FEE_LIMIT: Balance = 10 * TOKEN;
 
+pub const BLOCK_TIME: u64 = 5;
+
 pub fn get_accounts() -> DefaultAccounts<DefaultEnvironment> {
     // The default account is "alice"
     default_accounts::<DefaultEnvironment>().unwrap()
@@ -83,9 +85,7 @@ fn _print_events(events: &[Event]) {
             Event::NodeCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
-            Event::DealCreated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
-            Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
         }
     }
 }

@@ -9,6 +9,7 @@ use ink_storage::{
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 
 use super::entity::{Bucket, BucketId, BucketParams};
+use crate::ddc_bucket::cluster::entity::ClusterId;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
@@ -16,11 +17,11 @@ pub struct BucketStore(pub InkVec<Bucket>);
 
 impl BucketStore {
     #[must_use]
-    pub fn create(&mut self, owner_id: AccountId, bucket_params: BucketParams) -> (BucketId, usize) {
+    pub fn create(&mut self, owner_id: AccountId, bucket_params: BucketParams, cluster_id: ClusterId) -> (BucketId, usize) {
         let bucket = Bucket {
             owner_id,
-            cluster_ids: Vec::new(),
-            deal_ids: Vec::new(),
+            cluster_id,
+            flows: Vec::new(),
             bucket_params,
             resource_reserved: 0,
         };

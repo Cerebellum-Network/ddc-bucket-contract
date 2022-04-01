@@ -9,7 +9,7 @@ use crate::ddc_bucket::{
 };
 
 impl DdcBucket {
-    pub fn message_deposit(&mut self) -> Result<()> {
+    pub fn message_account_deposit(&mut self) -> Result<()> {
         // Receive the payable value, minus the contract fee.
         let mut cash = Self::receive_cash();
         let account_id = Self::env().caller();

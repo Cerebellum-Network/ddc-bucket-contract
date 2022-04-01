@@ -8,7 +8,8 @@ use crate::ddc_bucket::{
     schedule::Schedule,
 };
 
-#[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+// TODO: remove Clone.
+#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Flow {
     pub from: AccountId,

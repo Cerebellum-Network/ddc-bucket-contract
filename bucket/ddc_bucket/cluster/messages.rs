@@ -3,7 +3,8 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
+use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, PartitionIndex};
 use crate::ddc_bucket::Error::{PartitionDoesNotExist, UnauthorizedClusterManager};
 use crate::ddc_bucket::node::entity::{NodeId, Resource};
@@ -18,10 +19,12 @@ impl DdcBucket {
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
+        let mut nodes = Vec::new();
         for node_id in &node_ids {
-            let _ = self.nodes.get(*node_id)?;
+            let node = self.nodes.get(*node_id)?;
+            nodes.push(node);
         }
-        let (cluster_id, record_size) = self.clusters.create(manager, partition_count, node_ids, cluster_params.clone());
+        let (cluster_id, record_size) = self.clusters.create(manager, partition_count, &nodes, cluster_params.clone());
         Self::capture_fee_and_refund(record_size)?;
         Self::env().emit_event(ClusterCreated { cluster_id, manager, cluster_params });
         Ok(cluster_id)
@@ -55,6 +58,23 @@ impl DdcBucket {
         *old_node_id = new_node_id;
 
         Self::env().emit_event(ClusterNodeReplaced { cluster_id, node_id: new_node_id, partition_index });
+        Ok(())
+    }
+
+    pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
+        let cluster = self.clusters.get_mut(cluster_id)?;
+        let num_shares = cluster.vnodes.len() as Balance;
+        let per_share = cluster.revenues.peek() / num_shares;
+        cluster.revenues.pay(Payable(per_share * num_shares))?;
+
+        for node_id in &cluster.vnodes {
+            let node = self.nodes.get(*node_id)?;
+            Self::send_cash(node.provider_id, Cash(per_share))?;
+        }
+
+        // TODO: set a maximum node count, or support paging.
+        // TODO: aggregate the payments per node_id or per provider_id.
+
         Ok(())
     }
 

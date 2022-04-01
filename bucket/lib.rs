@@ -15,9 +15,10 @@ pub mod ddc_bucket {
     use bucket::{entity::*, store::*};
     use cash::*;
     use cluster::{entity::*, store::*};
-    use deal::{entity::*, store::*};
     use Error::*;
     use node::{entity::*, store::*};
+
+    use crate::ddc_bucket::account::entity::Account;
 
     pub mod account;
     pub mod flow;
@@ -25,7 +26,6 @@ pub mod ddc_bucket {
     pub mod cash;
     pub mod node;
     pub mod bucket;
-    pub mod deal;
     pub mod cluster;
     pub mod contract_fee;
 
@@ -33,7 +33,6 @@ pub mod ddc_bucket {
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
-        deals: DealStore,
         clusters: ClusterStore,
         nodes: NodeStore,
         accounts: AccountStore,
@@ -44,7 +43,6 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: BucketStore::default(),
-                deals: DealStore::default(),
                 clusters: ClusterStore::default(),
                 nodes: NodeStore::default(),
                 accounts: AccountStore::default(),
@@ -73,33 +71,21 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
     }
 
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct DealCreated {
-        #[ink(topic)]
-        deal_id: DealId,
-        #[ink(topic)]
-        bucket_id: BucketId,
-        #[ink(topic)]
-        node_id: NodeId,
-    }
-
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn bucket_create(&mut self, bucket_params: BucketParams) -> BucketId {
-            self.message_bucket_create(bucket_params).unwrap()
+        pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> BucketId {
+            self.message_bucket_create(bucket_params, cluster_id).unwrap()
         }
 
         #[ink(message, payable)]
-        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, cluster_id: ClusterId) -> () {
-            self.message_bucket_alloc_into_cluster(bucket_id, cluster_id).unwrap()
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
+            self.message_bucket_alloc_into_cluster(bucket_id, resource).unwrap()
         }
 
-        /* Not allowed to reserve because it is not connected to payments yet.
         #[ink(message)]
-        pub fn bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
-            self._message_bucket_reserve_resource(bucket_id, amount).unwrap()
-        }*/
+        pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) {
+            self.message_bucket_settle_payment(bucket_id).unwrap()
+        }
 
         #[ink(message)]
         pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
@@ -117,32 +103,6 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Bucket ----
-
-
-    // ---- Deal ----
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderWithdraw {
-        #[ink(topic)]
-        provider_id: AccountId,
-        #[ink(topic)]
-        deal_id: DealId,
-        value: Balance,
-    }
-
-    impl DdcBucket {
-        #[ink(message)]
-        pub fn provider_withdraw(&mut self, deal_id: DealId) -> () {
-            self.message_provider_withdraw(deal_id).unwrap()
-        }
-
-        #[ink(message)]
-        pub fn deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
-            self.message_deal_get_status(deal_id)
-        }
-    }
-    // ---- End Deal ----
 
 
     // ---- Cluster ----
@@ -192,6 +152,11 @@ pub mod ddc_bucket {
         pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<Cluster>, u32) {
             self.clusters.list(offset, limit, filter_manager_id)
         }
+
+        #[ink(message)]
+        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
+            self.message_cluster_distribute_revenues(cluster_id).unwrap()
+        }
     }
     // ---- End Cluster ----
 
@@ -240,8 +205,13 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn deposit(&mut self) -> () {
-            self.message_deposit().unwrap()
+        pub fn account_deposit(&mut self) -> () {
+            self.message_account_deposit().unwrap()
+        }
+
+        #[ink(message)]
+        pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
+            Ok(self.accounts.get(&account_id)?.clone())
         }
     }
     // ---- End Billing ----
@@ -255,10 +225,10 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BucketDoesNotExist,
-        DealDoesNotExist,
         ClusterDoesNotExist,
         PartitionDoesNotExist,
         BucketClusterAlreadyConnected,
+        BucketClusterNotSetup,
         NodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
