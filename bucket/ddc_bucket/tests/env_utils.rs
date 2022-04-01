@@ -85,9 +85,7 @@ fn _print_events(events: &[Event]) {
             Event::NodeCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
-            Event::DealCreated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
-            Event::ProviderWithdraw(ev) => println!("EVENT {:?}", ev),
         }
     }
 }

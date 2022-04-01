@@ -22,7 +22,6 @@ impl BucketStore {
             owner_id,
             cluster_id,
             flows: Vec::new(),
-            deal_ids: Vec::new(),
             bucket_params,
             resource_reserved: 0,
         };

@@ -9,12 +9,11 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
     AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
-    deal::entity::{DealId}, Error::*,
-    Result,
+    Error::*, Result,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
-use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::flow::Flow;
+use crate::ddc_bucket::node::entity::Resource;
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -24,8 +23,8 @@ pub type BucketParams = String;
 pub struct Bucket {
     pub owner_id: AccountId,
     pub cluster_id: ClusterId,
-    pub flows: Vec<Flow>, // TODO: make it simple Flow always init.
-    pub deal_ids: Vec<DealId>,
+    pub flows: Vec<Flow>,
+    // TODO: make it simple Flow always init.
     pub bucket_params: BucketParams,
     pub resource_reserved: Resource,
 }

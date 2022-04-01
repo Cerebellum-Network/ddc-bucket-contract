@@ -356,13 +356,12 @@ fn ddc_bucket_works() {
     ddc_bucket.bucket_alloc_into_cluster(bucket_id);
     pop_caller();
 
-    // Check the structure of the bucket including all deal IDs.
+    // Check the structure of the bucket including the payment flow.
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         cluster_id,
         flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, 1 * TOKEN) }],
-        deal_ids: vec![],
         bucket_params: bucket_params.to_string(),
         resource_reserved: 0,
     });
@@ -372,7 +371,7 @@ fn ddc_bucket_works() {
     ddc_bucket.account_deposit();
     pop_caller();
 
-    // Check the status of the bucket recursively including all deal statuses.
+    // Check the status of the bucket.
     let bucket_status = ddc_bucket.bucket_get_status(bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
         bucket_id,
@@ -411,7 +410,6 @@ fn ddc_bucket_works() {
     assert!(matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
         BucketCreated {  bucket_id, owner_id: consumer_id }));
 
-    // Add a cluster with 2 deals and an initial deposit.
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
         BucketAllocated { bucket_id, cluster_id }));
 

@@ -15,7 +15,6 @@ pub mod ddc_bucket {
     use bucket::{entity::*, store::*};
     use cash::*;
     use cluster::{entity::*, store::*};
-    use deal::{entity::*, store::*};
     use Error::*;
     use node::{entity::*, store::*};
 
@@ -27,7 +26,6 @@ pub mod ddc_bucket {
     pub mod cash;
     pub mod node;
     pub mod bucket;
-    pub mod deal;
     pub mod cluster;
     pub mod contract_fee;
 
@@ -35,7 +33,6 @@ pub mod ddc_bucket {
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
-        deals: DealStore,
         clusters: ClusterStore,
         nodes: NodeStore,
         accounts: AccountStore,
@@ -46,7 +43,6 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: BucketStore::default(),
-                deals: DealStore::default(),
                 clusters: ClusterStore::default(),
                 nodes: NodeStore::default(),
                 accounts: AccountStore::default(),
@@ -73,17 +69,6 @@ pub mod ddc_bucket {
         bucket_id: BucketId,
         #[ink(topic)]
         cluster_id: ClusterId,
-    }
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct DealCreated {
-        #[ink(topic)]
-        deal_id: DealId,
-        #[ink(topic)]
-        bucket_id: BucketId,
-        #[ink(topic)]
-        node_id: NodeId,
     }
 
     impl DdcBucket {
@@ -124,32 +109,6 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Bucket ----
-
-
-    // ---- Deal ----
-
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ProviderWithdraw {
-        #[ink(topic)]
-        provider_id: AccountId,
-        #[ink(topic)]
-        deal_id: DealId,
-        value: Balance,
-    }
-
-    impl DdcBucket {
-        #[ink(message)]
-        pub fn provider_withdraw(&mut self, deal_id: DealId) -> () {
-            self.message_provider_withdraw(deal_id).unwrap()
-        }
-
-        #[ink(message)]
-        pub fn deal_get_status(&self, deal_id: DealId) -> Result<DealStatus> {
-            self.message_deal_get_status(deal_id)
-        }
-    }
-    // ---- End Deal ----
 
 
     // ---- Cluster ----
@@ -272,7 +231,6 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BucketDoesNotExist,
-        DealDoesNotExist,
         ClusterDoesNotExist,
         PartitionDoesNotExist,
         BucketClusterAlreadyConnected,
