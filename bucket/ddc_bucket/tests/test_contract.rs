@@ -83,7 +83,8 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
 
     // Reserve some resources for the bucket from the cluster.
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    ctx.contract.bucket_alloc_into_cluster(bucket_id);
+    let resource = 1;
+    ctx.contract.bucket_alloc_into_cluster(bucket_id, resource);
     pop_caller();
 
     // Deposit some value to pay for buckets.
@@ -317,6 +318,10 @@ fn ddc_bucket_works() {
     let cluster_id = ddc_bucket.cluster_create(cluster_manager, 2, vec![node_id0, node_id1], cluster_params.to_string());
     pop_caller();
 
+    push_caller_value(cluster_manager, 0);
+    ddc_bucket.cluster_reserve_resource(cluster_id, 10);
+    pop_caller();
+
     // Consumer discovers the Cluster with the 2 Nodes.
     let cluster = ddc_bucket.cluster_get(cluster_id)?;
     let total_rent = rent_per_month * 2;
@@ -325,7 +330,7 @@ fn ddc_bucket_works() {
         manager_id: cluster_manager,
         cluster_params: cluster_params.to_string(),
         vnodes: vec![node_id0, node_id1],
-        resource_per_vnode: 0,
+        resource_per_vnode: 10,
         resource_used: 0,
         revenues: Cash(0),
         total_rent,
@@ -336,7 +341,7 @@ fn ddc_bucket_works() {
         provider_id: provider_id0,
         rent_per_month,
         node_params: node_params0.to_string(),
-        free_resource: capacity,
+        free_resource: capacity - cluster.resource_per_vnode,
     });
     let node1 = ddc_bucket.node_get(node_id1)?;
     assert_eq!(node1, Node {
@@ -344,7 +349,7 @@ fn ddc_bucket_works() {
         provider_id: provider_id1,
         rent_per_month,
         node_params: node_params1.to_string(),
-        free_resource: capacity,
+        free_resource: capacity - cluster.resource_per_vnode,
     });
 
     // Deposit some value to pay for buckets.
@@ -360,7 +365,8 @@ fn ddc_bucket_works() {
 
     // Allocate the bucket to the cluster.
     push_caller_value(consumer_id, CONTRACT_FEE_LIMIT);
-    ddc_bucket.bucket_alloc_into_cluster(bucket_id);
+    let resource_reserved = 1;
+    ddc_bucket.bucket_alloc_into_cluster(bucket_id, resource_reserved);
     pop_caller();
 
     // Check the structure of the bucket including the payment flow.
@@ -370,7 +376,7 @@ fn ddc_bucket_works() {
         cluster_id,
         flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, total_rent) }],
         bucket_params: bucket_params.to_string(),
-        resource_reserved: 0,
+        resource_reserved,
     });
 
     // Deposit more value into the account.

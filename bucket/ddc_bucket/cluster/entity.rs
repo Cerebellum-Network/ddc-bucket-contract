@@ -42,8 +42,8 @@ impl Cluster {
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 
-    pub fn get_rent(&self) -> Balance {
-        return self.total_rent;
+    pub fn get_rent(&self, resource: Resource) -> Balance {
+        return self.total_rent * resource as Balance;
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

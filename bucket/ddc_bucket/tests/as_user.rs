@@ -35,7 +35,8 @@ impl TestUser {
 
         // Allocate the bucket to the cluster.
         push_caller_value(account_id, CONTRACT_FEE_LIMIT);
-        contract.bucket_alloc_into_cluster(bucket_id);
+        let resource = 1;
+        contract.bucket_alloc_into_cluster(bucket_id, resource);
         pop_caller();
 
         Ok(bucket_id)

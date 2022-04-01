@@ -20,13 +20,21 @@ impl DdcBucket {
         Ok(bucket_id)
     }
 
-    pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId) -> Result<()> {
+    pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {
         let owner_id = Self::env().caller();
 
         let bucket = self.buckets.get_mut(bucket_id)?;
         bucket.only_owner(owner_id)?;
 
-        let rent = self.clusters.get(bucket.cluster_id)?.get_rent();
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        cluster.take_resource(resource)?;
+        bucket.put_resource(resource);
+
+        let rent = cluster.get_rent(bucket.resource_reserved);
+
+        if bucket.flows.len() != 0 {
+            unimplemented!("cannot increase resources");
+        }
 
         // Start the payment flow to the cluster.
         let start_ms = Self::env().block_timestamp();

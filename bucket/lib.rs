@@ -78,8 +78,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message, payable)]
-        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId) -> () {
-            self.message_bucket_alloc_into_cluster(bucket_id).unwrap()
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
+            self.message_bucket_alloc_into_cluster(bucket_id, resource).unwrap()
         }
 
         #[ink(message)]
