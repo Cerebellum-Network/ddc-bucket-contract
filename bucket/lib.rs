@@ -18,6 +18,7 @@ pub mod ddc_bucket {
     use deal::{entity::*, store::*};
     use Error::*;
     use node::{entity::*, store::*};
+    use crate::ddc_bucket::account::entity::Account;
 
     pub mod account;
     pub mod flow;
@@ -252,6 +253,11 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn deposit(&mut self) -> () {
             self.message_deposit().unwrap()
+        }
+
+        #[ink(message)]
+        pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
+            Ok(self.accounts.get(&account_id)?.clone())
         }
     }
     // ---- End Billing ----

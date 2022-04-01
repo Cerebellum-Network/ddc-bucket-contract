@@ -71,7 +71,8 @@ struct TestBucket {
 
 fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     let accounts = get_accounts();
-    let owner_id = accounts.charlie;
+    let owner_id = accounts.django;
+    set_balance(owner_id, 1000 * TOKEN);
 
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
     let bucket_id = ctx.contract.bucket_create("".to_string(), ctx.cluster_id);
@@ -198,13 +199,28 @@ fn cluster_management_validation_works() {
 }
 
 
+fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
+    // Go to the future when some revenues are due.
+    advance_block::<DefaultEnvironment>().unwrap();
+
+    // Pay the due thus far.
+    push_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
+    ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
+    pop_caller();
+}
+
+
 #[ink::test]
 fn bucket_pays_cluster() {
     let ctx = &mut new_cluster();
     let test_bucket = &new_bucket(ctx);
 
     // Check the state before payment.
+    let before = ctx.contract
+        .account_get(test_bucket.owner_id)?
+        .deposit.peek();
     let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    assert_eq!(bucket.owner_id, test_bucket.owner_id);
     assert_eq!(bucket.flows[0],
                Flow {
                    from: test_bucket.owner_id,
@@ -214,6 +230,10 @@ fn bucket_pays_cluster() {
     bucket_settle_payment(ctx, &test_bucket);
 
     // Check the state after payment.
+    let after = ctx.contract
+        .account_get(test_bucket.owner_id)?
+        .deposit.peek();
+    let spent = before - after;
     let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     assert_eq!(bucket.flows[0],
                Flow {
@@ -223,20 +243,10 @@ fn bucket_pays_cluster() {
 
     let expect_revenues = 1 * TOKEN * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
     assert!(expect_revenues > 0);
+    assert_eq!(expect_revenues, spent, "revenues must come from the bucket owner");
 
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert_eq!(cluster.revenues.peek(), expect_revenues, "must get revenues into the cluster");
-}
-
-
-fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
-    // Go to the future when some revenues are due.
-    advance_block::<DefaultEnvironment>().unwrap();
-
-    // Pay the due thus far.
-    push_caller_value(test_bucket.owner_id, CONTRACT_FEE_LIMIT);
-    ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
-    pop_caller();
 }
 
 
