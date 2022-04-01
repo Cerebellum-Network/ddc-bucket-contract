@@ -378,7 +378,7 @@ fn ddc_bucket_works() {
         bucket_id,
         bucket,
         writer_ids: vec![consumer_id],
-        deal_statuses: vec![],
+        rent_covered_until_ms: 291195648000, // TODO: check this value.
     });
 
     // Go to the future when some revenues are due.
@@ -433,7 +433,7 @@ fn bucket_list_works() {
 
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id);
-    let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1)?;
+    let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1).unwrap();
     pop_caller();
 
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);

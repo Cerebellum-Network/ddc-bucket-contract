@@ -80,7 +80,7 @@ impl DdcBucket {
                 }
             }
             // Collect all the details of the bucket.
-            match self.bucket_collect_status(bucket_id, bucket.clone()) {
+            match self.bucket_calculate_status(bucket_id, bucket.clone()) {
                 Err(_) => continue, // Skip on unexpected error.
                 Ok(status) =>
                     bucket_statuses.push(status),
@@ -91,17 +91,18 @@ impl DdcBucket {
 
     pub fn message_bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
         let bucket = self.bucket_get(bucket_id)?;
-        self.bucket_collect_status(bucket_id, bucket)
+        self.bucket_calculate_status(bucket_id, bucket)
     }
 
-    pub fn bucket_collect_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
+    pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
 
-        let mut deal_statuses = Vec::with_capacity(bucket.deal_ids.len());
-        for deal_id in bucket.deal_ids.iter() {
-            deal_statuses.push(self.deal_get_status(*deal_id)?);
-        }
+        let rent_covered_until_ms = match bucket.flows.first() {
+            Some(flow) =>
+                self.accounts.flow_covered_until(flow)?,
+            None => 0,
+        };
 
-        Ok(BucketStatus { bucket_id, bucket, writer_ids, deal_statuses })
+        Ok(BucketStatus { bucket_id, bucket, writer_ids, rent_covered_until_ms })
     }
 }

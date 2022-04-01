@@ -9,7 +9,7 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
     AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
-    deal::entity::{DealId, DealStatus}, Error::*,
+    deal::entity::{DealId}, Error::*,
     Result,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
@@ -36,7 +36,7 @@ pub struct BucketStatus {
     pub bucket_id: BucketId,
     pub bucket: Bucket,
     pub writer_ids: Vec<AccountId>,
-    pub deal_statuses: Vec<DealStatus>,
+    pub rent_covered_until_ms: u64,
 }
 
 impl Bucket {
