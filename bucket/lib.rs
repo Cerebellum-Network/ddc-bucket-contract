@@ -18,6 +18,7 @@ pub mod ddc_bucket {
     use deal::{entity::*, store::*};
     use Error::*;
     use node::{entity::*, store::*};
+
     use crate::ddc_bucket::account::entity::Account;
 
     pub mod account;
@@ -251,8 +252,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn deposit(&mut self) -> () {
-            self.message_deposit().unwrap()
+        pub fn account_deposit(&mut self) -> () {
+            self.message_account_deposit().unwrap()
         }
 
         #[ink(message)]

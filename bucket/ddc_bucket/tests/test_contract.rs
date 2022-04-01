@@ -85,7 +85,7 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
 
     // Deposit some value to pay for buckets.
     push_caller_value(owner_id, 10 * TOKEN);
-    ctx.contract.deposit();
+    ctx.contract.account_deposit();
     pop_caller();
 
     TestBucket { bucket_id, owner_id }
@@ -342,7 +342,7 @@ fn ddc_bucket_works() {
 
     // Deposit some value to pay for buckets.
     push_caller_value(consumer_id, 10 * TOKEN);
-    ddc_bucket.deposit();
+    ddc_bucket.account_deposit();
     pop_caller();
 
     // Create a bucket.
@@ -361,7 +361,7 @@ fn ddc_bucket_works() {
     assert_eq!(bucket, Bucket {
         owner_id: consumer_id,
         cluster_id,
-        flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, 1) }],
+        flows: vec![Flow { from: consumer_id, schedule: Schedule::new(0, 1 * TOKEN) }],
         deal_ids: vec![],
         bucket_params: bucket_params.to_string(),
         resource_reserved: 0,
@@ -369,7 +369,7 @@ fn ddc_bucket_works() {
 
     // Deposit more value into the account.
     push_caller_value(consumer_id, 100 * TOKEN);
-    ddc_bucket.deposit();
+    ddc_bucket.account_deposit();
     pop_caller();
 
     // Check the status of the bucket recursively including all deal statuses.

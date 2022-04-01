@@ -17,7 +17,7 @@ impl TestUser {
     pub fn new(contract: &mut DdcBucket, account_id: AccountId) -> Result<Self> {
         // Deposit some value.
         push_caller_value(account_id, 10 * TOKEN);
-        contract.deposit();
+        contract.account_deposit();
         pop_caller();
 
         let storage_bucket_id = Self::create_bucket(contract, account_id, STORAGE_ENGINE)?;
