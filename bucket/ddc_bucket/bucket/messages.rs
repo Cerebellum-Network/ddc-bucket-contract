@@ -33,7 +33,7 @@ impl DdcBucket {
         let rent = cluster.get_rent(bucket.resource_reserved);
 
         if bucket.flows.len() != 0 {
-            unimplemented!("cannot increase resources");
+            unimplemented!("cannot increase resources"); // TODO.
         }
 
         // Start the payment flow to the cluster.
@@ -59,18 +59,6 @@ impl DdcBucket {
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
         cluster.revenues.increase(cash);
 
-        Ok(())
-    }
-
-    fn _message_bucket_reserve_resource(&mut self, bucket_id: BucketId, amount: Resource) -> Result<()> {
-        let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
-
-        let owner_id = Self::env().caller();
-        bucket.only_owner(owner_id)?;
-
-        cluster.take_resource(amount)?;
-        bucket.put_resource(amount);
         Ok(())
     }
 

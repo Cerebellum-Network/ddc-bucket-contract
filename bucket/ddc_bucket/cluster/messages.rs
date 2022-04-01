@@ -72,6 +72,9 @@ impl DdcBucket {
             Self::send_cash(node.provider_id, Cash(per_share))?;
         }
 
+        // TODO: set a maximum node count, or support paging.
+        // TODO: aggregate the payments per node_id or per provider_id.
+
         Ok(())
     }
 
