@@ -13,8 +13,10 @@ impl DdcBucket {
     pub fn message_bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> Result<BucketId> {
         let owner_id = Self::env().caller();
         let record_size0 = self.accounts.create_if_not_exist(owner_id);
-        let (bucket_id, record_size1) = self.buckets.create(owner_id, bucket_params, cluster_id);
-        Self::capture_fee_and_refund(record_size0 + record_size1)?;
+        let bucket_id = self.buckets.create(owner_id, cluster_id);
+        let (params_id, record_size2) = self.bucket_params.create(bucket_params);
+        assert_eq!(bucket_id, params_id);
+        Self::capture_fee_and_refund(record_size0 + Bucket::RECORD_SIZE + record_size2)?;
         Self::env().emit_event(BucketCreated { bucket_id, owner_id });
         Ok(bucket_id)
     }
@@ -52,7 +54,7 @@ impl DdcBucket {
     pub fn message_bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
         let mut bucket_statuses = Vec::with_capacity(limit as usize);
         for bucket_id in offset..offset + limit {
-            let bucket = match self.buckets.buckets.get(bucket_id) {
+            let bucket = match self.buckets.0.get(bucket_id) {
                 None => break, // No more buckets, stop.
                 Some(bucket) => bucket,
             };
@@ -69,7 +71,7 @@ impl DdcBucket {
                     bucket_statuses.push(status),
             };
         }
-        (bucket_statuses, self.buckets.buckets.len())
+        (bucket_statuses, self.buckets.0.len())
     }
 
     pub fn message_bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
@@ -80,8 +82,7 @@ impl DdcBucket {
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
-        let params = self.buckets.get_params(bucket_id)?.clone();
-
+        let params = self.message_bucket_params_get(bucket_id)?;
         Ok(BucketStatus { bucket_id, bucket, params, writer_ids, rent_covered_until_ms })
     }
 

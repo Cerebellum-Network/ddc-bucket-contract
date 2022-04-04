@@ -17,6 +17,7 @@ pub mod ddc_bucket {
     use cluster::{entity::*, store::*};
     use Error::*;
     use node::{entity::*, store::*};
+    use params::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
 
@@ -28,11 +29,13 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod cluster;
     pub mod contract_fee;
+    pub mod params;
 
     // ---- Global state ----
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
+        bucket_params: ParamsStore,
         clusters: ClusterStore,
         nodes: NodeStore,
         accounts: AccountStore,
@@ -43,6 +46,7 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: BucketStore::default(),
+                bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
                 nodes: NodeStore::default(),
                 accounts: AccountStore::default(),
