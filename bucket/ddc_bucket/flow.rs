@@ -7,6 +7,7 @@ use crate::ddc_bucket::{
     AccountId,
     schedule::Schedule,
 };
+use crate::ddc_bucket::contract_fee::SIZE_ACCOUNT_ID;
 
 // TODO: remove Clone.
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
@@ -14,4 +15,8 @@ use crate::ddc_bucket::{
 pub struct Flow {
     pub from: AccountId,
     pub schedule: Schedule,
+}
+
+impl Flow {
+    pub const RECORD_SIZE: usize = SIZE_ACCOUNT_ID + Schedule::RECORD_SIZE;
 }

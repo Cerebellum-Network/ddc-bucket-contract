@@ -5,7 +5,6 @@ use ink_prelude::{vec, vec::Vec};
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
-use crate::ddc_bucket::Error::BucketClusterNotSetup;
 use crate::ddc_bucket::node::entity::Resource;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};

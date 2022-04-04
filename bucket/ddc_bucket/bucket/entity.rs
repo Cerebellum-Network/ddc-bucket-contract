@@ -11,7 +11,7 @@ use crate::ddc_bucket::{
     AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
     Error::*, Result,
 };
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_VEC};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::node::entity::Resource;
 
@@ -41,7 +41,7 @@ impl Bucket {
     pub fn new_size(&self) -> usize {
         // TODO: update.
         SIZE_PER_RECORD
-            + SIZE_ACCOUNT_ID + SIZE_VEC + SIZE_VEC + SIZE_VEC
+            + SIZE_ACCOUNT_ID + SIZE_INDEX + Flow::RECORD_SIZE + SIZE_VEC + SIZE_RESOURCE
             + self.bucket_params.len()
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
