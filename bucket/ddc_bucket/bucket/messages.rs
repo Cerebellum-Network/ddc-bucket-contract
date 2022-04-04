@@ -29,19 +29,13 @@ impl DdcBucket {
         cluster.take_resource(resource)?;
         bucket.put_resource(resource);
 
-        let rent = cluster.get_rent(bucket.resource_reserved);
-
         // Start the payment flow to the cluster.
-        let start_ms = Self::env().block_timestamp();
-        let flow = self.accounts.start_flow(start_ms, owner_id, rent)?;
+        let rent = cluster.get_rent(resource);
+        let now_ms = Self::env().block_timestamp();
 
-        bucket.flow = flow; // TODO: add instead.
+        self.accounts.increase_flow(now_ms, rent, &mut bucket.flow)?;
 
         Self::env().emit_event(BucketAllocated { bucket_id, cluster_id: bucket.cluster_id });
-
-        // Capture the contract storage fee.
-        let record_size = 0; // TODO.
-        Self::capture_fee_and_refund(record_size)?;
         Ok(())
     }
 

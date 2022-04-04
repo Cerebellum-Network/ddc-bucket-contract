@@ -11,42 +11,47 @@ use crate::ddc_bucket::contract_fee::SIZE_BALANCE;
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Schedule {
     rate: Balance,
-    start_ms: u64,
+    offset: Balance,
 }
 
 impl Schedule {
     pub const RECORD_SIZE: usize = SIZE_BALANCE + 8;
 
     pub fn new(start_ms: u64, rate: Balance) -> Schedule {
-        Schedule { rate, start_ms }
+        let offset = rate * start_ms as Balance / MS_PER_MONTH;
+        Schedule { rate, offset }
     }
 
     pub fn empty() -> Schedule { Schedule::new(0, 0) }
 
     pub fn value_at_time(&self, time_ms: u64) -> Balance {
-        assert!(time_ms >= self.start_ms);
-        let period_ms = (time_ms - self.start_ms) as u128;
-        period_ms * self.rate / MS_PER_MONTH
+        let absolute = self.rate * time_ms as Balance / MS_PER_MONTH;
+        assert!(absolute >= self.offset);
+        absolute - self.offset
     }
 
     pub fn time_of_value(&self, value: Balance) -> u64 {
         if self.rate == 0 { return u64::MAX; }
-        let duration_ms = value * MS_PER_MONTH / self.rate;
-        self.start_ms + duration_ms as u64
+
+        let absolute = self.offset + value;
+        let time = absolute * MS_PER_MONTH / self.rate;
+        time as u64
+    }
+
+    pub fn add_schedule(&mut self, to_add: Schedule) {
+        self.offset += to_add.offset;
+        self.rate += to_add.rate;
+    }
+
+    pub fn take_value(&mut self, value: Balance) {
+        self.offset += value;
     }
 
     #[must_use]
     pub fn take_value_at_time(&mut self, now_ms: u64) -> Balance {
         let value = self.value_at_time(now_ms);
-        self.start_ms = now_ms;
+        self.offset += value;
         value
-    }
-
-    #[must_use]
-    pub fn take_value_then_add_rate(&mut self, to_add: Schedule) -> Balance {
-        let accumulated = self.take_value_at_time(to_add.start_ms);
-        self.rate += to_add.rate;
-        accumulated
     }
 }
 

@@ -406,7 +406,6 @@ fn account_deposit_works() {
     let account = contract.account_get(account_id)?;
     assert_eq!(account, Account {
         deposit: Cash(deposit_after_fee),
-        payable_locked: 0,
         payable_schedule: Schedule::empty(),
     }, "must take deposit minus creation fee");
 
@@ -418,7 +417,6 @@ fn account_deposit_works() {
     let account = contract.account_get(account_id)?;
     assert_eq!(account, Account {
         deposit: Cash(deposit_after_fee + deposit),
-        payable_locked: 0,
         payable_schedule: Schedule::empty(),
     }, "must take more deposits without creation fee");
 

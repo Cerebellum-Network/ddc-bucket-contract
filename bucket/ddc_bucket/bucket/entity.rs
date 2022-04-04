@@ -24,6 +24,7 @@ pub struct Bucket {
     pub owner_id: AccountId,
     pub cluster_id: ClusterId,
     pub flow: Flow,
+    // TODO: make lazy.
     pub bucket_params: BucketParams,
     pub resource_reserved: Resource,
 }
@@ -39,10 +40,10 @@ pub struct BucketStatus {
 
 impl Bucket {
     pub fn new_size(&self) -> usize {
-        // TODO: update.
         SIZE_PER_RECORD
-            + SIZE_ACCOUNT_ID + SIZE_INDEX + Flow::RECORD_SIZE + SIZE_VEC + SIZE_RESOURCE
-            + self.bucket_params.len()
+            + SIZE_ACCOUNT_ID + SIZE_INDEX + Flow::RECORD_SIZE
+            + SIZE_VEC + self.bucket_params.len()
+            + SIZE_RESOURCE
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 
