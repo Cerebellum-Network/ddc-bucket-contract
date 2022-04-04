@@ -7,7 +7,8 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE};
+use crate::ddc_bucket::params::store::Params;
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
@@ -20,17 +21,20 @@ pub struct Node {
     pub node_id: NodeId,
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
-    // TODO: make lazy.
-    pub node_params: NodeParams,
     pub free_resource: Resource,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub struct NodeStatus {
+    pub node: Node,
+    pub params: Params,
 }
 
 impl Node {
     pub fn new_size(&self) -> usize {
         SIZE_PER_RECORD
-            + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE
-            + SIZE_VEC + self.node_params.len()
-            + SIZE_RESOURCE
+            + SIZE_INDEX + SIZE_ACCOUNT_ID + SIZE_BALANCE + SIZE_RESOURCE
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 

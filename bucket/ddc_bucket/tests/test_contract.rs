@@ -112,30 +112,36 @@ fn cluster_create_works() {
     // Check the nodes.
     {
         let node0 = ctx.contract.node_get(ctx.node_id0)?;
-        assert_eq!(node0, Node {
-            node_id: ctx.node_id0,
-            provider_id: ctx.provider_id0,
-            rent_per_month: ctx.rent_per_vnode,
-            node_params: ctx.node_params0.to_string(),
-            free_resource: ctx.capacity - ctx.reserved * 2,
+        assert_eq!(node0, NodeStatus {
+            node: Node {
+                node_id: ctx.node_id0,
+                provider_id: ctx.provider_id0,
+                rent_per_month: ctx.rent_per_vnode,
+                free_resource: ctx.capacity - ctx.reserved * 2,
+            },
+            params: ctx.node_params0.to_string(),
         });
 
         let node1 = ctx.contract.node_get(ctx.node_id1)?;
-        assert_eq!(node1, Node {
-            node_id: ctx.node_id1,
-            provider_id: ctx.provider_id1,
-            rent_per_month: ctx.rent_per_vnode,
-            node_params: ctx.node_params1.to_string(),
-            free_resource: ctx.capacity - ctx.reserved * 2,
+        assert_eq!(node1, NodeStatus {
+            node: Node {
+                node_id: ctx.node_id1,
+                provider_id: ctx.provider_id1,
+                rent_per_month: ctx.rent_per_vnode,
+                free_resource: ctx.capacity - ctx.reserved * 2,
+            },
+            params: ctx.node_params1.to_string(),
         });
 
         let node2 = ctx.contract.node_get(ctx.node_id2)?;
-        assert_eq!(node2, Node {
-            node_id: ctx.node_id2,
-            provider_id: ctx.provider_id2,
-            rent_per_month: ctx.rent_per_vnode,
-            node_params: ctx.node_params2.to_string(),
-            free_resource: ctx.capacity - ctx.reserved * 2,
+        assert_eq!(node2, NodeStatus {
+            node: Node {
+                node_id: ctx.node_id2,
+                provider_id: ctx.provider_id2,
+                rent_per_month: ctx.rent_per_vnode,
+                free_resource: ctx.capacity - ctx.reserved * 2,
+            },
+            params: ctx.node_params2.to_string(),
         });
     }
 
@@ -200,7 +206,7 @@ fn cluster_replace_node_works() {
     ];
     for (node_id, available) in expected_resources {
         assert_eq!(
-            ctx.contract.node_get(node_id)?.free_resource,
+            ctx.contract.node_get(node_id)?.node.free_resource,
             available, "resources must have shifted between nodes");
     }
 }
@@ -226,7 +232,7 @@ fn cluster_reserve_works() {
     ];
     for (node_id, available) in expected_resources {
         assert_eq!(
-            ctx.contract.node_get(node_id)?.free_resource,
+            ctx.contract.node_get(node_id)?.node.free_resource,
             available, "more resources must be reserved from the nodes");
     }
 }
@@ -515,20 +521,24 @@ fn node_list_works() {
     assert_ne!(node_id1, node_id2);
     let count = 2;
 
-    let node1 = Node {
-        node_id: node_id1,
-        provider_id: owner_id1,
-        rent_per_month,
-        node_params: node_params1.to_string(),
-        free_resource: capacity,
+    let node1 = NodeStatus {
+        node: Node {
+            node_id: node_id1,
+            provider_id: owner_id1,
+            rent_per_month,
+            free_resource: capacity,
+        },
+        params: node_params1.to_string(),
     };
 
-    let node2 = Node {
-        node_id: node_id2,
-        provider_id: owner_id2,
-        rent_per_month,
-        node_params: node_params2.to_string(),
-        free_resource: capacity,
+    let node2 = NodeStatus {
+        node: Node {
+            node_id: node_id2,
+            provider_id: owner_id2,
+            rent_per_month,
+            free_resource: capacity,
+        },
+        params: node_params2.to_string(),
     };
 
     assert_eq!(

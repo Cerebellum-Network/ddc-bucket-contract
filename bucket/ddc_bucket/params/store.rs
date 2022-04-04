@@ -6,6 +6,7 @@ use ink_storage::{
     traits,
 };
 
+use crate::ddc_bucket::{Error::ParamsDoesNotExist, Result};
 use crate::ddc_bucket::contract_fee::SIZE_VEC;
 
 pub type ParamsId = u32;
@@ -21,5 +22,9 @@ impl ParamsStore {
         let params_id = self.0.len();
         self.0.push(params);
         (params_id, record_size)
+    }
+
+    pub fn get(&self, params_id: ParamsId) -> Result<&Params> {
+        self.0.get(params_id).ok_or(ParamsDoesNotExist)
     }
 }

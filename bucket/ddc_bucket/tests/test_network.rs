@@ -95,7 +95,7 @@ fn storage_network_works() {
 
     // Check the resource distribution of all nodes.
     let (nodes, _) = contract.node_list(0, 20, None);
-    let resources: Vec<Resource> = nodes.iter().map(|n| n.free_resource).collect();
+    let resources: Vec<Resource> = nodes.iter().map(|n| n.node.free_resource).collect();
     const INIT: u32 = 100; // Initial capacity of each node.
     const PART: u32 = 15; // Size of a partition.
     assert_eq!(resources, vec![

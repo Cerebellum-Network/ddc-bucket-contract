@@ -35,7 +35,7 @@ impl TestGateway {
             let node_id = cluster.vnodes.get(index).expect("Not enough nodes");
             let storage_node = contract.node_get(*node_id)?;
             // Get the URL of the storage node.
-            let storage_url = storage_node.node_params;
+            let storage_url = storage_node.params;
             // Prepare a request.
             let storage_request = TestRequest {
                 url: storage_url,

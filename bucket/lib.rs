@@ -38,6 +38,7 @@ pub mod ddc_bucket {
         bucket_params: ParamsStore,
         clusters: ClusterStore,
         nodes: NodeStore,
+        node_params: ParamsStore,
         accounts: AccountStore,
     }
 
@@ -49,6 +50,7 @@ pub mod ddc_bucket {
                 bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
                 nodes: NodeStore::default(),
+                node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
             }
         }
@@ -185,13 +187,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn node_get(&self, node_id: NodeId) -> Result<Node> {
-            Ok(self.nodes.get(node_id)?.clone())
+        pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
+            self.message_node_get(node_id)
         }
 
         #[ink(message)]
-        pub fn node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Node>, u32) {
-            self.nodes.list(offset, limit, filter_provider_id)
+        pub fn node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<NodeStatus>, u32) {
+            self.message_node_list(offset, limit, filter_provider_id)
         }
     }
     // ---- End Node ----
@@ -236,6 +238,7 @@ pub mod ddc_bucket {
         NodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
+        ParamsDoesNotExist,
         UnauthorizedProvider,
         UnauthorizedOwner,
         UnauthorizedClusterManager,

@@ -82,7 +82,7 @@ impl DdcBucket {
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
-        let params = self.message_bucket_params_get(bucket_id)?;
+        let params = self.bucket_params.get(bucket_id)?.clone();
         Ok(BucketStatus { bucket_id, bucket, params, writer_ids, rent_covered_until_ms })
     }
 

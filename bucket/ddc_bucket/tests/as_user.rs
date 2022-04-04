@@ -49,7 +49,7 @@ impl TestUser {
         let node_id = *cluster.vnodes.first().expect("empty cluster");
         let node = contract.node_get(node_id)?;
         // Get the URL of the gateway.
-        let url = node.node_params;
+        let url = node.params;
         // Prepare a request.
         let request = TestRequest {
             url,
