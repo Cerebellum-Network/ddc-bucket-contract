@@ -96,18 +96,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
-            self.message_bucket_list_statuses(offset, limit, filter_owner_id)
+        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+            self.message_bucket_get(bucket_id)
         }
 
         #[ink(message)]
-        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
-            Ok(self.buckets.get(bucket_id)?.clone())
-        }
-
-        #[ink(message)]
-        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-            self.message_bucket_get_status(bucket_id)
+        pub fn bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
+            self.message_bucket_list(offset, limit, filter_owner_id)
         }
     }
     // ---- End Bucket ----

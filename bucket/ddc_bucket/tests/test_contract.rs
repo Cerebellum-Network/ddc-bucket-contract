@@ -286,7 +286,7 @@ fn bucket_pays_cluster() {
     let before = ctx.contract
         .account_get(test_bucket.owner_id)?
         .deposit.peek();
-    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?.bucket;
     assert_eq!(bucket.owner_id, test_bucket.owner_id);
     assert_eq!(bucket.flow,
                Flow {
@@ -301,7 +301,7 @@ fn bucket_pays_cluster() {
         .account_get(test_bucket.owner_id)?
         .deposit.peek();
     let spent = before - after;
-    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?.bucket;
     assert_eq!(bucket.flow,
                Flow {
                    from: test_bucket.owner_id,
@@ -355,9 +355,8 @@ fn bucket_create_works() {
     let test_bucket = &new_bucket(ctx);
 
     // Check the structure of the bucket including the payment flow.
-    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     let total_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
-    assert_eq!(bucket, Bucket {
+    let expect_bucket = Bucket {
         owner_id: test_bucket.owner_id,
         cluster_id: ctx.cluster_id,
         flow: Flow {
@@ -365,13 +364,13 @@ fn bucket_create_works() {
             schedule: Schedule::new(0, total_rent),
         },
         resource_reserved: test_bucket.resource,
-    });
+    };
 
     // Check the status of the bucket.
-    let bucket_status = ctx.contract.bucket_get_status(test_bucket.bucket_id)?;
+    let bucket_status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
         bucket_id: test_bucket.bucket_id,
-        bucket,
+        bucket: expect_bucket,
         params: "".to_string(),
         writer_ids: vec![test_bucket.owner_id],
         rent_covered_until_ms: 446400000, // TODO: check this value.
@@ -455,48 +454,48 @@ fn bucket_list_works() {
 
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id);
-    let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1).unwrap();
+    let bucket_status1 = ddc_bucket.bucket_get(bucket_id1).unwrap();
     pop_caller();
 
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
     let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id);
-    let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
+    let bucket_status2 = ddc_bucket.bucket_get(bucket_id2)?;
     pop_caller();
 
     assert_ne!(bucket_id1, bucket_id2);
     let count = 2;
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, None),
+        ddc_bucket.bucket_list(0, 100, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 2, None),
+        ddc_bucket.bucket_list(0, 2, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 1, None),
+        ddc_bucket.bucket_list(0, 1, None),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(1, 1, None),
+        ddc_bucket.bucket_list(1, 1, None),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(20, 20, None),
+        ddc_bucket.bucket_list(20, 20, None),
         (vec![], count));
 
     // Filter by owner.
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id1)),
+        ddc_bucket.bucket_list(0, 100, Some(owner_id1)),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id2)),
+        ddc_bucket.bucket_list(0, 100, Some(owner_id2)),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id3)),
+        ddc_bucket.bucket_list(0, 100, Some(owner_id3)),
         (vec![], count));
 }
 

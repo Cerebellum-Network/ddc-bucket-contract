@@ -51,7 +51,12 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
+    pub fn message_bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+        let bucket = self.buckets.get(bucket_id)?.clone();
+        self.bucket_calculate_status(bucket_id, bucket)
+    }
+
+    pub fn message_bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
         let mut bucket_statuses = Vec::with_capacity(limit as usize);
         for bucket_id in offset..offset + limit {
             let bucket = match self.buckets.0.get(bucket_id) {
@@ -72,11 +77,6 @@ impl DdcBucket {
             };
         }
         (bucket_statuses, self.buckets.0.len())
-    }
-
-    pub fn message_bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-        let bucket = self.bucket_get(bucket_id)?;
-        self.bucket_calculate_status(bucket_id, bucket)
     }
 
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
