@@ -23,8 +23,7 @@ pub type BucketParams = String;
 pub struct Bucket {
     pub owner_id: AccountId,
     pub cluster_id: ClusterId,
-    pub flows: Vec<Flow>,
-    // TODO: make it simple Flow always init.
+    pub flow: Flow,
     pub bucket_params: BucketParams,
     pub resource_reserved: Resource,
 }

@@ -32,14 +32,11 @@ impl DdcBucket {
 
         let rent = cluster.get_rent(bucket.resource_reserved);
 
-        if bucket.flows.len() != 0 {
-            unimplemented!("cannot increase resources"); // TODO.
-        }
-
         // Start the payment flow to the cluster.
         let start_ms = Self::env().block_timestamp();
         let flow = self.accounts.start_flow(start_ms, owner_id, rent)?;
-        bucket.flows.push(flow);
+
+        bucket.flow = flow; // TODO: add instead.
 
         Self::env().emit_event(BucketAllocated { bucket_id, cluster_id: bucket.cluster_id });
 
@@ -51,10 +48,9 @@ impl DdcBucket {
 
     pub fn message_bucket_settle_payment(&mut self, bucket_id: BucketId) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let flow = bucket.flows.get_mut(0).ok_or(BucketClusterNotSetup)?;
 
         let now_ms = Self::env().block_timestamp();
-        let cash = self.accounts.settle_flow(now_ms, flow)?;
+        let cash = self.accounts.settle_flow(now_ms, &mut bucket.flow)?;
 
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
         cluster.revenues.increase(cash);
@@ -93,11 +89,7 @@ impl DdcBucket {
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
 
-        let rent_covered_until_ms = match bucket.flows.first() {
-            Some(flow) =>
-                self.accounts.flow_covered_until(flow)?,
-            None => 0,
-        };
+        let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
 
         Ok(BucketStatus { bucket_id, bucket, writer_ids, rent_covered_until_ms })
     }
