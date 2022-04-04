@@ -28,7 +28,7 @@ impl ClusterManager {
         let (nodes, count) = contract.node_list(0, 20, None);
         if count > 20 { unimplemented!("full iteration of contract entities") }
         let node_ids = nodes.iter()
-            .filter(|n| n.node_params.contains(engine_name))
+            .filter(|n| n.params.contains(engine_name))
             .map(|n| n.node_id)
             .collect();
 
@@ -57,7 +57,8 @@ impl ClusterManager {
         let partition_ids = self.find_partitions_of_node(contract, old_node_id);
 
         for (cluster_id, partition_i) in partition_ids.iter() {
-            let resource_needed = contract.cluster_get(*cluster_id).unwrap().resource_per_vnode;
+            let resource_needed = contract.cluster_get(*cluster_id).unwrap()
+                .cluster.resource_per_vnode;
             let new_node_id = self.find_best_storage_node(contract, resource_needed);
             contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id);
         }
@@ -71,11 +72,11 @@ impl ClusterManager {
         if count > 20 { unimplemented!("full iteration of contract entities") }
 
         for cluster in clusters.iter() {
-            if cluster.manager_id != self.account_id {
+            if cluster.cluster.manager_id != self.account_id {
                 continue; // Not our cluster, skip.
             }
 
-            for (index, &some_node_id) in cluster.vnodes.iter().enumerate() {
+            for (index, &some_node_id) in cluster.cluster.vnodes.iter().enumerate() {
                 if some_node_id == node_id {
                     let partition_id = (cluster.cluster_id, index as PartitionIndex);
                     partition_ids.push(partition_id);
@@ -93,8 +94,8 @@ impl ClusterManager {
 
         // Return the ID of the best available node.
         nodes.iter()
-            .filter(|n| n.node_params.contains(STORAGE_ENGINE))
-            .filter(|n| n.free_resource >= resource_needed)
+            .filter(|n| n.params.contains(STORAGE_ENGINE))
+            .filter(|n| n.node.free_resource >= resource_needed)
             .filter(|n| {
                 let node_state = self.node_states.get(&n.node_id);
                 match node_state {
@@ -102,7 +103,7 @@ impl ClusterManager {
                     _ => true,
                 }
             })
-            .max_by_key(|n| n.free_resource)
+            .max_by_key(|n| n.node.free_resource)
             .map(|n| n.node_id)
             .expect("no node available")
     }

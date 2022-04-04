@@ -17,6 +17,7 @@ pub mod ddc_bucket {
     use cluster::{entity::*, store::*};
     use Error::*;
     use node::{entity::*, store::*};
+    use params::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
 
@@ -28,13 +29,17 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod cluster;
     pub mod contract_fee;
+    pub mod params;
 
     // ---- Global state ----
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
+        bucket_params: ParamsStore,
         clusters: ClusterStore,
+        cluster_params: ParamsStore,
         nodes: NodeStore,
+        node_params: ParamsStore,
         accounts: AccountStore,
     }
 
@@ -43,8 +48,11 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             Self {
                 buckets: BucketStore::default(),
+                bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
+                cluster_params: ParamsStore::default(),
                 nodes: NodeStore::default(),
+                node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
             }
         }
@@ -88,18 +96,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
-            self.message_bucket_list_statuses(offset, limit, filter_owner_id)
+        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+            self.message_bucket_get(bucket_id)
         }
 
         #[ink(message)]
-        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<Bucket> {
-            Ok(self.buckets.get(bucket_id)?.clone())
-        }
-
-        #[ink(message)]
-        pub fn bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-            self.message_bucket_get_status(bucket_id)
+        pub fn bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
+            self.message_bucket_list(offset, limit, filter_owner_id)
         }
     }
     // ---- End Bucket ----
@@ -144,13 +147,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<Cluster> {
-            Ok(self.clusters.get(cluster_id)?.clone())
+        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
+            self.message_cluster_get(cluster_id)
         }
 
         #[ink(message)]
-        pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<Cluster>, u32) {
-            self.clusters.list(offset, limit, filter_manager_id)
+        pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<ClusterStatus>, u32) {
+            self.message_cluster_list(offset, limit, filter_manager_id)
         }
 
         #[ink(message)]
@@ -181,13 +184,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn node_get(&self, node_id: NodeId) -> Result<Node> {
-            Ok(self.nodes.get(node_id)?.clone())
+        pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
+            self.message_node_get(node_id)
         }
 
         #[ink(message)]
-        pub fn node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<Node>, u32) {
-            self.nodes.list(offset, limit, filter_provider_id)
+        pub fn node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<NodeStatus>, u32) {
+            self.message_node_list(offset, limit, filter_provider_id)
         }
     }
     // ---- End Node ----
@@ -232,6 +235,7 @@ pub mod ddc_bucket {
         NodeDoesNotExist,
         FlowDoesNotExist,
         AccountDoesNotExist,
+        ParamsDoesNotExist,
         UnauthorizedProvider,
         UnauthorizedOwner,
         UnauthorizedClusterManager,

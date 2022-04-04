@@ -112,47 +112,55 @@ fn cluster_create_works() {
     // Check the nodes.
     {
         let node0 = ctx.contract.node_get(ctx.node_id0)?;
-        assert_eq!(node0, Node {
+        assert_eq!(node0, NodeStatus {
             node_id: ctx.node_id0,
-            provider_id: ctx.provider_id0,
-            rent_per_month: ctx.rent_per_vnode,
-            node_params: ctx.node_params0.to_string(),
-            free_resource: ctx.capacity - ctx.reserved * 2,
+            node: Node {
+                provider_id: ctx.provider_id0,
+                rent_per_month: ctx.rent_per_vnode,
+                free_resource: ctx.capacity - ctx.reserved * 2,
+            },
+            params: ctx.node_params0.to_string(),
         });
 
         let node1 = ctx.contract.node_get(ctx.node_id1)?;
-        assert_eq!(node1, Node {
+        assert_eq!(node1, NodeStatus {
             node_id: ctx.node_id1,
-            provider_id: ctx.provider_id1,
-            rent_per_month: ctx.rent_per_vnode,
-            node_params: ctx.node_params1.to_string(),
-            free_resource: ctx.capacity - ctx.reserved * 2,
+            node: Node {
+                provider_id: ctx.provider_id1,
+                rent_per_month: ctx.rent_per_vnode,
+                free_resource: ctx.capacity - ctx.reserved * 2,
+            },
+            params: ctx.node_params1.to_string(),
         });
 
         let node2 = ctx.contract.node_get(ctx.node_id2)?;
-        assert_eq!(node2, Node {
+        assert_eq!(node2, NodeStatus {
             node_id: ctx.node_id2,
-            provider_id: ctx.provider_id2,
-            rent_per_month: ctx.rent_per_vnode,
-            node_params: ctx.node_params2.to_string(),
-            free_resource: ctx.capacity - ctx.reserved * 2,
+            node: Node {
+                provider_id: ctx.provider_id2,
+                rent_per_month: ctx.rent_per_vnode,
+                free_resource: ctx.capacity - ctx.reserved * 2,
+            },
+            params: ctx.node_params2.to_string(),
         });
     }
 
     // Check the initial state of the cluster.
     {
         let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
-        assert_eq!(cluster, Cluster {
+        assert_eq!(cluster, ClusterStatus {
             cluster_id: ctx.cluster_id,
-            manager_id: ctx.manager,
-            cluster_params: "{}".to_string(),
-            vnodes: vec![
-                ctx.node_id0, ctx.node_id1, ctx.node_id2,
-                ctx.node_id0, ctx.node_id1, ctx.node_id2],
-            resource_per_vnode: ctx.reserved,
-            resource_used: 0,
-            revenues: Cash(0),
-            total_rent: ctx.rent_per_vnode * ctx.partition_count as Balance,
+            cluster: Cluster {
+                manager_id: ctx.manager,
+                vnodes: vec![
+                    ctx.node_id0, ctx.node_id1, ctx.node_id2,
+                    ctx.node_id0, ctx.node_id1, ctx.node_id2],
+                resource_per_vnode: ctx.reserved,
+                resource_used: 0,
+                revenues: Cash(0),
+                total_rent: ctx.rent_per_vnode * ctx.partition_count as Balance,
+            },
+            params: "{}".to_string(),
         });
     }
 
@@ -187,7 +195,7 @@ fn cluster_replace_node_works() {
     ctx.contract.cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2);
 
     // Check the changed state of the cluster.
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(&cluster.vnodes,
                &[ctx.node_id0, /* changed */ ctx.node_id2, ctx.node_id2, ctx.node_id0, ctx.node_id1, ctx.node_id2],
                "a vnode must be replaced");
@@ -200,7 +208,7 @@ fn cluster_replace_node_works() {
     ];
     for (node_id, available) in expected_resources {
         assert_eq!(
-            ctx.contract.node_get(node_id)?.free_resource,
+            ctx.contract.node_get(node_id)?.node.free_resource,
             available, "resources must have shifted between nodes");
     }
 }
@@ -215,7 +223,7 @@ fn cluster_reserve_works() {
     ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
 
     // Check the changed state of the cluster.
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(cluster.resource_per_vnode, 10 + 5);
 
     // Check the changed state of the nodes.
@@ -226,7 +234,7 @@ fn cluster_reserve_works() {
     ];
     for (node_id, available) in expected_resources {
         assert_eq!(
-            ctx.contract.node_get(node_id)?.free_resource,
+            ctx.contract.node_get(node_id)?.node.free_resource,
             available, "more resources must be reserved from the nodes");
     }
 }
@@ -278,7 +286,7 @@ fn bucket_pays_cluster() {
     let before = ctx.contract
         .account_get(test_bucket.owner_id)?
         .deposit.peek();
-    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?.bucket;
     assert_eq!(bucket.owner_id, test_bucket.owner_id);
     assert_eq!(bucket.flow,
                Flow {
@@ -293,7 +301,7 @@ fn bucket_pays_cluster() {
         .account_get(test_bucket.owner_id)?
         .deposit.peek();
     let spent = before - after;
-    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?.bucket;
     assert_eq!(bucket.flow,
                Flow {
                    from: test_bucket.owner_id,
@@ -304,7 +312,7 @@ fn bucket_pays_cluster() {
     assert!(expect_revenues > 0);
     assert_eq!(expect_revenues, spent, "revenues must come from the bucket owner");
 
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(cluster.revenues.peek(), expect_revenues, "must get revenues into the cluster");
 }
 
@@ -316,7 +324,8 @@ fn cluster_pays_providers() {
     bucket_settle_payment(ctx, &test_bucket);
 
     // Get state before the distribution.
-    let to_distribute = ctx.contract.cluster_get(ctx.cluster_id)?.revenues.peek();
+    let to_distribute = ctx.contract.cluster_get(ctx.cluster_id)?
+        .cluster.revenues.peek();
     let before0 = balance_of(ctx.provider_id0);
     let before1 = balance_of(ctx.provider_id1);
     let before2 = balance_of(ctx.provider_id2);
@@ -325,7 +334,8 @@ fn cluster_pays_providers() {
     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
 
     // Get state after the distribution.
-    let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?.revenues.peek();
+    let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?
+        .cluster.revenues.peek();
     let earned0 = balance_of(ctx.provider_id0) - before0;
     let earned1 = balance_of(ctx.provider_id1) - before1;
     let earned2 = balance_of(ctx.provider_id2) - before2;
@@ -345,24 +355,23 @@ fn bucket_create_works() {
     let test_bucket = &new_bucket(ctx);
 
     // Check the structure of the bucket including the payment flow.
-    let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     let total_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
-    assert_eq!(bucket, Bucket {
+    let expect_bucket = Bucket {
         owner_id: test_bucket.owner_id,
         cluster_id: ctx.cluster_id,
         flow: Flow {
             from: test_bucket.owner_id,
             schedule: Schedule::new(0, total_rent),
         },
-        bucket_params: "".to_string(),
         resource_reserved: test_bucket.resource,
-    });
+    };
 
     // Check the status of the bucket.
-    let bucket_status = ctx.contract.bucket_get_status(test_bucket.bucket_id)?;
+    let bucket_status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
         bucket_id: test_bucket.bucket_id,
-        bucket,
+        bucket: expect_bucket,
+        params: "".to_string(),
         writer_ids: vec![test_bucket.owner_id],
         rent_covered_until_ms: 446400000, // TODO: check this value.
     });
@@ -445,48 +454,48 @@ fn bucket_list_works() {
 
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id);
-    let bucket_status1 = ddc_bucket.bucket_get_status(bucket_id1).unwrap();
+    let bucket_status1 = ddc_bucket.bucket_get(bucket_id1).unwrap();
     pop_caller();
 
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
     let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id);
-    let bucket_status2 = ddc_bucket.bucket_get_status(bucket_id2)?;
+    let bucket_status2 = ddc_bucket.bucket_get(bucket_id2)?;
     pop_caller();
 
     assert_ne!(bucket_id1, bucket_id2);
     let count = 2;
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, None),
+        ddc_bucket.bucket_list(0, 100, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 2, None),
+        ddc_bucket.bucket_list(0, 2, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 1, None),
+        ddc_bucket.bucket_list(0, 1, None),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(1, 1, None),
+        ddc_bucket.bucket_list(1, 1, None),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(20, 20, None),
+        ddc_bucket.bucket_list(20, 20, None),
         (vec![], count));
 
     // Filter by owner.
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id1)),
+        ddc_bucket.bucket_list(0, 100, Some(owner_id1)),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id2)),
+        ddc_bucket.bucket_list(0, 100, Some(owner_id2)),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list_statuses(0, 100, Some(owner_id3)),
+        ddc_bucket.bucket_list(0, 100, Some(owner_id3)),
         (vec![], count));
 }
 
@@ -515,20 +524,24 @@ fn node_list_works() {
     assert_ne!(node_id1, node_id2);
     let count = 2;
 
-    let node1 = Node {
+    let node1 = NodeStatus {
         node_id: node_id1,
-        provider_id: owner_id1,
-        rent_per_month,
-        node_params: node_params1.to_string(),
-        free_resource: capacity,
+        node: Node {
+            provider_id: owner_id1,
+            rent_per_month,
+            free_resource: capacity,
+        },
+        params: node_params1.to_string(),
     };
 
-    let node2 = Node {
+    let node2 = NodeStatus {
         node_id: node_id2,
-        provider_id: owner_id2,
-        rent_per_month,
-        node_params: node_params2.to_string(),
-        free_resource: capacity,
+        node: Node {
+            provider_id: owner_id2,
+            rent_per_month,
+            free_resource: capacity,
+        },
+        params: node_params2.to_string(),
     };
 
     assert_eq!(

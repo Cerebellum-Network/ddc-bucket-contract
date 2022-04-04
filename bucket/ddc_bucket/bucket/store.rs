@@ -10,7 +10,7 @@ use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::schedule::Schedule;
 
-use super::entity::{Bucket, BucketId, BucketParams};
+use super::entity::{Bucket, BucketId};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
@@ -18,20 +18,16 @@ pub struct BucketStore(pub InkVec<Bucket>);
 
 impl BucketStore {
     #[must_use]
-    pub fn create(&mut self, owner_id: AccountId, bucket_params: BucketParams, cluster_id: ClusterId) -> (BucketId, usize) {
+    pub fn create(&mut self, owner_id: AccountId, cluster_id: ClusterId) -> BucketId {
         let bucket = Bucket {
             owner_id,
             cluster_id,
             flow: Flow { from: owner_id, schedule: Schedule::empty() },
-            bucket_params,
             resource_reserved: 0,
         };
-
-        let record_size = bucket.new_size();
         let bucket_id = self.0.len();
         self.0.push(bucket);
-
-        (bucket_id, record_size)
+        bucket_id
     }
 
     pub fn get(&self, bucket_id: BucketId) -> Result<&Bucket> {

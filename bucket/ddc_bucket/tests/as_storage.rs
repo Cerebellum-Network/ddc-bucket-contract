@@ -27,8 +27,8 @@ impl TestStorage {
         assert_eq!(request.url, self.node.url, "wrong storage URL");
 
         // Fetch the status of this bucket.
-        let status = contract.bucket_get_status(request.bucket_id)?;
-        let cluster = contract.cluster_get(status.bucket.cluster_id).unwrap();
+        let status = contract.bucket_get(request.bucket_id)?;
+        let cluster = contract.cluster_get(status.bucket.cluster_id).unwrap().cluster;
 
         // Check that this bucket is allocated in the storage cluster of this node.
         let allocated = cluster.vnodes.contains(&self.node.node_id);

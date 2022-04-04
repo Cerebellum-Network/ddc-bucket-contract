@@ -85,7 +85,8 @@ fn storage_network_works() {
     // Replace a node.
     cluster_manager.replace_node(&mut contract, 0);
 
-    let vnodes = contract.cluster_get(0).unwrap().vnodes;
+    let vnodes = contract.cluster_get(0).unwrap()
+        .cluster.vnodes;
     assert_eq!(vnodes, vec![
         5, // Node 0 was replaced by Node 5.
         1, 2, 3, 4, 5,
@@ -95,7 +96,7 @@ fn storage_network_works() {
 
     // Check the resource distribution of all nodes.
     let (nodes, _) = contract.node_list(0, 20, None);
-    let resources: Vec<Resource> = nodes.iter().map(|n| n.free_resource).collect();
+    let resources: Vec<Resource> = nodes.iter().map(|n| n.node.free_resource).collect();
     const INIT: u32 = 100; // Initial capacity of each node.
     const PART: u32 = 15; // Size of a partition.
     assert_eq!(resources, vec![
