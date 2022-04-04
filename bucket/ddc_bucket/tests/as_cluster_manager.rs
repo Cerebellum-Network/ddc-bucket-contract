@@ -57,7 +57,8 @@ impl ClusterManager {
         let partition_ids = self.find_partitions_of_node(contract, old_node_id);
 
         for (cluster_id, partition_i) in partition_ids.iter() {
-            let resource_needed = contract.cluster_get(*cluster_id).unwrap().resource_per_vnode;
+            let resource_needed = contract.cluster_get(*cluster_id).unwrap()
+                .cluster.resource_per_vnode;
             let new_node_id = self.find_best_storage_node(contract, resource_needed);
             contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id);
         }
@@ -70,7 +71,8 @@ impl ClusterManager {
         let (clusters, count) = contract.cluster_list(0, 20, None);
         if count > 20 { unimplemented!("full iteration of contract entities") }
 
-        for cluster in clusters.iter() {
+        for status in clusters.iter() {
+            let cluster = &status.cluster;
             if cluster.manager_id != self.account_id {
                 continue; // Not our cluster, skip.
             }

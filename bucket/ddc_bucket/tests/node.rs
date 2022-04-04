@@ -25,14 +25,14 @@ impl TestNode {
     }
 }
 
-pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<Cluster> {
+pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<ClusterStatus> {
     // Discover the available clusters.
     let (clusters, _count) = contract.cluster_list(0, 20, None);
 
     // Pick the first one that provides the right engine.
     let cluster = clusters.iter()
         .find(|cluster| {
-            let topology = Topology::from_str(&cluster.cluster_params).unwrap();
+            let topology = Topology::from_str(&cluster.params).unwrap();
             topology.engine_name == engine_name
         })
         .expect(&format!("No cluster found for engine {}", engine_name));

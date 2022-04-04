@@ -1,9 +1,6 @@
 //! The data structure of Buckets.
 
-use ink_prelude::{
-    string::String,
-    vec::Vec,
-};
+use ink_prelude::vec::Vec;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
@@ -14,9 +11,10 @@ use crate::ddc_bucket::{
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_RESOURCE};
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::node::entity::Resource;
+use crate::ddc_bucket::params::store::Params;
 
 pub type BucketId = u32;
-pub type BucketParams = String;
+pub type BucketParams = Params;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]

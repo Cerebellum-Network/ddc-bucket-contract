@@ -148,17 +148,19 @@ fn cluster_create_works() {
     // Check the initial state of the cluster.
     {
         let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
-        assert_eq!(cluster, Cluster {
-            cluster_id: ctx.cluster_id,
-            manager_id: ctx.manager,
-            cluster_params: "{}".to_string(),
-            vnodes: vec![
-                ctx.node_id0, ctx.node_id1, ctx.node_id2,
-                ctx.node_id0, ctx.node_id1, ctx.node_id2],
-            resource_per_vnode: ctx.reserved,
-            resource_used: 0,
-            revenues: Cash(0),
-            total_rent: ctx.rent_per_vnode * ctx.partition_count as Balance,
+        assert_eq!(cluster, ClusterStatus {
+            cluster: Cluster {
+                cluster_id: ctx.cluster_id,
+                manager_id: ctx.manager,
+                vnodes: vec![
+                    ctx.node_id0, ctx.node_id1, ctx.node_id2,
+                    ctx.node_id0, ctx.node_id1, ctx.node_id2],
+                resource_per_vnode: ctx.reserved,
+                resource_used: 0,
+                revenues: Cash(0),
+                total_rent: ctx.rent_per_vnode * ctx.partition_count as Balance,
+            },
+            params: "{}".to_string(),
         });
     }
 
@@ -193,7 +195,7 @@ fn cluster_replace_node_works() {
     ctx.contract.cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2);
 
     // Check the changed state of the cluster.
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(&cluster.vnodes,
                &[ctx.node_id0, /* changed */ ctx.node_id2, ctx.node_id2, ctx.node_id0, ctx.node_id1, ctx.node_id2],
                "a vnode must be replaced");
@@ -221,7 +223,7 @@ fn cluster_reserve_works() {
     ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
 
     // Check the changed state of the cluster.
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(cluster.resource_per_vnode, 10 + 5);
 
     // Check the changed state of the nodes.
@@ -310,7 +312,7 @@ fn bucket_pays_cluster() {
     assert!(expect_revenues > 0);
     assert_eq!(expect_revenues, spent, "revenues must come from the bucket owner");
 
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(cluster.revenues.peek(), expect_revenues, "must get revenues into the cluster");
 }
 
@@ -322,7 +324,8 @@ fn cluster_pays_providers() {
     bucket_settle_payment(ctx, &test_bucket);
 
     // Get state before the distribution.
-    let to_distribute = ctx.contract.cluster_get(ctx.cluster_id)?.revenues.peek();
+    let to_distribute = ctx.contract.cluster_get(ctx.cluster_id)?
+        .cluster.revenues.peek();
     let before0 = balance_of(ctx.provider_id0);
     let before1 = balance_of(ctx.provider_id1);
     let before2 = balance_of(ctx.provider_id2);
@@ -331,7 +334,8 @@ fn cluster_pays_providers() {
     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
 
     // Get state after the distribution.
-    let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?.revenues.peek();
+    let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?
+        .cluster.revenues.peek();
     let earned0 = balance_of(ctx.provider_id0) - before0;
     let earned1 = balance_of(ctx.provider_id1) - before1;
     let earned2 = balance_of(ctx.provider_id2) - before2;

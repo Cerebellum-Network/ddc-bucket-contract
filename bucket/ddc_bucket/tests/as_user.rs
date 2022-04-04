@@ -27,7 +27,8 @@ impl TestUser {
 
     pub fn create_bucket(contract: &mut DdcBucket, account_id: AccountId, engine_name: &str) -> Result<BucketId> {
         // Choose a cluster.
-        let cluster_id = find_cluster(contract, engine_name)?.cluster_id;
+        let cluster_id = find_cluster(contract, engine_name)?
+            .cluster.cluster_id;
 
         push_caller_value(account_id, CONTRACT_FEE_LIMIT);
         let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap(), cluster_id);
@@ -44,7 +45,7 @@ impl TestUser {
 
     pub fn make_request(&self, contract: &DdcBucket, action: Action) -> Result<TestRequest> {
         // Find a gateway cluster.
-        let cluster = find_cluster(contract, GATEWAY_ENGINE)?;
+        let cluster = find_cluster(contract, GATEWAY_ENGINE)?.cluster;
         // Pick a gateway node.
         let node_id = *cluster.vnodes.first().expect("empty cluster");
         let node = contract.node_get(node_id)?;

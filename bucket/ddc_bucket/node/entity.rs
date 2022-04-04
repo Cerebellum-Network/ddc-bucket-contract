@@ -1,8 +1,5 @@
 //! The data structure of Nodes.
 
-use ink_prelude::{
-    string::String,
-};
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
@@ -12,7 +9,7 @@ use crate::ddc_bucket::params::store::Params;
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
-pub type NodeParams = String;
+pub type NodeParams = Params;
 pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]

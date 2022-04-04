@@ -37,6 +37,7 @@ pub mod ddc_bucket {
         buckets: BucketStore,
         bucket_params: ParamsStore,
         clusters: ClusterStore,
+        cluster_params: ParamsStore,
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
@@ -49,6 +50,7 @@ pub mod ddc_bucket {
                 buckets: BucketStore::default(),
                 bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
+                cluster_params: ParamsStore::default(),
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
@@ -150,13 +152,13 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<Cluster> {
-            Ok(self.clusters.get(cluster_id)?.clone())
+        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
+            self.message_cluster_get(cluster_id)
         }
 
         #[ink(message)]
-        pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<Cluster>, u32) {
-            self.clusters.list(offset, limit, filter_manager_id)
+        pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<ClusterStatus>, u32) {
+            self.message_cluster_list(offset, limit, filter_manager_id)
         }
 
         #[ink(message)]

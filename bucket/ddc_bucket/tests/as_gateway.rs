@@ -24,7 +24,7 @@ impl TestGateway {
         let status = contract.bucket_get_status(client_request.bucket_id)?;
         let bucket_params = BucketParams::from_str(&status.params).unwrap();
         let cluster = contract.cluster_get(status.bucket.cluster_id)?;
-        let topology = Topology::from_str(&cluster.cluster_params).unwrap();
+        let topology = Topology::from_str(&cluster.params).unwrap();
         assert_eq!(topology.engine_name, STORAGE_ENGINE, "cluster should run the storage engine");
 
         let replica_indices = topology.get_replica_indices(
@@ -32,7 +32,7 @@ impl TestGateway {
 
         // Make a request to the right storage nodes.
         for index in replica_indices {
-            let node_id = cluster.vnodes.get(index).expect("Not enough nodes");
+            let node_id = cluster.cluster.vnodes.get(index).expect("Not enough nodes");
             let storage_node = contract.node_get(*node_id)?;
             // Get the URL of the storage node.
             let storage_url = storage_node.params;

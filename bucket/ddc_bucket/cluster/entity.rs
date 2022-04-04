@@ -1,9 +1,6 @@
 //! The data structure of Clusters.
 
-use ink_prelude::{
-    string::String,
-    vec::Vec,
-};
+use ink_prelude::vec::Vec;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
@@ -12,9 +9,10 @@ use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::node::entity::Resource;
+use crate::ddc_bucket::params::store::Params;
 
 pub type ClusterId = u32;
-pub type ClusterParams = String;
+pub type ClusterParams = Params;
 pub type PartitionIndex = u32;
 pub type PartitionId = (ClusterId, PartitionIndex);
 
@@ -23,8 +21,6 @@ pub type PartitionId = (ClusterId, PartitionIndex);
 pub struct Cluster {
     pub cluster_id: ClusterId,
     pub manager_id: AccountId,
-    // TODO: make lazy.
-    pub cluster_params: ClusterParams,
     pub vnodes: Vec<NodeId>,
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
@@ -32,12 +28,18 @@ pub struct Cluster {
     pub total_rent: Balance,
 }
 
+#[derive(Clone, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub struct ClusterStatus {
+    pub cluster: Cluster,
+    pub params: Params,
+}
+
 impl Cluster {
     pub fn new_size(&self) -> usize {
         SIZE_PER_RECORD
             + SIZE_INDEX
             + SIZE_ACCOUNT_ID
-            + SIZE_VEC + self.cluster_params.len()
             + SIZE_VEC + self.vnodes.len() * SIZE_INDEX
             + SIZE_RESOURCE
             + SIZE_RESOURCE

@@ -85,7 +85,8 @@ fn storage_network_works() {
     // Replace a node.
     cluster_manager.replace_node(&mut contract, 0);
 
-    let vnodes = contract.cluster_get(0).unwrap().vnodes;
+    let vnodes = contract.cluster_get(0).unwrap()
+        .cluster.vnodes;
     assert_eq!(vnodes, vec![
         5, // Node 0 was replaced by Node 5.
         1, 2, 3, 4, 5,
