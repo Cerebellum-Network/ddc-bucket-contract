@@ -354,7 +354,6 @@ fn bucket_create_works() {
             from: test_bucket.owner_id,
             schedule: Schedule::new(0, total_rent),
         },
-        bucket_params: "".to_string(),
         resource_reserved: test_bucket.resource,
     });
 
@@ -363,6 +362,7 @@ fn bucket_create_works() {
     assert_eq!(bucket_status, BucketStatus {
         bucket_id: test_bucket.bucket_id,
         bucket,
+        params: "".to_string(),
         writer_ids: vec![test_bucket.owner_id],
         rent_covered_until_ms: 446400000, // TODO: check this value.
     });

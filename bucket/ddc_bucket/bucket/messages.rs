@@ -52,7 +52,7 @@ impl DdcBucket {
     pub fn message_bucket_list_statuses(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
         let mut bucket_statuses = Vec::with_capacity(limit as usize);
         for bucket_id in offset..offset + limit {
-            let bucket = match self.buckets.0.get(bucket_id) {
+            let bucket = match self.buckets.buckets.get(bucket_id) {
                 None => break, // No more buckets, stop.
                 Some(bucket) => bucket,
             };
@@ -69,7 +69,7 @@ impl DdcBucket {
                     bucket_statuses.push(status),
             };
         }
-        (bucket_statuses, self.buckets.0.len())
+        (bucket_statuses, self.buckets.buckets.len())
     }
 
     pub fn message_bucket_get_status(&self, bucket_id: BucketId) -> Result<BucketStatus> {
@@ -79,10 +79,10 @@ impl DdcBucket {
 
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
-
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
+        let params = self.buckets.get_params(bucket_id)?.clone();
 
-        Ok(BucketStatus { bucket_id, bucket, writer_ids, rent_covered_until_ms })
+        Ok(BucketStatus { bucket_id, bucket, params, writer_ids, rent_covered_until_ms })
     }
 
     fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {

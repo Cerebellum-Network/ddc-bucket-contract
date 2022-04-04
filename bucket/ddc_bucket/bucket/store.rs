@@ -7,6 +7,7 @@ use ink_storage::{
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
+use crate::ddc_bucket::contract_fee::SIZE_VEC;
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::schedule::Schedule;
 
@@ -14,7 +15,10 @@ use super::entity::{Bucket, BucketId, BucketParams};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct BucketStore(pub InkVec<Bucket>);
+pub struct BucketStore {
+    pub buckets: InkVec<Bucket>,
+    pub params: InkVec<BucketParams>,
+}
 
 impl BucketStore {
     #[must_use]
@@ -23,22 +27,28 @@ impl BucketStore {
             owner_id,
             cluster_id,
             flow: Flow { from: owner_id, schedule: Schedule::empty() },
-            bucket_params,
             resource_reserved: 0,
         };
 
-        let record_size = bucket.new_size();
-        let bucket_id = self.0.len();
-        self.0.push(bucket);
+        let record_size = Bucket::RECORD_SIZE + SIZE_VEC + bucket_params.len();
+        let bucket_id = self.buckets.len();
+        assert_eq!(bucket_id, self.params.len());
+
+        self.buckets.push(bucket);
+        self.params.push(bucket_params);
 
         (bucket_id, record_size)
     }
 
     pub fn get(&self, bucket_id: BucketId) -> Result<&Bucket> {
-        self.0.get(bucket_id).ok_or(BucketDoesNotExist)
+        self.buckets.get(bucket_id).ok_or(BucketDoesNotExist)
     }
 
     pub fn get_mut(&mut self, bucket_id: BucketId) -> Result<&mut Bucket> {
-        self.0.get_mut(bucket_id).ok_or(BucketDoesNotExist)
+        self.buckets.get_mut(bucket_id).ok_or(BucketDoesNotExist)
+    }
+
+    pub fn get_params(&self, bucket_id: BucketId) -> Result<&BucketParams> {
+        self.params.get(bucket_id).ok_or(BucketDoesNotExist)
     }
 }

@@ -21,9 +21,9 @@ impl TestGateway {
         let mut storage_requests = vec![];
 
         // Find the storage cluster of this bucket.
-        let bucket = contract.bucket_get(client_request.bucket_id)?;
-        let bucket_params = BucketParams::from_str(&bucket.bucket_params).unwrap();
-        let cluster = contract.cluster_get(bucket.cluster_id)?;
+        let status = contract.bucket_get_status(client_request.bucket_id)?;
+        let bucket_params = BucketParams::from_str(&status.params).unwrap();
+        let cluster = contract.cluster_get(status.bucket.cluster_id)?;
         let topology = Topology::from_str(&cluster.cluster_params).unwrap();
         assert_eq!(topology.engine_name, STORAGE_ENGINE, "cluster should run the storage engine");
 
