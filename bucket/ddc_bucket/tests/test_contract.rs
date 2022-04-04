@@ -280,7 +280,7 @@ fn bucket_pays_cluster() {
         .deposit.peek();
     let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     assert_eq!(bucket.owner_id, test_bucket.owner_id);
-    assert_eq!(bucket.flows[0],
+    assert_eq!(bucket.flow,
                Flow {
                    from: test_bucket.owner_id,
                    schedule: Schedule::new(0, expected_rent),
@@ -294,7 +294,7 @@ fn bucket_pays_cluster() {
         .deposit.peek();
     let spent = before - after;
     let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?;
-    assert_eq!(bucket.flows[0],
+    assert_eq!(bucket.flow,
                Flow {
                    from: test_bucket.owner_id,
                    schedule: Schedule::new(BLOCK_TIME, expected_rent),
@@ -350,10 +350,10 @@ fn bucket_create_works() {
     assert_eq!(bucket, Bucket {
         owner_id: test_bucket.owner_id,
         cluster_id: ctx.cluster_id,
-        flows: vec![Flow {
+        flow: Flow {
             from: test_bucket.owner_id,
             schedule: Schedule::new(0, total_rent),
-        }],
+        },
         bucket_params: "".to_string(),
         resource_reserved: test_bucket.resource,
     });
@@ -406,7 +406,6 @@ fn account_deposit_works() {
     let account = contract.account_get(account_id)?;
     assert_eq!(account, Account {
         deposit: Cash(deposit_after_fee),
-        payable_locked: 0,
         payable_schedule: Schedule::empty(),
     }, "must take deposit minus creation fee");
 
@@ -418,7 +417,6 @@ fn account_deposit_works() {
     let account = contract.account_get(account_id)?;
     assert_eq!(account, Account {
         deposit: Cash(deposit_after_fee + deposit),
-        payable_locked: 0,
         payable_schedule: Schedule::empty(),
     }, "must take more deposits without creation fee");
 

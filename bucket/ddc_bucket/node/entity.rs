@@ -20,6 +20,7 @@ pub struct Node {
     pub node_id: NodeId,
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
+    // TODO: make lazy.
     pub node_params: NodeParams,
     pub free_resource: Resource,
 }

@@ -1,15 +1,16 @@
 //! The store to create and access Buckets.
 
-use ink_prelude::vec::Vec;
 use ink_storage::{
     collections::Vec as InkVec,
     traits,
 };
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
+use crate::ddc_bucket::cluster::entity::ClusterId;
+use crate::ddc_bucket::flow::Flow;
+use crate::ddc_bucket::schedule::Schedule;
 
 use super::entity::{Bucket, BucketId, BucketParams};
-use crate::ddc_bucket::cluster::entity::ClusterId;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
@@ -21,7 +22,7 @@ impl BucketStore {
         let bucket = Bucket {
             owner_id,
             cluster_id,
-            flows: Vec::new(),
+            flow: Flow { from: owner_id, schedule: Schedule::empty() },
             bucket_params,
             resource_reserved: 0,
         };

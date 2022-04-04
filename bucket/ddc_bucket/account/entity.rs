@@ -14,19 +14,17 @@ use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_HASHMA
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Account {
     pub deposit: Cash,
-    pub payable_locked: Balance,
     pub payable_schedule: Schedule,
 }
 
 impl Account {
     pub const RECORD_SIZE: usize =
         SIZE_PER_RECORD + SIZE_HASHMAP + SIZE_ACCOUNT_ID
-            + SIZE_BALANCE + SIZE_BALANCE + Schedule::RECORD_SIZE;
+            + SIZE_BALANCE + Schedule::RECORD_SIZE;
 
     pub fn new() -> Account {
         Account {
             deposit: Cash(0),
-            payable_locked: 0,
             payable_schedule: Schedule::empty(),
         }
     }
@@ -46,7 +44,7 @@ impl Account {
 
     pub fn get_withdrawable(&self, time_ms: u64) -> Balance {
         let deposit = self.deposit.peek();
-        let consumed = self.payable_locked + self.payable_schedule.value_at_time(time_ms);
+        let consumed = self.payable_schedule.value_at_time(time_ms);
         if deposit >= consumed {
             deposit - consumed
         } else {
@@ -55,16 +53,15 @@ impl Account {
     }
 
     pub fn lock_schedule(&mut self, payable_schedule: Schedule) {
-        let more_locked = self.payable_schedule.take_value_then_add_rate(payable_schedule);
-        self.payable_locked += more_locked;
+        self.payable_schedule.add_schedule(payable_schedule);
     }
 
     pub fn schedule_covered_until(&self) -> u64 {
         self.payable_schedule.time_of_value(self.deposit.peek())
     }
 
-    pub fn pay_scheduled(&mut self, now_ms: u64, payable: Payable) -> Result<()> {
-        self.unlock_scheduled_amount(now_ms, payable.peek());
+    pub fn pay_scheduled(&mut self, payable: Payable) -> Result<()> {
+        self.unlock_scheduled_amount(payable.peek());
         self.pay(payable)
     }
 
@@ -77,9 +74,7 @@ impl Account {
         }
     }
 
-    fn unlock_scheduled_amount(&mut self, now_ms: u64, unlocked: Balance) {
-        self.payable_locked = self.payable_locked
-            + self.payable_schedule.take_value_at_time(now_ms)
-            - unlocked;
+    fn unlock_scheduled_amount(&mut self, unlocked: Balance) {
+        self.payable_schedule.take_value(unlocked);
     }
 }

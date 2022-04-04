@@ -4,8 +4,7 @@ use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{vec, vec::Vec};
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, Result};
-use crate::ddc_bucket::cluster::entity::ClusterId;
-use crate::ddc_bucket::Error::BucketClusterNotSetup;
+use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
@@ -21,40 +20,28 @@ impl DdcBucket {
     }
 
     pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {
-        let owner_id = Self::env().caller();
-
         let bucket = self.buckets.get_mut(bucket_id)?;
-        bucket.only_owner(owner_id)?;
-
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+
         cluster.take_resource(resource)?;
         bucket.put_resource(resource);
 
-        let rent = cluster.get_rent(bucket.resource_reserved);
-
-        if bucket.flows.len() != 0 {
-            unimplemented!("cannot increase resources"); // TODO.
-        }
-
         // Start the payment flow to the cluster.
-        let start_ms = Self::env().block_timestamp();
-        let flow = self.accounts.start_flow(start_ms, owner_id, rent)?;
-        bucket.flows.push(flow);
+        let rent = cluster.get_rent(resource);
+        let now_ms = Self::env().block_timestamp();
+
+        self.accounts.increase_flow(now_ms, rent, &mut bucket.flow)?;
 
         Self::env().emit_event(BucketAllocated { bucket_id, cluster_id: bucket.cluster_id });
-
-        // Capture the contract storage fee.
-        let record_size = 0; // TODO.
-        Self::capture_fee_and_refund(record_size)?;
         Ok(())
     }
 
     pub fn message_bucket_settle_payment(&mut self, bucket_id: BucketId) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let flow = bucket.flows.get_mut(0).ok_or(BucketClusterNotSetup)?;
 
         let now_ms = Self::env().block_timestamp();
-        let cash = self.accounts.settle_flow(now_ms, flow)?;
+        let cash = self.accounts.settle_flow(now_ms, &mut bucket.flow)?;
 
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
         cluster.revenues.increase(cash);
@@ -93,12 +80,15 @@ impl DdcBucket {
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
 
-        let rent_covered_until_ms = match bucket.flows.first() {
-            Some(flow) =>
-                self.accounts.flow_covered_until(flow)?,
-            None => 0,
-        };
+        let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
 
         Ok(BucketStatus { bucket_id, bucket, writer_ids, rent_covered_until_ms })
+    }
+
+    fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {
+        let caller = Self::env().caller();
+        cluster.only_manager(caller)
+            .or_else(|_|
+                bucket.only_owner(caller))
     }
 }

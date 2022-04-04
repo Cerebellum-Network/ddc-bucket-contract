@@ -48,18 +48,16 @@ impl AccountStore {
         self.0.get_mut(account_id).ok_or(AccountDoesNotExist)
     }
 
-    pub fn start_flow(&mut self, start_ms: u64, from: AccountId, rate: Balance) -> Result<Flow> {
-        let cash_schedule = Schedule::new(start_ms, rate);
-        let payable_schedule = cash_schedule.clone();
+    /// Increase the rate of the given flow starting from the given time.
+    /// Lock the payment flow from the deposit of the payer account.
+    pub fn increase_flow(&mut self, start_ms: u64, extra_rate: Balance, flow: &mut Flow) -> Result<()> {
+        let extra_schedule = Schedule::new(start_ms, extra_rate);
+        flow.schedule.add_schedule(extra_schedule.clone());
 
-        let from_account = self.get_mut(&from)?;
-        from_account.lock_schedule(payable_schedule);
+        let from_account = self.get_mut(&flow.from)?;
+        from_account.lock_schedule(extra_schedule);
 
-        let flow = Flow {
-            from,
-            schedule: cash_schedule,
-        };
-        Ok(flow)
+        Ok(())
     }
 
     pub fn settle_flow(&mut self, now_ms: u64, flow: &mut Flow) -> Result<Cash> {
@@ -67,7 +65,7 @@ impl AccountStore {
         let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
 
         let account = self.get_mut(&flow.from)?;
-        account.pay_scheduled(now_ms, payable)?;
+        account.pay_scheduled(payable)?;
         Ok(cash)
     }
 

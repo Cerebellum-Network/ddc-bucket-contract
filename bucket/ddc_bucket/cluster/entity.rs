@@ -9,7 +9,8 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
 use crate::ddc_bucket::cash::Cash;
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
+use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::node::entity::Resource;
 
 pub type ClusterId = u32;
@@ -22,6 +23,7 @@ pub type PartitionId = (ClusterId, PartitionIndex);
 pub struct Cluster {
     pub cluster_id: ClusterId,
     pub manager_id: AccountId,
+    // TODO: make lazy.
     pub cluster_params: ClusterParams,
     pub vnodes: Vec<NodeId>,
     pub resource_per_vnode: Resource,
@@ -32,13 +34,15 @@ pub struct Cluster {
 
 impl Cluster {
     pub fn new_size(&self) -> usize {
-        // TODO: add revenues.
         SIZE_PER_RECORD
             + SIZE_INDEX
             + SIZE_ACCOUNT_ID
             + SIZE_VEC + self.cluster_params.len()
             + SIZE_VEC + self.vnodes.len() * SIZE_INDEX
-            + SIZE_RESOURCE + SIZE_RESOURCE
+            + SIZE_RESOURCE
+            + SIZE_RESOURCE
+            + SIZE_BALANCE
+            + SIZE_BALANCE
         // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 
@@ -57,5 +61,9 @@ impl Cluster {
         }
         self.resource_used = used;
         Ok(())
+    }
+
+    pub fn only_manager(&self, caller: AccountId) -> Result<()> {
+        if self.manager_id == caller { Ok(()) } else { Err(UnauthorizedClusterManager) }
     }
 }
