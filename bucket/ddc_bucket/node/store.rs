@@ -19,13 +19,12 @@ impl NodeStore {
                   provider_id: AccountId,
                   rent_per_month: Balance,
                   capacity: Resource,
-    ) -> (NodeId, usize) {
+    ) -> NodeId {
         let node_id = self.0.len();
-        let node = Node { node_id, provider_id, rent_per_month, free_resource: capacity };
+        let node = Node { provider_id, rent_per_month, free_resource: capacity };
 
-        let record_size = node.new_size();
         self.0.push(node);
-        (node_id, record_size)
+        node_id
     }
 
     pub fn get(&self, node_id: NodeId) -> Result<&Node> {

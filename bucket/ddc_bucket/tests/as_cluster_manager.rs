@@ -29,7 +29,7 @@ impl ClusterManager {
         if count > 20 { unimplemented!("full iteration of contract entities") }
         let node_ids = nodes.iter()
             .filter(|n| n.params.contains(engine_name))
-            .map(|n| n.node.node_id)
+            .map(|n| n.node_id)
             .collect();
 
         let topology = Topology::new(engine_name, partition_count);
@@ -98,14 +98,14 @@ impl ClusterManager {
             .filter(|n| n.params.contains(STORAGE_ENGINE))
             .filter(|n| n.node.free_resource >= resource_needed)
             .filter(|n| {
-                let node_state = self.node_states.get(&n.node.node_id);
+                let node_state = self.node_states.get(&n.node_id);
                 match node_state {
                     Some(&NodeState::Dead) => false,
                     _ => true,
                 }
             })
             .max_by_key(|n| n.node.free_resource)
-            .map(|n| n.node.node_id)
+            .map(|n| n.node_id)
             .expect("no node available")
     }
 }

@@ -22,7 +22,7 @@ impl ClusterStore {
         &mut self,
         manager_id: AccountId,
         partition_count: u32,
-        nodes: &[&Node],
+        nodes: &[(NodeId, &Node)],
     ) -> (ClusterId, usize) {
         let cluster_id = self.0.len();
         let (vnodes, total_rent) = Self::new_vnodes(partition_count as usize, nodes);
@@ -40,13 +40,13 @@ impl ClusterStore {
         (cluster_id, record_size)
     }
 
-    fn new_vnodes(partition_count: usize, node_ids: &[&Node]) -> (Vec<NodeId>, Balance) {
-        let node_count = node_ids.len();
+    fn new_vnodes(partition_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {
+        let node_count = nodes.len();
         let mut vnode_ids = Vec::with_capacity(partition_count);
         let mut total_rent = 0;
         for i in 0..partition_count {
-            let node = &node_ids[i % node_count];
-            vnode_ids.push(node.node_id);
+            let (node_id, node) = &nodes[i % node_count];
+            vnode_ids.push(*node_id);
             total_rent += node.rent_per_month;
         }
         // TODO: consider using the max rent instead of average rent.

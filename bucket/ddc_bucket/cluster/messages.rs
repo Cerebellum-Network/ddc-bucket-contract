@@ -7,7 +7,7 @@ use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterNodeReplaced,
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, PartitionIndex};
 use crate::ddc_bucket::Error::{PartitionDoesNotExist, UnauthorizedClusterManager};
-use crate::ddc_bucket::node::entity::{NodeId, Resource};
+use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 
 use super::entity::{ClusterId, ClusterParams};
 
@@ -19,10 +19,10 @@ impl DdcBucket {
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
-        let mut nodes = Vec::new();
-        for node_id in &node_ids {
-            let node = self.nodes.get(*node_id)?;
-            nodes.push(node);
+        let mut nodes = Vec::<(NodeId, &Node)>::new();
+        for node_id in node_ids {
+            let node = self.nodes.get(node_id)?;
+            nodes.push((node_id, node));
         }
 
         let (cluster_id, record_size0) = self.clusters.create(manager, partition_count, &nodes);
