@@ -4,7 +4,7 @@ use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{vec, vec::Vec};
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, Result};
-use crate::ddc_bucket::cluster::entity::ClusterId;
+use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
 
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
@@ -20,12 +20,10 @@ impl DdcBucket {
     }
 
     pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {
-        let owner_id = Self::env().caller();
-
         let bucket = self.buckets.get_mut(bucket_id)?;
-        bucket.only_owner(owner_id)?;
-
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+
         cluster.take_resource(resource)?;
         bucket.put_resource(resource);
 
@@ -85,5 +83,12 @@ impl DdcBucket {
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
 
         Ok(BucketStatus { bucket_id, bucket, writer_ids, rent_covered_until_ms })
+    }
+
+    fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {
+        let caller = Self::env().caller();
+        cluster.only_manager(caller)
+            .or_else(|_|
+                bucket.only_owner(caller))
     }
 }

@@ -10,6 +10,7 @@ use scale::{Decode, Encode};
 use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
 use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
+use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::node::entity::Resource;
 
 pub type ClusterId = u32;
@@ -60,5 +61,9 @@ impl Cluster {
         }
         self.resource_used = used;
         Ok(())
+    }
+
+    pub fn only_manager(&self, caller: AccountId) -> Result<()> {
+        if self.manager_id == caller { Ok(()) } else { Err(UnauthorizedClusterManager) }
     }
 }
