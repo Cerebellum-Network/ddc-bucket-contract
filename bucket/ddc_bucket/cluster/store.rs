@@ -27,7 +27,6 @@ impl ClusterStore {
         let cluster_id = self.0.len();
         let (vnodes, total_rent) = Self::new_vnodes(partition_count as usize, nodes);
         let cluster = Cluster {
-            cluster_id,
             manager_id,
             vnodes,
             resource_per_vnode: 0,

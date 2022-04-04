@@ -19,7 +19,6 @@ pub type PartitionId = (ClusterId, PartitionIndex);
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
-    pub cluster_id: ClusterId,
     pub manager_id: AccountId,
     pub vnodes: Vec<NodeId>,
     pub resource_per_vnode: Resource,
@@ -31,6 +30,7 @@ pub struct Cluster {
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct ClusterStatus {
+    pub cluster_id: ClusterId,
     pub cluster: Cluster,
     pub params: Params,
 }
@@ -38,7 +38,6 @@ pub struct ClusterStatus {
 impl Cluster {
     pub fn new_size(&self) -> usize {
         SIZE_PER_RECORD
-            + SIZE_INDEX
             + SIZE_ACCOUNT_ID
             + SIZE_VEC + self.vnodes.len() * SIZE_INDEX
             + SIZE_RESOURCE

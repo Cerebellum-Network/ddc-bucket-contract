@@ -149,8 +149,8 @@ fn cluster_create_works() {
     {
         let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
         assert_eq!(cluster, ClusterStatus {
+            cluster_id: ctx.cluster_id,
             cluster: Cluster {
-                cluster_id: ctx.cluster_id,
                 manager_id: ctx.manager,
                 vnodes: vec![
                     ctx.node_id0, ctx.node_id1, ctx.node_id2,

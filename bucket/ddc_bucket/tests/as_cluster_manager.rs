@@ -71,13 +71,12 @@ impl ClusterManager {
         let (clusters, count) = contract.cluster_list(0, 20, None);
         if count > 20 { unimplemented!("full iteration of contract entities") }
 
-        for status in clusters.iter() {
-            let cluster = &status.cluster;
-            if cluster.manager_id != self.account_id {
+        for cluster in clusters.iter() {
+            if cluster.cluster.manager_id != self.account_id {
                 continue; // Not our cluster, skip.
             }
 
-            for (index, &some_node_id) in cluster.vnodes.iter().enumerate() {
+            for (index, &some_node_id) in cluster.cluster.vnodes.iter().enumerate() {
                 if some_node_id == node_id {
                     let partition_id = (cluster.cluster_id, index as PartitionIndex);
                     partition_ids.push(partition_id);

@@ -85,7 +85,7 @@ impl DdcBucket {
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
         let cluster = self.clusters.get(cluster_id)?.clone();
         let params = self.cluster_params.get(cluster_id)?.clone();
-        Ok(ClusterStatus { cluster, params })
+        Ok(ClusterStatus { cluster_id, cluster, params })
     }
 
     pub fn message_cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<ClusterStatus>, u32) {
@@ -103,6 +103,7 @@ impl DdcBucket {
             }
             // Include the complete status of matched items.
             let status = ClusterStatus {
+                cluster_id,
                 cluster: cluster.clone(),
                 params: self.cluster_params.get(cluster_id).unwrap().clone(),
             };
