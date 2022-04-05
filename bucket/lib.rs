@@ -19,6 +19,7 @@ pub mod ddc_bucket {
     use Error::*;
     use node::{entity::*, store::*};
     use params::{store::*};
+    use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
 
@@ -32,6 +33,7 @@ pub mod ddc_bucket {
     pub mod contract_fee;
     pub mod params;
     pub mod admin;
+    pub mod perm;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -44,6 +46,7 @@ pub mod ddc_bucket {
         node_params: ParamsStore,
         accounts: AccountStore,
         admin_id: Lazy<AccountId>,
+        perms: PermStore,
     }
 
     impl DdcBucket {
@@ -58,6 +61,7 @@ pub mod ddc_bucket {
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
                 admin_id: Lazy::new(Self::env().caller()),
+                perms: PermStore::default(),
             }
         }
     }
@@ -222,6 +226,21 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Billing ----
+
+
+    // ---- Permissions ----
+    impl DdcBucket {
+        #[ink(message, payable)]
+        pub fn perm_trust(&mut self, trustee: AccountId) {
+            self.message_perm_trust(trustee);
+        }
+
+        #[ink(message)]
+        pub fn perm_has_trust(&mut self, trustee: AccountId, trust_giver: AccountId) -> bool {
+            self.perms.has_perm(trustee, trust_giver)
+        }
+    }
+    // ---- End Permissions ----
 
 
     // ---- Admin ----
