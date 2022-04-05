@@ -82,7 +82,7 @@ async function main() {
     {
         log("Reserve some resources for the cluster…");
         const tx = contract.tx
-            .clusterReserveResource(txOptionsPay, clusterId, cluster_resource);
+            .clusterReserveResource(txOptions, clusterId, cluster_resource);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
@@ -118,7 +118,7 @@ async function main() {
     {
         log("Allocate some resources for the bucket…");
         const tx = contract.tx
-            .bucketAllocIntoCluster(txOptionsPay, bucketId, bucket_resource);
+            .bucketAllocIntoCluster(txOptions, bucketId, bucket_resource);
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
