@@ -9,6 +9,7 @@ use ink_lang as ink;
 #[ink::contract]
 pub mod ddc_bucket {
     use ink_prelude::vec::Vec;
+    use ink_storage::Lazy;
     use scale::{Decode, Encode};
 
     use account::store::*;
@@ -30,6 +31,7 @@ pub mod ddc_bucket {
     pub mod cluster;
     pub mod contract_fee;
     pub mod params;
+    pub mod admin;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -41,6 +43,7 @@ pub mod ddc_bucket {
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
+        admin_id: Lazy<AccountId>,
     }
 
     impl DdcBucket {
@@ -54,6 +57,7 @@ pub mod ddc_bucket {
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
+                admin_id: Lazy::new(Self::env().caller()),
             }
         }
     }
@@ -220,6 +224,26 @@ pub mod ddc_bucket {
     // ---- End Billing ----
 
 
+    // ---- Admin ----
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn admin_get(&self) -> AccountId {
+            *self.admin_id
+        }
+
+        #[ink(message)]
+        pub fn admin_change(&mut self, new_admin: AccountId) {
+            self.message_admin_change(new_admin);
+        }
+
+        #[ink(message)]
+        pub fn admin_withdraw(&mut self, amount: Balance) {
+            self.message_admin_withdraw(amount);
+        }
+    }
+    // ---- End Admin ----
+
+
     // ---- Utils ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
@@ -239,6 +263,7 @@ pub mod ddc_bucket {
         UnauthorizedProvider,
         UnauthorizedOwner,
         UnauthorizedClusterManager,
+        UnauthorizedAdmin,
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,

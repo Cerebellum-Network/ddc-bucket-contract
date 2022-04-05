@@ -1,6 +1,7 @@
 mod env_utils;
 
 mod test_contract;
+mod test_admin;
 
 mod test_network;
 mod as_storage;
