@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xa4ea89841ae87268bd86e98c3c3ef7d388f25ade162dd3750067bef524d35d4d",
+    "hash": "0x88c54aa08d5e07ea623486675b4bd471c6d0f34d481efecd2089a7ff1aba6f6a",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -86,84 +86,6 @@
           {
             "docs": [],
             "indexed": true,
-            "name": "deal_id",
-            "type": {
-              "displayName": [
-                "DealId"
-              ],
-              "type": 1
-            }
-          },
-          {
-            "docs": [],
-            "indexed": true,
-            "name": "bucket_id",
-            "type": {
-              "displayName": [
-                "BucketId"
-              ],
-              "type": 1
-            }
-          },
-          {
-            "docs": [],
-            "indexed": true,
-            "name": "node_id",
-            "type": {
-              "displayName": [
-                "NodeId"
-              ],
-              "type": 1
-            }
-          }
-        ],
-        "docs": [],
-        "name": "DealCreated"
-      },
-      {
-        "args": [
-          {
-            "docs": [],
-            "indexed": true,
-            "name": "provider_id",
-            "type": {
-              "displayName": [
-                "AccountId"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "docs": [],
-            "indexed": true,
-            "name": "deal_id",
-            "type": {
-              "displayName": [
-                "DealId"
-              ],
-              "type": 1
-            }
-          },
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "value",
-            "type": {
-              "displayName": [
-                "Balance"
-              ],
-              "type": 11
-            }
-          }
-        ],
-        "docs": [],
-        "name": "ProviderWithdraw"
-      },
-      {
-        "args": [
-          {
-            "docs": [],
-            "indexed": true,
             "name": "cluster_id",
             "type": {
               "displayName": [
@@ -191,7 +113,7 @@
               "displayName": [
                 "ClusterParams"
               ],
-              "type": 7
+              "type": 9
             }
           }
         ],
@@ -269,7 +191,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 11
+              "type": 8
             }
           },
           {
@@ -280,7 +202,7 @@
               "displayName": [
                 "NodeParams"
               ],
-              "type": 7
+              "type": 9
             }
           }
         ],
@@ -308,7 +230,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 11
+              "type": 8
             }
           }
         ],
@@ -325,33 +247,7 @@
               "displayName": [
                 "BucketParams"
               ],
-              "type": 7
-            }
-          }
-        ],
-        "docs": [],
-        "mutates": true,
-        "name": [
-          "bucket_create"
-        ],
-        "payable": true,
-        "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 21
-        },
-        "selector": "0x0aeb2379"
-      },
-      {
-        "args": [
-          {
-            "name": "bucket_id",
-            "type": {
-              "displayName": [
-                "BucketId"
-              ],
-              "type": 1
+              "type": 9
             }
           },
           {
@@ -367,16 +263,96 @@
         "docs": [],
         "mutates": true,
         "name": [
-          "bucket_alloc_into_cluster"
+          "bucket_create"
         ],
         "payable": true,
         "returnType": {
           "displayName": [
-            "Result"
+            "BucketId"
           ],
-          "type": 23
+          "type": 1
+        },
+        "selector": "0x0aeb2379"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "resource",
+            "type": {
+              "displayName": [
+                "Resource"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "bucket_alloc_into_cluster"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [],
+          "type": 19
         },
         "selector": "0x4c482d19"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "bucket_settle_payment"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x15974555"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "bucket_get"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 20
+        },
+        "selector": "0x3802cb77"
       },
       {
         "args": [
@@ -411,118 +387,14 @@
         "docs": [],
         "mutates": false,
         "name": [
-          "bucket_list_statuses"
+          "bucket_list"
         ],
         "payable": false,
         "returnType": {
           "displayName": [],
           "type": 26
         },
-        "selector": "0x0b04c5f2"
-      },
-      {
-        "args": [
-          {
-            "name": "bucket_id",
-            "type": {
-              "displayName": [
-                "BucketId"
-              ],
-              "type": 1
-            }
-          }
-        ],
-        "docs": [],
-        "mutates": false,
-        "name": [
-          "bucket_get"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 32
-        },
-        "selector": "0x3802cb77"
-      },
-      {
-        "args": [
-          {
-            "name": "bucket_id",
-            "type": {
-              "displayName": [
-                "BucketId"
-              ],
-              "type": 1
-            }
-          }
-        ],
-        "docs": [],
-        "mutates": false,
-        "name": [
-          "bucket_get_status"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 33
-        },
-        "selector": "0xcef55af6"
-      },
-      {
-        "args": [
-          {
-            "name": "deal_id",
-            "type": {
-              "displayName": [
-                "DealId"
-              ],
-              "type": 1
-            }
-          }
-        ],
-        "docs": [],
-        "mutates": true,
-        "name": [
-          "provider_withdraw"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 23
-        },
-        "selector": "0x6d5d546a"
-      },
-      {
-        "args": [
-          {
-            "name": "deal_id",
-            "type": {
-              "displayName": [
-                "DealId"
-              ],
-              "type": 1
-            }
-          }
-        ],
-        "docs": [],
-        "mutates": false,
-        "name": [
-          "deal_get_status"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 34
-        },
-        "selector": "0x54739bc7"
+        "selector": "0x417ab584"
       },
       {
         "args": [
@@ -550,7 +422,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 6
+              "type": 11
             }
           },
           {
@@ -559,7 +431,7 @@
               "displayName": [
                 "ClusterParams"
               ],
-              "type": 7
+              "type": 9
             }
           }
         ],
@@ -571,9 +443,9 @@
         "payable": true,
         "returnType": {
           "displayName": [
-            "Result"
+            "NodeId"
           ],
-          "type": 21
+          "type": 1
         },
         "selector": "0x4c0f21f6"
       },
@@ -605,10 +477,8 @@
         ],
         "payable": false,
         "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 23
+          "displayName": [],
+          "type": 19
         },
         "selector": "0xb5e38125"
       },
@@ -649,10 +519,8 @@
         ],
         "payable": false,
         "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 23
+          "displayName": [],
+          "type": 19
         },
         "selector": "0x48194ab1"
       },
@@ -678,7 +546,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 35
+          "type": 28
         },
         "selector": "0xe75411f5"
       },
@@ -720,9 +588,30 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 36
+          "type": 30
         },
         "selector": "0xd9db9d44"
+      },
+      {
+        "args": [
+          {
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "cluster_distribute_revenues"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0xe71e66fc"
       },
       {
         "args": [
@@ -732,7 +621,7 @@
               "displayName": [
                 "Balance"
               ],
-              "type": 11
+              "type": 8
             }
           },
           {
@@ -741,7 +630,7 @@
               "displayName": [
                 "NodeParams"
               ],
-              "type": 7
+              "type": 9
             }
           },
           {
@@ -762,9 +651,9 @@
         "payable": true,
         "returnType": {
           "displayName": [
-            "Result"
+            "NodeId"
           ],
-          "type": 21
+          "type": 1
         },
         "selector": "0xb77ac1bb"
       },
@@ -790,7 +679,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 38
+          "type": 32
         },
         "selector": "0x847f3997"
       },
@@ -832,7 +721,7 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 39
+          "type": 34
         },
         "selector": "0x423286d6"
       },
@@ -841,16 +730,40 @@
         "docs": [],
         "mutates": true,
         "name": [
-          "deposit"
+          "account_deposit"
         ],
         "payable": true,
+        "returnType": {
+          "displayName": [],
+          "type": 19
+        },
+        "selector": "0xc311af62"
+      },
+      {
+        "args": [
+          {
+            "name": "account_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "account_get"
+        ],
+        "payable": false,
         "returnType": {
           "displayName": [
             "Result"
           ],
-          "type": 23
+          "type": 36
         },
-        "selector": "0x2d10c9bd"
+        "selector": "0x1d4220fa"
       }
     ]
   },
@@ -924,7 +837,7 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0000000002000000000000000000000000000000000000000000000000000000",
-                                  "ty": 8
+                                  "ty": 9
                                 }
                               },
                               "len": 4294967295,
@@ -941,7 +854,7 @@
               ]
             }
           },
-          "name": "deals"
+          "name": "bucket_params"
         },
         {
           "layout": {
@@ -967,7 +880,7 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0000000003000000000000000000000000000000000000000000000000000000",
-                                  "ty": 13
+                                  "ty": 10
                                 }
                               },
                               "len": 4294967295,
@@ -1010,11 +923,54 @@
                               "layout": {
                                 "cell": {
                                   "key": "0x0000000004000000000000000000000000000000000000000000000000000000",
-                                  "ty": 14
+                                  "ty": 9
                                 }
                               },
                               "len": 4294967295,
                               "offset": "0x0100000003000000000000000000000000000000000000000000000000000000"
+                            }
+                          },
+                          "name": "elems"
+                        }
+                      ]
+                    }
+                  },
+                  "name": null
+                }
+              ]
+            }
+          },
+          "name": "cluster_params"
+        },
+        {
+          "layout": {
+            "struct": {
+              "fields": [
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0000000004000000000000000000000000000000000000000000000000000000",
+                              "ty": 1
+                            }
+                          },
+                          "name": "len"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "cellsPerElem": 1,
+                              "layout": {
+                                "cell": {
+                                  "key": "0x0000000005000000000000000000000000000000000000000000000000000000",
+                                  "ty": 13
+                                }
+                              },
+                              "len": 4294967295,
+                              "offset": "0x0100000004000000000000000000000000000000000000000000000000000000"
                             }
                           },
                           "name": "elems"
@@ -1039,13 +995,56 @@
                       "fields": [
                         {
                           "layout": {
+                            "cell": {
+                              "key": "0x0000000005000000000000000000000000000000000000000000000000000000",
+                              "ty": 1
+                            }
+                          },
+                          "name": "len"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "cellsPerElem": 1,
+                              "layout": {
+                                "cell": {
+                                  "key": "0x0000000006000000000000000000000000000000000000000000000000000000",
+                                  "ty": 9
+                                }
+                              },
+                              "len": 4294967295,
+                              "offset": "0x0100000005000000000000000000000000000000000000000000000000000000"
+                            }
+                          },
+                          "name": "elems"
+                        }
+                      ]
+                    }
+                  },
+                  "name": null
+                }
+              ]
+            }
+          },
+          "name": "node_params"
+        },
+        {
+          "layout": {
+            "struct": {
+              "fields": [
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
                             "struct": {
                               "fields": [
                                 {
                                   "layout": {
                                     "cell": {
-                                      "key": "0x0000000004000000000000000000000000000000000000000000000000000000",
-                                      "ty": 15
+                                      "key": "0x0000000006000000000000000000000000000000000000000000000000000000",
+                                      "ty": 14
                                     }
                                   },
                                   "name": "header"
@@ -1057,7 +1056,7 @@
                                         {
                                           "layout": {
                                             "cell": {
-                                              "key": "0x0100000004000000000000000000000000000000000000000000000000000000",
+                                              "key": "0x0100000006000000000000000000000000000000000000000000000000000000",
                                               "ty": 1
                                             }
                                           },
@@ -1069,12 +1068,12 @@
                                               "cellsPerElem": 1,
                                               "layout": {
                                                 "cell": {
-                                                  "key": "0x0100000005000000000000000000000000000000000000000000000000000000",
-                                                  "ty": 16
+                                                  "key": "0x0100000007000000000000000000000000000000000000000000000000000000",
+                                                  "ty": 15
                                                 }
                                               },
                                               "len": 4294967295,
-                                              "offset": "0x0200000004000000000000000000000000000000000000000000000000000000"
+                                              "offset": "0x0200000006000000000000000000000000000000000000000000000000000000"
                                             }
                                           },
                                           "name": "elems"
@@ -1094,11 +1093,11 @@
                             "hash": {
                               "layout": {
                                 "cell": {
-                                  "key": "0x0200000005000000000000000000000000000000000000000000000000000000",
-                                  "ty": 18
+                                  "key": "0x0200000007000000000000000000000000000000000000000000000000000000",
+                                  "ty": 17
                                 }
                               },
-                              "offset": "0x0100000005000000000000000000000000000000000000000000000000000000",
+                              "offset": "0x0100000007000000000000000000000000000000000000000000000000000000",
                               "strategy": {
                                 "hasher": "Blake2x256",
                                 "postfix": "",
@@ -1137,19 +1136,14 @@
               "typeName": "AccountId"
             },
             {
-              "name": "cluster_ids",
-              "type": 6,
-              "typeName": "Vec<ClusterId>"
+              "name": "cluster_id",
+              "type": 1,
+              "typeName": "ClusterId"
             },
             {
-              "name": "deal_ids",
+              "name": "flow",
               "type": 6,
-              "typeName": "Vec<DealId>"
-            },
-            {
-              "name": "bucket_params",
-              "type": 7,
-              "typeName": "BucketParams"
+              "typeName": "Flow"
             },
             {
               "name": "resource_reserved",
@@ -1199,43 +1193,6 @@
     },
     {
       "def": {
-        "sequence": {
-          "type": 1
-        }
-      }
-    },
-    {
-      "def": {
-        "primitive": "str"
-      }
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "node_id",
-              "type": 1,
-              "typeName": "NodeId"
-            },
-            {
-              "name": "flow",
-              "type": 9,
-              "typeName": "Flow"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_bucket",
-        "ddc_bucket",
-        "deal",
-        "entity",
-        "Deal"
-      ]
-    },
-    {
-      "def": {
         "composite": {
           "fields": [
             {
@@ -1245,7 +1202,7 @@
             },
             {
               "name": "schedule",
-              "type": 10,
+              "type": 7,
               "typeName": "Schedule"
             }
           ]
@@ -1264,13 +1221,13 @@
           "fields": [
             {
               "name": "rate",
-              "type": 11,
+              "type": 8,
               "typeName": "Balance"
             },
             {
-              "name": "start_ms",
-              "type": 12,
-              "typeName": "u64"
+              "name": "offset",
+              "type": 8,
+              "typeName": "Balance"
             }
           ]
         }
@@ -1289,7 +1246,7 @@
     },
     {
       "def": {
-        "primitive": "u64"
+        "primitive": "str"
       }
     },
     {
@@ -1297,23 +1254,13 @@
         "composite": {
           "fields": [
             {
-              "name": "cluster_id",
-              "type": 1,
-              "typeName": "ClusterId"
-            },
-            {
               "name": "manager_id",
               "type": 3,
               "typeName": "AccountId"
             },
             {
-              "name": "cluster_params",
-              "type": 7,
-              "typeName": "ClusterParams"
-            },
-            {
               "name": "vnodes",
-              "type": 6,
+              "type": 11,
               "typeName": "Vec<NodeId>"
             },
             {
@@ -1325,6 +1272,16 @@
               "name": "resource_used",
               "type": 1,
               "typeName": "Resource"
+            },
+            {
+              "name": "revenues",
+              "type": 12,
+              "typeName": "Cash"
+            },
+            {
+              "name": "total_rent",
+              "type": 8,
+              "typeName": "Balance"
             }
           ]
         }
@@ -1339,13 +1296,34 @@
     },
     {
       "def": {
+        "sequence": {
+          "type": 1
+        }
+      }
+    },
+    {
+      "def": {
         "composite": {
           "fields": [
             {
-              "name": "node_id",
-              "type": 1,
-              "typeName": "NodeId"
-            },
+              "name": "value",
+              "type": 8,
+              "typeName": "Balance"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "cash",
+        "Cash"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
             {
               "name": "provider_id",
               "type": 3,
@@ -1353,13 +1331,8 @@
             },
             {
               "name": "rent_per_month",
-              "type": 11,
+              "type": 8,
               "typeName": "Balance"
-            },
-            {
-              "name": "node_params",
-              "type": 7,
-              "typeName": "NodeParams"
             },
             {
               "name": "free_resource",
@@ -1413,7 +1386,7 @@
             {
               "fields": [
                 {
-                  "type": 17,
+                  "type": 16,
                   "typeName": "VacantEntry"
                 }
               ],
@@ -1471,7 +1444,7 @@
           "fields": [
             {
               "name": "value",
-              "type": 19,
+              "type": 18,
               "typeName": "V"
             },
             {
@@ -1483,7 +1456,7 @@
         }
       },
       "params": [
-        19
+        18
       ],
       "path": [
         "ink_storage",
@@ -1498,17 +1471,12 @@
           "fields": [
             {
               "name": "deposit",
-              "type": 20,
+              "type": 12,
               "typeName": "Cash"
             },
             {
-              "name": "payable_locked",
-              "type": 11,
-              "typeName": "Balance"
-            },
-            {
               "name": "payable_schedule",
-              "type": 10,
+              "type": 7,
               "typeName": "Schedule"
             }
           ]
@@ -1524,21 +1492,8 @@
     },
     {
       "def": {
-        "composite": {
-          "fields": [
-            {
-              "type": 11,
-              "typeName": "Balance"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_bucket",
-        "ddc_bucket",
-        "cash",
-        "Cash"
-      ]
+        "tuple": []
+      }
     },
     {
       "def": {
@@ -1547,7 +1502,7 @@
             {
               "fields": [
                 {
-                  "type": 1,
+                  "type": 21,
                   "typeName": "T"
                 }
               ],
@@ -1556,7 +1511,7 @@
             {
               "fields": [
                 {
-                  "type": 22,
+                  "type": 24,
                   "typeName": "E"
                 }
               ],
@@ -1566,12 +1521,64 @@
         }
       },
       "params": [
-        1,
-        22
+        21,
+        24
       ],
       "path": [
         "Result"
       ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "bucket_id",
+              "type": 1,
+              "typeName": "BucketId"
+            },
+            {
+              "name": "bucket",
+              "type": 2,
+              "typeName": "Bucket"
+            },
+            {
+              "name": "params",
+              "type": 9,
+              "typeName": "BucketParams"
+            },
+            {
+              "name": "writer_ids",
+              "type": 22,
+              "typeName": "Vec<AccountId>"
+            },
+            {
+              "name": "rent_covered_until_ms",
+              "type": 23,
+              "typeName": "u64"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "bucket",
+        "entity",
+        "BucketStatus"
+      ]
+    },
+    {
+      "def": {
+        "sequence": {
+          "type": 3
+        }
+      }
+    },
+    {
+      "def": {
+        "primitive": "u64"
+      }
     },
     {
       "def": {
@@ -1583,19 +1590,19 @@
             },
             {
               "discriminant": 1,
-              "name": "DealDoesNotExist"
-            },
-            {
-              "discriminant": 2,
               "name": "ClusterDoesNotExist"
             },
             {
-              "discriminant": 3,
+              "discriminant": 2,
               "name": "PartitionDoesNotExist"
             },
             {
-              "discriminant": 4,
+              "discriminant": 3,
               "name": "BucketClusterAlreadyConnected"
+            },
+            {
+              "discriminant": 4,
+              "name": "BucketClusterNotSetup"
             },
             {
               "discriminant": 5,
@@ -1611,26 +1618,30 @@
             },
             {
               "discriminant": 8,
-              "name": "UnauthorizedProvider"
+              "name": "ParamsDoesNotExist"
             },
             {
               "discriminant": 9,
-              "name": "UnauthorizedOwner"
+              "name": "UnauthorizedProvider"
             },
             {
               "discriminant": 10,
-              "name": "UnauthorizedClusterManager"
+              "name": "UnauthorizedOwner"
             },
             {
               "discriminant": 11,
-              "name": "TransferFailed"
+              "name": "UnauthorizedClusterManager"
             },
             {
               "discriminant": 12,
-              "name": "InsufficientBalance"
+              "name": "TransferFailed"
             },
             {
               "discriminant": 13,
+              "name": "InsufficientBalance"
+            },
+            {
+              "discriminant": 14,
               "name": "InsufficientResources"
             }
           ]
@@ -1641,44 +1652,6 @@
         "ddc_bucket",
         "Error"
       ]
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 24,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 22,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        24,
-        22
-      ],
-      "path": [
-        "Result"
-      ]
-    },
-    {
-      "def": {
-        "tuple": []
-      }
     },
     {
       "def": {
@@ -1717,33 +1690,61 @@
     {
       "def": {
         "sequence": {
-          "type": 28
+          "type": 21
         }
       }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 29,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 24,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        29,
+        24
+      ],
+      "path": [
+        "Result"
+      ]
     },
     {
       "def": {
         "composite": {
           "fields": [
             {
-              "name": "bucket_id",
+              "name": "cluster_id",
               "type": 1,
-              "typeName": "BucketId"
+              "typeName": "ClusterId"
             },
             {
-              "name": "bucket",
-              "type": 2,
-              "typeName": "Bucket"
+              "name": "cluster",
+              "type": 10,
+              "typeName": "Cluster"
             },
             {
-              "name": "writer_ids",
-              "type": 29,
-              "typeName": "Vec<AccountId>"
-            },
-            {
-              "name": "deal_statuses",
-              "type": 30,
-              "typeName": "Vec<DealStatus>"
+              "name": "params",
+              "type": 9,
+              "typeName": "Params"
             }
           ]
         }
@@ -1751,24 +1752,58 @@
       "path": [
         "ddc_bucket",
         "ddc_bucket",
-        "bucket",
+        "cluster",
         "entity",
-        "BucketStatus"
+        "ClusterStatus"
       ]
     },
     {
       "def": {
-        "sequence": {
-          "type": 3
-        }
+        "tuple": [
+          31,
+          1
+        ]
       }
     },
     {
       "def": {
         "sequence": {
-          "type": 31
+          "type": 29
         }
       }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 33,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 24,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        33,
+        24
+      ],
+      "path": [
+        "Result"
+      ]
     },
     {
       "def": {
@@ -1780,9 +1815,14 @@
               "typeName": "NodeId"
             },
             {
-              "name": "estimated_rent_end_ms",
-              "type": 12,
-              "typeName": "u64"
+              "name": "node",
+              "type": 13,
+              "typeName": "Node"
+            },
+            {
+              "name": "params",
+              "type": 9,
+              "typeName": "Params"
             }
           ]
         }
@@ -1790,147 +1830,15 @@
       "path": [
         "ddc_bucket",
         "ddc_bucket",
-        "deal",
+        "node",
         "entity",
-        "DealStatus"
-      ]
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 2,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 22,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        2,
-        22
-      ],
-      "path": [
-        "Result"
-      ]
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 28,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 22,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        28,
-        22
-      ],
-      "path": [
-        "Result"
-      ]
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 31,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 22,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        31,
-        22
-      ],
-      "path": [
-        "Result"
-      ]
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 13,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 22,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        13,
-        22
-      ],
-      "path": [
-        "Result"
+        "NodeStatus"
       ]
     },
     {
       "def": {
         "tuple": [
-          37,
+          35,
           1
         ]
       }
@@ -1938,7 +1846,7 @@
     {
       "def": {
         "sequence": {
-          "type": 13
+          "type": 33
         }
       }
     },
@@ -1949,7 +1857,7 @@
             {
               "fields": [
                 {
-                  "type": 14,
+                  "type": 18,
                   "typeName": "T"
                 }
               ],
@@ -1958,7 +1866,7 @@
             {
               "fields": [
                 {
-                  "type": 22,
+                  "type": 24,
                   "typeName": "E"
                 }
               ],
@@ -1968,27 +1876,12 @@
         }
       },
       "params": [
-        14,
-        22
+        18,
+        24
       ],
       "path": [
         "Result"
       ]
-    },
-    {
-      "def": {
-        "tuple": [
-          40,
-          1
-        ]
-      }
-    },
-    {
-      "def": {
-        "sequence": {
-          "type": 14
-        }
-      }
     }
   ]
 }

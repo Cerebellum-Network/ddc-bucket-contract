@@ -11,7 +11,7 @@ use crate::ddc_bucket::{Balance, InsufficientBalance, Result};
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Cash(pub Balance);
 
 /// Payable represents some value that was credited to someone, and that must be paid by someone.
@@ -58,4 +58,22 @@ impl Payable {
     pub fn consume(self) -> Balance { self.0 }
 
     pub fn peek(&self) -> Balance { self.0 }
+}
+
+// Implement TypeInfo with a field "value" to work with polkadot.js.
+#[cfg(feature = "std")]
+impl ::scale_info::TypeInfo for Cash {
+    type Identity = Self;
+    fn type_info() -> ::scale_info::Type {
+        ::scale_info::Type::builder()
+            .path(::scale_info::Path::new(
+                "Cash",
+                "ddc_bucket::ddc_bucket::cash",
+            ))
+            .type_params([])
+            .composite(
+                ::scale_info::build::Fields::named()
+                    .field_of::<Balance>("value", "Balance"),
+            )
+    }
 }

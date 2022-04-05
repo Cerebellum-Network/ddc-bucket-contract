@@ -19,15 +19,10 @@ function findCreatedBucketId(events) {
     return findCreatedId(events, "BucketCreated");
 }
 
-function findCreatedDealId(events) {
-    return findCreatedId(events, "DealCreated");
-}
-
 
 module.exports = {
     findCreatedId,
     findCreatedNodeId,
     findCreatedClusterId,
     findCreatedBucketId,
-    findCreatedDealId,
 };
