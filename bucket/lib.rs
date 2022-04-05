@@ -282,6 +282,7 @@ pub mod ddc_bucket {
         UnauthorizedProvider,
         UnauthorizedOwner,
         UnauthorizedClusterManager,
+        ClusterManagerIsNotTrusted,
         UnauthorizedAdmin,
         TransferFailed,
         InsufficientBalance,

@@ -11,13 +11,14 @@ pub struct TestNode {
 }
 
 impl TestNode {
-    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, engine_name: &str, node_name: &str) -> Self {
+    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, manager_id: AccountId, engine_name: &str, node_name: &str) -> Self {
         let url = format!("https://node-{}.ddc.cere.network/{}/", node_name, engine_name);
         let node_params = url.clone();
         let rent_per_month: Balance = 10 * TOKEN;
         let capacity = 100;
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
+        contract.perm_trust(manager_id);
         let node_id = contract.node_create(rent_per_month, node_params, capacity);
         pop_caller();
 

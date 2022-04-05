@@ -42,18 +42,21 @@ fn new_cluster() -> TestCluster {
     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
     let capacity = 100;
     push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    contract.perm_trust(manager);
     let node_id0 = contract.node_create(rent_per_vnode, node_params0.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+    contract.perm_trust(manager);
     let node_id1 = contract.node_create(rent_per_vnode, node_params1.to_string(), capacity);
     pop_caller();
 
     // Provide another Node.
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     push_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+    contract.perm_trust(manager);
     let node_id2 = contract.node_create(rent_per_vnode, node_params2.to_string(), capacity);
     pop_caller();
 

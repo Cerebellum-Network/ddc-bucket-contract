@@ -6,7 +6,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, PartitionIndex};
-use crate::ddc_bucket::Error::{PartitionDoesNotExist, UnauthorizedClusterManager};
+use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, PartitionDoesNotExist, UnauthorizedClusterManager};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 
 use super::entity::{ClusterId, ClusterParams};
@@ -23,6 +23,10 @@ impl DdcBucket {
         for node_id in node_ids {
             let node = self.nodes.get(node_id)?;
             nodes.push((node_id, node));
+
+            // Verify that the node provider trusts the cluster manager.
+            let trusts = self.perms.has_perm(manager, node.provider_id);
+            if !trusts { return Err(ClusterManagerIsNotTrusted); }
         }
 
         let (cluster_id, record_size0) = self.clusters.create(manager, partition_count, &nodes);
@@ -36,6 +40,7 @@ impl DdcBucket {
 
     pub fn message_cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
+        Self::only_cluster_manager(cluster)?;
         cluster.put_resource(amount);
 
         for node_id in &cluster.vnodes {

@@ -11,6 +11,7 @@ fn storage_network_works() {
     set_balance(accounts.charlie, 1000 * TOKEN);
     set_balance(accounts.django, 1000 * TOKEN);
     set_balance(accounts.eve, 1000 * TOKEN);
+    let manager_id = accounts.alice;
 
     let mut contract = DdcBucket::new();
 
@@ -27,15 +28,15 @@ fn storage_network_works() {
     // Provide storage Nodes.
     let mut storage_nodes: Vec<TestStorage> =
         node_specs.iter().map(|spec| {
-            TestStorage::new(&mut contract, spec.0, spec.1)
+            TestStorage::new(&mut contract, spec.0, manager_id, spec.1)
         }).collect();
 
     assert_ne!(storage_nodes[0].node.url, storage_nodes[1].node.url, "nodes must have different URLs");
 
     // Provide one gateway Node.
-    let gateway_node = TestGateway::new(&mut contract, accounts.alice, "alice");
+    let gateway_node = TestGateway::new(&mut contract, accounts.alice, manager_id, "alice");
 
-    let mut cluster_manager = ClusterManager::new(accounts.alice);
+    let mut cluster_manager = ClusterManager::new(manager_id);
 
     // Create storage and gateway Clusters.
     cluster_manager.create_cluster(&mut contract, STORAGE_ENGINE, partition_count);

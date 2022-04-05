@@ -64,6 +64,16 @@ async function main() {
         nodeId = ddcBucket.findCreatedNodeId(events);
         log("New NodeId", nodeId, "\n");
     }
+    {
+        log("Trust the cluster manager…");
+        const tx = contract.tx
+            .permTrust(txOptionsPay, managerId);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+    }
 
     let clusterId;
     {
