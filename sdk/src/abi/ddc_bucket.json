@@ -1,7 +1,7 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x88c54aa08d5e07ea623486675b4bd471c6d0f34d481efecd2089a7ff1aba6f6a",
+    "hash": "0xdf34b3cb3607cadac49e363a787dfb1e74b47b71af0e375a4eb89f33c1168edf",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
@@ -764,6 +764,64 @@
           "type": 36
         },
         "selector": "0x1d4220fa"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "admin_get"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "AccountId"
+          ],
+          "type": 3
+        },
+        "selector": "0x1261dae1"
+      },
+      {
+        "args": [
+          {
+            "name": "new_admin",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "admin_change"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x12292787"
+      },
+      {
+        "args": [
+          {
+            "name": "amount",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 8
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "admin_withdraw"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x2f6e0868"
       }
     ]
   },
@@ -1116,6 +1174,15 @@
             }
           },
           "name": "accounts"
+        },
+        {
+          "layout": {
+            "cell": {
+              "key": "0x0200000007000000000000000000000000000000000000000000000000000000",
+              "ty": 3
+            }
+          },
+          "name": "admin_id"
         }
       ]
     }
@@ -1634,14 +1701,18 @@
             },
             {
               "discriminant": 12,
-              "name": "TransferFailed"
+              "name": "UnauthorizedAdmin"
             },
             {
               "discriminant": 13,
-              "name": "InsufficientBalance"
+              "name": "TransferFailed"
             },
             {
               "discriminant": 14,
+              "name": "InsufficientBalance"
+            },
+            {
+              "discriminant": 15,
               "name": "InsufficientResources"
             }
           ]
