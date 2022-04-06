@@ -11,8 +11,8 @@ pub struct TestGateway {
 }
 
 impl TestGateway {
-    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, node_name: &str) -> Self {
-        Self { node: TestNode::new(contract, provider_id, GATEWAY_ENGINE, node_name) }
+    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, manager_id: AccountId, node_name: &str) -> Self {
+        Self { node: TestNode::new(contract, provider_id, manager_id, GATEWAY_ENGINE, node_name) }
     }
 
     pub fn handle_request(&self, contract: &DdcBucket, client_request: TestRequest) -> Result<Vec<TestRequest>> {
