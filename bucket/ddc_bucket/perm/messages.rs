@@ -3,16 +3,16 @@
 use ink_lang::StaticEnv;
 
 use crate::ddc_bucket::{
-    AccountId, DdcBucket,
+    AccountId, DdcBucket, Result,
 };
+use crate::ddc_bucket::perm::store::PermStore;
 
 impl DdcBucket {
-    pub fn message_perm_trust(&mut self, trustee: AccountId) {
+    pub fn message_perm_trust(&mut self, trustee: AccountId) -> Result<()> {
         let trust_giver = Self::env().caller();
         self.perms.grant_perm(trustee, trust_giver);
 
-        // TODO: Event.
-
-        // TODO: Capture storage fee.
+        Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
+        Ok(())
     }
 }

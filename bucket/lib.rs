@@ -232,7 +232,7 @@ pub mod ddc_bucket {
     impl DdcBucket {
         #[ink(message, payable)]
         pub fn perm_trust(&mut self, trustee: AccountId) {
-            self.message_perm_trust(trustee);
+            self.message_perm_trust(trustee).unwrap();
         }
 
         #[ink(message)]

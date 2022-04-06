@@ -19,6 +19,9 @@ impl TestNode {
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
         contract.perm_trust(manager_id);
+        pop_caller();
+
+        push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
         let node_id = contract.node_create(rent_per_month, node_params, capacity);
         pop_caller();
 
