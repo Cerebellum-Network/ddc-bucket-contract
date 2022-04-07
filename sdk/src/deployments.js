@@ -5,9 +5,9 @@ const {registerContract} = require("./contractRegistry.js");
 const ddc_bucket_abi = require("./abi/ddc_bucket.json");
 
 function init() {
-    registerABI("ddc_bucket", ddc_bucket_abi, "0xdf34b3cb3607cadac49e363a787dfb1e74b47b71af0e375a4eb89f33c1168edf");
+    registerABI("ddc_bucket", ddc_bucket_abi, "0xdc6bcc300da19bf8d13f9da92addb3643079f722947e947f811487ae190331f6");
 
-    registerContract("ddc_bucket", "Cere Testnet", "5DHey2c1XfgCjiVLddwG46mhCUMSw7iSL2a8TxRZR1SjezPX");
+    registerContract("ddc_bucket", "Cere Testnet", "5HVvafs4xBbSnVDFSam9tArJrAFX8xnZALUn3cgDS5RDBufB");
 }
 
 

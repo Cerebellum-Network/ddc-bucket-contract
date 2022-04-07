@@ -28,8 +28,8 @@ async function listAll(contract, listMethod, optionalFilter) {
 }
 
 
-async function bucketListStatuses(contract, optionalFilter) {
-    return listAll(contract, "bucketListStatuses", optionalFilter);
+async function bucketList(contract, optionalFilter) {
+    return listAll(contract, "bucketList", optionalFilter);
 }
 
 async function nodeList(contract, optionalFilter) {
@@ -42,7 +42,7 @@ async function clusterList(contract, optionalFilter) {
 
 
 module.exports = {
-    bucketListStatuses,
+    bucketList,
     nodeList,
     clusterList,
 };
