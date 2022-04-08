@@ -7,3 +7,5 @@ Object.assign(module.exports, require("./contractRegistry.js"));
 Object.assign(module.exports, require("./polkadotWrappers.js"));
 module.exports.ddcBucket = require("./ddcBucket.js");
 module.exports.ddcBucketQuery = require("./ddcBucketQuery.js");
+
+module.exports.lodash = require("lodash");
