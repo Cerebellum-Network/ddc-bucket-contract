@@ -18,20 +18,21 @@ async function main() {
     log("Using contract", contract.address.toString(), "on", chainName);
 
     const clusters = await ddcBucketQuery.clusterList(contract, ACCOUNT_FILTER);
-    log("\n## Clusters");
+    log("\n## Clusters\n");
     printTable(clusters);
     //log(JSON.stringify(clusters, null, 4));
 
     const nodes = await ddcBucketQuery.nodeList(contract, ACCOUNT_FILTER);
-    log("\n## Nodes");
+    log("\n## Nodes\n");
     printTable(nodes);
     //log(JSON.stringify(nodes, null, 4));
 
     const buckets = await ddcBucketQuery.bucketList(contract, ACCOUNT_FILTER);
-    log("\n## Buckets");
+    log("\n## Buckets\n");
     printTable(buckets);
     //log(JSON.stringify(buckets, null, 4));
 
+    log("\n## Network Graph\n");
     printGraph(clusters, nodes, buckets);
 
     process.exit(0);
@@ -79,12 +80,17 @@ function printEntity(header, entity) {
     for (k of header) {
         let v = _.get(entity, k);
         if (_.isObject(v)) {
-            row.push(JSON.stringify(v).substr(0, 200));
-        } else {
-            row.push(v);
+            fixEntity(v);
+            v = JSON.stringify(v).substr(0, 200);
         }
+        row.push(v);
     }
     printRow(row);
+}
+
+// Fix some strange data that does not render well.
+function fixEntity(entity) {
+    if (entity.schedule) entity.schedule = "…";
 }
 
 function printRow(row) {
@@ -94,7 +100,6 @@ function printRow(row) {
 
 
 function printGraph(clusters, nodes, buckets) {
-    log();
     log("```mermaid");
     log("graph BT;");
     log();
