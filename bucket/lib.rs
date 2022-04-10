@@ -16,6 +16,7 @@ pub mod ddc_bucket {
     use bucket::{entity::*, store::*};
     use cash::*;
     use cluster::{entity::*, store::*};
+    use currency::CurrencyStore;
     use Error::*;
     use node::{entity::*, store::*};
     use params::{store::*};
@@ -34,6 +35,7 @@ pub mod ddc_bucket {
     pub mod params;
     pub mod admin;
     pub mod perm;
+    pub mod currency;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -47,6 +49,7 @@ pub mod ddc_bucket {
         accounts: AccountStore,
         admin_id: Lazy<AccountId>,
         perms: PermStore,
+        currency: CurrencyStore,
     }
 
     impl DdcBucket {
@@ -62,6 +65,7 @@ pub mod ddc_bucket {
                 accounts: AccountStore::default(),
                 admin_id: Lazy::new(Self::env().caller()),
                 perms: PermStore::default(),
+                currency: CurrencyStore::new(1),
             }
         }
     }
@@ -261,6 +265,21 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Admin ----
+
+
+    // ---- Currency ----
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn currency_get_conversion_rate(&self) -> Balance {
+            self.message_currency_get_conversion_rate()
+        }
+
+        #[ink(message)]
+        pub fn currency_set_conversion_rate(&mut self, rate: Balance) {
+            self.message_currency_set_conversion_rate(rate);
+        }
+    }
+    // ---- End Currency ----
 
 
     // ---- Utils ----
