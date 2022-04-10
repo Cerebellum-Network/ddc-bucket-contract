@@ -9,6 +9,7 @@ use crate::ddc_bucket::{
     schedule::Schedule,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_HASHMAP, SIZE_PER_RECORD};
+use crate::ddc_bucket::currency::{CurrencyConverter, USD};
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -43,10 +44,12 @@ impl Account {
     }
 
     pub fn get_withdrawable(&self, time_ms: u64) -> Balance {
-        let deposit = self.deposit.peek();
-        let consumed = self.payable_schedule.value_at_time(time_ms);
-        if deposit >= consumed {
-            deposit - consumed
+        let _deposit = self.deposit.peek();
+        let _consumed_usd = self.payable_schedule.value_at_time(time_ms);
+        todo!("implement currency conversion");
+        let consumed = _consumed_usd;
+        if _deposit >= consumed {
+            _deposit - consumed
         } else {
             0
         }
@@ -56,12 +59,12 @@ impl Account {
         self.payable_schedule.add_schedule(payable_schedule);
     }
 
-    pub fn schedule_covered_until(&self) -> u64 {
-        self.payable_schedule.time_of_value(self.deposit.peek())
+    pub fn schedule_covered_until(&self, deposit_usd: USD) -> u64 {
+        self.payable_schedule.time_of_value(deposit_usd)
     }
 
-    pub fn pay_scheduled(&mut self, payable: Payable) -> Result<()> {
-        self.unlock_scheduled_amount(payable.peek());
+    pub fn pay_scheduled(&mut self, payable: Payable, payable_usd: USD) -> Result<()> {
+        self.unlock_scheduled_amount(payable_usd);
         self.pay(payable)
     }
 

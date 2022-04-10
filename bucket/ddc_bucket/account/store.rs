@@ -10,13 +10,17 @@ use crate::ddc_bucket::{
     Result,
     schedule::Schedule,
 };
+use crate::ddc_bucket::currency::CurrencyConverter;
 use crate::ddc_bucket::flow::Flow;
 
 use super::entity::Account;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct AccountStore(pub HashMap<AccountId, Account>);
+pub struct AccountStore(
+    pub HashMap<AccountId, Account>,
+    pub CurrencyConverter,
+);
 
 impl AccountStore {
     /// Create a record for the given account if it does not exist yet.
@@ -61,16 +65,19 @@ impl AccountStore {
     }
 
     pub fn settle_flow(&mut self, now_ms: u64, flow: &mut Flow) -> Result<Cash> {
-        let flowed_amount = flow.schedule.take_value_at_time(now_ms);
-        let (payable, cash) = Cash::borrow_payable_cash(flowed_amount);
+        let flowed_usd = flow.schedule.take_value_at_time(now_ms);
+        let flowed_cere = self.1.to_cere(flowed_usd);
+        let (payable, cash) = Cash::borrow_payable_cash(flowed_cere);
 
         let account = self.get_mut(&flow.from)?;
-        account.pay_scheduled(payable)?;
+        account.pay_scheduled(payable, flowed_usd)?;
         Ok(cash)
     }
 
     pub fn flow_covered_until(&self, flow: &Flow) -> Result<u64> {
         let account = self.get(&flow.from)?;
-        Ok(account.schedule_covered_until())
+        let deposit_cere = account.deposit.peek();
+        let deposit_usd = self.1.to_usd(deposit_cere);
+        Ok(account.schedule_covered_until(deposit_usd))
     }
 }

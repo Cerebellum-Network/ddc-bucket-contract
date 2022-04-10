@@ -14,32 +14,33 @@ fn admin_id() -> AccountId {
 }
 
 #[ink::test]
-fn currency_init_works() {
+fn currency_conversion_init_works() {
     let contract = setup();
 
-    assert_eq!(contract.currency_get_conversion_rate(), 1,
+    assert_eq!(contract.account_get_usd_per_cere(), 1 * TOKEN,
                "conversion rate must be 1 initially");
 }
 
 #[ink::test]
-fn currency_set_works() {
+fn currency_conversion_set_rate_works() {
     let mut contract = setup();
+    let usd_per_cere = TOKEN / 10;
 
     push_caller(admin_id());
-    contract.currency_set_conversion_rate(9);
+    contract.account_set_usd_per_cere(usd_per_cere);
     pop_caller();
 
-    assert_eq!(contract.currency_get_conversion_rate(), 9,
+    assert_eq!(contract.account_get_usd_per_cere(), usd_per_cere,
                "conversion rate must be changed");
 }
 
 #[ink::test]
 #[should_panic]
-fn currency_set_only_admin() {
+fn currency_conversion_set_rate_only_admin() {
     let mut contract = setup();
     let not_admin = get_accounts().bob;
 
     push_caller(not_admin);
-    contract.currency_set_conversion_rate(9);
+    contract.account_set_usd_per_cere(9);
     pop_caller();
 }
