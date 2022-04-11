@@ -8,7 +8,7 @@ fn setup() -> DdcBucket {
     let mut contract = DdcBucket::new();
 
     push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
-    contract.admin_grant(admin_id(), Perm::SetExchangeRate);
+    contract.admin_grant_perm(admin_id(), Perm::SetExchangeRate);
     pop_caller();
 
     contract

@@ -259,8 +259,13 @@ pub mod ddc_bucket {
     // ---- Admin ----
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn admin_grant(&mut self, trustee: AccountId, perm: Perm) {
-            self.message_admin_grant(trustee, perm).unwrap();
+        pub fn admin_grant_perm(&mut self, trustee: AccountId, perm: Perm) {
+            self.message_admin_grant_perm(trustee, perm).unwrap();
+        }
+
+        #[ink(message)]
+        pub fn admin_revoke_perm(&mut self, trustee: AccountId, perm: Perm) {
+            self.message_admin_revoke_perm(trustee, perm).unwrap();
         }
 
         #[ink(message)]

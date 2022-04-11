@@ -39,7 +39,7 @@ fn admin_change_works() {
     let admin1 = get_accounts().bob;
 
     push_caller_value(admin0, CONTRACT_FEE_LIMIT);
-    contract.admin_grant(admin1, Perm::SuperAdmin);
+    contract.admin_grant_perm(admin1, Perm::SuperAdmin);
     pop_caller();
 
     push_caller(admin);
@@ -49,11 +49,40 @@ fn admin_change_works() {
 
 #[ink::test]
 #[should_panic]
-fn admin_change_only_admin() {
+fn admin_grant_only_admin() {
     let mut contract = DdcBucket::new();
     let not_admin = get_accounts().bob;
 
     push_caller_value(not_admin, CONTRACT_FEE_LIMIT);
-    contract.admin_grant(get_accounts().charlie, Perm::SuperAdmin); // panic.
+    contract.admin_grant_perm(get_accounts().charlie, Perm::SuperAdmin); // panic.
+    pop_caller();
+}
+
+#[ink::test]
+#[should_panic]
+fn admin_revoke_only_admin() {
+    let mut contract = DdcBucket::new();
+    let not_admin = get_accounts().bob;
+
+    push_caller_value(not_admin, CONTRACT_FEE_LIMIT);
+    contract.admin_revoke_perm(get_accounts().alice, Perm::SuperAdmin); // panic.
+    pop_caller();
+}
+
+#[ink::test]
+#[should_panic]
+fn admin_revoke_works() {
+    let mut contract = DdcBucket::new();
+    let admin = get_accounts().alice;
+    set_balance(contract_id(), 10);
+
+    // Revoke the permission.
+    push_caller(admin);
+    contract.admin_revoke_perm(admin, Perm::SuperAdmin);
+    pop_caller();
+
+    // Cannot withdraw because no more permission.
+    push_caller(admin);
+    contract.admin_withdraw(9); // panic.
     pop_caller();
 }

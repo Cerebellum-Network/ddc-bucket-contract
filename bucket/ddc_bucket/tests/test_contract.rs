@@ -300,7 +300,7 @@ fn bucket_pays_cluster_at_new_rate() {
 
     // Set up an exchange rate manager.
     push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
-    ctx.contract.admin_grant(admin_id(), Perm::SetExchangeRate);
+    ctx.contract.admin_grant_perm(admin_id(), Perm::SetExchangeRate);
     pop_caller();
 
     // Change the currency exchange rate.
