@@ -21,7 +21,7 @@ pub mod ddc_bucket {
     use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
-    use crate::ddc_bucket::perm::entity::Perm;
+    use crate::ddc_bucket::perm::entity::Permission;
 
     pub mod account;
     pub mod flow;
@@ -64,7 +64,7 @@ pub mod ddc_bucket {
             };
             // Make the creator of this contract a super-admin.
             let admin_id = Self::env().caller();
-            contract.perms.grant_perm(admin_id, Perm::SuperAdmin);
+            contract.perms.grant_permission(admin_id, Permission::SuperAdmin);
             contract
         }
     }
@@ -254,8 +254,8 @@ pub mod ddc_bucket {
     // ---- Permissions ----
     impl DdcBucket {
         #[ink(message)]
-        pub fn perm_has(&self, grantee: AccountId, perm: Perm) -> bool {
-            self.perms.has_perm(grantee, perm)
+        pub fn has_permission(&self, grantee: AccountId, permission: Permission) -> bool {
+            self.perms.has_permission(grantee, permission)
         }
     }
     // ---- End Permissions ----
@@ -264,13 +264,13 @@ pub mod ddc_bucket {
     // ---- Admin ----
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn admin_grant_perm(&mut self, grantee: AccountId, perm: Perm) {
-            self.message_admin_grant_perm(grantee, perm, true).unwrap();
+        pub fn admin_grant_permission(&mut self, grantee: AccountId, permission: Permission) {
+            self.message_admin_grant_permission(grantee, permission, true).unwrap();
         }
 
         #[ink(message)]
-        pub fn admin_revoke_perm(&mut self, grantee: AccountId, perm: Perm) {
-            self.message_admin_grant_perm(grantee, perm, false).unwrap();
+        pub fn admin_revoke_permission(&mut self, grantee: AccountId, permission: Permission) {
+            self.message_admin_grant_permission(grantee, permission, false).unwrap();
         }
 
         #[ink(message)]

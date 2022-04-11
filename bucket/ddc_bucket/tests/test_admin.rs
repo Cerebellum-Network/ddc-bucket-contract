@@ -8,8 +8,8 @@ use super::env_utils::*;
 fn admin_init_works() {
     let contract = setup();
 
-    assert!(contract.perm_has(admin_id(), Perm::SuperAdmin));
-    assert!(!contract.perm_has(not_admin_id(), Perm::SuperAdmin));
+    assert!(contract.has_permission(admin_id(), Permission::SuperAdmin));
+    assert!(!contract.has_permission(not_admin_id(), Permission::SuperAdmin));
 }
 
 
@@ -40,10 +40,10 @@ fn admin_grant_works() {
     let mut contract = setup();
 
     push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
-    contract.admin_grant_perm(not_admin_id(), Perm::SuperAdmin);
+    contract.admin_grant_permission(not_admin_id(), Permission::SuperAdmin);
     pop_caller();
 
-    assert!(contract.perm_has(not_admin_id(), Perm::SuperAdmin));
+    assert!(contract.has_permission(not_admin_id(), Permission::SuperAdmin));
 
     push_caller(not_admin_id());
     contract.admin_withdraw(9);
@@ -56,7 +56,7 @@ fn admin_grant_only_admin() {
     let mut contract = DdcBucket::new();
 
     push_caller_value(not_admin_id(), CONTRACT_FEE_LIMIT);
-    contract.admin_grant_perm(get_accounts().charlie, Perm::SuperAdmin); // panic.
+    contract.admin_grant_permission(get_accounts().charlie, Permission::SuperAdmin); // panic.
     pop_caller();
 }
 
@@ -68,10 +68,10 @@ fn admin_revoke_works() {
 
     // Revoke the permission.
     push_caller(admin_id());
-    contract.admin_revoke_perm(admin_id(), Perm::SuperAdmin);
+    contract.admin_revoke_permission(admin_id(), Permission::SuperAdmin);
     pop_caller();
 
-    assert!(!contract.perm_has(admin_id(), Perm::SuperAdmin));
+    assert!(!contract.has_permission(admin_id(), Permission::SuperAdmin));
 
     // Cannot withdraw because no more permission.
     push_caller(admin_id());
@@ -85,7 +85,7 @@ fn admin_revoke_only_admin() {
     let mut contract = DdcBucket::new();
 
     push_caller_value(not_admin_id(), CONTRACT_FEE_LIMIT);
-    contract.admin_revoke_perm(admin_id(), Perm::SuperAdmin); // panic.
+    contract.admin_revoke_permission(admin_id(), Permission::SuperAdmin); // panic.
     pop_caller();
 }
 

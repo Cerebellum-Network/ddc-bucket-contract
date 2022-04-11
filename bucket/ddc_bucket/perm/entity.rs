@@ -6,8 +6,8 @@ use crate::ddc_bucket::AccountId;
 
 #[derive(Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub enum Perm {
-    TrustedBy(AccountId),
+pub enum Permission {
+    ManagerTrustedBy(AccountId),
     SetExchangeRate,
     SuperAdmin,
 }

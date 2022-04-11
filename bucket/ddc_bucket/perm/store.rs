@@ -10,7 +10,7 @@ use scale::Encode;
 use crate::ddc_bucket::AccountId;
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_HASHMAP, SIZE_PER_RECORD};
 
-use super::entity::Perm;
+use super::entity::Permission;
 
 pub type TrustedBy = AccountId;
 
@@ -28,18 +28,18 @@ impl PermStore {
     pub const RECORD_SIZE: usize =
         SIZE_PER_RECORD + SIZE_HASHMAP + SIZE_ACCOUNT_ID + SIZE_ACCOUNT_ID + 1;
 
-    pub fn grant_perm(&mut self, account_id: AccountId, perm: Perm) {
-        let key = (account_id, perm).encode();
+    pub fn grant_permission(&mut self, account_id: AccountId, permission: Permission) {
+        let key = (account_id, permission).encode();
         self.0.insert(key, true);
     }
 
-    pub fn revoke_perm(&mut self, account_id: AccountId, perm: Perm) {
-        let key = (account_id, perm).encode();
+    pub fn revoke_permission(&mut self, account_id: AccountId, permission: Permission) {
+        let key = (account_id, permission).encode();
         self.0.take(&key);
     }
 
-    pub fn has_perm(&self, account_id: AccountId, perm: Perm) -> bool {
-        let key = (account_id, perm).encode();
+    pub fn has_permission(&self, account_id: AccountId, permission: Permission) -> bool {
+        let key = (account_id, permission).encode();
         self.0.contains_key(&key)
     }
 }

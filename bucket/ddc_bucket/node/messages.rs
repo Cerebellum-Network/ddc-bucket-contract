@@ -5,7 +5,7 @@ use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
 use crate::ddc_bucket::node::entity::{Node, NodeStatus, Resource};
-use crate::ddc_bucket::perm::entity::Perm;
+use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
 
 use super::entity::{NodeId, NodeParams};
@@ -13,13 +13,13 @@ use super::entity::{NodeId, NodeParams};
 impl DdcBucket {
     pub fn message_node_trust_manager(&mut self, manager: AccountId, is_trusted: bool) -> Result<()> {
         let trust_giver = Self::env().caller();
-        let perm = Perm::TrustedBy(trust_giver);
+        let perm = Permission::ManagerTrustedBy(trust_giver);
 
         if is_trusted {
-            self.perms.grant_perm(manager, perm);
+            self.perms.grant_permission(manager, perm);
             Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
         } else {
-            self.perms.revoke_perm(manager, perm);
+            self.perms.revoke_permission(manager, perm);
         }
 
         Ok(())

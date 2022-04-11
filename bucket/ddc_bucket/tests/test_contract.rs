@@ -49,6 +49,8 @@ fn new_cluster() -> TestCluster {
     for provider_id in [provider_id0, provider_id1, provider_id2] {
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
         contract.node_trust_manager(manager);
+        let expected_perm = Permission::ManagerTrustedBy(provider_id);
+        assert!(contract.has_permission(manager, expected_perm));
         pop_caller();
     }
 
@@ -300,7 +302,7 @@ fn bucket_pays_cluster_at_new_rate() {
 
     // Set up an exchange rate manager.
     push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
-    ctx.contract.admin_grant_perm(admin_id(), Perm::SetExchangeRate);
+    ctx.contract.admin_grant_permission(admin_id(), Permission::SetExchangeRate);
     pop_caller();
 
     // Change the currency exchange rate.
