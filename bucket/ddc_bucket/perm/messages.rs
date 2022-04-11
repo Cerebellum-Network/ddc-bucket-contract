@@ -19,7 +19,7 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_perm_has_trust(&mut self, trustee: AccountId, trust_giver: AccountId) -> bool {
+    pub fn message_perm_has_trust(&self, trustee: AccountId, trust_giver: AccountId) -> bool {
         let perm = Perm::TrustedBy(trust_giver);
         self.perms.has_perm(trustee, perm)
     }
