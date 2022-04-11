@@ -5,6 +5,16 @@ use crate::ddc_bucket::*;
 use super::env_utils::*;
 
 #[ink::test]
+fn admin_init_works() {
+    let contract = DdcBucket::new();
+    let admin = get_accounts().alice;
+    let not_admin = get_accounts().bob;
+
+    assert!(contract.perm_has(admin, Perm::SuperAdmin));
+    assert!(!contract.perm_has(not_admin, Perm::SuperAdmin));
+}
+
+#[ink::test]
 fn admin_withdraw_works() {
     let mut contract = DdcBucket::new();
     let admin = get_accounts().alice;
@@ -30,7 +40,7 @@ fn admin_withdraw_only_admin() {
 }
 
 #[ink::test]
-fn admin_change_works() {
+fn admin_grant_works() {
     let mut contract = DdcBucket::new();
     let admin = get_accounts().alice;
     set_balance(contract_id(), 10);
@@ -41,6 +51,8 @@ fn admin_change_works() {
     push_caller_value(admin0, CONTRACT_FEE_LIMIT);
     contract.admin_grant_perm(admin1, Perm::SuperAdmin);
     pop_caller();
+
+    assert!(contract.perm_has(admin1, Perm::SuperAdmin));
 
     push_caller(admin);
     contract.admin_withdraw(9);
@@ -80,6 +92,8 @@ fn admin_revoke_works() {
     push_caller(admin);
     contract.admin_revoke_perm(admin, Perm::SuperAdmin);
     pop_caller();
+
+    assert!(!contract.perm_has(admin, Perm::SuperAdmin));
 
     // Cannot withdraw because no more permission.
     push_caller(admin);

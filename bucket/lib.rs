@@ -252,6 +252,11 @@ pub mod ddc_bucket {
         pub fn perm_has_trust(&self, trustee: AccountId, trust_giver: AccountId) -> bool {
             self.message_perm_has_trust(trustee, trust_giver)
         }
+
+        #[ink(message)]
+        pub fn perm_has(&self, grantee: AccountId, perm: Perm) -> bool {
+            self.perms.has_perm(grantee, perm)
+        }
     }
     // ---- End Permissions ----
 
@@ -259,13 +264,13 @@ pub mod ddc_bucket {
     // ---- Admin ----
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn admin_grant_perm(&mut self, trustee: AccountId, perm: Perm) {
-            self.message_admin_grant_perm(trustee, perm).unwrap();
+        pub fn admin_grant_perm(&mut self, grantee: AccountId, perm: Perm) {
+            self.message_admin_grant_perm(grantee, perm).unwrap();
         }
 
         #[ink(message)]
-        pub fn admin_revoke_perm(&mut self, trustee: AccountId, perm: Perm) {
-            self.message_admin_revoke_perm(trustee, perm).unwrap();
+        pub fn admin_revoke_perm(&mut self, grantee: AccountId, perm: Perm) {
+            self.message_admin_revoke_perm(grantee, perm).unwrap();
         }
 
         #[ink(message)]
