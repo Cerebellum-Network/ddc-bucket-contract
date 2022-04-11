@@ -9,17 +9,16 @@ use crate::ddc_bucket::perm::entity::Perm;
 use crate::ddc_bucket::perm::store::PermStore;
 
 impl DdcBucket {
-    pub fn message_admin_grant_perm(&mut self, grantee: AccountId, perm: Perm) -> Result<()> {
+    pub fn message_admin_grant_perm(&mut self, grantee: AccountId, perm: Perm, is_granted: bool) -> Result<()> {
         self.only_with_perm(Perm::SuperAdmin)?;
-        self.perms.grant_perm(grantee, perm);
 
-        Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
-        Ok(())
-    }
+        if is_granted {
+            self.perms.grant_perm(grantee, perm);
+            Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
+        } else {
+            self.perms.revoke_perm(grantee, perm);
+        }
 
-    pub fn message_admin_revoke_perm(&mut self, grantee: AccountId, perm: Perm) -> Result<()> {
-        self.only_with_perm(Perm::SuperAdmin)?;
-        self.perms.revoke_perm(grantee, perm);
         Ok(())
     }
 

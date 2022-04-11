@@ -48,7 +48,7 @@ fn new_cluster() -> TestCluster {
 
     for provider_id in [provider_id0, provider_id1, provider_id2] {
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
-        contract.perm_trust(manager);
+        contract.node_trust_manager(manager);
         pop_caller();
     }
 

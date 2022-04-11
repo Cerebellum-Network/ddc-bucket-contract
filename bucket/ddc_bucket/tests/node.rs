@@ -18,7 +18,7 @@ impl TestNode {
         let capacity = 100;
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
-        contract.perm_trust(manager_id);
+        contract.node_trust_manager(manager_id);
         pop_caller();
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);

@@ -190,6 +190,16 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
+        pub fn node_trust_manager(&mut self, manager: AccountId) {
+            self.message_node_trust_manager(manager, true).unwrap();
+        }
+
+        #[ink(message)]
+        pub fn node_distrust_manager(&mut self, manager: AccountId) {
+            self.message_node_trust_manager(manager, false).unwrap();
+        }
+
+        #[ink(message, payable)]
         pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> NodeId {
             self.message_node_create(rent_per_month, node_params, capacity).unwrap()
         }
@@ -243,16 +253,6 @@ pub mod ddc_bucket {
 
     // ---- Permissions ----
     impl DdcBucket {
-        #[ink(message, payable)]
-        pub fn perm_trust(&mut self, trustee: AccountId) {
-            self.message_perm_trust(trustee).unwrap();
-        }
-
-        #[ink(message)]
-        pub fn perm_has_trust(&self, trustee: AccountId, trust_giver: AccountId) -> bool {
-            self.message_perm_has_trust(trustee, trust_giver)
-        }
-
         #[ink(message)]
         pub fn perm_has(&self, grantee: AccountId, perm: Perm) -> bool {
             self.perms.has_perm(grantee, perm)
@@ -265,12 +265,12 @@ pub mod ddc_bucket {
     impl DdcBucket {
         #[ink(message, payable)]
         pub fn admin_grant_perm(&mut self, grantee: AccountId, perm: Perm) {
-            self.message_admin_grant_perm(grantee, perm).unwrap();
+            self.message_admin_grant_perm(grantee, perm, true).unwrap();
         }
 
         #[ink(message)]
         pub fn admin_revoke_perm(&mut self, grantee: AccountId, perm: Perm) {
-            self.message_admin_revoke_perm(grantee, perm).unwrap();
+            self.message_admin_grant_perm(grantee, perm, false).unwrap();
         }
 
         #[ink(message)]
