@@ -9,7 +9,6 @@ use ink_lang as ink;
 #[ink::contract]
 pub mod ddc_bucket {
     use ink_prelude::vec::Vec;
-    use ink_storage::Lazy;
     use scale::{Decode, Encode};
 
     use account::store::*;
@@ -47,14 +46,13 @@ pub mod ddc_bucket {
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
-        admin_id: Lazy<AccountId>,
         perms: PermStore,
     }
 
     impl DdcBucket {
         #[ink(constructor)]
         pub fn new() -> Self {
-            Self {
+            let mut contract = Self {
                 buckets: BucketStore::default(),
                 bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
@@ -62,9 +60,12 @@ pub mod ddc_bucket {
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
-                admin_id: Lazy::new(Self::env().caller()),
                 perms: PermStore::default(),
-            }
+            };
+            // Make the creator of this contract a super-admin.
+            let admin_id = Self::env().caller();
+            contract.perms.grant_perm(admin_id, Perm::SuperAdmin);
+            contract
         }
     }
     // ---- End global state ----
@@ -257,16 +258,6 @@ pub mod ddc_bucket {
 
     // ---- Admin ----
     impl DdcBucket {
-        #[ink(message)]
-        pub fn admin_get(&self) -> AccountId {
-            *self.admin_id
-        }
-
-        #[ink(message)]
-        pub fn admin_change(&mut self, new_admin: AccountId) {
-            self.message_admin_change(new_admin).unwrap();
-        }
-
         #[ink(message, payable)]
         pub fn admin_grant(&mut self, trustee: AccountId, perm: Perm) {
             self.message_admin_grant(trustee, perm).unwrap();
@@ -274,7 +265,7 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn admin_withdraw(&mut self, amount: Balance) {
-            self.message_admin_withdraw(amount);
+            self.message_admin_withdraw(amount).unwrap();
         }
     }
     // ---- End Admin ----
@@ -300,7 +291,6 @@ pub mod ddc_bucket {
         UnauthorizedOwner,
         UnauthorizedClusterManager,
         ClusterManagerIsNotTrusted,
-        UnauthorizedAdmin,
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,

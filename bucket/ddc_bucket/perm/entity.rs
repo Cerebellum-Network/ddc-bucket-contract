@@ -9,4 +9,5 @@ use crate::ddc_bucket::AccountId;
 pub enum Perm {
     TrustedBy(AccountId),
     SetExchangeRate,
+    SuperAdmin,
 }

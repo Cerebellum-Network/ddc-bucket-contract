@@ -32,18 +32,18 @@ fn admin_withdraw_only_admin() {
 #[ink::test]
 fn admin_change_works() {
     let mut contract = DdcBucket::new();
+    let admin = get_accounts().alice;
+    set_balance(contract_id(), 10);
+
     let admin0 = get_accounts().alice;
     let admin1 = get_accounts().bob;
-    assert_eq!(contract.admin_get(), admin0);
 
-    push_caller(admin0);
-    contract.admin_change(admin1);
-    assert_eq!(contract.admin_get(), admin1);
+    push_caller_value(admin0, CONTRACT_FEE_LIMIT);
+    contract.admin_grant(admin1, Perm::SuperAdmin);
     pop_caller();
 
-    push_caller(admin1);
-    contract.admin_change(AccountId::default());
-    assert_eq!(contract.admin_get(), AccountId::default());
+    push_caller(admin);
+    contract.admin_withdraw(9);
     pop_caller();
 }
 
@@ -53,7 +53,7 @@ fn admin_change_only_admin() {
     let mut contract = DdcBucket::new();
     let not_admin = get_accounts().bob;
 
-    push_caller(not_admin);
-    contract.admin_change(get_accounts().charlie); // panic.
+    push_caller_value(not_admin, CONTRACT_FEE_LIMIT);
+    contract.admin_grant(get_accounts().charlie, Perm::SuperAdmin); // panic.
     pop_caller();
 }
