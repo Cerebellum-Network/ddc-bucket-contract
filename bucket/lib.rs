@@ -137,13 +137,13 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
         #[ink(topic)]
         node_id: NodeId,
-        partition_index: PartitionIndex,
+        vnode_index: VNodeIndex,
     }
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, manager: AccountId, partition_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> NodeId {
-            self.message_cluster_create(manager, partition_count, node_ids, cluster_params).unwrap()
+        pub fn cluster_create(&mut self, manager: AccountId, vnode_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> NodeId {
+            self.message_cluster_create(manager, vnode_count, node_ids, cluster_params).unwrap()
         }
 
         #[ink(message)]
@@ -152,8 +152,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, partition_i: PartitionIndex, new_node_id: NodeId) -> () {
-            self.message_cluster_replace_node(cluster_id, partition_i, new_node_id).unwrap()
+        pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, vnode_i: VNodeIndex, new_node_id: NodeId) -> () {
+            self.message_cluster_replace_node(cluster_id, vnode_i, new_node_id).unwrap()
         }
 
         #[ink(message)]
@@ -289,7 +289,7 @@ pub mod ddc_bucket {
     pub enum Error {
         BucketDoesNotExist,
         ClusterDoesNotExist,
-        PartitionDoesNotExist,
+        VNodeDoesNotExist,
         BucketClusterAlreadyConnected,
         BucketClusterNotSetup,
         NodeDoesNotExist,

@@ -5,8 +5,8 @@ use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, PartitionIndex};
-use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, PartitionDoesNotExist, UnauthorizedClusterManager};
+use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, VNodeIndex};
+use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, VNodeDoesNotExist, UnauthorizedClusterManager};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Perm;
 
@@ -16,7 +16,7 @@ impl DdcBucket {
     pub fn message_cluster_create(
         &mut self,
         manager: AccountId,
-        partition_count: u32,
+        vnode_count: u32,
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
@@ -31,7 +31,7 @@ impl DdcBucket {
             if !trusts { return Err(ClusterManagerIsNotTrusted); }
         }
 
-        let (cluster_id, record_size0) = self.clusters.create(manager, partition_count, &nodes);
+        let (cluster_id, record_size0) = self.clusters.create(manager, vnode_count, &nodes);
         let (params_id, recorde_size1) = self.cluster_params.create(cluster_params.clone());
         assert_eq!(cluster_id, params_id);
 
@@ -53,12 +53,12 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_cluster_replace_node(&mut self, cluster_id: ClusterId, partition_index: PartitionIndex, new_node_id: NodeId) -> Result<()> {
+    pub fn message_cluster_replace_node(&mut self, cluster_id: ClusterId, vnode_index: VNodeIndex, new_node_id: NodeId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
         Self::only_cluster_manager(cluster)?;
 
         // Give back resources to the old node.
-        let old_node_id = cluster.vnodes.get_mut(partition_index as usize).ok_or(PartitionDoesNotExist)?;
+        let old_node_id = cluster.vnodes.get_mut(vnode_index as usize).ok_or(VNodeDoesNotExist)?;
 
         self.nodes.get_mut(*old_node_id)?
             .put_resource(cluster.resource_per_vnode);
@@ -68,7 +68,7 @@ impl DdcBucket {
             .take_resource(cluster.resource_per_vnode)?;
         *old_node_id = new_node_id;
 
-        Self::env().emit_event(ClusterNodeReplaced { cluster_id, node_id: new_node_id, partition_index });
+        Self::env().emit_event(ClusterNodeReplaced { cluster_id, node_id: new_node_id, vnode_index });
         Ok(())
     }
 

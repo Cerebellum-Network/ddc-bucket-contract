@@ -23,7 +23,7 @@ struct TestCluster {
     node_id1: NodeId,
     node_id2: NodeId,
     rent_per_vnode: Balance,
-    partition_count: u32,
+    vnode_count: u32,
     node_params0: &'static str,
     node_params1: &'static str,
     node_params2: &'static str,
@@ -70,9 +70,9 @@ fn new_cluster() -> TestCluster {
 
     // Create a Cluster.
     let cluster_params = "{}";
-    let partition_count = 6;
+    let vnode_count = 6;
     push_caller_value(manager, CONTRACT_FEE_LIMIT);
-    let cluster_id = contract.cluster_create(manager, partition_count, vec![node_id0, node_id1, node_id2], cluster_params.to_string());
+    let cluster_id = contract.cluster_create(manager, vnode_count, vec![node_id0, node_id1, node_id2], cluster_params.to_string());
     pop_caller();
 
     push_caller_value(manager, 0);
@@ -80,7 +80,7 @@ fn new_cluster() -> TestCluster {
     contract.cluster_reserve_resource(cluster_id, reserved);
     pop_caller();
 
-    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2, rent_per_vnode, partition_count, node_params0, node_params1, node_params2, capacity, reserved }
+    TestCluster { contract, manager, cluster_id, provider_id0, provider_id1, provider_id2, node_id0, node_id1, node_id2, rent_per_vnode, vnode_count, node_params0, node_params1, node_params2, capacity, reserved }
 }
 
 
@@ -169,7 +169,7 @@ fn cluster_create_works() {
                 resource_per_vnode: ctx.reserved,
                 resource_used: 0,
                 revenues: Cash(0),
-                total_rent: ctx.rent_per_vnode * ctx.partition_count as Balance,
+                total_rent: ctx.rent_per_vnode * ctx.vnode_count as Balance,
             },
             params: "{}".to_string(),
         });
@@ -313,7 +313,7 @@ fn bucket_pays_cluster_at_new_rate() {
 }
 
 fn do_bucket_pays_cluster(ctx: &mut TestCluster, test_bucket: &TestBucket, usd_per_cere: Balance) -> Result<()> {
-    let expected_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
+    let expected_rent = ctx.rent_per_vnode * ctx.vnode_count as Balance;
 
     // Check the state before payment.
     let before = ctx.contract
@@ -390,7 +390,7 @@ fn bucket_create_works() {
     let test_bucket = &new_bucket(ctx);
 
     // Check the structure of the bucket including the payment flow.
-    let total_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
+    let total_rent = ctx.rent_per_vnode * ctx.vnode_count as Balance;
     let expect_bucket = Bucket {
         owner_id: test_bucket.owner_id,
         cluster_id: ctx.cluster_id,

@@ -23,7 +23,7 @@ fn storage_network_works() {
         (accounts.django, "django-1"),
         (accounts.eve, "eve-1"),
     ];
-    let partition_count = node_specs.len() as u32 * 2;
+    let vnode_count = node_specs.len() as u32 * 2;
 
     // Provide storage Nodes.
     let mut storage_nodes: Vec<TestStorage> =
@@ -39,16 +39,16 @@ fn storage_network_works() {
     let mut cluster_manager = ClusterManager::new(manager_id);
 
     // Create storage and gateway Clusters.
-    cluster_manager.create_cluster(&mut contract, STORAGE_ENGINE, partition_count);
+    cluster_manager.create_cluster(&mut contract, STORAGE_ENGINE, vnode_count);
     cluster_manager.create_cluster(&mut contract, GATEWAY_ENGINE, 1);
 
     // Create a user with a storage bucket.
     let user = TestUser::new(&mut contract, accounts.bob)?;
 
-    // Target different partitions.
-    let routing0 = (u32::MAX / partition_count as u32) * 0 + 123;
-    let routing1 = (u32::MAX / partition_count as u32) * 1 + 123;
-    let routing4 = (u32::MAX / partition_count as u32) * 4 + 123;
+    // Target different vnodes.
+    let routing0 = (u32::MAX / vnode_count as u32) * 0 + 123;
+    let routing1 = (u32::MAX / vnode_count as u32) * 1 + 123;
+    let routing4 = (u32::MAX / vnode_count as u32) * 4 + 123;
 
     let mut execute_action = |action: Action, expect_nodes: &[usize]| {
         let request = user.make_request(&contract, action).unwrap();
@@ -61,7 +61,7 @@ fn storage_network_works() {
         }
     };
 
-    // Simulate write requests to the gateway into different partitions.
+    // Simulate write requests to the gateway into different vnodes.
     execute_action(
         Action { routing_key: routing0, data: "data in shard 0".to_string(), op: Op::Write },
         &[0, 1, 2]);
@@ -99,14 +99,14 @@ fn storage_network_works() {
     let (nodes, _) = contract.node_list(0, 20, None);
     let resources: Vec<Resource> = nodes.iter().map(|n| n.node.free_resource).collect();
     const INIT: u32 = 100; // Initial capacity of each node.
-    const PART: u32 = 15; // Size of a partition.
+    const PART: u32 = 15; // Size of a vnode.
     assert_eq!(resources, vec![
         INIT, //                    Node 0 was replaced, so it got back its initial resources.
-        INIT - PART * 2, //         Nodes 1,2,3 provided 2 partitions each.
+        INIT - PART * 2, //         Nodes 1,2,3 provided 2 vnodes each.
         INIT - PART * 2, //         …
         INIT - PART * 2, //         …
-        INIT - PART * 2 - PART, //  Node4 provided 2 partitions, and it took over 1 partition from Node0.
-        INIT - PART * 2 - PART, //  Node5 provided 2 partitions, and it took over 1 partition from Node0.
+        INIT - PART * 2 - PART, //  Node4 provided 2 vnodes, and it took over 1 vnode from Node0.
+        INIT - PART * 2 - PART, //  Node5 provided 2 vnodes, and it took over 1 vnode from Node0.
         INIT - PART, // That’s the single gateway node, not related to nodes above.
     ]);
 }

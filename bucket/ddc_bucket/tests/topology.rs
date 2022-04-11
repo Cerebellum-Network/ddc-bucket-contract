@@ -3,19 +3,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Topology {
     pub engine_name: String,
-    pub partition_count: usize,
+    pub vnode_count: usize,
     pub ring_tokens: Vec<u32>,
 }
 
 impl Topology {
-    pub fn new(engine_name: &str, partition_count: u32) -> Self {
-        let ring_tokens = (1..1 + partition_count).map(|i| {
-            (u32::MAX / partition_count) * i as u32
+    pub fn new(engine_name: &str, vnode_count: u32) -> Self {
+        let ring_tokens = (1..1 + vnode_count).map(|i| {
+            (u32::MAX / vnode_count) * i as u32
         }).collect();
 
         Self {
             engine_name: engine_name.to_string(),
-            partition_count: partition_count as usize,
+            vnode_count: vnode_count as usize,
             ring_tokens,
         }
     }
@@ -32,7 +32,7 @@ impl Topology {
         let first = self.get_segment_index(routing_key);
 
         (0..replication as usize).map(|i| {
-            (first + i) % self.partition_count
+            (first + i) % self.vnode_count
         }).collect()
     }
 
