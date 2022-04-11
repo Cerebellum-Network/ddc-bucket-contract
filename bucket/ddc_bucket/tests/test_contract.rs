@@ -8,6 +8,10 @@ use crate::ddc_bucket::schedule::{MS_PER_MONTH, Schedule};
 
 use super::env_utils::*;
 
+fn admin_id() -> AccountId {
+    get_accounts().alice
+}
+
 struct TestCluster {
     contract: DdcBucket,
     manager: AccountId,
@@ -294,9 +298,14 @@ fn bucket_pays_cluster_at_new_rate() {
     let ctx = &mut new_cluster();
     let test_bucket = &new_bucket(ctx);
 
+    // Set up an exchange rate manager.
+    push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
+    ctx.contract.admin_grant(admin_id(), Perm::SetExchangeRate);
+    pop_caller();
+
     // Change the currency exchange rate.
     let usd_per_cere = 2;
-    push_caller(get_accounts().alice);
+    push_caller(admin_id());
     ctx.contract.account_set_usd_per_cere(usd_per_cere * TOKEN);
     pop_caller();
 

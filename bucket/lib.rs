@@ -22,6 +22,7 @@ pub mod ddc_bucket {
     use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
+    use crate::ddc_bucket::perm::entity::Perm;
 
     pub mod account;
     pub mod flow;
@@ -263,7 +264,12 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn admin_change(&mut self, new_admin: AccountId) {
-            self.message_admin_change(new_admin);
+            self.message_admin_change(new_admin).unwrap();
+        }
+
+        #[ink(message, payable)]
+        pub fn admin_grant(&mut self, trustee: AccountId, perm: Perm) {
+            self.message_admin_grant(trustee, perm).unwrap();
         }
 
         #[ink(message)]
@@ -298,6 +304,7 @@ pub mod ddc_bucket {
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
+        Unauthorized,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

@@ -5,7 +5,12 @@ use crate::ddc_bucket::*;
 use super::env_utils::*;
 
 fn setup() -> DdcBucket {
-    let contract = DdcBucket::new();
+    let mut contract = DdcBucket::new();
+
+    push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
+    contract.admin_grant(admin_id(), Perm::SetExchangeRate);
+    pop_caller();
+
     contract
 }
 
