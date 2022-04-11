@@ -50,7 +50,8 @@ impl DdcBucket {
             .ok_or(InsufficientBalance)?;
 
         let time_ms = Self::env().block_timestamp();
-        account.withdraw(time_ms, payable)?;
+        let conv = &self.accounts.1;
+        account.withdraw(time_ms, conv, payable)?;
         Ok(())
     }
 
@@ -59,7 +60,8 @@ impl DdcBucket {
             None => 0,
             Some(account) => {
                 let time_ms = Self::env().block_timestamp();
-                account.get_withdrawable(time_ms)
+                let conv = &self.accounts.1;
+                account.get_withdrawable(time_ms, conv)
             }
         }
     }

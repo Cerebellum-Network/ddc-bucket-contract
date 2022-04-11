@@ -9,7 +9,7 @@ use crate::ddc_bucket::{
     schedule::Schedule,
 };
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_HASHMAP, SIZE_PER_RECORD};
-use crate::ddc_bucket::currency::USD;
+use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -34,8 +34,8 @@ impl Account {
         self.deposit.increase(cash);
     }
 
-    pub fn withdraw(&mut self, time_ms: u64, payable: Payable) -> Result<()> {
-        if self.get_withdrawable(time_ms) >= payable.peek() {
+    pub fn withdraw(&mut self, time_ms: u64, conv: &CurrencyConverter, payable: Payable) -> Result<()> {
+        if self.get_withdrawable(time_ms, conv) >= payable.peek() {
             self.deposit.pay_unchecked(payable);
             Ok(())
         } else {
@@ -43,13 +43,12 @@ impl Account {
         }
     }
 
-    pub fn get_withdrawable(&self, time_ms: u64) -> Balance {
-        let _deposit = self.deposit.peek();
-        let _consumed_usd = self.payable_schedule.value_at_time(time_ms);
-        todo!("implement currency conversion");
-        let consumed = _consumed_usd;
-        if _deposit >= consumed {
-            _deposit - consumed
+    pub fn get_withdrawable(&self, time_ms: u64, conv: &CurrencyConverter) -> Balance {
+        let deposit = self.deposit.peek();
+        let consumed_usd = self.payable_schedule.value_at_time(time_ms);
+        let consumed = conv.to_cere(consumed_usd);
+        if deposit >= consumed {
+            deposit - consumed
         } else {
             0
         }
