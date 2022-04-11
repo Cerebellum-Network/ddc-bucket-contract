@@ -248,7 +248,7 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn perm_has_trust(&mut self, trustee: AccountId, trust_giver: AccountId) -> bool {
-            self.perms.has_perm(trustee, trust_giver)
+            self.message_perm_has_trust(trustee, trust_giver)
         }
     }
     // ---- End Permissions ----
