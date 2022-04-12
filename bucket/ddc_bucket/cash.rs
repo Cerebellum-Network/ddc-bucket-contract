@@ -71,9 +71,9 @@ impl ::scale_info::TypeInfo for Cash {
                 "ddc_bucket::ddc_bucket::cash",
             ))
             .type_params([])
-            .composite(
-                ::scale_info::build::Fields::named()
-                    .field_of::<Balance>("value", "Balance"),
-            )
+            .docs(&["Cash represents some value that was taken from someone, and that must be credited to someone."])
+            .composite(::scale_info::build::Fields::named().field(|f| {
+                f.ty::<Balance>().name("value").type_name("Balance").docs(&[])
+            }))
     }
 }
