@@ -1,9 +1,6 @@
 //! The store to create and access Accounts.
 
-use ink_storage::{
-    collections::{HashMap, hashmap::Entry::*},
-    traits,
-};
+use ink_storage::{collections::{HashMap, hashmap::Entry::*}, traits, Lazy};
 
 use crate::ddc_bucket::{
     AccountId, Balance, cash::Cash, Error::*,
@@ -19,7 +16,7 @@ use super::entity::Account;
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct AccountStore(
     pub HashMap<AccountId, Account>,
-    pub CurrencyConverter,
+    pub Lazy<CurrencyConverter>,
 );
 
 impl AccountStore {
