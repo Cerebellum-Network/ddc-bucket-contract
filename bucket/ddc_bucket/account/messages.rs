@@ -2,11 +2,8 @@
 
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{
-    AccountId, Balance, Cash,
-    contract_fee::calculate_contract_fee,
-    DdcBucket, Deposit, InsufficientBalance, Payable, Result,
-};
+use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, DdcBucket, Deposit, InsufficientBalance, Payable, Result, TOKEN};
+use crate::ddc_bucket::perm::entity::Perm;
 
 impl DdcBucket {
     pub fn message_account_deposit(&mut self) -> Result<()> {
@@ -24,6 +21,15 @@ impl DdcBucket {
             .get_mut(&account_id)?
             .deposit(cash);
         Ok(())
+    }
+
+    pub fn message_account_get_usd_per_cere(&self) -> Balance {
+        self.accounts.1.to_usd(1 * TOKEN)
+    }
+
+    pub fn message_account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
+        self.only_with_perm(Perm::SetExchangeRate).unwrap();
+        self.accounts.1.set_usd_per_cere(usd_per_cere)
     }
 
     pub fn receive_cash() -> Cash {
@@ -44,7 +50,8 @@ impl DdcBucket {
             .ok_or(InsufficientBalance)?;
 
         let time_ms = Self::env().block_timestamp();
-        account.withdraw(time_ms, payable)?;
+        let conv = &self.accounts.1;
+        account.withdraw(time_ms, conv, payable)?;
         Ok(())
     }
 
@@ -53,7 +60,8 @@ impl DdcBucket {
             None => 0,
             Some(account) => {
                 let time_ms = Self::env().block_timestamp();
-                account.get_withdrawable(time_ms)
+                let conv = &self.accounts.1;
+                account.get_withdrawable(time_ms, conv)
             }
         }
     }

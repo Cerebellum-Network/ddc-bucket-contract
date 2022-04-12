@@ -8,6 +8,10 @@ use crate::ddc_bucket::schedule::{MS_PER_MONTH, Schedule};
 
 use super::env_utils::*;
 
+fn admin_id() -> AccountId {
+    get_accounts().alice
+}
+
 struct TestCluster {
     contract: DdcBucket,
     manager: AccountId,
@@ -286,7 +290,29 @@ fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
 fn bucket_pays_cluster() {
     let ctx = &mut new_cluster();
     let test_bucket = &new_bucket(ctx);
+    do_bucket_pays_cluster(ctx, test_bucket, 1).unwrap();
+}
 
+#[ink::test]
+fn bucket_pays_cluster_at_new_rate() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+
+    // Set up an exchange rate manager.
+    push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
+    ctx.contract.admin_grant(admin_id(), Perm::SetExchangeRate);
+    pop_caller();
+
+    // Change the currency exchange rate.
+    let usd_per_cere = 2;
+    push_caller(admin_id());
+    ctx.contract.account_set_usd_per_cere(usd_per_cere * TOKEN);
+    pop_caller();
+
+    do_bucket_pays_cluster(ctx, test_bucket, usd_per_cere).unwrap();
+}
+
+fn do_bucket_pays_cluster(ctx: &mut TestCluster, test_bucket: &TestBucket, usd_per_cere: Balance) -> Result<()> {
     let expected_rent = ctx.rent_per_vnode * ctx.partition_count as Balance;
 
     // Check the state before payment.
@@ -315,12 +341,14 @@ fn bucket_pays_cluster() {
                    schedule: Schedule::new(BLOCK_TIME, expected_rent),
                });
 
-    let expect_revenues = expected_rent * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
+    let expect_revenues_usd = expected_rent * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
+    let expect_revenues = expect_revenues_usd / usd_per_cere;
     assert!(expect_revenues > 0);
     assert_eq!(expect_revenues, spent, "revenues must come from the bucket owner");
 
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(cluster.revenues.peek(), expect_revenues, "must get revenues into the cluster");
+    Ok(())
 }
 
 

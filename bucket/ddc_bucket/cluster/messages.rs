@@ -8,6 +8,7 @@ use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, PartitionIndex};
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, PartitionDoesNotExist, UnauthorizedClusterManager};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
+use crate::ddc_bucket::perm::entity::Perm;
 
 use super::entity::{ClusterId, ClusterParams};
 
@@ -25,7 +26,8 @@ impl DdcBucket {
             nodes.push((node_id, node));
 
             // Verify that the node provider trusts the cluster manager.
-            let trusts = self.perms.has_perm(manager, node.provider_id);
+            let perm = Perm::TrustedBy(node.provider_id);
+            let trusts = self.perms.has_perm(manager, perm);
             if !trusts { return Err(ClusterManagerIsNotTrusted); }
         }
 

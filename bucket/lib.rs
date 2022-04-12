@@ -22,6 +22,7 @@ pub mod ddc_bucket {
     use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
+    use crate::ddc_bucket::perm::entity::Perm;
 
     pub mod account;
     pub mod flow;
@@ -34,6 +35,7 @@ pub mod ddc_bucket {
     pub mod params;
     pub mod admin;
     pub mod perm;
+    pub mod currency;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -224,6 +226,16 @@ pub mod ddc_bucket {
         pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
             Ok(self.accounts.get(&account_id)?.clone())
         }
+
+        #[ink(message)]
+        pub fn account_get_usd_per_cere(&self) -> Balance {
+            self.message_account_get_usd_per_cere()
+        }
+
+        #[ink(message)]
+        pub fn account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
+            self.message_account_set_usd_per_cere(usd_per_cere);
+        }
     }
     // ---- End Billing ----
 
@@ -237,7 +249,7 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn perm_has_trust(&mut self, trustee: AccountId, trust_giver: AccountId) -> bool {
-            self.perms.has_perm(trustee, trust_giver)
+            self.message_perm_has_trust(trustee, trust_giver)
         }
     }
     // ---- End Permissions ----
@@ -252,7 +264,12 @@ pub mod ddc_bucket {
 
         #[ink(message)]
         pub fn admin_change(&mut self, new_admin: AccountId) {
-            self.message_admin_change(new_admin);
+            self.message_admin_change(new_admin).unwrap();
+        }
+
+        #[ink(message, payable)]
+        pub fn admin_grant(&mut self, trustee: AccountId, perm: Perm) {
+            self.message_admin_grant(trustee, perm).unwrap();
         }
 
         #[ink(message)]
@@ -287,6 +304,7 @@ pub mod ddc_bucket {
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
+        Unauthorized,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;
