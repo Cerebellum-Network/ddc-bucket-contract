@@ -9,7 +9,6 @@ use ink_lang as ink;
 #[ink::contract]
 pub mod ddc_bucket {
     use ink_prelude::vec::Vec;
-    use ink_storage::Lazy;
     use scale::{Decode, Encode};
 
     use account::store::*;
@@ -22,7 +21,7 @@ pub mod ddc_bucket {
     use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
-    use crate::ddc_bucket::perm::entity::Perm;
+    use crate::ddc_bucket::perm::entity::Permission;
 
     pub mod account;
     pub mod flow;
@@ -47,14 +46,13 @@ pub mod ddc_bucket {
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
-        admin_id: Lazy<AccountId>,
         perms: PermStore,
     }
 
     impl DdcBucket {
         #[ink(constructor)]
         pub fn new() -> Self {
-            Self {
+            let mut contract = Self {
                 buckets: BucketStore::default(),
                 bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
@@ -62,9 +60,12 @@ pub mod ddc_bucket {
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
-                admin_id: Lazy::new(Self::env().caller()),
                 perms: PermStore::default(),
-            }
+            };
+            // Make the creator of this contract a super-admin.
+            let admin_id = Self::env().caller();
+            contract.perms.grant_permission(admin_id, Permission::SuperAdmin);
+            contract
         }
     }
     // ---- End global state ----
@@ -189,6 +190,16 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
+        pub fn node_trust_manager(&mut self, manager: AccountId) {
+            self.message_node_trust_manager(manager, true).unwrap();
+        }
+
+        #[ink(message)]
+        pub fn node_distrust_manager(&mut self, manager: AccountId) {
+            self.message_node_trust_manager(manager, false).unwrap();
+        }
+
+        #[ink(message, payable)]
         pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> NodeId {
             self.message_node_create(rent_per_month, node_params, capacity).unwrap()
         }
@@ -242,14 +253,9 @@ pub mod ddc_bucket {
 
     // ---- Permissions ----
     impl DdcBucket {
-        #[ink(message, payable)]
-        pub fn perm_trust(&mut self, trustee: AccountId) {
-            self.message_perm_trust(trustee).unwrap();
-        }
-
         #[ink(message)]
-        pub fn perm_has_trust(&self, trustee: AccountId, trust_giver: AccountId) -> bool {
-            self.message_perm_has_trust(trustee, trust_giver)
+        pub fn has_permission(&self, grantee: AccountId, permission: Permission) -> bool {
+            self.perms.has_permission(grantee, permission)
         }
     }
     // ---- End Permissions ----
@@ -257,24 +263,19 @@ pub mod ddc_bucket {
 
     // ---- Admin ----
     impl DdcBucket {
-        #[ink(message)]
-        pub fn admin_get(&self) -> AccountId {
-            *self.admin_id
-        }
-
-        #[ink(message)]
-        pub fn admin_change(&mut self, new_admin: AccountId) {
-            self.message_admin_change(new_admin).unwrap();
-        }
-
         #[ink(message, payable)]
-        pub fn admin_grant(&mut self, trustee: AccountId, perm: Perm) {
-            self.message_admin_grant(trustee, perm).unwrap();
+        pub fn admin_grant_permission(&mut self, grantee: AccountId, permission: Permission) {
+            self.message_admin_grant_permission(grantee, permission, true).unwrap();
+        }
+
+        #[ink(message)]
+        pub fn admin_revoke_permission(&mut self, grantee: AccountId, permission: Permission) {
+            self.message_admin_grant_permission(grantee, permission, false).unwrap();
         }
 
         #[ink(message)]
         pub fn admin_withdraw(&mut self, amount: Balance) {
-            self.message_admin_withdraw(amount);
+            self.message_admin_withdraw(amount).unwrap();
         }
     }
     // ---- End Admin ----
@@ -300,7 +301,6 @@ pub mod ddc_bucket {
         UnauthorizedOwner,
         UnauthorizedClusterManager,
         ClusterManagerIsNotTrusted,
-        UnauthorizedAdmin,
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,

@@ -3,7 +3,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, DdcBucket, Deposit, InsufficientBalance, Payable, Result, TOKEN};
-use crate::ddc_bucket::perm::entity::Perm;
+use crate::ddc_bucket::perm::entity::Permission;
 
 impl DdcBucket {
     pub fn message_account_deposit(&mut self) -> Result<()> {
@@ -28,7 +28,7 @@ impl DdcBucket {
     }
 
     pub fn message_account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
-        self.only_with_perm(Perm::SetExchangeRate).unwrap();
+        self.only_with_permission(Permission::SetExchangeRate).unwrap();
         self.accounts.1.set_usd_per_cere(usd_per_cere)
     }
 

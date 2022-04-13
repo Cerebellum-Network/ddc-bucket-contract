@@ -5,12 +5,19 @@ use crate::ddc_bucket::*;
 use super::env_utils::*;
 
 #[ink::test]
-fn admin_withdraw_works() {
-    let mut contract = DdcBucket::new();
-    let admin = get_accounts().alice;
-    set_balance(contract_id(), 10);
+fn admin_init_works() {
+    let contract = setup();
 
-    push_caller(admin);
+    assert!(contract.has_permission(admin_id(), Permission::SuperAdmin));
+    assert!(!contract.has_permission(not_admin_id(), Permission::SuperAdmin));
+}
+
+
+#[ink::test]
+fn admin_withdraw_works() {
+    let mut contract = setup();
+
+    push_caller(admin_id());
     contract.admin_withdraw(9);
     pop_caller();
 
@@ -20,40 +27,75 @@ fn admin_withdraw_works() {
 #[ink::test]
 #[should_panic]
 fn admin_withdraw_only_admin() {
-    let mut contract = DdcBucket::new();
-    let not_admin = get_accounts().bob;
-    set_balance(contract_id(), 10);
+    let mut contract = setup();
 
-    push_caller(not_admin);
+    push_caller(not_admin_id());
     contract.admin_withdraw(9); // panic.
     pop_caller();
 }
 
-#[ink::test]
-fn admin_change_works() {
-    let mut contract = DdcBucket::new();
-    let admin0 = get_accounts().alice;
-    let admin1 = get_accounts().bob;
-    assert_eq!(contract.admin_get(), admin0);
 
-    push_caller(admin0);
-    contract.admin_change(admin1);
-    assert_eq!(contract.admin_get(), admin1);
+#[ink::test]
+fn admin_grant_works() {
+    let mut contract = setup();
+
+    push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
+    contract.admin_grant_permission(not_admin_id(), Permission::SuperAdmin);
     pop_caller();
 
-    push_caller(admin1);
-    contract.admin_change(AccountId::default());
-    assert_eq!(contract.admin_get(), AccountId::default());
+    assert!(contract.has_permission(not_admin_id(), Permission::SuperAdmin));
+
+    push_caller(not_admin_id());
+    contract.admin_withdraw(9);
     pop_caller();
 }
 
 #[ink::test]
 #[should_panic]
-fn admin_change_only_admin() {
+fn admin_grant_only_admin() {
     let mut contract = DdcBucket::new();
-    let not_admin = get_accounts().bob;
 
-    push_caller(not_admin);
-    contract.admin_change(get_accounts().charlie); // panic.
+    push_caller_value(not_admin_id(), CONTRACT_FEE_LIMIT);
+    contract.admin_grant_permission(get_accounts().charlie, Permission::SuperAdmin); // panic.
     pop_caller();
 }
+
+
+#[ink::test]
+#[should_panic]
+fn admin_revoke_works() {
+    let mut contract = setup();
+
+    // Revoke the permission.
+    push_caller(admin_id());
+    contract.admin_revoke_permission(admin_id(), Permission::SuperAdmin);
+    pop_caller();
+
+    assert!(!contract.has_permission(admin_id(), Permission::SuperAdmin));
+
+    // Cannot withdraw because no more permission.
+    push_caller(admin_id());
+    contract.admin_withdraw(9); // panic.
+    pop_caller();
+}
+
+#[ink::test]
+#[should_panic]
+fn admin_revoke_only_admin() {
+    let mut contract = DdcBucket::new();
+
+    push_caller_value(not_admin_id(), CONTRACT_FEE_LIMIT);
+    contract.admin_revoke_permission(admin_id(), Permission::SuperAdmin); // panic.
+    pop_caller();
+}
+
+
+fn setup() -> DdcBucket {
+    let contract = DdcBucket::new();
+    set_balance(contract_id(), 10);
+    contract
+}
+
+fn admin_id() -> AccountId { get_accounts().alice }
+
+fn not_admin_id() -> AccountId { get_accounts().bob }

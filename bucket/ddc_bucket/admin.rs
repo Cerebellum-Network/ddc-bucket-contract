@@ -1,41 +1,29 @@
 //! The privileged interface for admin tasks.
 
-use ink_lang::StaticEnv;
-
 use crate::ddc_bucket::{
     AccountId, Balance, Cash,
-    DdcBucket, Error::UnauthorizedAdmin,
+    DdcBucket,
     Result,
 };
-use crate::ddc_bucket::perm::entity::Perm;
+use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
 
 impl DdcBucket {
-    pub fn message_admin_withdraw(&mut self, amount: Balance) {
-        let admin = self.only_admin().unwrap();
-        Self::send_cash(admin, Cash(amount)).unwrap();
-    }
+    pub fn message_admin_grant_permission(&mut self, grantee: AccountId, permission: Permission, is_granted: bool) -> Result<()> {
+        self.only_with_permission(Permission::SuperAdmin)?;
 
-    pub fn message_admin_change(&mut self, new_admin: AccountId) -> Result<()> {
-        self.only_admin()?;
-        *self.admin_id = new_admin;
-        Ok(())
-    }
-
-    pub fn message_admin_grant(&mut self, trustee: AccountId, perm: Perm) -> Result<()> {
-        let _ = self.only_admin()?;
-        self.perms.grant_perm(trustee, perm);
-
-        Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
-        Ok(())
-    }
-
-    pub fn only_admin(&self) -> Result<AccountId> {
-        let admin = Self::env().caller();
-        if admin == *self.admin_id {
-            Ok(admin)
+        if is_granted {
+            self.perms.grant_permission(grantee, permission);
+            Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
         } else {
-            Err(UnauthorizedAdmin)
+            self.perms.revoke_permission(grantee, permission);
         }
+
+        Ok(())
+    }
+
+    pub fn message_admin_withdraw(&mut self, amount: Balance) -> Result<()> {
+        let admin = self.only_with_permission(Permission::SuperAdmin)?;
+        Self::send_cash(admin, Cash(amount))
     }
 }
