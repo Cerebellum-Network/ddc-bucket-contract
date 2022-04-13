@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::ddc_bucket::{AccountId, DdcBucket};
-use crate::ddc_bucket::cluster::entity::{PartitionId, PartitionIndex};
+use crate::ddc_bucket::cluster::entity::{VNodeId, VNodeIndex};
 use crate::ddc_bucket::node::entity::{NodeId, Resource};
 use crate::ddc_bucket::tests::as_storage::STORAGE_ENGINE;
 use crate::ddc_bucket::tests::env_utils::{CONTRACT_FEE_LIMIT, pop_caller, push_caller_value};
@@ -24,7 +24,7 @@ impl ClusterManager {
         Self { account_id, node_states: Default::default() }
     }
 
-    pub fn create_cluster(&self, contract: &mut DdcBucket, engine_name: &str, partition_count: u32) {
+    pub fn create_cluster(&self, contract: &mut DdcBucket, engine_name: &str, vnode_count: u32) {
         let (nodes, count) = contract.node_list(0, 20, None);
         if count > 20 { unimplemented!("full iteration of contract entities") }
         let node_ids = nodes.iter()
@@ -32,12 +32,12 @@ impl ClusterManager {
             .map(|n| n.node_id)
             .collect();
 
-        let topology = Topology::new(engine_name, partition_count);
+        let topology = Topology::new(engine_name, vnode_count);
 
         push_caller_value(self.account_id, CONTRACT_FEE_LIMIT);
         let _id = contract.cluster_create(
             self.account_id,
-            partition_count,
+            vnode_count,
             node_ids,
             topology.to_string().unwrap(),
         );
@@ -54,18 +54,18 @@ impl ClusterManager {
     pub fn replace_node(&mut self, contract: &mut DdcBucket, old_node_id: NodeId) {
         self.node_states.insert(old_node_id, NodeState::Dead);
 
-        let partition_ids = self.find_partitions_of_node(contract, old_node_id);
+        let vnode_ids = self.find_vnodes_of_node(contract, old_node_id);
 
-        for (cluster_id, partition_i) in partition_ids.iter() {
+        for (cluster_id, vnode_i) in vnode_ids.iter() {
             let resource_needed = contract.cluster_get(*cluster_id).unwrap()
                 .cluster.resource_per_vnode;
             let new_node_id = self.find_best_storage_node(contract, resource_needed);
-            contract.cluster_replace_node(*cluster_id, *partition_i, new_node_id);
+            contract.cluster_replace_node(*cluster_id, *vnode_i, new_node_id);
         }
     }
 
-    pub fn find_partitions_of_node(&self, contract: &DdcBucket, node_id: NodeId) -> Vec<PartitionId> {
-        let mut partition_ids = Vec::new();
+    pub fn find_vnodes_of_node(&self, contract: &DdcBucket, node_id: NodeId) -> Vec<VNodeId> {
+        let mut vnode_ids = Vec::new();
 
         // Discover the available clusters.
         let (clusters, count) = contract.cluster_list(0, 20, None);
@@ -78,13 +78,13 @@ impl ClusterManager {
 
             for (index, &some_node_id) in cluster.cluster.vnodes.iter().enumerate() {
                 if some_node_id == node_id {
-                    let partition_id = (cluster.cluster_id, index as PartitionIndex);
-                    partition_ids.push(partition_id);
+                    let vnode_id = (cluster.cluster_id, index as VNodeIndex);
+                    vnode_ids.push(vnode_id);
                 }
             }
         }
 
-        partition_ids
+        vnode_ids
     }
 
     pub fn find_best_storage_node(&self, contract: &DdcBucket, resource_needed: Resource) -> NodeId {

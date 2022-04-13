@@ -13,8 +13,8 @@ use crate::ddc_bucket::params::store::Params;
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;
-pub type PartitionIndex = u32;
-pub type PartitionId = (ClusterId, PartitionIndex);
+pub type VNodeIndex = u32;
+pub type VNodeId = (ClusterId, VNodeIndex);
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]

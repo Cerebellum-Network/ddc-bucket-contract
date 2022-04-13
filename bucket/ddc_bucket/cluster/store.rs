@@ -21,11 +21,11 @@ impl ClusterStore {
     pub fn create(
         &mut self,
         manager_id: AccountId,
-        partition_count: u32,
+        vnode_count: u32,
         nodes: &[(NodeId, &Node)],
     ) -> (ClusterId, usize) {
         let cluster_id = self.0.len();
-        let (vnodes, total_rent) = Self::new_vnodes(partition_count as usize, nodes);
+        let (vnodes, total_rent) = Self::new_vnodes(vnode_count as usize, nodes);
         let cluster = Cluster {
             manager_id,
             vnodes,
@@ -39,11 +39,11 @@ impl ClusterStore {
         (cluster_id, record_size)
     }
 
-    fn new_vnodes(partition_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {
+    fn new_vnodes(vnode_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {
         let node_count = nodes.len();
-        let mut vnode_ids = Vec::with_capacity(partition_count);
+        let mut vnode_ids = Vec::with_capacity(vnode_count);
         let mut total_rent = 0;
-        for i in 0..partition_count {
+        for i in 0..vnode_count {
             let (node_id, node) = &nodes[i % node_count];
             vnode_ids.push(*node_id);
             total_rent += node.rent_per_month;
