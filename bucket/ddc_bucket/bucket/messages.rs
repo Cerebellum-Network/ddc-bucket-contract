@@ -3,7 +3,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{vec, vec::Vec};
 
-use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
 
@@ -48,6 +48,7 @@ impl DdcBucket {
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
         cluster.revenues.increase(cash);
 
+        Self::env().emit_event(BucketSettlePayment { bucket_id, cluster_id: bucket.cluster_id });
         Ok(())
     }
 

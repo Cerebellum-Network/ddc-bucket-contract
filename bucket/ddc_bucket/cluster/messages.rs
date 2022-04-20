@@ -3,10 +3,10 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterNodeReplaced, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterNodeReplaced, ClusterReserveResource, DdcBucket, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, VNodeIndex};
-use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, VNodeDoesNotExist, UnauthorizedClusterManager};
+use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager, VNodeDoesNotExist};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 
@@ -50,6 +50,7 @@ impl DdcBucket {
             node.take_resource(amount)?;
         }
 
+        Self::env().emit_event(ClusterReserveResource { cluster_id });
         Ok(())
     }
 
@@ -81,6 +82,8 @@ impl DdcBucket {
         for node_id in &cluster.vnodes {
             let node = self.nodes.get(*node_id)?;
             Self::send_cash(node.provider_id, Cash(per_share))?;
+
+            Self::env().emit_event(ClusterDistributeRevenues { cluster_id, provider_id: node.provider_id });
         }
 
         // TODO: set a maximum node count, or support paging.

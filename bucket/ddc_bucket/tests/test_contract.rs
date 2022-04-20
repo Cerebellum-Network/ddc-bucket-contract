@@ -178,7 +178,7 @@ fn cluster_create_works() {
     }
 
     // Check the events.
-    let mut evs = get_events(4);
+    let mut evs = get_events();
     evs.reverse(); // Work with pop().
 
     // Node created 0.
@@ -196,6 +196,11 @@ fn cluster_create_works() {
     // Cluster setup.
     assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
         ClusterCreated { cluster_id: ctx.cluster_id, manager: ctx.manager, cluster_params: "{}".to_string() }));
+
+    assert!(matches!(evs.pop().unwrap(), Event::ClusterReserveResource(ev) if ev ==
+        ClusterReserveResource { cluster_id: ctx.cluster_id }));
+
+    assert_eq!(evs.len(), 0, "all events must be checked");
 }
 
 
@@ -206,6 +211,11 @@ fn cluster_replace_node_works() {
 
     // Reassign a vnode from node1 to node2.
     ctx.contract.cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2);
+
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::ClusterNodeReplaced(ev) if ev ==
+        ClusterNodeReplaced { cluster_id: ctx.cluster_id, node_id: ctx.node_id2, vnode_index: 1 }));
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
@@ -234,6 +244,11 @@ fn cluster_reserve_works() {
 
     // Reserve more resources.
     ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
+
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::ClusterReserveResource(ev) if ev ==
+        ClusterReserveResource { cluster_id: ctx.cluster_id }));
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
@@ -331,6 +346,11 @@ fn do_bucket_pays_cluster(ctx: &mut TestCluster, test_bucket: &TestBucket, usd_p
 
     bucket_settle_payment(ctx, &test_bucket);
 
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::BucketSettlePayment(ev) if ev ==
+        BucketSettlePayment {  bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id }));
+
     // Check the state after payment.
     let after = ctx.contract
         .account_get(test_bucket.owner_id)?
@@ -350,6 +370,7 @@ fn do_bucket_pays_cluster(ctx: &mut TestCluster, test_bucket: &TestBucket, usd_p
 
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
     assert_eq!(cluster.revenues.peek(), expect_revenues, "must get revenues into the cluster");
+
     Ok(())
 }
 
@@ -367,8 +388,24 @@ fn cluster_pays_providers() {
     let before1 = balance_of(ctx.provider_id1);
     let before2 = balance_of(ctx.provider_id2);
 
+    let skip_events = get_events::<Event>().len();
+
     // Distribute the revenues of the cluster to providers.
     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
+
+    // Check the last events.
+    let mut evs = get_events();
+    evs.reverse(); // Work with pop().
+    evs.truncate(evs.len() - skip_events);
+    let expected_recipients = vec![
+        ctx.provider_id0, ctx.provider_id1, ctx.provider_id2,
+        ctx.provider_id0, ctx.provider_id1, ctx.provider_id2,
+    ];
+    for provider_id in expected_recipients {
+        assert!(matches!(evs.pop().unwrap(), Event::ClusterDistributeRevenues(ev) if ev ==
+            ClusterDistributeRevenues { cluster_id: ctx.cluster_id, provider_id }));
+    }
+    assert_eq!(evs.len(), 0, "all events must be checked");
 
     // Get state after the distribution.
     let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?
@@ -413,9 +450,9 @@ fn bucket_create_works() {
         rent_covered_until_ms: 446400000, // TODO: check this value.
     });
 
-    let mut evs = get_events(7);
+    let mut evs = get_events();
     evs.reverse(); // Work with pop().
-    evs.truncate(7 - 3 - 1); // Skip 3 NodeCreated and 1 ClusterCreated events.
+    evs.truncate(8 - 3 - 2); // Skip 3 NodeCreated and 2 cluster setup events.
 
     // Create bucket.
     assert!(matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
@@ -428,6 +465,8 @@ fn bucket_create_works() {
     let net_deposit = 10 * TOKEN;
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id: test_bucket.owner_id, value: net_deposit }));
+
+    assert_eq!(evs.len(), 0, "all events must be checked");
 }
 
 
@@ -467,7 +506,7 @@ fn account_deposit_works() {
     }, "must take more deposits without creation fee");
 
     // Check events.
-    let mut evs = get_events(2);
+    let mut evs = get_events();
     evs.reverse(); // Work with pop().
 
     // First deposit event.
@@ -477,6 +516,8 @@ fn account_deposit_works() {
     // Second deposit event. No deposit_contract_fee because the account already exists.
     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
         Deposit { account_id, value: deposit }));
+
+    assert_eq!(evs.len(), 0, "all events must be checked");
 }
 
 
