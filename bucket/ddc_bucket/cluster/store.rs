@@ -13,6 +13,8 @@ use crate::ddc_bucket::node::entity::Node;
 
 use super::entity::{Cluster, ClusterId};
 
+pub const MAX_VNODES: u32 = 1000;
+
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct ClusterStore(pub InkVec<Cluster>);
@@ -23,7 +25,10 @@ impl ClusterStore {
         manager_id: AccountId,
         vnode_count: u32,
         nodes: &[(NodeId, &Node)],
-    ) -> (ClusterId, usize) {
+    ) -> Result<(ClusterId, usize)> {
+        if vnode_count > MAX_VNODES {
+            return Err(TooManyVNodes);
+        }
         let cluster_id = self.0.len();
         let (vnodes, total_rent) = Self::new_vnodes(vnode_count as usize, nodes);
         let cluster = Cluster {
@@ -36,7 +41,7 @@ impl ClusterStore {
         };
         let record_size = cluster.new_size();
         self.0.push(cluster);
-        (cluster_id, record_size)
+        Ok((cluster_id, record_size))
     }
 
     fn new_vnodes(vnode_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {

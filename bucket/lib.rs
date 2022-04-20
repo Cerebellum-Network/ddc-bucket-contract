@@ -290,6 +290,7 @@ pub mod ddc_bucket {
     pub enum Error {
         BucketDoesNotExist,
         ClusterDoesNotExist,
+        TooManyVNodes,
         VNodeDoesNotExist,
         BucketClusterAlreadyConnected,
         BucketClusterNotSetup,
