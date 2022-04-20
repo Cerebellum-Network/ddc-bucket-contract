@@ -30,6 +30,20 @@ impl ParamsStore {
         Ok((params_id, record_size))
     }
 
+    pub fn change(&mut self, params_id: ParamsId, params: Params) -> Result<usize> {
+        let current = self.0.get_mut(params_id).ok_or(ParamsDoesNotExist)?;
+
+        if params.len() > PARAMS_MAX_LEN {
+            return Err(ParamsTooBig);
+        }
+        let record_size = if params.len() > current.len() {
+            params.len() - current.len()
+        } else { 0 };
+
+        *current = params;
+        Ok(record_size)
+    }
+
     pub fn get(&self, params_id: ParamsId) -> Result<&Params> {
         self.0.get(params_id).ok_or(ParamsDoesNotExist)
     }

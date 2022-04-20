@@ -115,6 +115,11 @@ pub mod ddc_bucket {
             self.message_bucket_settle_payment(bucket_id).unwrap()
         }
 
+        #[ink(message, payable)]
+        pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
+            Self::impl_change_params(&mut self.bucket_params, bucket_id, params).unwrap();
+        }
+
         #[ink(message)]
         pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
             self.message_bucket_get(bucket_id)
@@ -187,6 +192,11 @@ pub mod ddc_bucket {
             self.message_cluster_distribute_revenues(cluster_id).unwrap()
         }
 
+        #[ink(message, payable)]
+        pub fn cluster_change_params(&mut self, cluster_id: ClusterId, params: ClusterParams) {
+            Self::impl_change_params(&mut self.cluster_params, cluster_id, params).unwrap();
+        }
+
         #[ink(message)]
         pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
             self.message_cluster_get(cluster_id)
@@ -227,6 +237,11 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> NodeId {
             self.message_node_create(rent_per_month, node_params, capacity).unwrap()
+        }
+
+        #[ink(message, payable)]
+        pub fn node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
+            Self::impl_change_params(&mut self.node_params, node_id, params).unwrap();
         }
 
         #[ink(message)]
