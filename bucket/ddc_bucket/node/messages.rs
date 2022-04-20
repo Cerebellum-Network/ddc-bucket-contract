@@ -33,7 +33,7 @@ impl DdcBucket {
         let provider_id = Self::env().caller();
 
         let node_id = self.nodes.create(provider_id, rent_per_month, capacity);
-        let (params_id, recorde_size1) = self.node_params.create(node_params.clone());
+        let (params_id, recorde_size1) = self.node_params.create(node_params.clone())?;
         assert_eq!(node_id, params_id);
 
         Self::capture_fee_and_refund(Node::RECORD_SIZE + recorde_size1)?;

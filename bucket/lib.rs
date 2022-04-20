@@ -291,6 +291,7 @@ pub mod ddc_bucket {
         BucketDoesNotExist,
         ClusterDoesNotExist,
         TooManyVNodes,
+        ParamsTooBig,
         VNodeDoesNotExist,
         BucketClusterAlreadyConnected,
         BucketClusterNotSetup,

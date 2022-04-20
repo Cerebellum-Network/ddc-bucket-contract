@@ -32,7 +32,7 @@ impl DdcBucket {
         }
 
         let (cluster_id, record_size0) = self.clusters.create(manager, vnode_count, &nodes)?;
-        let (params_id, recorde_size1) = self.cluster_params.create(cluster_params.clone());
+        let (params_id, recorde_size1) = self.cluster_params.create(cluster_params.clone())?;
         assert_eq!(cluster_id, params_id);
 
         Self::capture_fee_and_refund(record_size0 + recorde_size1)?;

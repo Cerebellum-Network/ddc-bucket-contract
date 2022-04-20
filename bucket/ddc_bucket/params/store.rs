@@ -8,20 +8,26 @@ use ink_storage::{
 
 use crate::ddc_bucket::{Error::ParamsDoesNotExist, Result};
 use crate::ddc_bucket::contract_fee::SIZE_VEC;
+use crate::ddc_bucket::Error::ParamsTooBig;
 
 pub type ParamsId = u32;
 pub type Params = String;
+
+pub const PARAMS_MAX_LEN: usize = 100_000;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct ParamsStore(pub InkVec<Params>);
 
 impl ParamsStore {
-    pub fn create(&mut self, params: Params) -> (ParamsId, usize) {
+    pub fn create(&mut self, params: Params) -> Result<(ParamsId, usize)> {
+        if params.len() > PARAMS_MAX_LEN {
+            return Err(ParamsTooBig);
+        }
         let record_size = SIZE_VEC + params.len();
         let params_id = self.0.len();
         self.0.push(params);
-        (params_id, record_size)
+        Ok((params_id, record_size))
     }
 
     pub fn get(&self, params_id: ParamsId) -> Result<&Params> {
