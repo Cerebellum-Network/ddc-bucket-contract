@@ -117,7 +117,7 @@ pub mod ddc_bucket {
 
         #[ink(message, payable)]
         pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
-            Self::impl_change_params(&mut self.bucket_params, bucket_id, params).unwrap();
+            self.message_bucket_change_params(bucket_id, params).unwrap();
         }
 
         #[ink(message)]
@@ -194,7 +194,7 @@ pub mod ddc_bucket {
 
         #[ink(message, payable)]
         pub fn cluster_change_params(&mut self, cluster_id: ClusterId, params: ClusterParams) {
-            Self::impl_change_params(&mut self.cluster_params, cluster_id, params).unwrap();
+            self.message_cluster_change_params(cluster_id, params).unwrap();
         }
 
         #[ink(message)]
@@ -241,7 +241,7 @@ pub mod ddc_bucket {
 
         #[ink(message, payable)]
         pub fn node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
-            Self::impl_change_params(&mut self.node_params, node_id, params).unwrap();
+            self.message_node_change_params(node_id, params).unwrap();
         }
 
         #[ink(message)]
