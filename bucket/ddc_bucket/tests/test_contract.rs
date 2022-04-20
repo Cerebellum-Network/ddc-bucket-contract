@@ -98,7 +98,7 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     set_balance(owner_id, 1000 * TOKEN);
 
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    let bucket_id = ctx.contract.bucket_create("".to_string(), ctx.cluster_id);
+    let bucket_id = ctx.contract.bucket_create("{}".to_string(), ctx.cluster_id);
     pop_caller();
 
     // Reserve some resources for the bucket from the cluster.
@@ -408,7 +408,7 @@ fn bucket_create_works() {
     assert_eq!(bucket_status, BucketStatus {
         bucket_id: test_bucket.bucket_id,
         bucket: expect_bucket,
-        params: "".to_string(),
+        params: "{}".to_string(),
         writer_ids: vec![test_bucket.owner_id],
         rent_covered_until_ms: 446400000, // TODO: check this value.
     });
