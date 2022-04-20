@@ -1,13 +1,11 @@
 //! The store where to create and access Clusters by ID.
 
-use ink_prelude::vec::Vec;
 use ink_storage::{
     collections::Vec as InkVec,
     traits,
 };
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, NodeId, Result};
-use crate::ddc_bucket::cash::Cash;
+use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
 use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 use crate::ddc_bucket::node::entity::Node;
 
@@ -29,32 +27,13 @@ impl ClusterStore {
         if vnode_count > MAX_VNODES {
             return Err(TooManyVNodes);
         }
-        let cluster_id = self.0.len();
-        let (vnodes, total_rent) = Self::new_vnodes(vnode_count as usize, nodes);
-        let cluster = Cluster {
-            manager_id,
-            vnodes,
-            resource_per_vnode: 0,
-            resource_used: 0,
-            revenues: Cash(0),
-            total_rent,
-        };
-        let record_size = cluster.new_size();
-        self.0.push(cluster);
-        Ok((cluster_id, record_size))
-    }
+        let cluster = Cluster::new(manager_id, vnode_count, nodes);
 
-    fn new_vnodes(vnode_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {
-        let node_count = nodes.len();
-        let mut vnode_ids = Vec::with_capacity(vnode_count);
-        let mut total_rent = 0;
-        for i in 0..vnode_count {
-            let (node_id, node) = &nodes[i % node_count];
-            vnode_ids.push(*node_id);
-            total_rent += node.rent_per_month;
-        }
-        // TODO: consider using the max rent instead of average rent.
-        (vnode_ids, total_rent)
+        let record_size = cluster.new_size();
+        let cluster_id = self.0.len();
+        self.0.push(cluster);
+
+        Ok((cluster_id, record_size))
     }
 
     pub fn add_node(&mut self, cluster_id: ClusterId, node_id: NodeId) -> Result<usize> {

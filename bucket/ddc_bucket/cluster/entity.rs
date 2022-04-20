@@ -8,7 +8,7 @@ use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId
 use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
-use crate::ddc_bucket::node::entity::Resource;
+use crate::ddc_bucket::node::entity::{Node, Resource};
 use crate::ddc_bucket::params::store::Params;
 
 pub type ClusterId = u32;
@@ -36,6 +36,35 @@ pub struct ClusterStatus {
 }
 
 impl Cluster {
+    pub fn new(
+        manager_id: AccountId,
+        vnode_count: u32,
+        nodes: &[(NodeId, &Node)],
+    ) -> Self {
+        let (vnodes, total_rent) = Self::new_vnodes(vnode_count as usize, nodes);
+        Cluster {
+            manager_id,
+            vnodes,
+            resource_per_vnode: 0,
+            resource_used: 0,
+            revenues: Cash(0),
+            total_rent,
+        }
+    }
+
+    fn new_vnodes(vnode_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {
+        let node_count = nodes.len();
+        let mut vnode_ids = Vec::with_capacity(vnode_count);
+        let mut total_rent = 0;
+        for i in 0..vnode_count {
+            let (node_id, node) = &nodes[i % node_count];
+            vnode_ids.push(*node_id);
+            total_rent += node.rent_per_month;
+        }
+        // TODO: consider using the max rent instead of average rent.
+        (vnode_ids, total_rent)
+    }
+
     pub fn new_size(&self) -> usize {
         SIZE_PER_RECORD
             + SIZE_ACCOUNT_ID
