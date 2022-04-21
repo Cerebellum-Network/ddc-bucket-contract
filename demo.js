@@ -10,6 +10,7 @@ const {
     CERE,
     MGAS,
     ddcBucket,
+    lodash: _,
 } = require("./sdk");
 
 const assert = require("assert");
@@ -59,6 +60,7 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         nodeId = ddcBucket.findCreatedNodeId(events);
@@ -71,6 +73,7 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
     }
@@ -84,6 +87,7 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         clusterId = ddcBucket.findCreatedClusterId(events);
@@ -96,6 +100,7 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         log();
@@ -109,6 +114,7 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         bucketId = ddcBucket.findCreatedBucketId(events);
@@ -121,6 +127,7 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         log();
@@ -132,10 +139,37 @@ async function main() {
 
         const result = await sendTx(account, tx);
         const events = result.contractEvents || [];
+        printGas(result);
         log(getExplorerUrl(result));
         log("EVENTS", JSON.stringify(events, null, 4));
         log();
     }
+
+    {
+        log("Collect payment from Bucket to Cluster…");
+        const tx = contract.tx
+            .bucketSettlePayment(txOptions, bucketId);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        printGas(result);
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        log();
+    }
+    {
+        log("Distribute payment from Cluster to Providers…");
+        const tx = contract.tx
+            .clusterDistributeRevenues(txOptions, clusterId);
+
+        const result = await sendTx(account, tx);
+        const events = result.contractEvents || [];
+        printGas(result);
+        log(getExplorerUrl(result));
+        log("EVENTS", JSON.stringify(events, null, 4));
+        log();
+    }
+
     log("    ----    \n");
 
     {
@@ -164,6 +198,11 @@ async function main() {
     }
 
     process.exit(0);
+}
+
+function printGas(result) {
+    let gas = _.get(result, "dispatchInfo.weight", 0);
+    log(parseInt(gas / 1e6), "MGas");
 }
 
 main().then(log, log);
