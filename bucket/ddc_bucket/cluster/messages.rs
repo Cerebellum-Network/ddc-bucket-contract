@@ -92,6 +92,14 @@ impl DdcBucket {
         Ok(())
     }
 
+    pub fn message_cluster_change_params(&mut self, cluster_id: ClusterId, params: ClusterParams) -> Result<()> {
+        let caller = Self::env().caller();
+        let cluster = self.clusters.get(cluster_id)?;
+        cluster.only_manager(caller)?;
+
+        Self::impl_change_params(&mut self.cluster_params, cluster_id, params)
+    }
+
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
         let cluster = self.clusters.get(cluster_id)?.clone();
         let params = self.cluster_params.get(cluster_id)?.clone();

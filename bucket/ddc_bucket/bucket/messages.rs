@@ -52,6 +52,14 @@ impl DdcBucket {
         Ok(())
     }
 
+    pub fn message_bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) -> Result<()>{
+        let caller = Self::env().caller();
+        let bucket = self.buckets.get(bucket_id)?;
+        bucket.only_owner(caller)?;
+
+        Self::impl_change_params(&mut self.bucket_params, bucket_id, params)
+    }
+
     pub fn message_bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
         let bucket = self.buckets.get(bucket_id)?.clone();
         self.bucket_calculate_status(bucket_id, bucket)

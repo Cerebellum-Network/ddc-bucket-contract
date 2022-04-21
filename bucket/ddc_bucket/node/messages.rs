@@ -41,6 +41,14 @@ impl DdcBucket {
         Ok(node_id)
     }
 
+    pub fn message_node_change_params(&mut self, node_id: NodeId, params: NodeParams) -> Result<()>{
+        let caller = Self::env().caller();
+        let node = self.nodes.get(node_id)?;
+        node.only_owner(caller)?;
+
+        Self::impl_change_params(&mut self.node_params, node_id, params)
+    }
+
     pub fn message_node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
         let node = self.nodes.get(node_id)?.clone();
         let params = self.node_params.get(node_id)?.clone();

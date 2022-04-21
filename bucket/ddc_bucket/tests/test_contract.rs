@@ -522,6 +522,86 @@ fn account_deposit_works() {
 
 
 #[ink::test]
+fn node_change_params_works() {
+    let ctx = &mut new_cluster();
+
+    // Change params.
+    push_caller_value(ctx.provider_id0, CONTRACT_FEE_LIMIT);
+    ctx.contract.node_change_params(ctx.node_id0, "new params".to_string());
+    pop_caller();
+
+    // Check the changed params.
+    let status = ctx.contract.node_get(ctx.node_id0)?;
+    assert_eq!(status.params, "new params");
+}
+
+#[ink::test]
+#[should_panic]
+fn node_change_params_only_owner() {
+    let ctx = &mut new_cluster();
+
+    // Change params.
+    push_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
+    ctx.contract.node_change_params(ctx.node_id0, "new params".to_string());
+    // Panic.
+}
+
+
+#[ink::test]
+fn cluster_change_params_works() {
+    let ctx = &mut new_cluster();
+
+    // Change params.
+    push_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
+    ctx.contract.cluster_change_params(ctx.cluster_id, "new params".to_string());
+    pop_caller();
+
+    // Check the changed params.
+    let status = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert_eq!(status.params, "new params");
+}
+
+#[ink::test]
+#[should_panic]
+fn cluster_change_params_only_owner() {
+    let ctx = &mut new_cluster();
+
+    // Change params.
+    push_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
+    ctx.contract.cluster_change_params(ctx.cluster_id, "new params".to_string());
+    // Panic.
+}
+
+
+#[ink::test]
+fn bucket_change_params_works() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+
+    // Change params.
+    push_caller_value(test_bucket.owner_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.bucket_change_params(test_bucket.bucket_id, "new params".to_string());
+    pop_caller();
+
+    // Check the changed params.
+    let status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    assert_eq!(status.params, "new params");
+}
+
+#[ink::test]
+#[should_panic]
+fn bucket_change_params_only_owner() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+
+    // Change params.
+    push_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
+    ctx.contract.bucket_change_params(test_bucket.bucket_id, "new params".to_string());
+    // Panic.
+}
+
+
+#[ink::test]
 fn bucket_list_works() {
     let mut ddc_bucket = DdcBucket::new();
     let accounts = get_accounts();
