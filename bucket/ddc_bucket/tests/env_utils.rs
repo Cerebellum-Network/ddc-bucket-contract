@@ -68,9 +68,8 @@ pub fn decode_event<Event: Decode>(event: &ink_env::test::EmittedEvent) -> Event
         .expect("encountered invalid contract event data buffer")
 }
 
-pub fn get_events<Event: Decode>(expected_count: usize) -> Vec<Event> {
+pub fn get_events<Event: Decode>() -> Vec<Event> {
     let raw_events = recorded_events().collect::<Vec<_>>();
-    assert_eq!(raw_events.len(), expected_count);
     raw_events.iter().map(decode_event).collect()
 }
 
@@ -82,9 +81,12 @@ fn _print_events(events: &[Event]) {
         match ev {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
             Event::ClusterNodeReplaced(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterReserveResource(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
             Event::NodeCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketCreated(ev) => println!("EVENT {:?}", ev),
             Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
+            Event::BucketSettlePayment(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
         }
     }

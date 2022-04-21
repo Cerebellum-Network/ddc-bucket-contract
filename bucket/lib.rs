@@ -90,6 +90,15 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketSettlePayment {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
+        cluster_id: ClusterId,
+    }
+
     impl DdcBucket {
         #[ink(message, payable)]
         pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> BucketId {
@@ -141,6 +150,22 @@ pub mod ddc_bucket {
         vnode_index: VNodeIndex,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterReserveResource {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterDistributeRevenues {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        provider_id: AccountId,
+    }
+
     impl DdcBucket {
         #[ink(message, payable)]
         pub fn cluster_create(&mut self, manager: AccountId, vnode_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> NodeId {
@@ -158,6 +183,11 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
+            self.message_cluster_distribute_revenues(cluster_id).unwrap()
+        }
+
+        #[ink(message)]
         pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
             self.message_cluster_get(cluster_id)
         }
@@ -165,11 +195,6 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<ClusterStatus>, u32) {
             self.message_cluster_list(offset, limit, filter_manager_id)
-        }
-
-        #[ink(message)]
-        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-            self.message_cluster_distribute_revenues(cluster_id).unwrap()
         }
     }
     // ---- End Cluster ----
