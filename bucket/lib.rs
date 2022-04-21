@@ -88,6 +88,7 @@ pub mod ddc_bucket {
         bucket_id: BucketId,
         #[ink(topic)]
         cluster_id: ClusterId,
+        resource: Resource,
     }
 
     #[ink(event)]
@@ -160,6 +161,7 @@ pub mod ddc_bucket {
     pub struct ClusterReserveResource {
         #[ink(topic)]
         cluster_id: ClusterId,
+        resource: Resource,
     }
 
     #[ink(event)]

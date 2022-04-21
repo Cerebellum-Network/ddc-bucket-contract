@@ -35,7 +35,7 @@ impl DdcBucket {
 
         self.accounts.increase_flow(now_ms, rent, &mut bucket.flow)?;
 
-        Self::env().emit_event(BucketAllocated { bucket_id, cluster_id: bucket.cluster_id });
+        Self::env().emit_event(BucketAllocated { bucket_id, cluster_id: bucket.cluster_id, resource });
         Ok(())
     }
 
@@ -52,7 +52,7 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) -> Result<()>{
+    pub fn message_bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) -> Result<()> {
         let caller = Self::env().caller();
         let bucket = self.buckets.get(bucket_id)?;
         bucket.only_owner(caller)?;

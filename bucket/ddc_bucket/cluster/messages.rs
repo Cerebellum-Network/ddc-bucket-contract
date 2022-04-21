@@ -40,17 +40,17 @@ impl DdcBucket {
         Ok(cluster_id)
     }
 
-    pub fn message_cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
+    pub fn message_cluster_reserve_resource(&mut self, cluster_id: ClusterId, resource: Resource) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
         Self::only_cluster_manager(cluster)?;
-        cluster.put_resource(amount);
+        cluster.put_resource(resource);
 
         for node_id in &cluster.vnodes {
             let node = self.nodes.get_mut(*node_id)?;
-            node.take_resource(amount)?;
+            node.take_resource(resource)?;
         }
 
-        Self::env().emit_event(ClusterReserveResource { cluster_id });
+        Self::env().emit_event(ClusterReserveResource { cluster_id, resource });
         Ok(())
     }
 

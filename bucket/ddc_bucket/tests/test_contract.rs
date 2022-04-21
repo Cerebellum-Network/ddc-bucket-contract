@@ -205,7 +205,7 @@ fn cluster_create_works() {
         ClusterCreated { cluster_id: ctx.cluster_id, manager: ctx.manager, cluster_params: "{}".to_string() }));
 
     assert!(matches!(evs.pop().unwrap(), Event::ClusterReserveResource(ev) if ev ==
-        ClusterReserveResource { cluster_id: ctx.cluster_id }));
+        ClusterReserveResource { cluster_id: ctx.cluster_id, resource: ctx.reserved }));
 
     assert_eq!(evs.len(), 0, "all events must be checked");
 }
@@ -255,7 +255,7 @@ fn cluster_reserve_works() {
     // Check the last event.
     let ev = get_events().pop().unwrap();
     assert!(matches!(ev, Event::ClusterReserveResource(ev) if ev ==
-        ClusterReserveResource { cluster_id: ctx.cluster_id }));
+        ClusterReserveResource { cluster_id: ctx.cluster_id, resource: 5 }));
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
@@ -466,7 +466,7 @@ fn bucket_create_works() {
         BucketCreated {  bucket_id: test_bucket.bucket_id, owner_id: test_bucket.owner_id }));
 
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
-        BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id }));
+        BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id, resource: test_bucket.resource }));
 
     // Deposit more.
     let net_deposit = 10 * TOKEN;
