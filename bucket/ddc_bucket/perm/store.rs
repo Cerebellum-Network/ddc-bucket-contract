@@ -3,7 +3,7 @@
 use ink_prelude::vec::Vec;
 use ink_storage::{
     collections::HashMap,
-    traits::{SpreadLayout, StorageLayout},
+    traits,
 };
 use scale::Encode;
 
@@ -17,8 +17,8 @@ pub type TrustedBy = AccountId;
 
 type PermKey = Vec<u8>;
 
-#[derive(SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[derive(traits::SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct PermStore(pub HashMap<PermKey, bool>);
 // TODO: Switch to Mapping (must upgrade ink first).
 

@@ -1,6 +1,6 @@
 //! The privileged interface for admin tasks.
 
-use ink_storage::traits::{SpreadLayout, StorageLayout};
+use ink_storage::traits;
 
 use crate::ddc_bucket::{Balance, TOKEN};
 
@@ -8,8 +8,8 @@ pub type CERE = Balance;
 pub type USD = Balance;
 
 
-#[derive(SpreadLayout)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[derive(traits::SpreadLayout)]
+#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct CurrencyConverter(Balance /* how many USD for PRECISION CERE */);
 
 const PRECISION: Balance = 10_000;
