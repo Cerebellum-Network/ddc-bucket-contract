@@ -38,12 +38,18 @@ fn admin_withdraw_only_admin() {
 #[ink::test]
 fn admin_grant_works() {
     let mut contract = setup();
+    let permission = Permission::SuperAdmin;
 
     push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
-    contract.admin_grant_permission(not_admin_id(), Permission::SuperAdmin);
+    contract.admin_grant_permission(not_admin_id(), permission);
     pop_caller();
 
-    assert!(contract.has_permission(not_admin_id(), Permission::SuperAdmin));
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::GrantPermission(ev) if ev ==
+        GrantPermission { account_id: not_admin_id(), permission }));
+
+    assert!(contract.has_permission(not_admin_id(), permission));
 
     push_caller(not_admin_id());
     contract.admin_withdraw(9);
@@ -65,13 +71,19 @@ fn admin_grant_only_admin() {
 #[should_panic]
 fn admin_revoke_works() {
     let mut contract = setup();
+    let permission = Permission::SuperAdmin;
 
     // Revoke the permission.
     push_caller(admin_id());
-    contract.admin_revoke_permission(admin_id(), Permission::SuperAdmin);
+    contract.admin_revoke_permission(admin_id(), permission);
     pop_caller();
 
-    assert!(!contract.has_permission(admin_id(), Permission::SuperAdmin));
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::RevokePermission(ev) if ev ==
+        RevokePermission { account_id: not_admin_id(), permission }));
+
+    assert!(!contract.has_permission(admin_id(), permission));
 
     // Cannot withdraw because no more permission.
     push_caller(admin_id());

@@ -3,7 +3,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
+use crate::ddc_bucket::{AccountId, Balance, DdcBucket, GrantPermission, NodeCreated, Result, RevokePermission};
 use crate::ddc_bucket::node::entity::{Node, NodeStatus, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
@@ -13,13 +13,15 @@ use super::entity::{NodeId, NodeParams};
 impl DdcBucket {
     pub fn message_node_trust_manager(&mut self, manager: AccountId, is_trusted: bool) -> Result<()> {
         let trust_giver = Self::env().caller();
-        let perm = Permission::ManagerTrustedBy(trust_giver);
+        let permission = Permission::ManagerTrustedBy(trust_giver);
 
         if is_trusted {
-            self.perms.grant_permission(manager, perm);
+            self.perms.grant_permission(manager, &permission);
+            Self::env().emit_event(GrantPermission { account_id: manager, permission });
             Self::capture_fee_and_refund(PermStore::RECORD_SIZE)?;
         } else {
-            self.perms.revoke_permission(manager, perm);
+            self.perms.revoke_permission(manager, &permission);
+            Self::env().emit_event(RevokePermission { account_id: manager, permission });
         }
 
         Ok(())
@@ -41,7 +43,7 @@ impl DdcBucket {
         Ok(node_id)
     }
 
-    pub fn message_node_change_params(&mut self, node_id: NodeId, params: NodeParams) -> Result<()>{
+    pub fn message_node_change_params(&mut self, node_id: NodeId, params: NodeParams) -> Result<()> {
         let caller = Self::env().caller();
         let node = self.nodes.get(node_id)?;
         node.only_owner(caller)?;

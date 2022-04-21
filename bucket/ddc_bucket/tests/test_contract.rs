@@ -119,6 +119,7 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
 #[ink::test]
 fn cluster_create_works() {
     let ctx = new_cluster();
+    let provider_ids = &[ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
 
     assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
 
@@ -180,6 +181,12 @@ fn cluster_create_works() {
     // Check the events.
     let mut evs = get_events();
     evs.reverse(); // Work with pop().
+
+    // Provider 0 trusts Manager.
+    for provider_id in provider_ids {
+        assert!(matches!(evs.pop().unwrap(), Event::GrantPermission(ev) if ev ==
+            GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) }));
+    }
 
     // Node created 0.
     assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==

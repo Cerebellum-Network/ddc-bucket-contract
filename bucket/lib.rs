@@ -64,7 +64,7 @@ pub mod ddc_bucket {
             };
             // Make the creator of this contract a super-admin.
             let admin_id = Self::env().caller();
-            contract.perms.grant_permission(admin_id, Permission::SuperAdmin);
+            contract.perms.grant_permission(admin_id, &Permission::SuperAdmin);
             contract
         }
     }
@@ -292,6 +292,22 @@ pub mod ddc_bucket {
 
 
     // ---- Permissions ----
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct GrantPermission {
+        #[ink(topic)]
+        account_id: AccountId,
+        permission: Permission,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct RevokePermission {
+        #[ink(topic)]
+        account_id: AccountId,
+        permission: Permission,
+    }
+
     impl DdcBucket {
         #[ink(message)]
         pub fn has_permission(&self, grantee: AccountId, permission: Permission) -> bool {
