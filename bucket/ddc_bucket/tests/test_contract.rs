@@ -119,6 +119,9 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
 #[ink::test]
 fn cluster_create_works() {
     let ctx = new_cluster();
+    let provider_ids = &[ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
+    let node_ids = &[ctx.node_id0, ctx.node_id1, ctx.node_id2];
+    let node_params = &[ctx.node_params0, ctx.node_params1, ctx.node_params2];
 
     assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
 
@@ -181,24 +184,28 @@ fn cluster_create_works() {
     let mut evs = get_events();
     evs.reverse(); // Work with pop().
 
-    // Node created 0.
-    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
-        NodeCreated { node_id: ctx.node_id0, provider_id: ctx.provider_id0, rent_per_month: ctx.rent_per_vnode, node_params: ctx.node_params0.to_string() }));
+    // Providers trust Manager.
+    for provider_id in provider_ids {
+        assert!(matches!(evs.pop().unwrap(), Event::GrantPermission(ev) if ev ==
+            GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) }));
+    }
 
-    // Node created 1.
-    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
-        NodeCreated { node_id: ctx.node_id1, provider_id: ctx.provider_id1, rent_per_month: ctx.rent_per_vnode, node_params: ctx.node_params1.to_string() }));
-
-    // Node created 2.
-    assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
-        NodeCreated { node_id: ctx.node_id2, provider_id: ctx.provider_id2, rent_per_month: ctx.rent_per_vnode, node_params: ctx.node_params2.to_string() }));
+    // Nodes created.
+    for i in 0..3 {
+        assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
+            NodeCreated {
+                node_id: node_ids[i],
+                provider_id: provider_ids[i],
+                rent_per_month: ctx.rent_per_vnode,
+                node_params: node_params[i].to_string() }));
+    }
 
     // Cluster setup.
     assert!(matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
         ClusterCreated { cluster_id: ctx.cluster_id, manager: ctx.manager, cluster_params: "{}".to_string() }));
 
     assert!(matches!(evs.pop().unwrap(), Event::ClusterReserveResource(ev) if ev ==
-        ClusterReserveResource { cluster_id: ctx.cluster_id }));
+        ClusterReserveResource { cluster_id: ctx.cluster_id, resource: ctx.reserved }));
 
     assert_eq!(evs.len(), 0, "all events must be checked");
 }
@@ -248,7 +255,7 @@ fn cluster_reserve_works() {
     // Check the last event.
     let ev = get_events().pop().unwrap();
     assert!(matches!(ev, Event::ClusterReserveResource(ev) if ev ==
-        ClusterReserveResource { cluster_id: ctx.cluster_id }));
+        ClusterReserveResource { cluster_id: ctx.cluster_id, resource: 5 }));
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
@@ -459,7 +466,7 @@ fn bucket_create_works() {
         BucketCreated {  bucket_id: test_bucket.bucket_id, owner_id: test_bucket.owner_id }));
 
     assert!(matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
-        BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id }));
+        BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id, resource: test_bucket.resource }));
 
     // Deposit more.
     let net_deposit = 10 * TOKEN;

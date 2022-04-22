@@ -88,6 +88,8 @@ fn _print_events(events: &[Event]) {
             Event::BucketAllocated(ev) => println!("EVENT {:?}", ev),
             Event::BucketSettlePayment(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
+            Event::GrantPermission(ev) => println!("EVENT {:?}", ev),
+            Event::RevokePermission(ev) => println!("EVENT {:?}", ev),
         }
     }
 }
