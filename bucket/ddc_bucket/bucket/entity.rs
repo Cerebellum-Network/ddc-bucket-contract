@@ -27,9 +27,19 @@ pub struct Bucket {
 
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub struct BucketInStatus {
+    pub owner_id: AccountId,
+    pub cluster_id: ClusterId,
+    // The field "flow" is not included because it triggers a bug in polkadot.js.
+    // TODO: find a fix, then return the entire Bucket structure.
+    pub resource_reserved: Resource,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct BucketStatus {
     pub bucket_id: BucketId,
-    pub bucket: Bucket,
+    pub bucket: BucketInStatus,
     pub params: BucketParams,
     pub writer_ids: Vec<AccountId>,
     pub rent_covered_until_ms: u64,
@@ -45,5 +55,15 @@ impl Bucket {
 
     pub fn put_resource(&mut self, amount: Resource) {
         self.resource_reserved += amount;
+    }
+}
+
+impl From<Bucket> for BucketInStatus {
+    fn from(bucket: Bucket) -> Self {
+        Self {
+            owner_id: bucket.owner_id,
+            cluster_id: bucket.cluster_id,
+            resource_reserved: bucket.resource_reserved,
+        }
     }
 }

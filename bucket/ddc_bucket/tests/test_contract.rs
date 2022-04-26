@@ -345,11 +345,13 @@ fn do_bucket_pays_cluster(ctx: &mut TestCluster, test_bucket: &TestBucket, usd_p
         .deposit.peek();
     let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?.bucket;
     assert_eq!(bucket.owner_id, test_bucket.owner_id);
+    /* TODO: Not testable at the moment, see struct BucketInStatus.
     assert_eq!(bucket.flow,
                Flow {
                    from: test_bucket.owner_id,
                    schedule: Schedule::new(0, expected_rent),
                });
+    */
 
     bucket_settle_payment(ctx, &test_bucket);
 
@@ -363,12 +365,14 @@ fn do_bucket_pays_cluster(ctx: &mut TestCluster, test_bucket: &TestBucket, usd_p
         .account_get(test_bucket.owner_id)?
         .deposit.peek();
     let spent = before - after;
+    /* TODO: Not testable at the moment, see struct BucketInStatus.
     let bucket = ctx.contract.bucket_get(test_bucket.bucket_id)?.bucket;
     assert_eq!(bucket.flow,
                Flow {
                    from: test_bucket.owner_id,
                    schedule: Schedule::new(BLOCK_TIME, expected_rent),
                });
+    */
 
     let expect_revenues_usd = expected_rent * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
     let expect_revenues = expect_revenues_usd / usd_per_cere;
@@ -451,7 +455,7 @@ fn bucket_create_works() {
     let bucket_status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
     assert_eq!(bucket_status, BucketStatus {
         bucket_id: test_bucket.bucket_id,
-        bucket: expect_bucket,
+        bucket: expect_bucket.into(),
         params: "{}".to_string(),
         writer_ids: vec![test_bucket.owner_id],
         rent_covered_until_ms: 446400000, // TODO: check this value.

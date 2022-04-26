@@ -92,7 +92,7 @@ impl DdcBucket {
         let writer_ids = vec![bucket.owner_id];
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
         let params = self.bucket_params.get(bucket_id)?.clone();
-        Ok(BucketStatus { bucket_id, bucket, params, writer_ids, rent_covered_until_ms })
+        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, rent_covered_until_ms })
     }
 
     fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {
