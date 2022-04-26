@@ -11,7 +11,7 @@ use crate::ddc_bucket::node::entity::Node;
 
 use super::entity::{Cluster, ClusterId};
 
-pub const MAX_VNODES: u32 = 1000;
+pub const MAX_VNODES: u32 = 300;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
