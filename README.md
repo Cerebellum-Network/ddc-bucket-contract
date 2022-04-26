@@ -31,8 +31,12 @@ To deploy:
 
 # Test
 
-    # Fast test
+    # Fast test off-chain
     cargo test
 
-    # Long test
-    node deploy.js
+    # Long test after an on-chain deployment (see instructions above)
+    node demo.js
+
+    # Visualize the state of the network.
+    # Read this .md file, ideally with a Markdown and Mermaid editor (e.g., VSCode with Markdown Preview Mermaid Support).
+    node print_ddc_bucket.js > local/Network_state.md
