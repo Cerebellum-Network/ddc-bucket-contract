@@ -1,13 +1,13 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0xdc6bcc300da19bf8d13f9da92addb3643079f722947e947f811487ae190331f6",
+    "hash": "0x5e690c8fd199cbf15e7f27bf1b510235aaf5d2bfebc776f72b77f04e03c1ad3b",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "authors": [
       "Aurélien Nicolas <aurel@cere.network>"
     ]
@@ -76,10 +76,49 @@
               ],
               "type": 1
             }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "resource",
+            "type": {
+              "displayName": [
+                "Resource"
+              ],
+              "type": 1
+            }
           }
         ],
         "docs": [],
         "name": "BucketAllocated"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "name": "BucketSettlePayment"
       },
       {
         "args": [
@@ -147,10 +186,10 @@
           {
             "docs": [],
             "indexed": false,
-            "name": "partition_index",
+            "name": "vnode_index",
             "type": {
               "displayName": [
-                "PartitionIndex"
+                "VNodeIndex"
               ],
               "type": 1
             }
@@ -158,6 +197,62 @@
         ],
         "docs": [],
         "name": "ClusterNodeReplaced"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "resource",
+            "type": {
+              "displayName": [
+                "Resource"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "name": "ClusterReserveResource"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "provider_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [],
+        "name": "ClusterDistributeRevenues"
       },
       {
         "args": [
@@ -236,6 +331,62 @@
         ],
         "docs": [],
         "name": "Deposit"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "account_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "permission",
+            "type": {
+              "displayName": [
+                "Permission"
+              ],
+              "type": 42
+            }
+          }
+        ],
+        "docs": [],
+        "name": "GrantPermission"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": true,
+            "name": "account_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "permission",
+            "type": {
+              "displayName": [
+                "Permission"
+              ],
+              "type": 42
+            }
+          }
+        ],
+        "docs": [],
+        "name": "RevokePermission"
       }
     ],
     "messages": [
@@ -338,6 +489,36 @@
               ],
               "type": 1
             }
+          },
+          {
+            "name": "params",
+            "type": {
+              "displayName": [
+                "BucketParams"
+              ],
+              "type": 9
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "bucket_change_params"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0x9f2d075b"
+      },
+      {
+        "args": [
+          {
+            "name": "bucket_id",
+            "type": {
+              "displayName": [
+                "BucketId"
+              ],
+              "type": 1
+            }
           }
         ],
         "docs": [],
@@ -380,7 +561,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 29
+              "type": 30
             }
           }
         ],
@@ -392,7 +573,7 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 30
+          "type": 31
         },
         "selector": "0x417ab584"
       },
@@ -408,7 +589,7 @@
             }
           },
           {
-            "name": "partition_count",
+            "name": "vnode_count",
             "type": {
               "displayName": [
                 "u32"
@@ -494,10 +675,10 @@
             }
           },
           {
-            "name": "partition_i",
+            "name": "vnode_i",
             "type": {
               "displayName": [
-                "PartitionIndex"
+                "VNodeIndex"
               ],
               "type": 1
             }
@@ -537,6 +718,57 @@
           }
         ],
         "docs": [],
+        "mutates": true,
+        "name": [
+          "cluster_distribute_revenues"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0xe71e66fc"
+      },
+      {
+        "args": [
+          {
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "name": "params",
+            "type": {
+              "displayName": [
+                "ClusterParams"
+              ],
+              "type": 9
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "cluster_change_params"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0x1207912c"
+      },
+      {
+        "args": [
+          {
+            "name": "cluster_id",
+            "type": {
+              "displayName": [
+                "ClusterId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
         "mutates": false,
         "name": [
           "cluster_get"
@@ -546,7 +778,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 32
+          "type": 33
         },
         "selector": "0xe75411f5"
       },
@@ -576,7 +808,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 29
+              "type": 30
             }
           }
         ],
@@ -588,30 +820,51 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 34
+          "type": 35
         },
         "selector": "0xd9db9d44"
       },
       {
         "args": [
           {
-            "name": "cluster_id",
+            "name": "manager",
             "type": {
               "displayName": [
-                "ClusterId"
+                "AccountId"
               ],
-              "type": 1
+              "type": 3
             }
           }
         ],
         "docs": [],
         "mutates": true,
         "name": [
-          "cluster_distribute_revenues"
+          "node_trust_manager"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0x6fd54a01"
+      },
+      {
+        "args": [
+          {
+            "name": "manager",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "node_distrust_manager"
         ],
         "payable": false,
         "returnType": null,
-        "selector": "0xe71e66fc"
+        "selector": "0x40912279"
       },
       {
         "args": [
@@ -667,6 +920,36 @@
               ],
               "type": 1
             }
+          },
+          {
+            "name": "params",
+            "type": {
+              "displayName": [
+                "NodeParams"
+              ],
+              "type": 9
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "node_change_params"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0x258ccb2a"
+      },
+      {
+        "args": [
+          {
+            "name": "node_id",
+            "type": {
+              "displayName": [
+                "NodeId"
+              ],
+              "type": 1
+            }
           }
         ],
         "docs": [],
@@ -679,7 +962,7 @@
           "displayName": [
             "Result"
           ],
-          "type": 36
+          "type": 37
         },
         "selector": "0x847f3997"
       },
@@ -709,7 +992,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 29
+              "type": 30
             }
           }
         ],
@@ -721,7 +1004,7 @@
         "payable": false,
         "returnType": {
           "displayName": [],
-          "type": 38
+          "type": 39
         },
         "selector": "0x423286d6"
       },
@@ -761,35 +1044,51 @@
           "displayName": [
             "Result"
           ],
-          "type": 40
+          "type": 41
         },
         "selector": "0x1d4220fa"
       },
       {
+        "args": [],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "account_get_usd_per_cere"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Balance"
+          ],
+          "type": 8
+        },
+        "selector": "0xe4a4652a"
+      },
+      {
         "args": [
           {
-            "name": "trustee",
+            "name": "usd_per_cere",
             "type": {
               "displayName": [
-                "AccountId"
+                "Balance"
               ],
-              "type": 3
+              "type": 8
             }
           }
         ],
         "docs": [],
         "mutates": true,
         "name": [
-          "perm_trust"
+          "account_set_usd_per_cere"
         ],
-        "payable": true,
+        "payable": false,
         "returnType": null,
-        "selector": "0x32e7de43"
+        "selector": "0x48d45ee8"
       },
       {
         "args": [
           {
-            "name": "trustee",
+            "name": "grantee",
             "type": {
               "displayName": [
                 "AccountId"
@@ -798,19 +1097,19 @@
             }
           },
           {
-            "name": "trust_giver",
+            "name": "permission",
             "type": {
               "displayName": [
-                "AccountId"
+                "Permission"
               ],
-              "type": 3
+              "type": 42
             }
           }
         ],
         "docs": [],
-        "mutates": true,
+        "mutates": false,
         "name": [
-          "perm_has_trust"
+          "has_permission"
         ],
         "payable": false,
         "returnType": {
@@ -819,44 +1118,67 @@
           ],
           "type": 22
         },
-        "selector": "0xc50c38f7"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "mutates": false,
-        "name": [
-          "admin_get"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "AccountId"
-          ],
-          "type": 3
-        },
-        "selector": "0x1261dae1"
+        "selector": "0xe0942492"
       },
       {
         "args": [
           {
-            "name": "new_admin",
+            "name": "grantee",
             "type": {
               "displayName": [
                 "AccountId"
               ],
               "type": 3
             }
+          },
+          {
+            "name": "permission",
+            "type": {
+              "displayName": [
+                "Permission"
+              ],
+              "type": 42
+            }
           }
         ],
         "docs": [],
         "mutates": true,
         "name": [
-          "admin_change"
+          "admin_grant_permission"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0xbe41ea55"
+      },
+      {
+        "args": [
+          {
+            "name": "grantee",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "name": "permission",
+            "type": {
+              "displayName": [
+                "Permission"
+              ],
+              "type": 42
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "admin_revoke_permission"
         ],
         "payable": false,
         "returnType": null,
-        "selector": "0x12292787"
+        "selector": "0x6b150666"
       },
       {
         "args": [
@@ -1225,20 +1547,29 @@
                     }
                   },
                   "name": null
+                },
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0200000007000000000000000000000000000000000000000000000000000000",
+                              "ty": 8
+                            }
+                          },
+                          "name": null
+                        }
+                      ]
+                    }
+                  },
+                  "name": null
                 }
               ]
             }
           },
           "name": "accounts"
-        },
-        {
-          "layout": {
-            "cell": {
-              "key": "0x0200000007000000000000000000000000000000000000000000000000000000",
-              "ty": 3
-            }
-          },
-          "name": "admin_id"
         },
         {
           "layout": {
@@ -1739,10 +2070,9 @@
     },
     {
       "def": {
-        "tuple": [
-          3,
-          3
-        ]
+        "sequence": {
+          "type": 5
+        }
       }
     },
     {
@@ -1798,7 +2128,7 @@
             {
               "fields": [
                 {
-                  "type": 28,
+                  "type": 29,
                   "typeName": "E"
                 }
               ],
@@ -1809,7 +2139,7 @@
       },
       "params": [
         25,
-        28
+        29
       ],
       "path": [
         "Result"
@@ -1826,8 +2156,8 @@
             },
             {
               "name": "bucket",
-              "type": 2,
-              "typeName": "Bucket"
+              "type": 26,
+              "typeName": "BucketInStatus"
             },
             {
               "name": "params",
@@ -1836,12 +2166,12 @@
             },
             {
               "name": "writer_ids",
-              "type": 26,
+              "type": 27,
               "typeName": "Vec<AccountId>"
             },
             {
               "name": "rent_covered_until_ms",
-              "type": 27,
+              "type": 28,
               "typeName": "u64"
             }
           ]
@@ -1853,6 +2183,36 @@
         "bucket",
         "entity",
         "BucketStatus"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "owner_id",
+              "type": 3,
+              "typeName": "AccountId"
+            },
+            {
+              "name": "cluster_id",
+              "type": 1,
+              "typeName": "ClusterId"
+            },
+            {
+              "name": "resource_reserved",
+              "type": 1,
+              "typeName": "Resource"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "bucket",
+        "entity",
+        "BucketInStatus"
       ]
     },
     {
@@ -1881,63 +2241,71 @@
             },
             {
               "discriminant": 2,
-              "name": "PartitionDoesNotExist"
+              "name": "TooManyVNodes"
             },
             {
               "discriminant": 3,
-              "name": "BucketClusterAlreadyConnected"
+              "name": "ParamsTooBig"
             },
             {
               "discriminant": 4,
-              "name": "BucketClusterNotSetup"
+              "name": "VNodeDoesNotExist"
             },
             {
               "discriminant": 5,
-              "name": "NodeDoesNotExist"
+              "name": "BucketClusterAlreadyConnected"
             },
             {
               "discriminant": 6,
-              "name": "FlowDoesNotExist"
+              "name": "BucketClusterNotSetup"
             },
             {
               "discriminant": 7,
-              "name": "AccountDoesNotExist"
+              "name": "NodeDoesNotExist"
             },
             {
               "discriminant": 8,
-              "name": "ParamsDoesNotExist"
+              "name": "FlowDoesNotExist"
             },
             {
               "discriminant": 9,
-              "name": "UnauthorizedProvider"
+              "name": "AccountDoesNotExist"
             },
             {
               "discriminant": 10,
-              "name": "UnauthorizedOwner"
+              "name": "ParamsDoesNotExist"
             },
             {
               "discriminant": 11,
-              "name": "UnauthorizedClusterManager"
+              "name": "UnauthorizedProvider"
             },
             {
               "discriminant": 12,
-              "name": "ClusterManagerIsNotTrusted"
+              "name": "UnauthorizedOwner"
             },
             {
               "discriminant": 13,
-              "name": "UnauthorizedAdmin"
+              "name": "UnauthorizedClusterManager"
             },
             {
               "discriminant": 14,
-              "name": "TransferFailed"
+              "name": "ClusterManagerIsNotTrusted"
             },
             {
               "discriminant": 15,
-              "name": "InsufficientBalance"
+              "name": "TransferFailed"
             },
             {
               "discriminant": 16,
+              "name": "InsufficientBalance"
+            },
+            {
+              "discriminant": 17,
               "name": "InsufficientResources"
+            },
+            {
+              "discriminant": 18,
+              "name": "Unauthorized"
             }
           ]
         }
@@ -1977,7 +2345,7 @@
     {
       "def": {
         "tuple": [
-          31,
+          32,
           1
         ]
       }
@@ -1996,7 +2364,7 @@
             {
               "fields": [
                 {
-                  "type": 33,
+                  "type": 34,
                   "typeName": "T"
                 }
               ],
@@ -2005,7 +2373,7 @@
             {
               "fields": [
                 {
-                  "type": 28,
+                  "type": 29,
                   "typeName": "E"
                 }
               ],
@@ -2015,8 +2383,8 @@
         }
       },
       "params": [
-        33,
-        28
+        34,
+        29
       ],
       "path": [
         "Result"
@@ -2055,7 +2423,7 @@
     {
       "def": {
         "tuple": [
-          35,
+          36,
           1
         ]
       }
@@ -2063,7 +2431,7 @@
     {
       "def": {
         "sequence": {
-          "type": 33
+          "type": 34
         }
       }
     },
@@ -2074,7 +2442,7 @@
             {
               "fields": [
                 {
-                  "type": 37,
+                  "type": 38,
                   "typeName": "T"
                 }
               ],
@@ -2083,7 +2451,7 @@
             {
               "fields": [
                 {
-                  "type": 28,
+                  "type": 29,
                   "typeName": "E"
                 }
               ],
@@ -2093,8 +2461,8 @@
         }
       },
       "params": [
-        37,
-        28
+        38,
+        29
       ],
       "path": [
         "Result"
@@ -2133,7 +2501,7 @@
     {
       "def": {
         "tuple": [
-          39,
+          40,
           1
         ]
       }
@@ -2141,7 +2509,7 @@
     {
       "def": {
         "sequence": {
-          "type": 37
+          "type": 38
         }
       }
     },
@@ -2161,7 +2529,7 @@
             {
               "fields": [
                 {
-                  "type": 28,
+                  "type": 29,
                   "typeName": "E"
                 }
               ],
@@ -2172,10 +2540,40 @@
       },
       "params": [
         18,
-        28
+        29
       ],
       "path": [
         "Result"
+      ]
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 3,
+                  "typeName": "AccountId"
+                }
+              ],
+              "name": "ManagerTrustedBy"
+            },
+            {
+              "name": "SetExchangeRate"
+            },
+            {
+              "name": "SuperAdmin"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "perm",
+        "entity",
+        "Permission"
       ]
     }
   ]
