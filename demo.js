@@ -47,7 +47,8 @@ async function main() {
     const anyAccountId = account.address;
     const rent_per_month = 10n * CERE;
     const node_params = "{\"url\":\"https://ddc-123.cere.network/bucket/{BUCKET_ID}\"}";
-    const capacity = 100;
+    const capacity = 1e6;
+    const num_vnodes = 6;
     const cluster_resource = 10;
     const bucket_resource = 5;
     const bucket_params = "{}";
@@ -59,23 +60,22 @@ async function main() {
             .nodeCreate(txOptionsPay, rent_per_month, node_params, capacity);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        const events = printEvents(result);
         nodeId = ddcBucket.findCreatedNodeId(events);
         log("New NodeId", nodeId, "\n");
     }
     {
         log("Trust the cluster manager…");
         const tx = contract.tx
-            .permTrust(txOptionsPay, managerId);
+            .nodeTrustManager(txOptionsPay, managerId);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        printEvents(result);
+        log();
     }
 
     let clusterId;
@@ -83,13 +83,12 @@ async function main() {
         log("Setup a cluster…");
         let cluster_params = "{}";
         const tx = contract.tx
-            .clusterCreate(txOptionsPay, managerId, 6, [nodeId], cluster_params);
+            .clusterCreate(txOptionsPay, managerId, num_vnodes, [nodeId], cluster_params);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        const events = printEvents(result);
         clusterId = ddcBucket.findCreatedClusterId(events);
         log("New ClusterId", clusterId, "\n");
     }
@@ -99,10 +98,9 @@ async function main() {
             .clusterReserveResource(txOptions, clusterId, cluster_resource);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        printEvents(result);
         log();
     }
 
@@ -113,10 +111,9 @@ async function main() {
             .bucketCreate(txOptionsPay, bucket_params, clusterId);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        const events = printEvents(result);
         bucketId = ddcBucket.findCreatedBucketId(events);
         log("New BucketId", bucketId, "\n");
     }
@@ -126,10 +123,9 @@ async function main() {
             .accountDeposit(txOptionsPay);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        printEvents(result);
         log();
     }
     {
@@ -138,10 +134,9 @@ async function main() {
             .bucketAllocIntoCluster(txOptions, bucketId, bucket_resource);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        printEvents(result);
         log();
     }
 
@@ -151,10 +146,9 @@ async function main() {
             .bucketSettlePayment(txOptions, bucketId);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        printEvents(result);
         log();
     }
     {
@@ -163,10 +157,9 @@ async function main() {
             .clusterDistributeRevenues(txOptions, clusterId);
 
         const result = await sendTx(account, tx);
-        const events = result.contractEvents || [];
         printGas(result);
         log(getExplorerUrl(result));
-        log("EVENTS", JSON.stringify(events, null, 4));
+        printEvents(result);
         log();
     }
 
@@ -198,6 +191,13 @@ async function main() {
     }
 
     process.exit(0);
+}
+
+function printEvents(result) {
+    const events = result.contractEvents || [];
+    //log("EVENTS", JSON.stringify(events, null, 4));
+    log(events.length, "events");
+    return events;
 }
 
 function printGas(result) {
