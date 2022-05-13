@@ -8,12 +8,14 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_nft_registry {
+    use ink_prelude::string::String;
     use scale::{Decode, Encode};
 
     use Error::*;
 
     pub mod cash;
     pub mod contract_fee;
+    pub mod attachment;
 
     // ---- Global state ----
     #[ink(storage)]
@@ -32,13 +34,17 @@ pub mod ddc_nft_registry {
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct Attach {
-        #[ink(topic)]
-        account_id: AccountId,
+        reporter_id: AccountId,
+        nft_id: String,
+        asset_id: String,
+        proof: String,
     }
 
     impl DdcNftRegistry {
         #[ink(message, payable)]
-        pub fn attach(&mut self) {}
+        pub fn attach(&mut self, nft_id: String, asset_id: String, proof: String) {
+            self.message_attach(nft_id, asset_id, proof).unwrap()
+        }
 
         #[ink(message)]
         pub fn get(&self) -> Result<()> {
