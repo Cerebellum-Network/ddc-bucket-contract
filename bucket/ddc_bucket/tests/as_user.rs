@@ -42,18 +42,28 @@ impl TestUser {
         Ok(bucket_id)
     }
 
+    pub fn find_bucket(contract: &DdcBucket, account_id: AccountId) -> Result<BucketStatus> {
+        // Discover the buckets owned by the account.
+        let (buckets, _count) = contract.bucket_list(0, 20, Some(account_id));
+        buckets.first().cloned().ok_or(BucketDoesNotExist)
+    }
+
     pub fn make_request(&self, contract: &DdcBucket, action: Action) -> Result<TestRequest> {
+        // Find own bucket.
+        let bucket_id = Self::find_bucket(contract, self.account_id)?.bucket_id;
+        assert_eq!(bucket_id, self.storage_bucket_id, "should find the bucket that we created before");
+
         // Find a gateway cluster.
-        let cluster = find_cluster(contract, GATEWAY_ENGINE)?.cluster;
+        let cdn_cluster = find_cluster(contract, GATEWAY_ENGINE)?.cluster;
         // Pick a gateway node.
-        let node_id = *cluster.vnodes.first().expect("empty cluster");
-        let node = contract.node_get(node_id)?;
+        let cdn_node_id = *cdn_cluster.vnodes.first().expect("empty cluster");
+        let cdn_node = contract.node_get(cdn_node_id)?;
         // Get the URL of the gateway.
-        let url = node.params;
+        let url = cdn_node.params;
         // Prepare a request.
         let request = TestRequest {
             url,
-            bucket_id: self.storage_bucket_id,
+            bucket_id,
             sender: self.account_id,
             action,
         };
