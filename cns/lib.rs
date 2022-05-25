@@ -1,4 +1,4 @@
-//! The Cere Name System smart contract.
+//! The smart contract of the Cere Name System.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(proc_macro_hygiene)] // for tests in a separate file
@@ -12,19 +12,23 @@ pub mod cns {
     use scale::{Decode, Encode};
 
     use Error::*;
+    use names::{entity::*, store::*};
 
+    pub mod names;
     pub mod cash;
-    pub mod contract_fee;
-    pub mod registry;
 
     // ---- Global state ----
     #[ink(storage)]
-    pub struct CNS {}
+    pub struct CNS {
+        name_store: NameStore,
+    }
 
     impl CNS {
         #[ink(constructor)]
         pub fn new() -> Self {
-            Self {}
+            Self {
+                name_store: Default::default(),
+            }
         }
     }
     // ---- End global state ----
@@ -34,8 +38,18 @@ pub mod cns {
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct AllocateName {
+        #[ink(topic)]
         name: String,
+        #[ink(topic)]
         owner_id: AccountId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct SetPayload {
+        #[ink(topic)]
+        name: String,
+        payload: String,
     }
 
     impl CNS {
@@ -45,8 +59,13 @@ pub mod cns {
         }
 
         #[ink(message)]
-        pub fn get(&self) -> Result<()> {
-            Ok(())
+        pub fn set_payload(&mut self, name: String, payload: String) {
+            self.message_set_payload(name, payload).unwrap()
+        }
+
+        #[ink(message)]
+        pub fn get_by_name(&self, name: String) -> Result<Record> {
+            Ok(self.name_store.get(&name)?.clone())
         }
     }
     // ---- End Name Allocation ----
@@ -60,6 +79,11 @@ pub mod cns {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         InsufficientBalance,
+        NameDoesNotExist,
+        NameAlreadyTaken,
+        NameTooLong,
+        PayloadTooLong,
+        Unauthorized,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

@@ -27,7 +27,7 @@ serde = { version = "1.0.136", optional = true }
 serde_json = { version = "1.0.79", optional = true }
 
 [lib]
-name = "ddc_nft_registry"
+name = "ddc_cns"
 path = "lib.rs"
 crate-type = [
     # Used for normal contract Wasm blobs.
