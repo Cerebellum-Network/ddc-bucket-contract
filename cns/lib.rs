@@ -82,6 +82,7 @@ pub mod cns {
         NameDoesNotExist,
         NameAlreadyTaken,
         NameTooLong,
+        NameMustStartWithALetter,
         PayloadTooLong,
         Unauthorized,
     }

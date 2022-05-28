@@ -52,6 +52,28 @@ fn claim_name_already_taken() {
 
 
 #[ink::test]
+#[should_panic]
+fn claim_name_invalid() {
+    let mut contract = setup();
+
+    push_caller_value(owner_id(), 0);
+    contract.claim_name("0f".to_string());
+    pop_caller();
+}
+
+
+#[ink::test]
+#[should_panic]
+fn claim_name_empty() {
+    let mut contract = setup();
+
+    push_caller_value(owner_id(), 0);
+    contract.claim_name("".to_string());
+    pop_caller();
+}
+
+
+#[ink::test]
 fn set_payload_works() {
     let mut contract = setup();
 

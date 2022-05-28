@@ -23,6 +23,11 @@ impl NameStore {
         if name.len() > NAME_MAX_LEN {
             return Err(NameTooLong);
         }
+        match name.chars().next() {
+            Some(char) if char.is_ascii_alphabetic() => {}
+            _ => return Err(NameMustStartWithALetter),
+        };
+
         match self.0.entry(name) {
             Occupied(_) => Err(NameAlreadyTaken),
 
