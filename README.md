@@ -2,7 +2,7 @@
 
 See the [JavaScript SDK](sdk/).
 
-    yarn add @cere/ddc-contracts-sdk
+    yarn add @cere-ddc-sdk/smart-contract
 
 # Contract Deployments
 
