@@ -12,6 +12,8 @@ pub mod ddc_nft_registry {
     use scale::{Decode, Encode};
 
     use Error::*;
+    use crate::ddc_nft_registry::attachment::entity::AttachmentStatus;
+    use crate::ddc_nft_registry::attachment::store::AttachmentStore;
 
     pub mod cash;
     pub mod contract_fee;
@@ -19,12 +21,17 @@ pub mod ddc_nft_registry {
 
     // ---- Global state ----
     #[ink(storage)]
-    pub struct DdcNftRegistry {}
+    pub struct DdcNftRegistry {
+        attachments: AttachmentStore
+    }
 
     impl DdcNftRegistry {
         #[ink(constructor)]
         pub fn new() -> Self {
-            Self {}
+            let contract = Self {
+                attachments: AttachmentStore::default(),
+            };
+            contract
         }
     }
     // ---- End global state ----
@@ -47,6 +54,16 @@ pub mod ddc_nft_registry {
         }
 
         #[ink(message)]
+        pub fn get_by_nft_id(&mut self, nft_id: String) -> AttachmentStatus {
+            self.message_get_by_nft_id(nft_id).unwrap()
+        }
+
+        #[ink(message)]
+        pub fn get_by_asset_id(&mut self, asset_id: String) -> AttachmentStatus {
+            self.message_get_by_asset_id(asset_id).unwrap()
+        }
+
+        #[ink(message)]
         pub fn get(&self) -> Result<()> {
             Ok(())
         }
@@ -62,6 +79,8 @@ pub mod ddc_nft_registry {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         InsufficientBalance,
+        AttachmentDoesNotExist,
+        AttachmentIntegrityError
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

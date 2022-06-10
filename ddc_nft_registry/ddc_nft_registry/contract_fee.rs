@@ -15,6 +15,8 @@ pub const SIZE_PER_RECORD: usize = 32;
 pub const SIZE_HASHMAP: usize = 32;
 
 pub const SIZE_ACCOUNT_ID: usize = 32;
+pub const SIZE_NFT_ID: usize = 8 + 20 + 8;
+pub const SIZE_PROOF: usize = 20;
 pub const SIZE_VEC: usize = 4;
 pub const SIZE_BALANCE: usize = 8;
 pub const SIZE_INDEX: usize = 4;
