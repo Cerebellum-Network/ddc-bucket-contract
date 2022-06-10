@@ -10,13 +10,16 @@ const {
     CERE,
     MGAS,
     ddcBucket,
+    ddcNftRegistry,
     lodash: _,
 } = require("./sdk");
 
 const assert = require("assert");
 const log = console.log;
 
-const CONTRACT_NAME = "ddc_bucket";
+const BUCKET_CONTRACT_NAME = "ddc_bucket";
+const NFT_REGISTRY_CONTRACT_NAME = "ddc_nft_registry";
+
 const SEED = "//Alice";
 const RPC = "wss://rpc.testnet.cere.network:9945";
 
@@ -30,8 +33,8 @@ async function main() {
     const account = accountFromUri(SEED);
     log("From account", account.address);
 
-    const contract = getContract(CONTRACT_NAME, chainName, api);
-    log("Using contract", CONTRACT_NAME, "at", contract.address.toString());
+    const bucketContract = getContract(BUCKET_CONTRACT_NAME, chainName, api);
+    log("Using bucket contract", BUCKET_CONTRACT_NAME, "at", bucketContract.address.toString());
 
     const txOptions = {
         value: 0n,
@@ -56,7 +59,7 @@ async function main() {
     let nodeId;
     {
         log("Setup a node…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .nodeCreate(txOptionsPay, rent_per_month, node_params, capacity);
 
         const result = await sendTx(account, tx);
@@ -68,7 +71,7 @@ async function main() {
     }
     {
         log("Trust the cluster manager…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .nodeTrustManager(txOptionsPay, managerId);
 
         const result = await sendTx(account, tx);
@@ -82,7 +85,7 @@ async function main() {
     {
         log("Setup a cluster…");
         let cluster_params = "{}";
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .clusterCreate(txOptionsPay, managerId, num_vnodes, [nodeId], cluster_params);
 
         const result = await sendTx(account, tx);
@@ -94,7 +97,7 @@ async function main() {
     }
     {
         log("Reserve some resources for the cluster…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .clusterReserveResource(txOptions, clusterId, cluster_resource);
 
         const result = await sendTx(account, tx);
@@ -107,7 +110,7 @@ async function main() {
     let bucketId;
     {
         log("Create a bucket…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .bucketCreate(txOptionsPay, bucket_params, clusterId);
 
         const result = await sendTx(account, tx);
@@ -119,7 +122,7 @@ async function main() {
     }
     {
         log("Topup the account…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .accountDeposit(txOptionsPay);
 
         const result = await sendTx(account, tx);
@@ -130,7 +133,7 @@ async function main() {
     }
     {
         log("Allocate some resources for the bucket…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .bucketAllocIntoCluster(txOptions, bucketId, bucket_resource);
 
         const result = await sendTx(account, tx);
@@ -142,7 +145,7 @@ async function main() {
 
     {
         log("Collect payment from Bucket to Cluster…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .bucketSettlePayment(txOptions, bucketId);
 
         const result = await sendTx(account, tx);
@@ -153,7 +156,7 @@ async function main() {
     }
     {
         log("Distribute payment from Cluster to Providers…");
-        const tx = contract.tx
+        const tx = bucketContract.tx
             .clusterDistributeRevenues(txOptions, clusterId);
 
         const result = await sendTx(account, tx);
@@ -167,7 +170,7 @@ async function main() {
 
     {
         log("Read the node status…");
-        const {result, output} = await contract.query
+        const {result, output} = await bucketContract.query
             .nodeGet(anyAccountId, txOptions, nodeId);
 
         if (!result.isOk) assert.fail(result.asErr);
@@ -175,7 +178,7 @@ async function main() {
     }
     {
         log("Read the cluster status…");
-        const {result, output} = await contract.query
+        const {result, output} = await bucketContract.query
             .clusterGet(anyAccountId, txOptions, clusterId);
 
         if (!result.isOk) assert.fail(result.asErr);
@@ -183,11 +186,34 @@ async function main() {
     }
     {
         log("Read the bucket status…");
-        let {result, output} = await contract.query
+        let {result, output} = await bucketContract.query
             .bucketGet(anyAccountId, txOptions, bucketId);
 
         if (!result.isOk) assert.fail(result.asErr);
         log("Bucket", output.toHuman(), "\n");
+    }
+
+    // NFT registry
+    const registryContract = getContract(NFT_REGISTRY_CONTRACT_NAME, chainName, api);
+    log("Using nft registry contract", NFT_REGISTRY_CONTRACT_NAME, "at", registryContract.address.toString());
+
+    // Test data.
+    const nft_id = "0000000000000030ABCD1234ABCD1234ABCD1234ABCD1234ABCD12340000003132333435";
+    const asset_id = "ddc:1234";
+    const proof = "cere_tx";
+
+    {
+        log("Attach asset…");
+        const tx = registryContract.tx.attach(txOptionsPay, nft_id, asset_id, proof);
+
+        const result = await sendTx(account, tx);
+        printGas(result);
+        log(getExplorerUrl(result));
+        const events = printEvents(result);
+
+
+        const { nft_id, asset_id, proof} = ddcNftRegistry.findCreatedAttachment(events);
+        log(`New attach: nft_id=${nft_id}, asset_id=${asset_id}, proof=${proof}\n`);
     }
 
     process.exit(0);

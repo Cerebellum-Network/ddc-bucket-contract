@@ -1,9 +1,9 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x5e690c8fd199cbf15e7f27bf1b510235aaf5d2bfebc776f72b77f04e03c1ad3b",
+    "hash": "0x54d7b6c0b53f5c558f76fb100e7a4e878776837a854909283737e35799289559",
     "language": "ink! 3.0.0-rc4",
-    "compiler": "rustc 1.59.0-nightly"
+    "compiler": "rustc 1.63.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",

@@ -1,0 +1,398 @@
+{
+  "metadataVersion": "0.1.0",
+  "source": {
+    "hash": "0x5e8b0fba75d6c95874d02a9bc0a37b593ec1484ab5657f281a7512ba0f032574",
+    "language": "ink! 3.0.0-rc4",
+    "compiler": "rustc 1.63.0-nightly"
+  },
+  "contract": {
+    "name": "ddc_nft_registry",
+    "version": "0.1.0",
+    "authors": [
+      "Aurélien Nicolas <aurel@cere.network>"
+    ]
+  },
+  "spec": {
+    "constructors": [
+      {
+        "args": [],
+        "docs": [],
+        "name": [
+          "new"
+        ],
+        "selector": "0x9bae9d5e"
+      }
+    ],
+    "docs": [],
+    "events": [
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "reporter_id",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "nft_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "asset_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "name": "proof",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "name": "Attach"
+      }
+    ],
+    "messages": [
+      {
+        "args": [
+          {
+            "name": "nft_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          },
+          {
+            "name": "asset_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          },
+          {
+            "name": "proof",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "attach"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0x82e05a4c"
+      },
+      {
+        "args": [
+          {
+            "name": "nft_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "get_by_nft_id"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "AttachmentStatus"
+          ],
+          "type": 7
+        },
+        "selector": "0xb5c41aa2"
+      },
+      {
+        "args": [
+          {
+            "name": "asset_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "mutates": true,
+        "name": [
+          "get_by_asset_id"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "AttachmentStatus"
+          ],
+          "type": 7
+        },
+        "selector": "0xca3e76c0"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "mutates": false,
+        "name": [
+          "get"
+        ],
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "Result"
+          ],
+          "type": 8
+        },
+        "selector": "0x2f865bd9"
+      }
+    ]
+  },
+  "storage": {
+    "struct": {
+      "fields": [
+        {
+          "layout": {
+            "struct": {
+              "fields": [
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                              "ty": 1
+                            }
+                          },
+                          "name": "len"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "cellsPerElem": 1,
+                              "layout": {
+                                "cell": {
+                                  "key": "0x0000000001000000000000000000000000000000000000000000000000000000",
+                                  "ty": 2
+                                }
+                              },
+                              "len": 4294967295,
+                              "offset": "0x0100000000000000000000000000000000000000000000000000000000000000"
+                            }
+                          },
+                          "name": "elems"
+                        }
+                      ]
+                    }
+                  },
+                  "name": null
+                }
+              ]
+            }
+          },
+          "name": "attachments"
+        }
+      ]
+    }
+  },
+  "types": [
+    {
+      "def": {
+        "primitive": "u32"
+      }
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "owner_id",
+              "type": 3,
+              "typeName": "ink_env::AccountId"
+            },
+            {
+              "name": "nft_id",
+              "type": 6,
+              "typeName": "NftId"
+            },
+            {
+              "name": "asset_id",
+              "type": 6,
+              "typeName": "AssetId"
+            },
+            {
+              "name": "proof",
+              "type": 6,
+              "typeName": "Proof"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_nft_registry",
+        "ddc_nft_registry",
+        "attachment",
+        "entity",
+        "Attachment"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "type": 4,
+              "typeName": "[u8; 32]"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ink_env",
+        "types",
+        "AccountId"
+      ]
+    },
+    {
+      "def": {
+        "array": {
+          "len": 32,
+          "type": 5
+        }
+      }
+    },
+    {
+      "def": {
+        "primitive": "u8"
+      }
+    },
+    {
+      "def": {
+        "primitive": "str"
+      }
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "attachment",
+              "type": 2,
+              "typeName": "Attachment"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_nft_registry",
+        "ddc_nft_registry",
+        "attachment",
+        "entity",
+        "AttachmentStatus"
+      ]
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "fields": [
+                {
+                  "type": 9,
+                  "typeName": "T"
+                }
+              ],
+              "name": "Ok"
+            },
+            {
+              "fields": [
+                {
+                  "type": 10,
+                  "typeName": "E"
+                }
+              ],
+              "name": "Err"
+            }
+          ]
+        }
+      },
+      "params": [
+        9,
+        10
+      ],
+      "path": [
+        "Result"
+      ]
+    },
+    {
+      "def": {
+        "tuple": []
+      }
+    },
+    {
+      "def": {
+        "variant": {
+          "variants": [
+            {
+              "discriminant": 0,
+              "name": "InsufficientBalance"
+            },
+            {
+              "discriminant": 1,
+              "name": "AttachmentDoesNotExist"
+            },
+            {
+              "discriminant": 2,
+              "name": "AttachmentIntegrityError"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_nft_registry",
+        "ddc_nft_registry",
+        "Error"
+      ]
+    }
+  ]
+}

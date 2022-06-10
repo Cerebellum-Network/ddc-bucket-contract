@@ -11,8 +11,17 @@ See the latest deployments in [deployments.js](sdk/src/deployments.js). Use git 
 To deploy:
 
 - Update the version in the relevant [Cargo.toml](bucket/Cargo.toml) and [package.json](sdk/package.json).
-- Build the contracts: `cd bucket && cargo test && cargo contract build --release`
-- Update the [SDK ABIs](sdk/src/abi/) using `cp target/ink/ddc_bucket/metadata.json sdk/src/abi/ddc_bucket.json`
+- Build the contracts:
+```bash 
+cargo test && 
+cargo contract build --release --manifest-path bucket/Cargo.toml && 
+cargo contract build --release --manifest-path ddc_nft_registry/Cargo.toml
+```
+- Update the [SDK ABIs](sdk/src/abi/) using
+```bash
+cp target/ink/ddc_bucket/metadata.json sdk/src/abi/ddc_bucket.json &&
+cp target/ink/ddc_nft_registry/metadata.json sdk/src/abi/ddc_nft_registry.json
+```
 - Use the script [deploy.js](deploy.js) to deploy the contracts.
 - Update the [SDK default contracts](sdk/src/deployments.js).
 - Publish the JS SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
