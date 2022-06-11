@@ -435,9 +435,30 @@ fn cluster_pays_providers() {
 
 
 #[ink::test]
+fn bucket_reserve_0_works() {
+    let contract = DdcBucket::new();
+    assert_eq!(
+        contract.bucket_list(0, 10, None),
+        (vec![BucketStatus {
+            bucket_id: 0,
+            bucket: BucketInStatus {
+                owner_id: AccountId::default(),
+                cluster_id: 0,
+                resource_reserved: 0,
+            },
+            params: "".to_string(),
+            writer_ids: vec![AccountId::default()],
+            rent_covered_until_ms: 18446744073709551615,
+        }], 1));
+}
+
+
+#[ink::test]
 fn bucket_create_works() {
     let ctx = &mut new_cluster();
     let test_bucket = &new_bucket(ctx);
+
+    assert_eq!(test_bucket.bucket_id, 1, "bucket_id must start at 1");
 
     // Check the structure of the bucket including the payment flow.
     let total_rent = ctx.rent_per_vnode * ctx.vnode_count as Balance;
@@ -632,39 +653,38 @@ fn bucket_list_works() {
     pop_caller();
 
     assert_ne!(bucket_id1, bucket_id2);
-    let count = 2;
+    let count = 3;
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, None),
+        ddc_bucket.bucket_list(1, 100, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 2, None),
+        ddc_bucket.bucket_list(1, 2, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
-
-    assert_eq!(
-        ddc_bucket.bucket_list(0, 1, None),
-        (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
         ddc_bucket.bucket_list(1, 1, None),
+        (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
+    assert_eq!(
+        ddc_bucket.bucket_list(2, 1, None),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(20, 20, None),
+        ddc_bucket.bucket_list(21, 20, None),
         (vec![], count));
 
     // Filter by owner.
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, Some(owner_id1)),
+        ddc_bucket.bucket_list(1, 100, Some(owner_id1)),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, Some(owner_id2)),
+        ddc_bucket.bucket_list(1, 100, Some(owner_id2)),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, Some(owner_id3)),
+        ddc_bucket.bucket_list(1, 100, Some(owner_id3)),
         (vec![], count));
 }
 
