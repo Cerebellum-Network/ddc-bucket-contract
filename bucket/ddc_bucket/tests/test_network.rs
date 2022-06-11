@@ -83,20 +83,23 @@ fn storage_network_works() {
         Action { routing_key: routing4, data: "data in shard 4".to_string(), op: Op::Read },
         &[4, 5, 0]);
 
+    let vnodes = contract.cluster_get(1).unwrap()
+        .cluster.vnodes;
+    assert_eq!(vnodes, vec![
+        1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6]);
+
     // Replace a node.
-    cluster_manager.replace_node(&mut contract, 0);
+    cluster_manager.replace_node(&mut contract, 1);
 
     let vnodes = contract.cluster_get(1).unwrap()
         .cluster.vnodes;
     assert_eq!(vnodes, vec![
-        5, // Node 0 was replaced by Node 5.
-        1, 2, 3, 4, 5,
-        4, // Node 0 was replaced by Node 4.
-        1, 2, 3, 4, 5,
-    ]);
+        6, 2, 3, 4, 5, 6, 5, 2, 3, 4, 5, 6]);
+    //  ^                 ^
+    // Node 1 was replaced by Node 6 and Node 5.
 
     // Check the resource distribution of all nodes.
-    let (nodes, _) = contract.node_list(0, 20, None);
+    let (nodes, _) = contract.node_list(1, 20, None);
     let resources: Vec<Resource> = nodes.iter().map(|n| n.node.free_resource).collect();
     const INIT: u32 = 100; // Initial capacity of each node.
     const PART: u32 = 15; // Size of a vnode.
