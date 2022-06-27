@@ -31,7 +31,7 @@ impl TestNode {
 
 pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<ClusterStatus> {
     // Discover the available clusters.
-    let (clusters, _count) = contract.cluster_list(0, 20, None);
+    let (clusters, _count) = contract.cluster_list(1, 20, None);
 
     // Pick the first one that provides the right engine.
     let cluster = clusters.iter()
