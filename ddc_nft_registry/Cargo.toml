@@ -1,7 +1,7 @@
 [package]
 name = "ddc_nft_registry"
 version = "0.1.0"
-authors = ["Aurélien Nicolas <aurel@cere.network>"]
+authors = ["Aurélien Nicolas <aurel@cere.network>", "Anton Volk <anton.volk@cere.io>"]
 edition = "2021"
 
 [dependencies]

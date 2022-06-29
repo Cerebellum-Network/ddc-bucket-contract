@@ -14,22 +14,44 @@ fn new_works() {
     let asset_id = "4321DCBA4321DCBA4321DCBA4321DCBA4321DCBA";
     let proof = "certified by cere";
 
+    // Attach asset_id to nft_id
     push_caller_value(reporter_id, 1000 * TOKEN);
     contract.attach(nft_id.to_string(), asset_id.to_string(), proof.to_string());
     pop_caller();
 
-    // Check the last event.
+    // Verify attachment of asset_id to nft_id
     let ev = get_events().pop().unwrap();
     assert!(matches!(ev, Event::Attach(ev) if ev ==
         Attach {
             reporter_id,
-            nft_id:nft_id.to_string(),
-            asset_id:asset_id.to_string(),
-            proof:proof.to_string(),
+            nft_id:     nft_id.to_string(),
+            asset_id:   asset_id.to_string(),
+            proof:      proof.to_string(),
         }));
 
     let attachment_status = contract.get_by_nft_id(nft_id.to_string());
     assert_eq!(attachment_status.attachment.nft_id, nft_id.to_string());
     assert_eq!(attachment_status.attachment.asset_id, asset_id.to_string());
     assert_eq!(attachment_status.attachment.proof, proof.to_string());
+
+    // Attach different attachment to nft_id
+    let new_asset_id = "beefbeefbeefbeefbeefbeefbeefbeefbeefbeef";
+    push_caller_value(reporter_id, 900 * TOKEN);
+    contract.attach(nft_id.to_string(), new_asset_id.to_string(), proof.to_string());
+    pop_caller();
+
+    // Verify attachment of new_asset_id to nft_id
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::Attach(ev) if ev ==
+        Attach {
+            reporter_id,
+            nft_id:     nft_id.to_string(),
+            asset_id:   new_asset_id.to_string(),
+            proof:      proof.to_string(),
+        }));
+
+    let new_attachment_status = contract.get_by_nft_id(nft_id.to_string());
+    assert_eq!(new_attachment_status.attachment.nft_id, nft_id.to_string());
+    assert_eq!(new_attachment_status.attachment.asset_id, new_asset_id.to_string());
+    assert_eq!(new_attachment_status.attachment.proof, proof.to_string());
 }

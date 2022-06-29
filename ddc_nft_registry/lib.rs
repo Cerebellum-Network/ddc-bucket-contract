@@ -59,11 +59,6 @@ pub mod ddc_nft_registry {
         }
 
         #[ink(message)]
-        pub fn get_by_asset_id(&mut self, asset_id: String) -> AttachmentStatus {
-            self.message_get_by_asset_id(asset_id).unwrap()
-        }
-
-        #[ink(message)]
         pub fn get(&self) -> Result<()> {
             Ok(())
         }
@@ -80,7 +75,6 @@ pub mod ddc_nft_registry {
     pub enum Error {
         InsufficientBalance,
         AttachmentDoesNotExist,
-        AttachmentIntegrityError
     }
 
     pub type Result<T> = core::result::Result<T, Error>;
