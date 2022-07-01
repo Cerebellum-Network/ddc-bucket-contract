@@ -5,8 +5,7 @@ use ink_storage::{
     traits,
 };
 use crate::ddc_nft_registry::attachment::entity::{AssetId, NftId, Proof};
-use crate::ddc_nft_registry::{Error};
-use crate::ddc_nft_registry::Error::*;
+use crate::ddc_nft_registry::{AccountId, Error, Error::*};
 
 use super::entity::{Attachment};
 
@@ -16,9 +15,9 @@ pub struct AttachmentStore(pub InkHashMap<NftId, Attachment>);
 
 impl AttachmentStore {
     #[must_use]
-    pub fn create(&mut self, owner_id: ink_env::AccountId, nft_id: NftId, asset_id: AssetId, proof: Proof) -> Result<Attachment, Error> {
+    pub fn create(&mut self, reporter_id: AccountId, nft_id: NftId, asset_id: AssetId, proof: Proof) -> Result<Attachment, Error> {
         let attachment = Attachment {
-            owner_id,
+            reporter_id,
             nft_id,
             asset_id,
             proof
@@ -26,7 +25,7 @@ impl AttachmentStore {
 
         // If exists, check that this is the same reporter.
         if let Some(previous) = self.0.get(&attachment.nft_id) {
-            if previous.owner_id != owner_id {
+            if previous.reporter_id != reporter_id {
                 return Err(UnauthorizedUpdate);
             }
         }

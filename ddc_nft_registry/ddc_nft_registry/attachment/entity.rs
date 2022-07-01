@@ -12,7 +12,7 @@ pub type Proof = String;
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Attachment {
-    pub owner_id: AccountId,
+    pub reporter_id: AccountId,
     pub nft_id: NftId,
     pub asset_id: AssetId,
     pub proof: Proof,
