@@ -75,6 +75,7 @@ pub mod ddc_nft_registry {
     pub enum Error {
         InsufficientBalance,
         AttachmentDoesNotExist,
+        UnauthorizedUpdate,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

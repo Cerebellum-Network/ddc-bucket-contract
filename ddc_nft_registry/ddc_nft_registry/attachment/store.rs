@@ -6,7 +6,7 @@ use ink_storage::{
 };
 use crate::ddc_nft_registry::attachment::entity::{AssetId, NftId, Proof};
 use crate::ddc_nft_registry::{Error};
-use crate::ddc_nft_registry::Error::{AttachmentDoesNotExist};
+use crate::ddc_nft_registry::Error::*;
 
 use super::entity::{Attachment};
 
@@ -23,6 +23,14 @@ impl AttachmentStore {
             asset_id,
             proof
         };
+
+        // If exists, check that this is the same reporter.
+        if let Some(previous) = self.0.get(&attachment.nft_id) {
+            if previous.owner_id != owner_id {
+                return Err(UnauthorizedUpdate);
+            }
+        }
+
         self.0.insert(attachment.nft_id.clone(), attachment.clone());
         Ok(attachment)
     }
