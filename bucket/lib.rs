@@ -62,9 +62,20 @@ pub mod ddc_bucket {
                 accounts: AccountStore::default(),
                 perms: PermStore::default(),
             };
+
             // Make the creator of this contract a super-admin.
             let admin_id = Self::env().caller();
             contract.perms.grant_permission(admin_id, &Permission::SuperAdmin);
+
+            // Reserve IDs 0.
+            let _ = contract.accounts.create_if_not_exist(AccountId::default());
+            let _ = contract.nodes.create(AccountId::default(), 0, 0);
+            let _ = contract.node_params.create("".to_string());
+            let _ = contract.clusters.create(AccountId::default(), 0, &[]).unwrap();
+            let _ = contract.cluster_params.create("".to_string());
+            let _ = contract.buckets.create(AccountId::default(), 0);
+            let _ = contract.bucket_params.create("".to_string());
+
             contract
         }
     }

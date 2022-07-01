@@ -123,6 +123,8 @@ fn cluster_create_works() {
     let node_ids = &[ctx.node_id0, ctx.node_id1, ctx.node_id2];
     let node_params = &[ctx.node_params0, ctx.node_params1, ctx.node_params2];
 
+    assert_eq!(ctx.cluster_id, 1, "cluster_id must start at 1");
+    assert_eq!(ctx.node_id0, 1, "node_id must start at 1");
     assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
 
     // Check the nodes.
@@ -435,9 +437,58 @@ fn cluster_pays_providers() {
 
 
 #[ink::test]
+fn bucket_reserve_0_works() {
+    let contract = DdcBucket::new();
+
+    assert_eq!(
+        contract.bucket_list(0, 10, None),
+        (vec![BucketStatus {
+            bucket_id: 0,
+            bucket: BucketInStatus {
+                owner_id: AccountId::default(),
+                cluster_id: 0,
+                resource_reserved: 0,
+            },
+            params: "".to_string(),
+            writer_ids: vec![AccountId::default()],
+            rent_covered_until_ms: 18446744073709551615,
+        }], 1));
+
+    assert_eq!(
+        contract.cluster_list(0, 10, None),
+        (vec![ClusterStatus {
+            cluster_id: 0,
+            cluster: Cluster {
+                manager_id: AccountId::default(),
+                vnodes: vec![],
+                resource_per_vnode: 0,
+                resource_used: 0,
+                revenues: Cash(0),
+                total_rent: 0,
+            },
+            params: "".to_string(),
+        }], 1));
+
+    assert_eq!(
+        contract.node_list(0, 10, None),
+        (vec![NodeStatus {
+            node_id: 0,
+            node: Node {
+                provider_id: AccountId::default(),
+                rent_per_month: 0,
+                free_resource: 0,
+            },
+            params: "".to_string(),
+        }], 1));
+}
+
+
+#[ink::test]
 fn bucket_create_works() {
     let ctx = &mut new_cluster();
     let test_bucket = &new_bucket(ctx);
+
+    assert_eq!(test_bucket.bucket_id, 1, "bucket_id must start at 1");
 
     // Check the structure of the bucket including the payment flow.
     let total_rent = ctx.rent_per_vnode * ctx.vnode_count as Balance;
@@ -632,39 +683,38 @@ fn bucket_list_works() {
     pop_caller();
 
     assert_ne!(bucket_id1, bucket_id2);
-    let count = 2;
+    let count = 3;
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, None),
+        ddc_bucket.bucket_list(1, 100, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 2, None),
+        ddc_bucket.bucket_list(1, 2, None),
         (vec![bucket_status1.clone(), bucket_status2.clone()], count));
-
-    assert_eq!(
-        ddc_bucket.bucket_list(0, 1, None),
-        (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
         ddc_bucket.bucket_list(1, 1, None),
+        (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
+    assert_eq!(
+        ddc_bucket.bucket_list(2, 1, None),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(20, 20, None),
+        ddc_bucket.bucket_list(21, 20, None),
         (vec![], count));
 
     // Filter by owner.
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, Some(owner_id1)),
+        ddc_bucket.bucket_list(1, 100, Some(owner_id1)),
         (vec![bucket_status1.clone() /*, bucket_status2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, Some(owner_id2)),
+        ddc_bucket.bucket_list(1, 100, Some(owner_id2)),
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(0, 100, Some(owner_id3)),
+        ddc_bucket.bucket_list(1, 100, Some(owner_id3)),
         (vec![], count));
 }
 
@@ -691,7 +741,7 @@ fn node_list_works() {
     pop_caller();
 
     assert_ne!(node_id1, node_id2);
-    let count = 2;
+    let count = 3;
 
     let node1 = NodeStatus {
         node_id: node_id1,
@@ -714,36 +764,36 @@ fn node_list_works() {
     };
 
     assert_eq!(
-        ddc_bucket.node_list(0, 100, None),
+        ddc_bucket.node_list(1, 100, None),
         (vec![node1.clone(), node2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.node_list(0, 2, None),
+        ddc_bucket.node_list(1, 2, None),
         (vec![node1.clone(), node2.clone()], count));
-
-    assert_eq!(
-        ddc_bucket.node_list(0, 1, None),
-        (vec![node1.clone() /*, node2.clone()*/], count));
 
     assert_eq!(
         ddc_bucket.node_list(1, 1, None),
+        (vec![node1.clone() /*, node2.clone()*/], count));
+
+    assert_eq!(
+        ddc_bucket.node_list(2, 1, None),
         (vec![/*node1.clone(),*/ node2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.node_list(20, 20, None),
+        ddc_bucket.node_list(21, 20, None),
         (vec![], count));
 
     // Filter by owner.
     assert_eq!(
-        ddc_bucket.node_list(0, 100, Some(owner_id1)),
+        ddc_bucket.node_list(1, 100, Some(owner_id1)),
         (vec![node1.clone() /*, node2.clone()*/], count));
 
     assert_eq!(
-        ddc_bucket.node_list(0, 100, Some(owner_id2)),
+        ddc_bucket.node_list(1, 100, Some(owner_id2)),
         (vec![/*node1.clone(),*/ node2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.node_list(0, 100, Some(owner_id3)),
+        ddc_bucket.node_list(1, 100, Some(owner_id3)),
         (vec![], count));
 }
 
