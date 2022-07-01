@@ -16,12 +16,19 @@ const fs = require("fs/promises");
 const assert = require("assert");
 const log = console.log;
 
-const CONTRACT_NAME = "ddc_bucket";
-const REUSE_CODE_HASH = "";
-const REUSE_CONTRACT_ADDRESS = "";
+const DDC_CONTRACT_NAMES = [ "ddc_bucket", "ddc_nft_registry"]
 
-const WASM = `./target/ink/${CONTRACT_NAME}/${CONTRACT_NAME}.wasm`;
-const ABI = `./target/ink/${CONTRACT_NAME}/metadata.json`;
+const stash_data = {
+    [DDC_CONTRACT_NAMES[0]]: {
+        reuse_code_hash: "",
+        reuse_contract_address: "",
+    },
+    [DDC_CONTRACT_NAMES[1]]: {
+        reuse_code_hash: "",
+        reuse_contract_address: "",
+    }
+}
+
 const CONSTRUCTOR = "new";
 
 const SEED = "//Alice";
@@ -37,16 +44,26 @@ async function main() {
     const account = accountFromUri(SEED);
     log("From account", account.address);
 
-    const abi = JSON.parse(await fs.readFile(ABI));
-    log("ABI", abi.contract.name, abi.contract.version);
+    for (const sc in DDC_CONTRACT_NAMES) {
+        await deployContract(sc, api, account, chainName, getExplorerUrl)
+    }
 
+    process.exit(0);
+}
+
+const deployContract = async (contract_name, api, account, chainName, getExplorerUrl) => {
+    const { abi_path , wasm_path } = getPaths(contract_name)
+    const abi = JSON.parse(await fs.readFile(abi_path));
+    log(`${contract_name} SC: ABI name=${abi.contract.name}, version=${abi.contract.version}`);
+
+    const stashed = stash_data[contract_name]
     // Upload code if necessary.
-    if (REUSE_CODE_HASH) {
-        log("Using existing code", REUSE_CODE_HASH);
-        registerABI(CONTRACT_NAME, abi, REUSE_CODE_HASH);
+    if (stashed.reuse_code_hash) {
+        log("Using existing code", stashed.reuse_code_hash);
+        registerABI(contract_name, abi, stashed.reuse_code_hash);
     } else {
-        const wasm = await fs.readFile(WASM);
-        log(`Deploying the code ${WASM} (${wasm.length} bytes)`);
+        const wasm = await fs.readFile(wasm_path);
+        log(`Deploying the code ${wasm_path} (${wasm.length} bytes)`);
 
         const code = getCodeDeployer(api, abi, wasm);
         const tx = code.tx[CONSTRUCTOR]({});
@@ -55,16 +72,19 @@ async function main() {
         const result = await sendTx(account, tx);
         const new_code_hash = result.blueprint.codeHash.toString();
         log(getExplorerUrl(result));
-        log("Deployed the code. Write this in the script:");
-        log(`    const REUSE_CODE_HASH = "${new_code_hash}";`);
-        registerABI(CONTRACT_NAME, abi, new_code_hash);
+        log("Deployed the code. Update stash_data in the script with new code hash:");
+        log(`    const stash_data = {  `);
+        log(`       ${contract_name}: {`);
+        log(`           reuse_code_hash: ${new_code_hash}`);
+        log(`       };`);
+        registerABI(contract_name, abi, new_code_hash);
     }
     log();
 
     // Instantiate a new contract if necessary.
-    if (REUSE_CONTRACT_ADDRESS) {
-        log("Using existing contract", REUSE_CONTRACT_ADDRESS);
-        registerContract(CONTRACT_NAME, chainName, REUSE_CONTRACT_ADDRESS);
+    if (stashed.reuse_contract_address) {
+        log("Using existing contract", stashed.reuse_contract_address);
+        registerContract(contract_name, chainName, stashed.reuse_contract_address);
     } else {
         log("Instantiating a contract…");
 
@@ -73,19 +93,28 @@ async function main() {
             gasLimit: 100_000n * MGAS,
         };
 
-        const blueprint = getBlueprint(CONTRACT_NAME, api);
+        const blueprint = getBlueprint(contract_name, api);
         const tx = blueprint.tx[CONSTRUCTOR](txOptions);
 
         // Instantiate the contract and retrieve its address.
         const result = await sendTx(account, tx);
         const new_contract_address = result.contract.address.toString();
         log(getExplorerUrl(result));
-        log("Instantiated a new contract. Write this in the script:");
-        log(`    const REUSE_CONTRACT_ADDRESS = "${new_contract_address}";`);
-        registerContract(CONTRACT_NAME, chainName, new_contract_address);
-    }
+        log(`Instantiated a new contract. Update stash_data in the script with new contract address:`);
+        log(`    const stash_data = {  `);
+        log(`       ${contract_name}: {`);
+        log(`           reuse_contract_address: ${new_contract_address}`);
+        log(`       };`);
 
-    process.exit(0);
+        registerContract(contract_name, chainName, new_contract_address);
+    }
+}
+
+const getPaths = (contract_name) => {
+    contract_name = contract_name.toLowerCase();
+    const wasm_path = `./target/ink/${contract_name}/${contract_name}.wasm`;
+    const abi_path = `./target/ink/${contract_name}/metadata.json`;
+    return { wasm_path, abi_path }
 }
 
 main().then(log, log);

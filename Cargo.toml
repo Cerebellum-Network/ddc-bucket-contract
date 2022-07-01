@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "bucket",
+    "ddc_nft_registry",
 ]
 
 # Needed until https://github.com/paritytech/ink/issues/364 is resolved.

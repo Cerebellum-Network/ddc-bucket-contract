@@ -3,7 +3,7 @@
   "source": {
     "hash": "0x5e690c8fd199cbf15e7f27bf1b510235aaf5d2bfebc776f72b77f04e03c1ad3b",
     "language": "ink! 3.0.0-rc4",
-    "compiler": "rustc 1.59.0-nightly"
+    "compiler": "rustc 1.63.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",
