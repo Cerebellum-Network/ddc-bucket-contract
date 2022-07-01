@@ -14,6 +14,12 @@ impl DdcNftRegistry {
         Ok(())
     }
 
+    pub fn message_report(&mut self, nft_id: NftId, asset_id: AssetId, proof: Proof) -> Result<()> {
+        let reporter_id = Self::env().caller();
+        Self::env().emit_event(Attach { reporter_id, nft_id, asset_id, proof });
+        Ok(())
+    }
+
     pub fn message_get_by_nft_id(&mut self, nft_id: NftId) -> Result<AttachmentStatus> {
         let attachment = self.attachments.get_by_nft_id(nft_id)?;
         Ok(AttachmentStatus { attachment })
