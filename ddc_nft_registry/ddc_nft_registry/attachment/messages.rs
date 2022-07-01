@@ -9,7 +9,7 @@ impl DdcNftRegistry {
     pub fn message_attach(&mut self, nft_id: NftId, asset_id: AssetId, proof: Proof) -> Result<()> {
         let reporter_id = Self::env().caller();
         let attachment = self.attachments.create(reporter_id, nft_id, asset_id, proof)?;
-        Self::capture_fee_and_refund(scale::Encode::encoded_size(&attachment))?;
+        Self::capture_fee_and_refund(attachment.record_size())?;
         Self::env().emit_event(Attach { reporter_id, nft_id: attachment.nft_id, asset_id: attachment.asset_id, proof: attachment.proof });
         Ok(())
     }

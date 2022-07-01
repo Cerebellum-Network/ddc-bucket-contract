@@ -4,10 +4,11 @@ use ink_storage::{
     collections::HashMap as InkHashMap,
     traits,
 };
-use crate::ddc_nft_registry::attachment::entity::{AssetId, NftId, Proof};
-use crate::ddc_nft_registry::{AccountId, Error, Error::*};
 
-use super::entity::{Attachment};
+use crate::ddc_nft_registry::{AccountId, Error, Error::*};
+use crate::ddc_nft_registry::attachment::entity::{AssetId, NftId, Proof};
+
+use super::entity::Attachment;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
@@ -20,7 +21,7 @@ impl AttachmentStore {
             reporter_id,
             nft_id,
             asset_id,
-            proof
+            proof,
         };
 
         // If exists, check that this is the same reporter.
@@ -37,5 +38,4 @@ impl AttachmentStore {
     pub fn get_by_nft_id(&mut self, nft_id: NftId) -> Result<Attachment, Error> {
         return self.0.get(&nft_id).map(|a| a.clone()).ok_or(AttachmentDoesNotExist);
     }
-
 }
