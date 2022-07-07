@@ -12,6 +12,7 @@ pub mod ddc_nft_registry {
     use scale::{Decode, Encode};
 
     use Error::*;
+
     use crate::ddc_nft_registry::attachment::entity::AttachmentStatus;
     use crate::ddc_nft_registry::attachment::store::AttachmentStore;
 
@@ -22,7 +23,7 @@ pub mod ddc_nft_registry {
     // ---- Global state ----
     #[ink(storage)]
     pub struct DdcNftRegistry {
-        attachments: AttachmentStore
+        attachments: AttachmentStore,
     }
 
     impl DdcNftRegistry {
@@ -48,19 +49,35 @@ pub mod ddc_nft_registry {
     }
 
     impl DdcNftRegistry {
+        /// Report and attach an asset ID to an NFT ID.
+        ///
+        /// All attachments are recorded as events.
+        /// There is absolutely no validation, any account can "attach" some asset ID.
+        /// Events should be filtered by reporter_id, or by analyzing the proof (not specified here).
+        ///
+        /// The latest attachment is also recorded in contract storage.
+        /// The latest asset ID can be queried from get_by_nft_id.
+        /// The first reporter for an NFT ID can also update the asset ID.
         #[ink(message, payable)]
         pub fn attach(&mut self, nft_id: String, asset_id: String, proof: String) {
             self.message_attach(nft_id, asset_id, proof).unwrap()
         }
 
-        #[ink(message)]
-        pub fn get_by_nft_id(&mut self, nft_id: String) -> AttachmentStatus {
-            self.message_get_by_nft_id(nft_id).unwrap()
+        /// Report the attachment of an asset ID to an NFT ID.
+        ///
+        /// This is recorded only as a contract event.
+        /// This can *not* be queried from get_by_nft_id.
+        ///
+        /// There is absolutely no validation, any account can "report" some asset ID.
+        /// Events should be filtered by reporter_id, or by analyzing the proof (not specified here).
+        #[ink(message, payable)]
+        pub fn report(&mut self, nft_id: String, asset_id: String, proof: String) {
+            self.message_report(nft_id, asset_id, proof).unwrap()
         }
 
         #[ink(message)]
-        pub fn get(&self) -> Result<()> {
-            Ok(())
+        pub fn get_by_nft_id(&mut self, nft_id: String) -> AttachmentStatus {
+            self.message_get_by_nft_id(nft_id).unwrap()
         }
     }
     // ---- End Bucket ----
@@ -75,6 +92,7 @@ pub mod ddc_nft_registry {
     pub enum Error {
         InsufficientBalance,
         AttachmentDoesNotExist,
+        UnauthorizedUpdate,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

@@ -1,9 +1,9 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x4aab2d8fa85eb782817931c6eb6bf5de3044195081e0941d3146e922293a8efd",
+    "hash": "0x85213c9200bdf87bc86d0f333fbe504daa7c31810c6625c15e9007b12eee7caa",
     "language": "ink! 3.0.0-rc4",
-    "compiler": "rustc 1.64.0-nightly"
+    "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_nft_registry",
@@ -108,7 +108,17 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Report and attach an asset ID to an NFT ID.",
+          "",
+          " All attachments are recorded as events.",
+          " There is absolutely no validation, any account can \"attach\" some asset ID.",
+          " Events should be filtered by reporter_id, or by analyzing the proof (not specified here).",
+          "",
+          " The latest attachment is also recorded in contract storage.",
+          " The latest asset ID can be queried from get_by_nft_id.",
+          " The first reporter for an NFT ID can also update the asset ID."
+        ],
         "mutates": true,
         "name": [
           "attach"
@@ -116,6 +126,53 @@
         "payable": true,
         "returnType": null,
         "selector": "0x82e05a4c"
+      },
+      {
+        "args": [
+          {
+            "name": "nft_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "asset_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "name": "proof",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 4
+            }
+          }
+        ],
+        "docs": [
+          " Report the attachment of an asset ID to an NFT ID.",
+          "",
+          " This is recorded only as a contract event.",
+          " This can *not* be queried from get_by_nft_id.",
+          "",
+          " There is absolutely no validation, any account can \"report\" some asset ID.",
+          " Events should be filtered by reporter_id, or by analyzing the proof (not specified here)."
+        ],
+        "mutates": true,
+        "name": [
+          "report"
+        ],
+        "payable": true,
+        "returnType": null,
+        "selector": "0xf30f464c"
       },
       {
         "args": [
@@ -142,22 +199,6 @@
           "type": 11
         },
         "selector": "0xb5c41aa2"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "mutates": false,
-        "name": [
-          "get"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "Result"
-          ],
-          "type": 12
-        },
-        "selector": "0x2f865bd9"
       }
     ]
   },
@@ -387,7 +428,7 @@
         "composite": {
           "fields": [
             {
-              "name": "owner_id",
+              "name": "reporter_id",
               "type": 8,
               "typeName": "AccountId"
             },
@@ -465,65 +506,6 @@
         "attachment",
         "entity",
         "AttachmentStatus"
-      ]
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "fields": [
-                {
-                  "type": 13,
-                  "typeName": "T"
-                }
-              ],
-              "name": "Ok"
-            },
-            {
-              "fields": [
-                {
-                  "type": 14,
-                  "typeName": "E"
-                }
-              ],
-              "name": "Err"
-            }
-          ]
-        }
-      },
-      "params": [
-        13,
-        14
-      ],
-      "path": [
-        "Result"
-      ]
-    },
-    {
-      "def": {
-        "tuple": []
-      }
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
-              "discriminant": 0,
-              "name": "InsufficientBalance"
-            },
-            {
-              "discriminant": 1,
-              "name": "AttachmentDoesNotExist"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_nft_registry",
-        "ddc_nft_registry",
-        "Error"
       ]
     }
   ]
