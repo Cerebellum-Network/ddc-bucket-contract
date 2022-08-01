@@ -31,6 +31,7 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod cluster;
     pub mod contract_fee;
+    pub mod network_fee;
     pub mod params;
     pub mod admin;
     pub mod perm;
