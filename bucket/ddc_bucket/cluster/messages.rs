@@ -78,6 +78,11 @@ impl DdcBucket {
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
+
+        // Charge the network fee from the cluster.
+        Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
+
+        // Charge the provider payments from the cluster.
         let num_shares = cluster.vnodes.len() as Balance;
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;

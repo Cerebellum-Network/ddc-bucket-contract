@@ -434,6 +434,11 @@ fn cluster_pays_providers() {
 
     let skip_events = get_events::<Event>().len();
 
+    // Set a network fee.
+    let fee_bp = 100; // 1%
+    ctx.contract.admin_set_network_fee(fee_bp, AccountId::default());
+    let burned_fee = to_distribute * fee_bp / 10_000;
+
     // Distribute the revenues of the cluster to providers.
     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
 
@@ -461,9 +466,10 @@ fn cluster_pays_providers() {
     assert!(to_distribute > 0);
     assert!(left_after_distribution < 10, "revenues must go out of the cluster (besides rounding)");
     assert!(earned0 > 0, "provider must earn something");
+    assert!(burned_fee > 0, "the network must earn something");
     assert_eq!(earned0, earned1, "providers must earn the same amount");
     assert_eq!(earned0, earned2, "providers must earn the same amount");
-    assert_eq!(earned0 + earned1 + earned2 + left_after_distribution, to_distribute, "all revenues must go to providers");
+    assert_eq!(earned0 + earned1 + earned2 + left_after_distribution + burned_fee, to_distribute, "all revenues must go to providers");
 }
 
 

@@ -21,6 +21,7 @@ pub mod ddc_bucket {
     use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
+    use crate::ddc_bucket::network_fee::NetworkFeeStore;
     use crate::ddc_bucket::perm::entity::Permission;
 
     pub mod account;
@@ -31,6 +32,7 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod cluster;
     pub mod contract_fee;
+    pub mod network_fee;
     pub mod params;
     pub mod admin;
     pub mod perm;
@@ -47,6 +49,7 @@ pub mod ddc_bucket {
         node_params: ParamsStore,
         accounts: AccountStore,
         perms: PermStore,
+        network_fee: NetworkFeeStore,
     }
 
     impl DdcBucket {
@@ -61,6 +64,7 @@ pub mod ddc_bucket {
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
                 perms: PermStore::default(),
+                network_fee: NetworkFeeStore::default(),
             };
 
             // Make the creator of this contract a super-admin.
@@ -345,6 +349,12 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn admin_withdraw(&mut self, amount: Balance) {
             self.message_admin_withdraw(amount).unwrap();
+        }
+
+        /// Set the network fee on cluster revenues. In basis points (1% of 1%).
+        #[ink(message)]
+        pub fn admin_set_network_fee(&mut self, rate_bp: Balance, destination: AccountId) {
+            self.message_admin_set_network_fee(rate_bp, destination).unwrap();
         }
     }
     // ---- End Admin ----
