@@ -186,8 +186,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, manager: AccountId, vnode_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> NodeId {
-            self.message_cluster_create(manager, vnode_count, node_ids, cluster_params).unwrap()
+        pub fn cluster_create(&mut self, _unused: AccountId, vnode_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> NodeId {
+            self.message_cluster_create(vnode_count, node_ids, cluster_params).unwrap()
         }
 
         #[ink(message)]

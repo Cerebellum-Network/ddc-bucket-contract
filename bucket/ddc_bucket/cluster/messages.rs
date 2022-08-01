@@ -9,26 +9,26 @@ use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, VNodeIndex};
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager, VNodeDoesNotExist};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
+use crate::ddc_bucket::perm::store::PermStore;
 
 use super::entity::{ClusterId, ClusterParams};
 
 impl DdcBucket {
     pub fn message_cluster_create(
         &mut self,
-        manager: AccountId,
         vnode_count: u32,
         node_ids: Vec<NodeId>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
+        let manager = Self::env().caller();
+
         let mut nodes = Vec::<(NodeId, &Node)>::new();
         for node_id in node_ids {
             let node = self.nodes.get(node_id)?;
             nodes.push((node_id, node));
 
             // Verify that the node provider trusts the cluster manager.
-            let perm = Permission::ManagerTrustedBy(node.provider_id);
-            let trusts = self.perms.has_permission(manager, perm);
-            if !trusts { return Err(ClusterManagerIsNotTrusted); }
+            Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
         let (cluster_id, record_size0) = self.clusters.create(manager, vnode_count, &nodes)?;
@@ -56,17 +56,20 @@ impl DdcBucket {
 
     pub fn message_cluster_replace_node(&mut self, cluster_id: ClusterId, vnode_index: VNodeIndex, new_node_id: NodeId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
-        Self::only_cluster_manager(cluster)?;
+        let manager = Self::only_cluster_manager(cluster)?;
 
         // Give back resources to the old node.
         let old_node_id = cluster.vnodes.get_mut(vnode_index as usize).ok_or(VNodeDoesNotExist)?;
-
         self.nodes.get_mut(*old_node_id)?
             .put_resource(cluster.resource_per_vnode);
 
+        let new_node = self.nodes.get_mut(new_node_id)?;
+
+        // Verify that the provider of the new node trusts the cluster manager.
+        Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
+
         // Reserve resources on the new node.
-        self.nodes.get_mut(new_node_id)?
-            .take_resource(cluster.resource_per_vnode)?;
+        new_node.take_resource(cluster.resource_per_vnode)?;
         *old_node_id = new_node_id;
 
         Self::env().emit_event(ClusterNodeReplaced { cluster_id, node_id: new_node_id, vnode_index });
@@ -130,12 +133,18 @@ impl DdcBucket {
         (clusters, self.clusters.0.len())
     }
 
-    fn only_cluster_manager(cluster: &Cluster) -> Result<()> {
+    fn only_cluster_manager(cluster: &Cluster) -> Result<AccountId> {
         let caller = Self::env().caller();
         if caller == cluster.manager_id {
-            Ok(())
+            Ok(caller)
         } else {
             Err(UnauthorizedClusterManager)
         }
+    }
+
+    fn only_trusted_manager(perm_store: &PermStore, manager: AccountId, trusted_by: AccountId) -> Result<()> {
+        let perm = Permission::ManagerTrustedBy(trusted_by);
+        let trusts = perm_store.has_permission(manager, perm);
+        if trusts { Ok(()) } else { Err(ClusterManagerIsNotTrusted) }
     }
 }

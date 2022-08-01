@@ -214,6 +214,37 @@ fn cluster_create_works() {
 
 
 #[ink::test]
+fn cluster_replace_node_only_manager() {
+    let mut ctx = new_cluster();
+    let not_manager = get_accounts().alice;
+    push_caller_value(not_manager, 0);
+
+    // Reassign a vnode from node1 to node2.
+    assert_eq!(
+        ctx.contract.message_cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2),
+        Err(UnauthorizedClusterManager));
+}
+
+
+#[ink::test]
+fn cluster_replace_node_only_trusted_manager() {
+    let mut ctx = new_cluster();
+
+    // The provider stops trusting the manager.
+    push_caller(ctx.provider_id2);
+    ctx.contract.node_distrust_manager(ctx.manager);
+    pop_caller();
+
+    push_caller_value(ctx.manager, 0);
+
+    // The manager cannot use nodes of the provider.
+    assert_eq!(
+        ctx.contract.message_cluster_replace_node(ctx.cluster_id, 1, ctx.node_id2),
+        Err(ClusterManagerIsNotTrusted));
+}
+
+
+#[ink::test]
 fn cluster_replace_node_works() {
     let mut ctx = new_cluster();
     push_caller_value(ctx.manager, 0);
@@ -296,7 +327,7 @@ fn cluster_management_validation_works() {
         Err(NodeDoesNotExist), "cluster replacement node must exist");
 
     assert_eq!(
-        ctx.contract.message_cluster_create(ctx.manager, 2, vec![bad_node_id], "".to_string()),
+        ctx.contract.message_cluster_create(2, vec![bad_node_id], "".to_string()),
         Err(NodeDoesNotExist), "cluster initial nodes must exist");
 }
 
