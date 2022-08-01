@@ -353,8 +353,8 @@ pub mod ddc_bucket {
 
         /// Set the network fee on cluster revenues. In basis points (1% of 1%).
         #[ink(message)]
-        pub fn admin_set_network_fee(&mut self, network_fee_bp: Balance) {
-            self.message_admin_set_network_fee(network_fee_bp).unwrap();
+        pub fn admin_set_network_fee(&mut self, rate_bp: Balance, destination: AccountId) {
+            self.message_admin_set_network_fee(rate_bp, destination).unwrap();
         }
     }
     // ---- End Admin ----
