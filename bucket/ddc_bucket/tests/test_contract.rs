@@ -34,10 +34,11 @@ struct TestCluster {
 fn new_cluster() -> TestCluster {
     let accounts = get_accounts();
     set_balance(accounts.charlie, 1000 * TOKEN);
+    set_balance(accounts.django, 1000 * TOKEN);
     let provider_id0 = accounts.alice;
     let provider_id1 = accounts.bob;
     let provider_id2 = accounts.charlie;
-    let manager = accounts.charlie;
+    let manager = accounts.django;
 
     let mut contract = DdcBucket::new();
 
@@ -431,13 +432,21 @@ fn cluster_pays_providers() {
     let before0 = balance_of(ctx.provider_id0);
     let before1 = balance_of(ctx.provider_id1);
     let before2 = balance_of(ctx.provider_id2);
+    let before_mgmt = balance_of(ctx.manager);
 
     let skip_events = get_events::<Event>().len();
 
     // Set a network fee.
-    let fee_bp = 100; // 1%
-    ctx.contract.admin_set_network_fee(fee_bp, AccountId::default());
-    let burned_fee = to_distribute * fee_bp / 10_000;
+    let network_fee_bp = 100; // 1%
+    let cluster_management_fee_bp = 200; // 2%
+    ctx.contract.admin_set_fee_config(FeeConfig {
+        network_fee_bp,
+        network_fee_destination: AccountId::default(),
+        cluster_management_fee_bp,
+    });
+    let burned_fee = to_distribute * network_fee_bp / 10_000;
+    let manager_fee = (to_distribute - burned_fee) * cluster_management_fee_bp / 10_000;
+    let provider_fee = (to_distribute - burned_fee - manager_fee) / 3;
 
     // Distribute the revenues of the cluster to providers.
     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
@@ -457,19 +466,29 @@ fn cluster_pays_providers() {
     assert_eq!(evs.len(), 0, "all events must be checked");
 
     // Get state after the distribution.
-    let left_after_distribution = ctx.contract.cluster_get(ctx.cluster_id)?
+    let rounding_error = ctx.contract.cluster_get(ctx.cluster_id)?
         .cluster.revenues.peek();
     let earned0 = balance_of(ctx.provider_id0) - before0;
     let earned1 = balance_of(ctx.provider_id1) - before1;
     let earned2 = balance_of(ctx.provider_id2) - before2;
+    let earned_mgmt = balance_of(ctx.manager) - before_mgmt;
+
+    assert!(provider_fee > 0, "provider must earn something");
+    assert_eq!(earned0, provider_fee, "providers must earn the correct amount");
+    assert_eq!(earned1, provider_fee, "providers must earn the correct amount");
+    assert_eq!(earned2, provider_fee, "providers must earn the correct amount");
+
+    assert!(burned_fee > 0, "the network must earn something");
+    assert!(manager_fee > 0, "the manager must earn something");
+    assert_eq!(earned_mgmt, manager_fee, "the manager must earn the correct amount");
 
     assert!(to_distribute > 0);
-    assert!(left_after_distribution < 10, "revenues must go out of the cluster (besides rounding)");
-    assert!(earned0 > 0, "provider must earn something");
-    assert!(burned_fee > 0, "the network must earn something");
-    assert_eq!(earned0, earned1, "providers must earn the same amount");
-    assert_eq!(earned0, earned2, "providers must earn the same amount");
-    assert_eq!(earned0 + earned1 + earned2 + left_after_distribution + burned_fee, to_distribute, "all revenues must go to providers");
+    assert!(rounding_error < 10, "revenues must go out of the cluster (besides rounding)");
+    assert_eq!(
+        earned0 + earned1 + earned2 +
+            burned_fee + manager_fee +
+            rounding_error,
+        to_distribute, "all revenues must go to providers");
 }
 
 
