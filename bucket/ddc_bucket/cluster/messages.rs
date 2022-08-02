@@ -82,6 +82,12 @@ impl DdcBucket {
         // Charge the network fee from the cluster.
         Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
 
+        // Charge the cluster management fee.
+        Self::capture_fee(
+            self.network_fee.cluster_management_fee_bp(),
+            cluster.manager_id,
+            &mut cluster.revenues)?;
+
         // Charge the provider payments from the cluster.
         let num_shares = cluster.vnodes.len() as Balance;
         let per_share = cluster.revenues.peek() / num_shares;
