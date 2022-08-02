@@ -435,9 +435,14 @@ fn cluster_pays_providers() {
     let skip_events = get_events::<Event>().len();
 
     // Set a network fee.
-    let fee_bp = 100; // 1%
-    ctx.contract.admin_set_network_fee(fee_bp, AccountId::default());
-    let burned_fee = to_distribute * fee_bp / 10_000;
+    let network_fee_bp = 100; // 1%
+    let cluster_management_fee_bp = 200; // 2%
+    ctx.contract.admin_set_fee_config(FeeConfig {
+        network_fee_bp,
+        network_fee_destination: AccountId::default(),
+        cluster_management_fee_bp,
+    });
+    let burned_fee = to_distribute * network_fee_bp / 10_000;
 
     // Distribute the revenues of the cluster to providers.
     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);

@@ -21,7 +21,7 @@ pub mod ddc_bucket {
     use perm::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
-    use crate::ddc_bucket::network_fee::NetworkFeeStore;
+    use crate::ddc_bucket::network_fee::{NetworkFeeStore, FeeConfig};
     use crate::ddc_bucket::perm::entity::Permission;
 
     pub mod account;
@@ -353,8 +353,8 @@ pub mod ddc_bucket {
 
         /// Set the network fee on cluster revenues. In basis points (1% of 1%).
         #[ink(message)]
-        pub fn admin_set_network_fee(&mut self, rate_bp: Balance, destination: AccountId) {
-            self.message_admin_set_network_fee(rate_bp, destination).unwrap();
+        pub fn admin_set_fee_config(&mut self, config: FeeConfig) {
+            self.message_admin_set_fee_config(config).unwrap();
         }
     }
     // ---- End Admin ----
