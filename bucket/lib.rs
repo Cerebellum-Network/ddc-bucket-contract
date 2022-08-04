@@ -166,7 +166,7 @@ pub mod ddc_bucket {
 
         /// Iterate through all buckets.
         ///
-        /// Algorithm for paging: start with `offset = 1` and `limit = 20`. The function returns a `max_id`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
         /// The results can be filtered by owner. Note that paging must still be completed fully.
@@ -272,7 +272,7 @@ pub mod ddc_bucket {
 
         /// Iterate through all clusters.
         ///
-        /// Algorithm for paging: start with `offset = 1` and `limit = 20`. The function returns a `max_id`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
         /// The results can be filtered by manager. Note that paging must still be completed fully.
@@ -337,7 +337,7 @@ pub mod ddc_bucket {
 
         /// Iterate through all nodes.
         ///
-        /// Algorithm for paging: start with `offset = 1` and `limit = 20`. The function returns a `max_id`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
         /// The results can be filtered by owner. Note that paging must still be completed fully.
