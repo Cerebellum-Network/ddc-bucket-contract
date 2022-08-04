@@ -1,0 +1,13 @@
+{
+  "name": "ink-doc-gen",
+  "version": "0.1.0",
+  "description": "Generate documentation from Rust / Ink! smart contract code",
+  "main": "index.js",
+  "repository": "https://github.com/Cerebellum-Network/ddc-bucket-contract",
+  "author": "Aurélien Nicolas (aurel@cere.io)",
+  "license": "Apache-2.0",
+  "private": false,
+  "dependencies": {
+    "handlebars": "^4.7.7"
+  }
+}
