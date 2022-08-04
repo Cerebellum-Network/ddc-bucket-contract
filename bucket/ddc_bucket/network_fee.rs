@@ -2,7 +2,6 @@
 
 use ink_storage::{Lazy, traits};
 use scale::{Decode, Encode};
-use scale_info::TypeInfo;
 
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, Result};
 use crate::ddc_bucket::cash::Cash;
@@ -25,8 +24,8 @@ impl NetworkFeeStore {
 }
 
 /// The configuration of fees.
-#[derive(traits::SpreadLayout, Default, Decode, Encode, TypeInfo)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[derive(traits::SpreadLayout, Default, Decode, Encode)]
+#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug, scale_info::TypeInfo))]
 pub struct FeeConfig {
     /// The fee rate from cluster revenues to the overall network. In basis points (1% of 1%).
     pub network_fee_bp: BasisPoints,

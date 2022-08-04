@@ -8,6 +8,7 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
+    use ink_prelude::string::ToString;
     use ink_prelude::vec::Vec;
     use scale::{Decode, Encode};
 
