@@ -24,12 +24,16 @@ impl NetworkFeeStore {
     }
 }
 
+/// The configuration of fees.
 #[derive(traits::SpreadLayout, Default, Decode, Encode, TypeInfo)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct FeeConfig {
+    /// The fee rate from cluster revenues to the overall network. In basis points (1% of 1%).
     pub network_fee_bp: BasisPoints,
+    /// The destination account of network fees. Use the 0 account to burn the fees.
     pub network_fee_destination: AccountId,
 
+    /// The fee rate from cluster revenues to the cluster manager. In basis points (1% of 1%).
     pub cluster_management_fee_bp: BasisPoints,
 }
 

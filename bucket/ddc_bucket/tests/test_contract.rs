@@ -757,7 +757,7 @@ fn bucket_list_works() {
         (vec![/*bucket_status1.clone(),*/ bucket_status2.clone()], count));
 
     assert_eq!(
-        ddc_bucket.bucket_list(21, 20, None),
+        ddc_bucket.bucket_list(count, 20, None),
         (vec![], count));
 
     // Filter by owner.
