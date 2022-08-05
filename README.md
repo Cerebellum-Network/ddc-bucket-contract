@@ -49,7 +49,7 @@ ABI_PATH=target/ink/ddc_bucket/metadata.json  node ink-doc-gen
 
     # Install the documentation generator
     git clone https://github.com/Cerebellum-Network/ink-doc-gen.git
-    (cd ink-doc-gen && yarn)
+    (cd ink-doc-gen && git checkout v0.1.0 && yarn)
 
 ## Test
 
