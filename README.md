@@ -1,10 +1,16 @@
-# Usage
+# DDC v2 Smart Contracts
+
+These smart contracts orchestrate the DDC network around clusters and buckets.
+
+**[Documentation homepage](https://docs.cere.network/ddc/protocols/smart-contracts)**
+
+## Usage
 
 See the [JavaScript SDK](sdk/).
 
     yarn add @cere-ddc-sdk/smart-contract
 
-# Contract Deployments
+## Contract Deployments
 
 See the latest deployments in [deployments.js](sdk/src/deployments.js). Use git tags to find previous versions.
 
@@ -25,9 +31,12 @@ cp target/ink/ddc_nft_registry/metadata.json sdk/src/abi/ddc_nft_registry.json
 - Use the script [deploy.js](deploy.js) to deploy the contracts.
 - Update the [SDK default contracts](sdk/src/deployments.js).
 - Publish the JS SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
-- Regenerate the documentation with `cargo doc --workspace` and find it at `target/doc/ddc_bucket/index.html`
+- Regenerate the documentation, then sync [docs.cere.network](https://github.com/Cerebellum-Network/docs.cere.network/blob/main/ddc/protocols/smart-contract-api.md):
+```bash
+ABI_PATH=target/ink/ddc_bucket/metadata.json  node ink-doc-gen
+```
 
-# Contract Development
+## Development Setup
 
     rustup install nightly-2022-06-28
     rustup component add rust-src --toolchain nightly-2022-06-28
@@ -38,7 +47,11 @@ cp target/ink/ddc_nft_registry/metadata.json sdk/src/abi/ddc_nft_registry.json
     #apt-get install binaryen
     #brew install binaryen
 
-# Test
+    # Install the documentation generator
+    git clone https://github.com/Cerebellum-Network/ink-doc-gen.git
+    (cd ink-doc-gen && yarn)
+
+## Test
 
     # Fast test off-chain
     cargo test
