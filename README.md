@@ -2,6 +2,8 @@
 
 These smart contracts orchestrate the DDC network around clusters and buckets.
 
+**[Background information](https://docs.cere.network/ddc/protocols/topology)**
+
 **[Documentation homepage](https://docs.cere.network/ddc/protocols/smart-contracts)**
 
 ## Usage
@@ -50,6 +52,10 @@ ABI_PATH=target/ink/ddc_bucket/metadata.json  node ink-doc-gen
     # Install the documentation generator
     git clone https://github.com/Cerebellum-Network/ink-doc-gen.git
     (cd ink-doc-gen && git checkout v0.1.0 && yarn)
+
+See also some information about the code structure: [ink-tips](https://github.com/Cerebellum-Network/ink-tips)
+
+See also the custom documentation generator: [ink-doc-gen](https://github.com/Cerebellum-Network/ink-doc-gen)
 
 ## Test
 
