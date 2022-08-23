@@ -32,6 +32,26 @@ impl DdcBucket {
         Ok(node_id)
     }
 
+    pub fn message_node_change_rent(&mut self, node_id: NodeId, rent_per_month: Balance) -> Result<()> {
+        let caller = Self::env().caller();
+        let node = self.nodes.get_mut(node_id)?;
+        node.only_owner(caller)?;
+        node.rent_per_month = rent_per_month;
+        Ok(())
+    }
+
+    pub fn message_node_change_capacity(&mut self, node_id: NodeId, diff: i32) -> Result<()> {
+        let caller = Self::env().caller();
+        let node = self.nodes.get_mut(node_id)?;
+        node.only_owner(caller)?;
+        if diff >= 0 {
+            node.put_resource(diff as u32);
+        } else {
+            node.take_resource((-diff) as u32)?;
+        }
+        Ok(())
+    }
+
     pub fn message_node_change_params(&mut self, node_id: NodeId, params: NodeParams) -> Result<()> {
         let caller = Self::env().caller();
         let node = self.nodes.get(node_id)?;

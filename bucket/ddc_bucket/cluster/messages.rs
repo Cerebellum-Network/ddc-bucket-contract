@@ -72,6 +72,8 @@ impl DdcBucket {
         new_node.take_resource(cluster.resource_per_vnode)?;
         *old_node_id = new_node_id;
 
+        // TODO: update price.
+
         Self::env().emit_event(ClusterNodeReplaced { cluster_id, node_id: new_node_id, vnode_index });
         Ok(())
     }
@@ -103,6 +105,14 @@ impl DdcBucket {
         // TODO: set a maximum node count, or support paging.
         // TODO: aggregate the payments per node_id or per provider_id.
 
+        Ok(())
+    }
+
+    pub fn message_cluster_update_price(&mut self, cluster_id: ClusterId) -> Result<()> {
+        let caller = Self::env().caller();
+        let cluster = self.clusters.get(cluster_id)?;
+        cluster.only_manager(caller)?;
+        // TODO: update price.
         Ok(())
     }
 

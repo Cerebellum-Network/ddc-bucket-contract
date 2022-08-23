@@ -256,6 +256,12 @@ pub mod ddc_bucket {
             self.message_cluster_distribute_revenues(cluster_id).unwrap()
         }
 
+        /// Update the cluster price after changes in nodes.
+        #[ink(message)]
+        pub fn cluster_update_price(&mut self, cluster_id: ClusterId) {
+            self.message_cluster_update_price(cluster_id).unwrap()
+        }
+
         /// Change the `cluster_params`, which is configuration used by clients and nodes.
         ///
         /// See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
@@ -319,6 +325,18 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> NodeId {
             self.message_node_create(rent_per_month, node_params, capacity).unwrap()
+        }
+
+        /// Set the desired rent for this node. The change is not reflected immediately, but will affect the clusters and future subscriptions.
+        #[ink(message)]
+        pub fn node_change_rent(&mut self, node_id: NodeId, rent_per_month: Balance) {
+            self.message_node_change_rent(node_id, rent_per_month).unwrap()
+        }
+
+        /// Increase or decrease the capacity of this node, given as a positive or negative difference. The capacity can only be decreased up to the currently reserved capacity.
+        #[ink(message)]
+        pub fn node_change_capacity(&mut self, node_id: NodeId, difference: i32) {
+            self.message_node_change_capacity(node_id, difference).unwrap()
         }
 
         /// Change the `node_params`, which is configuration used by clients and nodes.
