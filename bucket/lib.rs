@@ -244,7 +244,7 @@ pub mod ddc_bucket {
 
         /// As manager, re-assign a vnode to another physical node.
         ///
-        /// Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`).
+        /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
         #[ink(message)]
         pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, vnode_i: VNodeIndex, new_node_id: NodeId) -> () {
             self.message_cluster_replace_node(cluster_id, vnode_i, new_node_id).unwrap()
@@ -381,6 +381,8 @@ pub mod ddc_bucket {
         }
 
         /// As price oracle, set the current conversion rate between the native currency and an external currency (USD).
+        ///
+        /// This requires the permission SetExchangeRate or SuperAdmin.
         #[ink(message)]
         pub fn account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
             self.message_account_set_usd_per_cere(usd_per_cere);
@@ -421,19 +423,19 @@ pub mod ddc_bucket {
 
     // ---- Admin ----
     impl DdcBucket {
-        /// As admin, grant any permission to any account.
+        /// As SuperAdmin, grant any permission to any account.
         #[ink(message, payable)]
         pub fn admin_grant_permission(&mut self, grantee: AccountId, permission: Permission) {
             self.message_admin_grant_permission(grantee, permission, true).unwrap();
         }
 
-        /// As admin, revoke any permission to any account.
+        /// As SuperAdmin, revoke any permission to any account.
         #[ink(message)]
         pub fn admin_revoke_permission(&mut self, grantee: AccountId, permission: Permission) {
             self.message_admin_grant_permission(grantee, permission, false).unwrap();
         }
 
-        /// As admin, withdraw the funds held in custody in this contract.
+        /// As SuperAdmin, withdraw the funds held in custody in this contract.
         ///
         /// This is a temporary measure to allow migrating the funds to a new version of the contract.
         #[ink(message)]
@@ -441,7 +443,7 @@ pub mod ddc_bucket {
             self.message_admin_withdraw(amount).unwrap();
         }
 
-        /// Set the network and cluster fee configuration.
+        /// As SuperAdmin, set the network and cluster fee configuration.
         #[ink(message)]
         pub fn admin_set_fee_config(&mut self, config: FeeConfig) {
             self.message_admin_set_fee_config(config).unwrap();
