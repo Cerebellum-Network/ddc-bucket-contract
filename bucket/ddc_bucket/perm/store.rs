@@ -42,6 +42,11 @@ impl PermStore {
 
     pub fn has_permission(&self, account_id: AccountId, permission: Permission) -> bool {
         let key = (account_id, permission).encode();
-        self.0.contains_key(&key)
+        if self.0.contains_key(&key) {
+            return true;
+        }
+
+        let admin_key = (account_id, Permission::SuperAdmin).encode();
+        self.0.contains_key(&admin_key)
     }
 }

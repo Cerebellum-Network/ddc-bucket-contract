@@ -8,8 +8,13 @@ use super::env_utils::*;
 fn admin_init_works() {
     let contract = setup();
 
+    // The deployer is SuperAdmin.
     assert!(contract.has_permission(admin_id(), Permission::SuperAdmin));
     assert!(!contract.has_permission(not_admin_id(), Permission::SuperAdmin));
+
+    // The SuperAdmin has all other permissions, too.
+    assert!(contract.has_permission(admin_id(), Permission::SetExchangeRate));
+    assert!(!contract.has_permission(not_admin_id(), Permission::SetExchangeRate));
 }
 
 
