@@ -1,6 +1,7 @@
 {
-  "name": "@cere-ddc-sdk/smart-contract",
-  "version": "0.5.1",
+  "name": "@cere/ddc-contracts-sdk",
+  "description": "This is an SDK to work with DDC smart contracts, mainly for development and admin purposes. For apps, see https://github.com/Cerebellum-Network/cere-ddc-sdk-js",
+  "version": "0.5.2",
   "main": "src/index.js",
   "license": "Apache-2.0",
   "dependencies": {
