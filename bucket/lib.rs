@@ -409,7 +409,8 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        /// Check whether the given account has the given permission currently.
+        /// Check whether the given account has the given permission currently,
+        /// or the SuperAdmin permission.
         #[ink(message)]
         pub fn has_permission(&self, grantee: AccountId, permission: Permission) -> bool {
             self.perms.has_permission(grantee, permission)
