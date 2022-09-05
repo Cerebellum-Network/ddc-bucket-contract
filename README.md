@@ -8,31 +8,29 @@ These smart contracts orchestrate the DDC network around clusters and buckets.
 
 ## Usage
 
-See the [JavaScript SDK](sdk/).
-
-    yarn add @cere-ddc-sdk/smart-contract
+See the [DDC SDK](https://github.com/Cerebellum-Network/cere-ddc-sdk-js).
 
 ## Contract Deployments
 
-See the latest deployments in [deployments.js](sdk/src/deployments.js). Use git tags to find previous versions.
+See the latest deployments in [deployments.js](js-dev/src/deployments.js). Use git tags to find previous versions.
 
 To deploy:
 
-- Update the version in the relevant [Cargo.toml](bucket/Cargo.toml) and [package.json](sdk/package.json).
+- Update the version in the relevant [Cargo.toml](bucket/Cargo.toml) and [package.json](js-dev/package.json).
 - Build the contracts:
 ```bash 
 cargo test && 
 cargo contract build --release --manifest-path bucket/Cargo.toml && 
 cargo contract build --release --manifest-path ddc_nft_registry/Cargo.toml
 ```
-- Update the [SDK ABIs](sdk/src/abi/) using
+- Update the [ABIs](js-dev/src/abi/) in the js-dev library using
 ```bash
-cp target/ink/ddc_bucket/metadata.json sdk/src/abi/ddc_bucket.json &&
-cp target/ink/ddc_nft_registry/metadata.json sdk/src/abi/ddc_nft_registry.json
+cp target/ink/ddc_bucket/metadata.json js-dev/src/abi/ddc_bucket.json &&
+cp target/ink/ddc_nft_registry/metadata.json js-dev/src/abi/ddc_nft_registry.json
 ```
 - Use the script [deploy.js](deploy.js) or the [Explorer](https://explorer.cere.network/) to deploy the contracts.
-- Update the [Admin SDK default contracts](sdk/src/deployments.js).
-- Publish the Admin SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
+- Update the js-dev library [default contracts](js-dev/src/deployments.js).
+- Publish the js-dev library (this requires an `NPM_TOKEN`): `cd js-dev && npm publish`
 - Similarly, update the [DDC SDK](https://github.com/Cerebellum-Network/cere-ddc-sdk-js) for apps.
 - Regenerate the documentation, then sync [docs.cere.network](https://github.com/Cerebellum-Network/docs.cere.network/blob/main/ddc/protocols/smart-contract-api.md):
 ```bash
