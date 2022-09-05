@@ -1,22 +1,28 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x5e690c8fd199cbf15e7f27bf1b510235aaf5d2bfebc776f72b77f04e03c1ad3b",
+    "hash": "0xabfb40d2f3cd9742bdd462002e4b8629c375e941ba5d6a059e20b33e23871cec",
     "language": "ink! 3.0.0-rc4",
-    "compiler": "rustc 1.63.0-nightly"
+    "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_bucket",
-    "version": "0.5.0",
+    "version": "0.5.2",
     "authors": [
       "Aurélien Nicolas <aurel@cere.network>"
-    ]
+    ],
+    "description": "DDC v2 Smart Contracts -- Orchestrate the network around clusters and buckets",
+    "license": "Apache-2.0"
   },
   "spec": {
     "constructors": [
       {
         "args": [],
-        "docs": [],
+        "docs": [
+          "Create a new contract.",
+          "",
+          "The caller will be admin of the contract."
+        ],
         "name": [
           "new"
         ],
@@ -50,7 +56,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " A bucket was created. The given account is its first owner and payer of resources."
+        ],
         "name": "BucketCreated"
       },
       {
@@ -89,7 +97,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Some amount of resources of a cluster were allocated to a bucket."
+        ],
         "name": "BucketAllocated"
       },
       {
@@ -117,7 +127,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " The due costs of a bucket was settled from the bucket payer to the cluster."
+        ],
         "name": "BucketSettlePayment"
       },
       {
@@ -156,7 +168,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " A new cluster was created."
+        ],
         "name": "ClusterCreated"
       },
       {
@@ -195,7 +209,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " A vnode was re-assigned to new node."
+        ],
         "name": "ClusterNodeReplaced"
       },
       {
@@ -223,7 +239,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Some resources were reserved for the cluster from the nodes."
+        ],
         "name": "ClusterReserveResource"
       },
       {
@@ -251,7 +269,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " The share of revenues of a cluster for a provider was distributed."
+        ],
         "name": "ClusterDistributeRevenues"
       },
       {
@@ -301,7 +321,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " A node was created. The given account is its owner and recipient of revenues."
+        ],
         "name": "NodeCreated"
       },
       {
@@ -329,7 +351,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Tokens were deposited on an account."
+        ],
         "name": "Deposit"
       },
       {
@@ -357,7 +381,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " A permission was granted to the account."
+        ],
         "name": "GrantPermission"
       },
       {
@@ -385,7 +411,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " A permission was revoked from the account."
+        ],
         "name": "RevokePermission"
       }
     ],
@@ -411,7 +439,15 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Create a new bucket and return its `bucket_id`.",
+          "",
+          " The caller will be its first owner and payer of resources.",
+          "",
+          " `bucket_params` is configuration used by clients and nodes. See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)",
+          "",
+          " The bucket can be connected to a single cluster (currently). Allocate cluster resources with the function `bucket_alloc_into_cluster`"
+        ],
         "mutates": true,
         "name": [
           "bucket_create"
@@ -446,7 +482,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Allocate some resources of a cluster to a bucket.",
+          "",
+          " The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes)."
+        ],
         "mutates": true,
         "name": [
           "bucket_alloc_into_cluster"
@@ -470,7 +510,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Settle the due costs of a bucket from its payer account to the cluster account."
+        ],
         "mutates": true,
         "name": [
           "bucket_settle_payment"
@@ -500,7 +542,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Change the `bucket_params`, which is configuration used by clients and nodes.",
+          "",
+          " See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)"
+        ],
         "mutates": true,
         "name": [
           "bucket_change_params"
@@ -521,7 +567,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Get the current status of a bucket."
+        ],
         "mutates": false,
         "name": [
           "bucket_get"
@@ -565,7 +613,14 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Iterate through all buckets.",
+          "",
+          " The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.",
+          " The optimal `limit` depends on the size of params.",
+          "",
+          " The results can be filtered by owner. Note that paging must still be completed fully."
+        ],
         "mutates": false,
         "name": [
           "bucket_list"
@@ -580,7 +635,7 @@
       {
         "args": [
           {
-            "name": "manager",
+            "name": "_unused",
             "type": {
               "displayName": [
                 "AccountId"
@@ -616,7 +671,15 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Create a new cluster and return its `cluster_id`.",
+          "",
+          " The caller will be its first manager.",
+          "",
+          " The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.",
+          "",
+          " `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)"
+        ],
         "mutates": true,
         "name": [
           "cluster_create"
@@ -624,7 +687,7 @@
         "payable": true,
         "returnType": {
           "displayName": [
-            "NodeId"
+            "ClusterId"
           ],
           "type": 1
         },
@@ -651,7 +714,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As manager, reserve more resources for the cluster from the free capacity of nodes.",
+          "",
+          " The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes)."
+        ],
         "mutates": true,
         "name": [
           "cluster_reserve_resource"
@@ -693,7 +760,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As manager, re-assign a vnode to another physical node.",
+          "",
+          " The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin."
+        ],
         "mutates": true,
         "name": [
           "cluster_replace_node"
@@ -717,7 +788,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Trigger the distribution of revenues from the cluster to the providers."
+        ],
         "mutates": true,
         "name": [
           "cluster_distribute_revenues"
@@ -747,7 +820,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Change the `cluster_params`, which is configuration used by clients and nodes.",
+          "",
+          " See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)"
+        ],
         "mutates": true,
         "name": [
           "cluster_change_params"
@@ -768,7 +845,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Get the current status of a cluster."
+        ],
         "mutates": false,
         "name": [
           "cluster_get"
@@ -812,7 +891,14 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Iterate through all clusters.",
+          "",
+          " The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.",
+          " The optimal `limit` depends on the size of params.",
+          "",
+          " The results can be filtered by manager. Note that paging must still be completed fully."
+        ],
         "mutates": false,
         "name": [
           "cluster_list"
@@ -836,7 +922,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As node provider, authorize a cluster manager to use his nodes."
+        ],
         "mutates": true,
         "name": [
           "node_trust_manager"
@@ -857,7 +945,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As node provider, revoke the authorization of a cluster manager to use his nodes."
+        ],
         "mutates": true,
         "name": [
           "node_distrust_manager"
@@ -896,7 +986,13 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Create a new node and return its `node_id`.",
+          "",
+          " The caller will be its owner.",
+          "",
+          " `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)"
+        ],
         "mutates": true,
         "name": [
           "node_create"
@@ -931,7 +1027,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Change the `node_params`, which is configuration used by clients and nodes.",
+          "",
+          " See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)"
+        ],
         "mutates": true,
         "name": [
           "node_change_params"
@@ -952,7 +1052,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Get the current status of a node."
+        ],
         "mutates": false,
         "name": [
           "node_get"
@@ -996,7 +1098,14 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Iterate through all nodes.",
+          "",
+          " The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.",
+          " The optimal `limit` depends on the size of params.",
+          "",
+          " The results can be filtered by owner. Note that paging must still be completed fully."
+        ],
         "mutates": false,
         "name": [
           "node_list"
@@ -1010,7 +1119,10 @@
       },
       {
         "args": [],
-        "docs": [],
+        "docs": [
+          " As user, deposit tokens on the account of the caller from the transaction value. This deposit",
+          " can be used to pay for the services to buckets of the account."
+        ],
         "mutates": true,
         "name": [
           "account_deposit"
@@ -1034,7 +1146,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Get the current status of an account."
+        ],
         "mutates": false,
         "name": [
           "account_get"
@@ -1050,7 +1164,9 @@
       },
       {
         "args": [],
-        "docs": [],
+        "docs": [
+          " Get the current conversion rate between the native currency and an external currency (USD)."
+        ],
         "mutates": false,
         "name": [
           "account_get_usd_per_cere"
@@ -1076,7 +1192,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As price oracle, set the current conversion rate between the native currency and an external currency (USD).",
+          "",
+          " This requires the permission SetExchangeRate or SuperAdmin."
+        ],
         "mutates": true,
         "name": [
           "account_set_usd_per_cere"
@@ -1106,7 +1226,10 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Check whether the given account has the given permission currently,",
+          " or the SuperAdmin permission."
+        ],
         "mutates": false,
         "name": [
           "has_permission"
@@ -1141,7 +1264,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As SuperAdmin, grant any permission to any account."
+        ],
         "mutates": true,
         "name": [
           "admin_grant_permission"
@@ -1171,7 +1296,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As SuperAdmin, revoke any permission to any account."
+        ],
         "mutates": true,
         "name": [
           "admin_revoke_permission"
@@ -1192,7 +1319,11 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " As SuperAdmin, withdraw the funds held in custody in this contract.",
+          "",
+          " This is a temporary measure to allow migrating the funds to a new version of the contract."
+        ],
         "mutates": true,
         "name": [
           "admin_withdraw"
@@ -1200,6 +1331,29 @@
         "payable": false,
         "returnType": null,
         "selector": "0x2f6e0868"
+      },
+      {
+        "args": [
+          {
+            "name": "config",
+            "type": {
+              "displayName": [
+                "FeeConfig"
+              ],
+              "type": 43
+            }
+          }
+        ],
+        "docs": [
+          " As SuperAdmin, set the network and cluster fee configuration."
+        ],
+        "mutates": true,
+        "name": [
+          "admin_set_fee_config"
+        ],
+        "payable": false,
+        "returnType": null,
+        "selector": "0x00d441e7"
       }
     ]
   },
@@ -1659,6 +1813,51 @@
             }
           },
           "name": "perms"
+        },
+        {
+          "layout": {
+            "struct": {
+              "fields": [
+                {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0500000008000000000000000000000000000000000000000000000000000000",
+                              "ty": 8
+                            }
+                          },
+                          "name": "network_fee_bp"
+                        },
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0600000008000000000000000000000000000000000000000000000000000000",
+                              "ty": 3
+                            }
+                          },
+                          "name": "network_fee_destination"
+                        },
+                        {
+                          "layout": {
+                            "cell": {
+                              "key": "0x0700000008000000000000000000000000000000000000000000000000000000",
+                              "ty": 8
+                            }
+                          },
+                          "name": "cluster_management_fee_bp"
+                        }
+                      ]
+                    }
+                  },
+                  "name": null
+                }
+              ]
+            }
+          },
+          "name": "network_fee"
         }
       ]
     }
@@ -2574,6 +2773,35 @@
         "perm",
         "entity",
         "Permission"
+      ]
+    },
+    {
+      "def": {
+        "composite": {
+          "fields": [
+            {
+              "name": "network_fee_bp",
+              "type": 8,
+              "typeName": "BasisPoints"
+            },
+            {
+              "name": "network_fee_destination",
+              "type": 3,
+              "typeName": "AccountId"
+            },
+            {
+              "name": "cluster_management_fee_bp",
+              "type": 8,
+              "typeName": "BasisPoints"
+            }
+          ]
+        }
+      },
+      "path": [
+        "ddc_bucket",
+        "ddc_bucket",
+        "network_fee",
+        "FeeConfig"
       ]
     }
   ]

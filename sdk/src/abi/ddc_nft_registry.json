@@ -1,13 +1,13 @@
 {
   "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x85213c9200bdf87bc86d0f333fbe504daa7c31810c6625c15e9007b12eee7caa",
+    "hash": "0x9700fb034126e4e649c8ecbc74eea11a49905b9518b0e7aa6bce735c1bb816bc",
     "language": "ink! 3.0.0-rc4",
     "compiler": "rustc 1.59.0-nightly"
   },
   "contract": {
     "name": "ddc_nft_registry",
-    "version": "0.1.0",
+    "version": "0.5.2",
     "authors": [
       "Aurélien Nicolas <aurel@cere.network>",
       "Anton Volk <anton.volk@cere.io>"

@@ -30,9 +30,10 @@ cargo contract build --release --manifest-path ddc_nft_registry/Cargo.toml
 cp target/ink/ddc_bucket/metadata.json sdk/src/abi/ddc_bucket.json &&
 cp target/ink/ddc_nft_registry/metadata.json sdk/src/abi/ddc_nft_registry.json
 ```
-- Use the script [deploy.js](deploy.js) to deploy the contracts.
-- Update the [SDK default contracts](sdk/src/deployments.js).
-- Publish the JS SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
+- Use the script [deploy.js](deploy.js) or the [Explorer](https://explorer.cere.network/) to deploy the contracts.
+- Update the [Admin SDK default contracts](sdk/src/deployments.js).
+- Publish the Admin SDK (this requires an `NPM_TOKEN`): `cd sdk && npm publish`
+- Similarly, update the [DDC SDK](https://github.com/Cerebellum-Network/cere-ddc-sdk-js) for apps.
 - Regenerate the documentation, then sync [docs.cere.network](https://github.com/Cerebellum-Network/docs.cere.network/blob/main/ddc/protocols/smart-contract-api.md):
 ```bash
 ABI_PATH=target/ink/ddc_bucket/metadata.json  node ink-doc-gen
