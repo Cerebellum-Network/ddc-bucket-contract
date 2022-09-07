@@ -16,14 +16,15 @@ pub mod ddc_bucket {
     use bucket::{entity::*, store::*};
     use cash::*;
     use cluster::{entity::*, store::*};
-    use Error::*;
     use node::{entity::*, store::*};
     use params::{store::*};
     use perm::{store::*};
+    use committer::{store::*};
 
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
+    use crate::ddc_bucket::committer::store::EraConfig;
 
     pub mod account;
     pub mod flow;
@@ -38,6 +39,7 @@ pub mod ddc_bucket {
     pub mod admin;
     pub mod perm;
     pub mod currency;
+    pub mod committer;
 
     // ---- Global state ----
     /// The main DDC smart contract.
@@ -52,6 +54,7 @@ pub mod ddc_bucket {
         accounts: AccountStore,
         perms: PermStore,
         network_fee: NetworkFeeStore,
+        committer_store: CommitterStore,
     }
 
     impl DdcBucket {
@@ -60,6 +63,8 @@ pub mod ddc_bucket {
         /// The caller will be admin of the contract.
         #[ink(constructor)]
         pub fn new() -> Self {
+            let operator = Self::env().caller();
+
             let mut contract = Self {
                 buckets: BucketStore::default(),
                 bucket_params: ParamsStore::default(),
@@ -70,6 +75,7 @@ pub mod ddc_bucket {
                 accounts: AccountStore::default(),
                 perms: PermStore::default(),
                 network_fee: NetworkFeeStore::default(),
+                committer_store: CommitterStore::new(operator),
             };
 
             // Make the creator of this contract a super-admin.
@@ -283,6 +289,40 @@ pub mod ddc_bucket {
     }
     // ---- End Cluster ----
 
+    // ---- Committer ----
+
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn get_commit(&self, node: AccountId) -> () {
+            self.message_get_commit(node);
+        }
+
+        #[ink(message)]
+        pub fn set_commit(&mut self, node: AccountId, confirmation: Confirmation) {
+            self.message_set_commit(node, confirmation);
+        }
+
+        #[ink(message)]
+        pub fn set_era(&mut self, era_config: EraConfig) -> () {
+            self.message_set_era(era_config).unwrap();
+        }
+    
+        #[ink(message)]
+        pub fn get_era(&self) -> () {
+            self.message_get_era();
+        }
+
+        #[ink(message)]
+        pub fn get_era_settings(&self) -> () {
+            self.message_get_era_settings();
+        }
+
+        #[ink(message)]
+        pub fn new_era(&mut self) -> () {
+            self.message_new_era().unwrap();
+        }
+    }
+    // ---- End Committer ----
 
     // ---- Node ----
 
