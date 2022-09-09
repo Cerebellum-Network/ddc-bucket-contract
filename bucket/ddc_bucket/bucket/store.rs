@@ -24,6 +24,10 @@ impl BucketStore {
             cluster_id,
             flow: Flow { from: owner_id, schedule: Schedule::empty() },
             resource_reserved: 0,
+            prepaid_resources: 0,
+            max_rate: 0,
+            period_start: 0,
+            period_prepaid_remaining: 0,
         };
         let bucket_id = self.0.len();
         self.0.push(bucket);

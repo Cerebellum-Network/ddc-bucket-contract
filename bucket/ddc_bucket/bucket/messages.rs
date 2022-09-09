@@ -3,11 +3,15 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::{vec, vec::Vec};
 
-use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, BucketAllocated, BucketCreated, BucketSettlePayment, Payable, DdcBucket, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
 
-use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
+use super::entity::{Bucket, BucketId, BucketParams, BucketStatus, BalancePerMonth};
+
+const PRICE_PER_GB: Balance = 1;
+const KB_PER_GB: Balance = 1000000;
+const BASE: u32 = 10;
 
 impl DdcBucket {
     pub fn message_bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> Result<BucketId> {
@@ -19,6 +23,40 @@ impl DdcBucket {
         Self::capture_fee_and_refund(record_size0 + Bucket::RECORD_SIZE + record_size2)?;
         Self::env().emit_event(BucketCreated { bucket_id, owner_id });
         Ok(bucket_id)
+    }
+
+    pub fn message_buy_resources(&mut self, bucket_id: BucketId, prepaid_resources: Balance, max_rate: BalancePerMonth) -> Result<()> {
+        let owner_id = Self::env().caller();
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let account = self.accounts.0.get_mut(&owner_id).ok_or(InsufficientBalance)?;
+        let time_ms = Self::env().block_timestamp();
+        let conv = &self.accounts.1;
+        account.withdraw(time_ms, conv, Payable(prepaid_resources))?;
+        bucket.prepaid_resources += prepaid_resources;
+        bucket.max_rate = max_rate;
+        bucket.period_start = time_ms;
+        bucket.period_prepaid_remaining = prepaid_resources;
+        Ok(())
+    }
+
+    pub fn message_consume_resources(&mut self, bucket_id: BucketId, resource: u128) -> Result<()> {
+
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+
+        let parsed_resource_cere = self.accounts.1.to_cere((resource / KB_PER_GB) * PRICE_PER_GB);
+        if bucket.period_prepaid_remaining >= parsed_resource_cere {
+            bucket.period_prepaid_remaining -= parsed_resource_cere;
+            Ok(())
+        } else {
+            Err(MaxRateExceeded)
+        }
+    }
+
+    pub fn message_calculate_prepaid(&self, bucket_id: BucketId) -> Result<u128> {
+        let bucket = self.buckets.get(bucket_id)?;
+        core::prelude::v1::Ok((self.accounts.1.to_usd(bucket.period_prepaid_remaining) / PRICE_PER_GB) * KB_PER_GB)
     }
 
     pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {

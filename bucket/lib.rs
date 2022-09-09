@@ -164,6 +164,22 @@ pub mod ddc_bucket {
             self.message_bucket_change_params(bucket_id, params).unwrap();
         }
 
+
+        /// Function allows to purchase prepaid resources for the bucket and specify max rate of consumption
+        pub fn bucket_buy_resources(&mut self, bucket_id: BucketId, prepaid_resources: Balance, max_rate: BalancePerMonth) -> () {
+            self.message_buy_resources(bucket_id, prepaid_resources, max_rate).unwrap()
+        }
+
+        /// Function allows to consume prepaid resources by the cluster operator
+        pub fn bucket_consume_resources(&mut self, bucket_id: BucketId, resource: u128) -> () {
+            self.message_consume_resources(bucket_id, resource).unwrap()
+        }
+
+        /// Get the remaining balance to consume prepaid resources 
+        pub fn bucket_calculate_prepaid(&self, bucket_id: BucketId) -> u128 {
+            self.message_calculate_prepaid(bucket_id).unwrap()
+        }
+
         /// Get the current status of a bucket.
         #[ink(message)]
         pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
@@ -517,6 +533,7 @@ pub mod ddc_bucket {
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
+        MaxRateExceeded,
         Unauthorized,
     }
 
