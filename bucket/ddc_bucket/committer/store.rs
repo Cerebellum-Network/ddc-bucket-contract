@@ -25,6 +25,13 @@ pub struct Confirmation {
     total: u128
 } 
 
+#[derive(Copy, Clone, traits::PackedLayout, traits::SpreadLayout, scale::Encode, scale::Decode)]
+#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+pub struct Settlement {
+    timestamp: u64,
+    settle: bool
+} 
+
 #[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode)]
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, traits::StorageLayout))]
 pub struct EraConfig {
@@ -37,6 +44,7 @@ pub struct EraConfig {
 pub struct CommitterStore {
     operator_id: AccountId,
     commits: StorageHashMap<AccountId, Confirmation>,
+    settlements: StorageHashMap<AccountId, Settlement>,
     era_settings: EraConfig
 }
 
@@ -45,6 +53,7 @@ impl CommitterStore {
         CommitterStore {
             operator_id,
             commits: Default::default(),
+            settlements: Default::default(),
             era_settings: EraConfig {
                 start: 0,
                 interval: 0
@@ -60,6 +69,16 @@ impl CommitterStore {
     /// check the sender !!!!
     pub fn set_commit(&mut self, node: AccountId, confirmation: Confirmation) {
         self.commits.insert(node, confirmation);
+    }
+
+    pub fn get_settlement(&self, node: AccountId) -> Settlement {
+        *self.settlements.get(&node).unwrap()
+    }
+
+    pub fn validate_settlement(&mut self, caller: AccountId, node: AccountId, settlement: Settlement) -> Result<()> {
+        self.only_owner(caller)?;
+        self.settlements.insert(node, settlement);
+        Ok(())
     }
 
     // Akin to modifier

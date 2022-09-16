@@ -24,7 +24,7 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
-    use crate::ddc_bucket::committer::store::EraConfig;
+    use crate::ddc_bucket::committer::store::{Confirmation, EraConfig, Settlement};
 
     pub mod account;
     pub mod flow;
@@ -165,16 +165,19 @@ pub mod ddc_bucket {
         }
 
 
+        #[ink(message, payable)]
         /// Function allows to purchase prepaid resources for the bucket and specify max rate of consumption
         pub fn bucket_buy_resources(&mut self, bucket_id: BucketId, prepaid_resources: Balance, max_rate: BalancePerMonth) -> () {
             self.message_buy_resources(bucket_id, prepaid_resources, max_rate).unwrap()
         }
 
+        #[ink(message)]
         /// Function allows to consume prepaid resources by the cluster operator
         pub fn bucket_consume_resources(&mut self, bucket_id: BucketId, resource: u128) -> () {
             self.message_consume_resources(bucket_id, resource).unwrap()
         }
 
+        #[ink(message)]
         /// Get the remaining balance to consume prepaid resources 
         pub fn bucket_calculate_prepaid(&self, bucket_id: BucketId) -> u128 {
             self.message_calculate_prepaid(bucket_id).unwrap()
@@ -309,8 +312,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn get_commit(&self, node: AccountId) -> () {
-            self.message_get_commit(node);
+        pub fn get_commit(&self, node: AccountId) -> Confirmation {
+            self.message_get_commit(node)
         }
 
         #[ink(message)]
@@ -319,18 +322,28 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
+        pub fn get_settlement(&self, node: AccountId) -> Settlement {
+            self.message_get_settlement(node)
+        }
+
+        #[ink(message)]
+        pub fn validate_settlement(&mut self, node: AccountId, settlement: Settlement) -> () {
+            self.message_validate_settlement(node, settlement).unwrap();
+        }
+
+        #[ink(message)]
         pub fn set_era(&mut self, era_config: EraConfig) -> () {
             self.message_set_era(era_config).unwrap();
         }
     
         #[ink(message)]
-        pub fn get_era(&self) -> () {
-            self.message_get_era();
+        pub fn get_era(&self) -> u64 {
+            self.message_get_era()
         }
 
         #[ink(message)]
-        pub fn get_era_settings(&self) -> () {
-            self.message_get_era_settings();
+        pub fn get_era_settings(&self) -> EraConfig {
+            self.message_get_era_settings()
         }
 
         #[ink(message)]
