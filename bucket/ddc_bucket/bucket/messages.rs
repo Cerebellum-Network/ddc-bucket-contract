@@ -95,6 +95,24 @@ impl DdcBucket {
         Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, rent_covered_until_ms })
     }
 
+    pub fn message_bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) ->  Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        bucket.set_cap(new_resource_cap);
+        Ok(())
+    }
+
+    pub fn message_bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        bucket.set_availability(public_availability);
+        Ok(())
+    }
+
     fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {
         let caller = Self::env().caller();
         cluster.only_manager(caller)

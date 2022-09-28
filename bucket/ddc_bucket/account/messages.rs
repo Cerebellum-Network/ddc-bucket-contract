@@ -2,9 +2,10 @@
 
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, DdcBucket, Deposit, Payable, Result, TOKEN};
+use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, currency::CurrencyConverter, DdcBucket, Deposit, Payable, Result, TOKEN};
 use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
+
 
 impl DdcBucket {
     pub fn message_account_deposit(&mut self) -> Result<()> {
@@ -21,6 +22,38 @@ impl DdcBucket {
         self.accounts
             .get_mut(&account_id)?
             .deposit(cash);
+        Ok(())
+    }
+
+    pub fn message_account_bond(&mut self, payable: Payable) -> Result<()> {
+        let time_ms = Self::env().block_timestamp();
+        let account_id = Self::env().caller();
+        let account = self.accounts.0.get_mut(&account_id)
+            .ok_or(InsufficientBalance)?;
+
+        let conv = &self.accounts.1;
+        
+        account.bond(time_ms, conv, payable)?;
+        Ok(())
+    }
+
+    pub fn message_account_unbond(&mut self, amount_to_unbond: Cash) -> Result<()> {
+        let time_ms = Self::env().block_timestamp();
+        let account_id = Self::env().caller();
+
+        self.accounts
+            .get_mut(&account_id)?
+            .unbond(amount_to_unbond, time_ms).unwrap();
+        Ok(())
+    }
+
+    pub fn message_account_withdraw_unbonded(&mut self) -> Result<()> {
+        let time_ms = Self::env().block_timestamp();
+        let account_id = Self::env().caller();
+
+        self.accounts
+            .get_mut(&account_id)?
+            .withdraw_unbonded(time_ms).unwrap();
         Ok(())
     }
 
@@ -53,6 +86,14 @@ impl DdcBucket {
         let time_ms = Self::env().block_timestamp();
         let conv = &self.accounts.1;
         account.withdraw(time_ms, conv, payable)?;
+        Ok(())
+    }
+
+    fn _account_withdraw_bonded(&mut self, account_id: AccountId, payable: Payable) -> Result<()> {
+        let account = self.accounts.0.get_mut(&account_id)
+            .ok_or(InsufficientBalance)?;
+        
+        account.withdraw_bonded(payable)?;
         Ok(())
     }
 

@@ -25,14 +25,22 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
     use crate::ddc_bucket::committer::store::EraConfig;
+    use crate::ddc_bucket::currency::CurrencyConverter;
+    use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
+    use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
+    
+    use self::cdn_cluster::store::CdnClusterStore;
+    use self::cdn_node::entity::CdnNode;
 
     pub mod account;
     pub mod flow;
     pub mod schedule;
     pub mod cash;
+    pub mod cdn_node;
     pub mod node;
     pub mod bucket;
     pub mod cluster;
+    pub mod cdn_cluster;
     pub mod contract_fee;
     pub mod network_fee;
     pub mod params;
@@ -48,7 +56,9 @@ pub mod ddc_bucket {
         buckets: BucketStore,
         bucket_params: ParamsStore,
         clusters: ClusterStore,
+        cdn_clusters: CdnClusterStore,
         cluster_params: ParamsStore,
+        cdn_nodes: CdnNodeStore,
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
@@ -70,6 +80,8 @@ pub mod ddc_bucket {
                 bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
                 cluster_params: ParamsStore::default(),
+                cdn_nodes: CdnNodeStore::default(),
+                cdn_clusters: CdnClusterStore:: default(),
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
@@ -84,6 +96,7 @@ pub mod ddc_bucket {
 
             // Reserve IDs 0.
             let _ = contract.accounts.create_if_not_exist(AccountId::default());
+            let _ = contract.cdn_nodes.create(AccountId::default(), 0);
             let _ = contract.nodes.create(AccountId::default(), 0, 0);
             let _ = contract.node_params.create("".to_string());
             let _ = contract.clusters.create(AccountId::default(), 0, &[]).unwrap();
@@ -179,6 +192,18 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
             self.message_bucket_list(offset, limit, filter_owner_id)
+        }
+
+        /// Set availiablity of the bucket
+        #[ink(message)]
+        pub fn bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> () {
+            self.message_bucket_set_availability(bucket_id, public_availability).unwrap()
+        }
+
+        /// Set max resource cap to be charged by CDN for public bucket
+        #[ink(message)]
+        pub fn bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) -> () {
+            self.message_bucket_set_resource_cap(bucket_id, new_resource_cap).unwrap()
         }
     }
     // ---- End Bucket ----
@@ -289,6 +314,75 @@ pub mod ddc_bucket {
     }
     // ---- End Cluster ----
 
+    // ---- CDN Cluster ----
+
+    /// A new cluster was created.
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnClusterCreated {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        manager: AccountId,
+    }
+
+    /// The share of revenues of a cluster for a provider was distributed.
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnClusterDistributeRevenues {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        provider_id: AccountId,
+    }
+
+    impl DdcBucket {
+        /// Create a new cluster and return its `cluster_id`.
+        ///
+        /// The caller will be its first manager.
+        ///
+        /// The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
+        ///
+        /// `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        #[ink(message, payable)]
+        pub fn cdn_cluster_create(&mut self, _unused: AccountId, node_ids: Vec<NodeId>) -> ClusterId {
+            self.message_cdn_cluster_create(node_ids).unwrap()
+        }
+
+        /// As manager, reserve more resources for the cluster from the free capacity of nodes.
+        ///
+        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        #[ink(message)]
+        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId) -> () {
+            self.message_cdn_cluster_put_revenue(cluster_id).unwrap()
+        }
+
+
+        /// Trigger the distribution of revenues from the cluster to the providers.
+        #[ink(message)]
+        pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
+            self.message_cdn_cluster_distribute_revenues(cluster_id).unwrap()
+        }
+
+        /// Get the current status of a cluster.
+        #[ink(message)]
+        pub fn cdn_cluster_get(&self, cluster_id: ClusterId) -> Result<CdnClusterStatus> {
+            self.message_cdn_cluster_get(cluster_id)
+        }
+
+        /// Iterate through all clusters.
+        ///
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The optimal `limit` depends on the size of params.
+        ///
+        /// The results can be filtered by manager. Note that paging must still be completed fully.
+        #[ink(message)]
+        pub fn cdn_cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<CdnClusterStatus>, u32) {
+            self.message_cdn_cluster_list(offset, limit, filter_manager_id)
+        }
+    }
+    // ---- End CDN Cluster ----
+
     // ---- Committer ----
 
     impl DdcBucket {
@@ -298,8 +392,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn set_commit(&mut self, node: AccountId, confirmation: Confirmation) {
-            self.message_set_commit(node, confirmation);
+        pub fn set_commit(&mut self, node: AccountId, commit: Commit, logs: Vec<(AccountId, AccountId, u128, u64)>) {
+            self.message_set_commit(node, commit, logs);
         }
 
         #[ink(message)]
@@ -323,6 +417,61 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Committer ----
+
+    // ---- CDN Node ----
+
+    /// A node was created. The given account is its owner and recipient of revenues.
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeCreated {
+        #[ink(topic)]
+        node_id: NodeId,
+        #[ink(topic)]
+        provider_id: AccountId,
+        undistributed_payment: Balance,
+    }
+
+    impl DdcBucket {
+        /// As node provider, authorize a cluster manager to use his nodes.
+        #[ink(message, payable)]
+        pub fn cdn_node_trust_manager(&mut self, manager: AccountId) {
+            self.message_cdn_node_trust_manager(manager, true).unwrap();
+        }
+
+        /// As node provider, revoke the authorization of a cluster manager to use his nodes.
+        #[ink(message)]
+        pub fn cdn_node_distrust_manager(&mut self, manager: AccountId) {
+            self.message_cdn_node_trust_manager(manager, false).unwrap();
+        }
+
+        /// Create a new node and return its `node_id`.
+        ///
+        /// The caller will be its owner.
+        ///
+        /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        #[ink(message, payable)]
+        pub fn cdn_node_create(&mut self, undistributed_payment: Balance) -> NodeId {
+            self.message_cdn_node_create(undistributed_payment).unwrap()
+        }
+
+        /// Get the current state of the cdn node
+        #[ink(message)]
+        pub fn cdn_node_get(&self, node_id: NodeId) -> Result<CdnNode> {
+            self.message_cdn_node_get(node_id)
+        }
+
+        /// Iterate through all nodes.
+        ///
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The optimal `limit` depends on the size of params.
+        ///
+        /// The results can be filtered by owner. Note that paging must still be completed fully.
+        #[ink(message)]
+        pub fn cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> Vec<CdnNode> {
+            self.message_cdn_node_list(offset, limit, filter_provider_id)
+        }
+    }
+    // ---- End CDN Node ----
 
     // ---- Node ----
 
@@ -408,6 +557,25 @@ pub mod ddc_bucket {
             self.message_account_deposit().unwrap()
         }
 
+        /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to 
+        /// pay for CDN nodes
+        #[ink(message, payable)]
+        pub fn account_bond(&mut self, payable: Payable) -> () {
+            self.message_account_bond(payable).unwrap()
+        }
+
+        /// As user, unbond a specified amount of tokens
+        #[ink(message, payable)]
+        pub fn account_unbond(&mut self, amount_to_unbond: Cash) -> () {
+            self.message_account_unbond(amount_to_unbond).unwrap()
+        }
+
+        /// As user, move the unbonded tokens back to withdrawable balance state
+        #[ink(message, payable)]
+        pub fn account_withdraw_unbonded(&mut self) -> () {
+            self.message_account_withdraw_unbonded().unwrap()
+        }
+        
         /// Get the current status of an account.
         #[ink(message)]
         pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
@@ -504,6 +672,7 @@ pub mod ddc_bucket {
         TooManyVNodes,
         ParamsTooBig,
         VNodeDoesNotExist,
+        BondingPeriodNotFinished,
         BucketClusterAlreadyConnected,
         BucketClusterNotSetup,
         NodeDoesNotExist,

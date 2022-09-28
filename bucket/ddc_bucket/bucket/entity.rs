@@ -23,6 +23,8 @@ pub struct Bucket {
     pub cluster_id: ClusterId,
     pub flow: Flow,
     pub resource_reserved: Resource,
+    pub public_availability: bool,
+    pub resource_consumption_cap: Resource, 
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -55,6 +57,14 @@ impl Bucket {
 
     pub fn put_resource(&mut self, amount: Resource) {
         self.resource_reserved += amount;
+    }
+
+    pub fn set_cap(&mut self, amount: Resource) {
+        self.resource_consumption_cap = amount;
+    }
+
+    pub fn set_availability(&mut self, availability: bool) {
+        self.public_availability = availability;
     }
 }
 

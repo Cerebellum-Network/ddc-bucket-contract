@@ -1,18 +1,19 @@
 use ink_lang::{StaticEnv};
 use ink_env::Error;
+use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, DdcBucket};
-use super::store::{Confirmation, EraConfig};
+use super::store::{Commit, EraConfig};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 impl DdcBucket {
-    pub fn message_get_commit(&self, node: AccountId) -> Confirmation {
+    pub fn message_get_commit(&self, node: AccountId) -> Commit {
         self.committer_store.get_commit(node)
     }
 
-    pub fn message_set_commit(&mut self, node: AccountId, confirmation: Confirmation) {
-        self.committer_store.set_commit(node, confirmation);
+    pub fn message_set_commit(&mut self, node: AccountId, commit: Commit, logs: Vec<(AccountId, AccountId, u128, u64)>) {
+        self.committer_store.set_commit(node, commit, logs);
     }
 
     pub fn message_set_era(&mut self, era_config: EraConfig) -> Result<()> {

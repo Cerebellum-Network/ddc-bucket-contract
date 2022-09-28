@@ -15,6 +15,9 @@ use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Account {
     pub deposit: Cash,
+    pub bonded: Cash,
+    pub unbonded_amount: Cash,
+    pub unbonded_timestamp: u64,
     pub payable_schedule: Schedule,
 }
 
@@ -26,6 +29,9 @@ impl Account {
     pub fn new() -> Account {
         Account {
             deposit: Cash(0),
+            bonded: Cash(0),
+            unbonded_amount: Cash(0),
+            unbonded_timestamp: 0,
             payable_schedule: Schedule::empty(),
         }
     }
@@ -34,12 +40,56 @@ impl Account {
         self.deposit.increase(cash);
     }
 
+    pub fn bond(&mut self, time_ms: u64, conv: &CurrencyConverter, payable: Payable) -> Result<()> {
+        if self.get_withdrawable(time_ms, conv) >= payable.peek() {
+            let bonded_amount = Cash(payable.peek());
+            self.deposit.pay_unchecked(payable);
+            self.bonded.increase(bonded_amount);
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
+    }
+
+    pub fn unbond(&mut self, amount_to_unbond: Cash, timestamp: u64) -> Result<()> {
+        let remaining_bonded = self.bonded.peek() - self.unbonded_amount.peek();
+        if remaining_bonded >= amount_to_unbond.peek() {
+            self.bonded.pay_unchecked(Payable(amount_to_unbond.peek()));
+            self.unbonded_amount.increase(amount_to_unbond);
+            self.unbonded_timestamp = timestamp + MS_PER_WEEK;
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
+    }
+
     pub fn withdraw(&mut self, time_ms: u64, conv: &CurrencyConverter, payable: Payable) -> Result<()> {
         if self.get_withdrawable(time_ms, conv) >= payable.peek() {
             self.deposit.pay_unchecked(payable);
             Ok(())
         } else {
             Err(InsufficientBalance)
+        }
+    }
+
+    pub fn withdraw_bonded(&mut self, payable: Payable) -> Result<()> {
+        let remaining_bonded = self.bonded.peek() - self.unbonded_amount.peek();
+        if remaining_bonded >= payable.peek() {
+            self.bonded.pay_unchecked(payable);
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
+    }
+
+    pub fn withdraw_unbonded(&mut self, timestamp: u64) -> Result<()> {
+        if timestamp >= self.unbonded_timestamp {
+            self.deposit.increase(self.unbonded_amount);
+            self.unbonded_amount = Cash(0);
+            self.unbonded_timestamp = 0;
+            Ok(())
+        } else {
+            Err(BondingPeriodNotFinished)
         }
     }
 
@@ -80,3 +130,5 @@ impl Account {
         self.payable_schedule.take_value(unlocked);
     }
 }
+
+pub const MS_PER_WEEK: u64 = 7 * 24 * 3600 * 1000;

@@ -11,7 +11,7 @@ use crate::ddc_bucket::Error::InsufficientBalance;
 // TODO: remove Clone.
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, Copy, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct Cash(pub Balance);
 

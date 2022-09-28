@@ -4,10 +4,12 @@ use more_asserts;
 
 use ink_storage::{
     collections::{
-        HashMap as StorageHashMap
+        HashMap as StorageHashMap,
     },
     traits,
 };
+use ink_prelude::vec::Vec;
+
 
 #[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
@@ -20,9 +22,10 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Copy, Clone, traits::PackedLayout, traits::SpreadLayout, scale::Encode, scale::Decode)]
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
-pub struct Confirmation {
+pub struct Commit {
     hash: Hash,
-    total: u128
+    total: u128,
+    timestamp: u64
 } 
 
 #[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode)]
@@ -36,7 +39,8 @@ pub struct EraConfig {
 #[cfg_attr(feature = "std", derive(traits::StorageLayout))]
 pub struct CommitterStore {
     operator_id: AccountId,
-    commits: StorageHashMap<AccountId, Confirmation>,
+    commits: StorageHashMap<AccountId, Commit>,
+    pub client_logs: StorageHashMap<AccountId, Vec<(AccountId, AccountId, u128, u64)>>, // Retrieve the client logs for payment
     era_settings: EraConfig
 }
 
@@ -45,6 +49,7 @@ impl CommitterStore {
         CommitterStore {
             operator_id,
             commits: Default::default(),
+            client_logs: Default::default(),
             era_settings: EraConfig {
                 start: 0,
                 interval: 0
@@ -52,14 +57,15 @@ impl CommitterStore {
         }
     }
 
-    pub fn get_commit(&self, node: AccountId) -> Confirmation {
+    pub fn get_commit(&self, node: AccountId) -> Commit {
         *self.commits.get(&node).unwrap()
     }
 
     /// The node can set the latest commit with this function
     /// check the sender !!!!
-    pub fn set_commit(&mut self, node: AccountId, confirmation: Confirmation) {
-        self.commits.insert(node, confirmation);
+    pub fn set_commit(&mut self, node: AccountId, commit: Commit, logs: Vec<(AccountId, AccountId, u128, u64)>) {
+        self.commits.insert(node, commit);
+        self.client_logs.insert(node, logs);
     }
 
     // Akin to modifier
