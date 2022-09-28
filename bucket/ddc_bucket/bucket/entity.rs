@@ -27,6 +27,7 @@ pub struct Bucket {
     pub resource_consumption_cap: Resource, 
 }
 
+// Add to status field bucket availability
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct BucketInStatus {
@@ -35,6 +36,8 @@ pub struct BucketInStatus {
     // The field "flow" is not included because it triggers a bug in polkadot.js.
     // TODO: find a fix, then return the entire Bucket structure.
     pub resource_reserved: Resource,
+    pub public_availability: bool,
+    pub resource_consumption_cap: Resource, 
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -74,6 +77,8 @@ impl From<Bucket> for BucketInStatus {
             owner_id: bucket.owner_id,
             cluster_id: bucket.cluster_id,
             resource_reserved: bucket.resource_reserved,
+            public_availability: bucket.public_availability,
+            resource_consumption_cap: bucket.resource_consumption_cap,
         }
     }
 }

@@ -16,6 +16,7 @@ use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 pub struct Account {
     pub deposit: Cash,
     pub bonded: Cash,
+    pub negative: Cash,
     pub unbonded_amount: Cash,
     pub unbonded_timestamp: u64,
     pub payable_schedule: Schedule,
@@ -30,6 +31,7 @@ impl Account {
         Account {
             deposit: Cash(0),
             bonded: Cash(0),
+            negative: Cash(0),
             unbonded_amount: Cash(0),
             unbonded_timestamp: 0,
             payable_schedule: Schedule::empty(),
@@ -42,10 +44,20 @@ impl Account {
 
     pub fn bond(&mut self, time_ms: u64, conv: &CurrencyConverter, payable: Payable) -> Result<()> {
         if self.get_withdrawable(time_ms, conv) >= payable.peek() {
-            let bonded_amount = Cash(payable.peek());
-            self.deposit.pay_unchecked(payable);
-            self.bonded.increase(bonded_amount);
-            Ok(())
+            let parsed_payable: u128;
+            if self.negative.peek() > 0  && payable.peek() >= self.negative.peek() {
+                parsed_payable = payable.peek() - self.negative.peek();
+                self.deposit.pay_unchecked(payable);
+                self.bonded.increase(Cash(parsed_payable));
+                Ok(())
+            } else if self.negative.peek() > 0 && payable.peek() < self.negative.peek(){
+                Err(InsufficientBalance)
+            } else {
+                let bonded_amount = Cash(payable.peek());
+                self.deposit.pay_unchecked(payable);
+                self.bonded.increase(bonded_amount);
+                Ok(())
+            }
         } else {
             Err(InsufficientBalance)
         }
@@ -79,7 +91,10 @@ impl Account {
             self.bonded.pay_unchecked(payable);
             Ok(())
         } else {
-            Err(InsufficientBalance)
+            let negative_balance = payable.peek() - remaining_bonded;
+            self.bonded.pay_unchecked(payable);
+            self.negative.increase(Cash(negative_balance));
+            Ok(())
         }
     }
 
