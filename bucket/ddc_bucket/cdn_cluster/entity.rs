@@ -4,13 +4,12 @@ use ink_prelude::vec::Vec;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
+use crate::ddc_bucket::{AccountId, NodeId, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
+use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
-use crate::ddc_bucket::cdn_node::entity::{CdnNode, Resource};
+use crate::ddc_bucket::cdn_node::entity::Resource;
 use crate::ddc_bucket::params::store::Params;
-use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;

@@ -25,7 +25,6 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
     use crate::ddc_bucket::committer::store::EraConfig;
-    use crate::ddc_bucket::currency::CurrencyConverter;
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
     

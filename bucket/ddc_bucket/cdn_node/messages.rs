@@ -1,10 +1,10 @@
 //! The public interface to manage Nodes.
 
-use ink_lang::{EmitEvent, StaticEnv};
+use ink_lang::StaticEnv;
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
-use crate::ddc_bucket::node::entity::{Node, NodeStatus, Resource};
+use crate::ddc_bucket::{AccountId, Balance, DdcBucket, Result};
+use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::perm::entity::Permission;
 
 use super::entity::{NodeId, CdnNode};

@@ -7,8 +7,6 @@ use ink_storage::{
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
-use crate::ddc_bucket::contract_fee::SIZE_INDEX;
-use crate::ddc_bucket::cdn_node::entity::CdnNode;
 
 use super::entity::{CdnCluster, ClusterId};
 

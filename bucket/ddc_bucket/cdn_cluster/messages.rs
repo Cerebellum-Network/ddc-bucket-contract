@@ -3,14 +3,13 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, CdnClusterCreated, ClusterDistributeRevenues, ClusterNodeReplaced, ClusterReserveResource, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, CdnClusterCreated, ClusterDistributeRevenues, DdcBucket, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cdn_cluster::entity::{CdnCluster, CdnClusterStatus, VNodeIndex};
-use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager, VNodeDoesNotExist, InsufficientBalance};
-use crate::ddc_bucket::cdn_node::entity::{CdnNode, NodeId, Resource};
+use crate::ddc_bucket::cdn_cluster::entity::{CdnCluster, CdnClusterStatus};
+use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager, InsufficientBalance};
+use crate::ddc_bucket::cdn_node::entity::{CdnNode, NodeId};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
-use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 
 use super::entity::{ClusterId};
 

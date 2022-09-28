@@ -6,7 +6,6 @@ use ink_storage::{
 };
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use crate::ddc_bucket::node::entity::Resource;
 
 use super::entity::{CdnNode, NodeId};
 

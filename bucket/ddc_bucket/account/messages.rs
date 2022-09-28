@@ -2,10 +2,9 @@
 
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, currency::CurrencyConverter, DdcBucket, Deposit, Payable, Result, TOKEN};
+use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, DdcBucket, Deposit, Payable, Result, TOKEN};
 use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
-
 
 impl DdcBucket {
     pub fn message_account_deposit(&mut self) -> Result<()> {

@@ -72,6 +72,7 @@ impl Account {
         }
     }
 
+    // Add logics when balance is below requested 
     pub fn withdraw_bonded(&mut self, payable: Payable) -> Result<()> {
         let remaining_bonded = self.bonded.peek() - self.unbonded_amount.peek();
         if remaining_bonded >= payable.peek() {
