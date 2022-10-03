@@ -348,14 +348,19 @@ pub mod ddc_bucket {
             self.message_cdn_cluster_create(node_ids).unwrap()
         }
 
+        /// Set rate for streaming (price per gb)
+        #[ink(message, payable)]
+        pub fn cdn_set_rate(&mut self,  cluster_id: ClusterId, usd_per_gb: u128) -> () {
+            self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
+        }
+
         /// As manager, reserve more resources for the cluster from the free capacity of nodes.
         ///
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
         #[ink(message)]
-        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId) -> () {
-            self.message_cdn_cluster_put_revenue(cluster_id).unwrap()
+        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>) -> () {
+            self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes).unwrap()
         }
-
 
         /// Trigger the distribution of revenues from the cluster to the providers.
         #[ink(message)]
@@ -391,8 +396,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn set_commit(&mut self, node: AccountId, commit: Commit, logs: Vec<(AccountId, AccountId, u128, u64)>) {
-            self.message_set_commit(node, commit, logs);
+        pub fn set_commit(&mut self, node: AccountId, commit: Commit) {
+            self.message_set_commit(node, commit);
         }
 
         #[ink(message)]

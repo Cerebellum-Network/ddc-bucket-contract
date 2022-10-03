@@ -38,33 +38,42 @@ impl DdcBucket {
         Ok(cluster_id)
     }
 
-    pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId) -> Result<()> {
+    // Set the price usd per gb
+    pub fn message_cdn_set_rate(&mut self, cluster_id: ClusterId, usd_per_gb: u128) -> Result<()> {
+        let cluster = self.cdn_clusters.get_mut(cluster_id)?;
+        Self::only_cdn_cluster_manager(cluster)?;
+
+        cluster.set_rate(usd_per_gb)?;
+
+        Ok(())
+    }
+
+    // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
+    pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>) -> Result<()> {
         let cluster = self.cdn_clusters.get_mut(cluster_id)?;
         Self::only_cdn_cluster_manager(cluster)?;
 
         let mut cluster_payment = 0;
+        let mut _undistributed_payment_accounts = 0;
 
-        for node_id in &cluster.cdn_nodes {
-          let node = self.cdn_nodes.get_mut(*node_id)?;
-          let node_provider = node.provider_id.clone();
-          let mut undistributed_payment = 0;
-          // get logs per provider
-          let logs = self.committer_store.client_logs.get(&node_provider).unwrap();
-          for log in logs {
-            let (_cdn_id, client_id, resources_used, _timestamp) = log;
-            // take payment from the clients
+        for &(client_id, payment) in aggregates_accounts.iter() {
             let account = self.accounts.0.get_mut(&client_id)
             .ok_or(InsufficientBalance)?;
-
-            let conv = &self.accounts.1;
-            let cere_payment = conv.to_cere (*resources_used as Balance * USD_PER_GB / 1000000 );
-            account.withdraw_bonded(Payable(cere_payment))?;
-            undistributed_payment += cere_payment;
-          }
-          // Add revenues to nodes
-          node.put_payment(undistributed_payment);
-          cluster_payment += undistributed_payment;
+            account.withdraw_bonded(Payable(payment))?;
+            _undistributed_payment_accounts += payment;
         }
+
+        let conv = &self.accounts.1;
+
+        for &(node_id, resources_used) in aggregates_nodes.iter() {
+            let node = self.cdn_nodes.get_mut(node_id)?;
+
+            let payment = conv.to_cere (resources_used as Balance * cluster.usd_per_gb / 1000000 );
+
+            node.put_payment(payment);
+            cluster_payment += payment;
+        }
+        // Add check that two payments should equal?
 
         // Add revenues to cluster
         cluster.put_revenues(Cash(cluster_payment));
@@ -150,5 +159,3 @@ impl DdcBucket {
         if trusts { Ok(()) } else { Err(ClusterManagerIsNotTrusted) }
     }
 }
-
-pub const USD_PER_GB: u128 = 1;

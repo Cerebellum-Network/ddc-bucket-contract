@@ -23,6 +23,7 @@ pub struct CdnCluster {
     pub cdn_nodes: Vec<NodeId>,
     pub resources_used: Resource,
     pub revenues: Cash,
+    pub usd_per_gb: u128,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -40,6 +41,7 @@ impl CdnCluster {
         CdnCluster {
             manager_id,
             cdn_nodes,
+            usd_per_gb: 0,
             resources_used: 0,
             revenues: Cash(0),
         }
@@ -56,6 +58,11 @@ impl CdnCluster {
 
     pub fn get_revenue_cere(&self) -> Cash {
         self.revenues
+    }
+
+    pub fn set_rate(&mut self, usd_per_gb: u128) -> Result<()> {
+        self.usd_per_gb = usd_per_gb;
+        Ok(())
     }
 
     pub fn put_revenues(&mut self, amount: Cash) {

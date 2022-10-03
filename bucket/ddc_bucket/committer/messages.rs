@@ -1,6 +1,5 @@
 use ink_lang::{StaticEnv};
 use ink_env::Error;
-use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, DdcBucket};
 use super::store::{Commit, EraConfig};
@@ -12,8 +11,8 @@ impl DdcBucket {
         self.committer_store.get_commit(node)
     }
 
-    pub fn message_set_commit(&mut self, node: AccountId, commit: Commit, logs: Vec<(AccountId, AccountId, u128, u64)>) {
-        self.committer_store.set_commit(node, commit, logs);
+    pub fn message_set_commit(&mut self, node: AccountId, commit: Commit) {
+        self.committer_store.set_commit(node, commit);
     }
 
     pub fn message_set_era(&mut self, era_config: EraConfig) -> Result<()> {

@@ -8,8 +8,6 @@ use ink_storage::{
     },
     traits,
 };
-use ink_prelude::vec::Vec;
-
 
 #[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
@@ -40,7 +38,6 @@ pub struct EraConfig {
 pub struct CommitterStore {
     operator_id: AccountId,
     commits: StorageHashMap<AccountId, Commit>,
-    pub client_logs: StorageHashMap<AccountId, Vec<(AccountId, AccountId, u128, u64)>>, // Retrieve the client logs for payment
     era_settings: EraConfig
 }
 
@@ -49,7 +46,6 @@ impl CommitterStore {
         CommitterStore {
             operator_id,
             commits: Default::default(),
-            client_logs: Default::default(),
             era_settings: EraConfig {
                 start: 0,
                 interval: 0
@@ -63,9 +59,8 @@ impl CommitterStore {
 
     /// The node can set the latest commit with this function
     /// check the sender !!!!
-    pub fn set_commit(&mut self, node: AccountId, commit: Commit, logs: Vec<(AccountId, AccountId, u128, u64)>) {
+    pub fn set_commit(&mut self, node: AccountId, commit: Commit) {
         self.commits.insert(node, commit);
-        self.client_logs.insert(node, logs);
     }
 
     // Akin to modifier
