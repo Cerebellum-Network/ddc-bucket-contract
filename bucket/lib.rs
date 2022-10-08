@@ -358,8 +358,8 @@ pub mod ddc_bucket {
         ///
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
         #[ink(message)]
-        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>) -> () {
-            self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes).unwrap()
+        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>) -> () {
+            self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes, aggregates_buckets).unwrap()
         }
 
         /// Trigger the distribution of revenues from the cluster to the providers.

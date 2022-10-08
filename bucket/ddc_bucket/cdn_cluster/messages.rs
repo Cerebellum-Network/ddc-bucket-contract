@@ -3,15 +3,13 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, CdnClusterCreated, ClusterDistributeRevenues, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, BucketId, CdnClusterCreated, ClusterDistributeRevenues, ClusterId, DdcBucket, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cdn_cluster::entity::{CdnCluster, CdnClusterStatus};
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager, InsufficientBalance};
-use crate::ddc_bucket::cdn_node::entity::{CdnNode, NodeId};
+use crate::ddc_bucket::cdn_node::entity::{CdnNode, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
-
-use super::entity::{ClusterId};
 
 impl DdcBucket {
     pub fn message_cdn_cluster_create(
@@ -49,7 +47,7 @@ impl DdcBucket {
     }
 
     // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
-    pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>) -> Result<()> {
+    pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>) -> Result<()> {
         let cluster = self.cdn_clusters.get_mut(cluster_id)?;
         Self::only_cdn_cluster_manager(cluster)?;
 
@@ -74,6 +72,15 @@ impl DdcBucket {
             cluster_payment += payment;
         }
         // Add check that two payments should equal?
+
+        // Go through buckets and deduct used resources
+        for &(bucket_id, resources_used) in aggregates_buckets.iter() {
+            let bucket = self.buckets.get_mut(bucket_id)?;
+
+            if bucket.resource_consumption_cap <= resources_used {
+                bucket.resource_consumption_cap -= resources_used;
+            }
+        }
 
         // Add revenues to cluster
         cluster.put_revenues(Cash(cluster_payment));
