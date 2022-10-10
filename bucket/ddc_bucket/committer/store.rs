@@ -1,7 +1,5 @@
 use crate::ddc_bucket::{AccountId, Hash};
 
-use more_asserts;
-
 use ink_storage::{
     collections::{
         HashMap as StorageHashMap,
@@ -30,7 +28,9 @@ pub struct Commit {
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, traits::StorageLayout))]
 pub struct EraConfig {
     start: u64,
-    interval: u64
+    interval: u64,
+    commit_deadline: u64,
+    validation_deadline:u64
 }  
 
 #[derive(traits::SpreadLayout)]
@@ -48,7 +48,9 @@ impl CommitterStore {
             commits: Default::default(),
             era_settings: EraConfig {
                 start: 0,
-                interval: 0
+                interval: 0,
+                commit_deadline: 0,
+                validation_deadline: 0,
             }
         }
     }
@@ -79,25 +81,20 @@ impl CommitterStore {
     pub fn get_era(&self, timestamp: u64) -> u64 {
         let era_start = self.era_settings.start;
         let interval = self.era_settings.interval;
-
-        if timestamp < (era_start + interval / 3) {
+        let elapsed_time_within_interval = (timestamp - era_start) % interval;
+        
+        if elapsed_time_within_interval < self.era_settings.commit_deadline {
             return 0;
-        } else if timestamp < (era_start + interval * 2 / 3) {
+        } else if elapsed_time_within_interval < self.era_settings.validation_deadline {
             return 1;
         } else {
             return 2;
         }
     }
 
+
     // Get the current era phase
     pub fn get_era_settings(&self) -> EraConfig {
         return self.era_settings;
-    }
-
-    // Move to next era
-    pub fn new_era(&mut self, timestamp: u64) -> Result<()> {
-        more_asserts::assert_ge!(timestamp, self.era_settings.start + self.era_settings.interval);
-        self.era_settings.start = self.era_settings.start + self.era_settings.interval;
-        Ok(())
     }
 }

@@ -406,18 +406,13 @@ pub mod ddc_bucket {
         }
     
         #[ink(message)]
-        pub fn get_era(&self) -> () {
-            self.message_get_era();
+        pub fn get_era(&self) -> u64 {
+            self.message_get_era()
         }
 
         #[ink(message)]
         pub fn get_era_settings(&self) -> () {
             self.message_get_era_settings();
-        }
-
-        #[ink(message)]
-        pub fn new_era(&mut self) -> () {
-            self.message_new_era().unwrap();
         }
     }
     // ---- End Committer ----

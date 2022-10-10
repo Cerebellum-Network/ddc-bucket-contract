@@ -24,20 +24,12 @@ impl DdcBucket {
         }
     }
   
-    pub fn message_get_era(&self) -> () {
-        let timestamp = Self::env().block_timestamp(); 
-        self.committer_store.get_era(timestamp);
+    pub fn message_get_era(&self) -> u64 {
+        let timestamp = Self::env().block_timestamp();
+        self.committer_store.get_era(timestamp)
     }
 
     pub fn message_get_era_settings(&self) -> () {
         self.committer_store.get_era_settings();
-    }
-
-    pub fn message_new_era(&mut self) -> Result<()> {
-        let timestamp = Self::env().block_timestamp();
-        match self.committer_store.new_era(timestamp) {
-          Err(_e) => panic!("Triggering new era failed"), 
-          Ok(_v) => Ok(()),
-        }
     }
 }
