@@ -29,7 +29,7 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
     
     use self::cdn_cluster::store::CdnClusterStore;
-    use self::cdn_node::entity::CdnNode;
+    use self::cdn_node::entity::CdnNodeStatus;
 
     pub mod account;
     pub mod flow;
@@ -58,6 +58,7 @@ pub mod ddc_bucket {
         cdn_clusters: CdnClusterStore,
         cluster_params: ParamsStore,
         cdn_nodes: CdnNodeStore,
+        cdn_node_params: ParamsStore,
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
@@ -80,6 +81,7 @@ pub mod ddc_bucket {
                 clusters: ClusterStore::default(),
                 cluster_params: ParamsStore::default(),
                 cdn_nodes: CdnNodeStore::default(),
+                cdn_node_params: ParamsStore::default(),
                 cdn_clusters: CdnClusterStore:: default(),
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
@@ -96,6 +98,7 @@ pub mod ddc_bucket {
             // Reserve IDs 0.
             let _ = contract.accounts.create_if_not_exist(AccountId::default());
             let _ = contract.cdn_nodes.create(AccountId::default(), 0);
+            let _ = contract.cdn_node_params.create("".to_string());
             let _ = contract.nodes.create(AccountId::default(), 0, 0);
             let _ = contract.node_params.create("".to_string());
             let _ = contract.clusters.create(AccountId::default(), 0, &[]).unwrap();
@@ -449,13 +452,22 @@ pub mod ddc_bucket {
         ///
         /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn cdn_node_create(&mut self, undistributed_payment: Balance) -> NodeId {
-            self.message_cdn_node_create(undistributed_payment).unwrap()
+        pub fn cdn_node_create(&mut self, node_params: Params) -> NodeId {
+            self.message_cdn_node_create(node_params).unwrap()
+        }
+
+
+        /// Change the `node_params`, which is configuration used by clients and nodes.
+        ///
+        /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        #[ink(message, payable)]
+        pub fn cdn_node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
+            self.message_cdn_node_change_params(node_id, params).unwrap();
         }
 
         /// Get the current state of the cdn node
         #[ink(message)]
-        pub fn cdn_node_get(&self, node_id: NodeId) -> Result<CdnNode> {
+        pub fn cdn_node_get(&self, node_id: NodeId) -> Result<CdnNodeStatus> {
             self.message_cdn_node_get(node_id)
         }
 
@@ -466,9 +478,10 @@ pub mod ddc_bucket {
         ///
         /// The results can be filtered by owner. Note that paging must still be completed fully.
         #[ink(message)]
-        pub fn cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> Vec<CdnNode> {
+        pub fn cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeStatus>, u32) {
             self.message_cdn_node_list(offset, limit, filter_provider_id)
         }
+           
     }
     // ---- End CDN Node ----
 
