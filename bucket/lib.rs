@@ -394,8 +394,8 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn get_commit(&self, node: AccountId) -> () {
-            self.message_get_commit(node);
+        pub fn get_commit(&self, node: AccountId) -> Commit {
+            self.message_get_commit(node)
         }
 
         #[ink(message)]

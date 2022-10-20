@@ -21,7 +21,8 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub struct Commit {
     hash: Hash,
     total: u128,
-    timestamp: u64
+    from_timestamp: u64,
+    to_timestamp: u64,
 } 
 
 #[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode)]
