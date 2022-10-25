@@ -77,7 +77,6 @@ impl DdcBucket {
         }
     }
 
-
     fn _account_withdraw(&mut self, from: AccountId, payable: Payable) -> Result<()> {
         let account = self.accounts.0.get_mut(&from)
             .ok_or(InsufficientBalance)?;
