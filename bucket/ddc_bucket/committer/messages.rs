@@ -29,7 +29,7 @@ impl DdcBucket {
         self.committer_store.get_era(timestamp)
     }
 
-    pub fn message_get_era_settings(&self) -> () {
-        self.committer_store.get_era_settings();
+    pub fn message_get_era_settings(&self) -> EraConfig {
+        self.committer_store.get_era_settings()
     }
 }

@@ -414,8 +414,8 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn get_era_settings(&self) -> () {
-            self.message_get_era_settings();
+        pub fn get_era_settings(&self) -> EraConfig {
+            self.message_get_era_settings()
         }
     }
     // ---- End Committer ----
