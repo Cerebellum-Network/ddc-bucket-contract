@@ -90,9 +90,10 @@ impl DdcBucket {
 
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
+        let reader_ids = bucket.reader_ids;
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
         let params = self.bucket_params.get(bucket_id)?.clone();
-        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, rent_covered_until_ms })
+        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, reader_ids, rent_covered_until_ms })
     }
 
     pub fn message_bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) ->  Result<()> {

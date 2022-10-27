@@ -2,6 +2,7 @@
 
 use ink_prelude::vec::Vec;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
+use ink_storage::collections::HashMap as StorageHashMap;
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
@@ -16,11 +17,13 @@ use crate::ddc_bucket::params::store::Params;
 pub type BucketId = u32;
 pub type BucketParams = Params;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout, Default)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Bucket {
     pub owner_id: AccountId,
     pub cluster_id: ClusterId,
+    pub writer_ids: StorageHashMap<AccountId, bool>,
+    pub reader_ids: StorageHashMap<AccountId, bool>,
     pub flow: Flow,
     pub resource_reserved: Resource,
     pub public_availability: bool,
@@ -47,6 +50,7 @@ pub struct BucketStatus {
     pub bucket: BucketInStatus,
     pub params: BucketParams,
     pub writer_ids: Vec<AccountId>,
+    pub reader_ids: Vec<AccountId>,
     pub rent_covered_until_ms: u64,
 }
 
