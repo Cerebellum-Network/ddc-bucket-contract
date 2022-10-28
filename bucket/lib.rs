@@ -212,28 +212,40 @@ pub mod ddc_bucket {
             self.message_bucket_set_resource_cap(bucket_id, new_resource_cap).unwrap()
         }
 
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+            self.message_get_bucket_writers(bucket_id).unwrap()
+        }
+
         /// Set permission for the writer of the bucket
         #[ink(message)]
-        pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId, permission: bool) -> () {
-            self.message_bucket_set_writer_perm(bucket_id, writer, permission).unwrap()
+        pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_grant_writer_permission(bucket_id, writer).unwrap()
+        }
+
+        /// Revoke permission for the writer of the bucket
+        #[ink(message)]
+        pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_revoke_writer_permission(bucket_id, writer).unwrap()
         }
 
         /// Set permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId, permission: bool) -> () {
-            self.message_bucket_set_reader_perm(bucket_id, writer, permission).unwrap()
+        pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+            self.message_get_bucket_readers(bucket_id).unwrap()
         }
 
         /// Set permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_get_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> bool {
-            self.message_bucket_get_writer_perm(bucket_id, writer).unwrap()
+        pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
+            self.message_grant_reader_permission(bucket_id, reader).unwrap()
         }
 
-        /// Set permission for the reader of the bucket
+        /// Revoke permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_get_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> bool {
-            self.message_bucket_get_reader_perm(bucket_id, writer).unwrap()
+        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_revoke_reader_permission(bucket_id, writer).unwrap()
         }
     }
     // ---- End Bucket ----

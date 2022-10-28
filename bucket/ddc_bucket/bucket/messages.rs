@@ -113,32 +113,50 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId, permission: bool) -> Result<()> {
+    pub fn message_get_bucket_writers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
+        let writers = self.buckets_perms.get_bucket_writers(bucket_id);
+        Ok(writers)
+    }
+
+    pub fn message_grant_writer_permission(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
 
         Self::only_owner_or_cluster_manager(bucket, cluster)?;
-        self.buckets_perms.set_permission_writer((bucket_id, writer), permission).unwrap();
+        self.buckets_perms.grant_writer_permission(bucket_id, writer).unwrap();
         Ok(())
     }
 
-    pub fn message_bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId, permission: bool) -> Result<()> {
+    pub fn message_revoke_writer_permission(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> { 
         let bucket = self.buckets.get_mut(bucket_id)?;
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;
 
         Self::only_owner_or_cluster_manager(bucket, cluster)?;
-        self.buckets_perms.set_permission_reader((bucket_id, reader), permission).unwrap();
+        self.buckets_perms.revoke_writer_permission(bucket_id, writer).unwrap();
         Ok(())
     }
 
-    pub fn message_bucket_get_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<bool> {
-        let granted = self.buckets_perms.get_permission_writer((bucket_id, writer));
-        Ok(granted)
+    pub fn message_get_bucket_readers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
+        let readers = self.buckets_perms.get_bucket_readers(bucket_id);
+        Ok(readers)
     }
 
-    pub fn message_bucket_get_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<bool> {
-        let granted = self.buckets_perms.get_permission_reader((bucket_id, writer));
-        Ok(granted)
+    pub fn message_grant_reader_permission(&mut self, bucket_id: BucketId, reader: AccountId) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        self.buckets_perms.grant_reader_permission(bucket_id, reader).unwrap();
+        Ok(())
+    }
+
+    pub fn message_revoke_reader_permission(&mut self, bucket_id: BucketId, reader: AccountId) -> Result<()> { 
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        self.buckets_perms.revoke_reader_permission(bucket_id, reader).unwrap();
+        Ok(())
     }
 
     fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {

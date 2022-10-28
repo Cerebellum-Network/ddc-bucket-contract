@@ -2,6 +2,7 @@
 
 use crate::ddc_bucket::{AccountId, BucketId, Result};
 
+use ink_prelude::vec::Vec;
 use ink_storage::{
     collections::{
         HashMap as StorageHashMap,
@@ -12,8 +13,8 @@ use ink_storage::{
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct BucketsPermsStore {
-    writers: StorageHashMap<(BucketId, AccountId), bool>,
-    readers: StorageHashMap<(BucketId, AccountId), bool>
+    writers: StorageHashMap<BucketId, Vec<AccountId>>,
+    readers: StorageHashMap<BucketId, Vec<AccountId>>
 }
 
 impl BucketsPermsStore {
@@ -24,35 +25,58 @@ impl BucketsPermsStore {
         }
     }
 
-    // get permission for bucket writer 
-    pub fn get_permission_writer(&self, key: (BucketId, AccountId)) -> bool {
-        *self.writers.get(&key).unwrap()
+    // get accounts with permission for bucket writing
+    pub fn get_bucket_writers(&self, key: BucketId) -> Vec<AccountId> {
+        let writers = (*self.writers.get(&key).unwrap()).clone();
+        return writers;
     }
 
-    // // get bucket writer 
-    // pub fn get_bucket_writers(&self, bucket: BucketId) -> Vec<AccountId> {
-    //     *self.writers.get(&key).unwrap()
-    // }
+    // grant permission for bucket writing for some account
+    pub fn grant_writer_permission(&mut self, key: BucketId, writer: AccountId) -> Result<()> {
+        if !self.writers.contains_key(&key) {
+            let empty_vec = Vec::new();
+            self.writers.insert(key, empty_vec);
+        }
 
-    // set permission for bucket writer
-    pub fn set_permission_writer(&mut self, key: (BucketId, AccountId), permission: bool) -> Result<()> {
-        self.writers.insert(key, permission);
+        (*self.writers.get_mut(&key).unwrap()).push(writer);
         Ok(())
     }
 
-    // get permission for bucket reader 
-    pub fn get_permission_reader(&self, key: (BucketId, AccountId)) -> bool {
-        *self.readers.get(&key).unwrap()
-    }
+    // revoke permission for bucket writing for some account
+    pub fn revoke_writer_permission(&mut self, key: BucketId, writer: AccountId) -> Result<()> {
+        let writers = &mut *self.writers.get_mut(&key).unwrap();
 
-    // // get bucket readers 
-    // pub fn get_bucket_readers(&self, bucket: BucketId) -> Vec<AccountId> {
-    //     *self.writers.get(&key).unwrap()
-    // }
-
-    // set permission for bucket reader
-    pub fn set_permission_reader(&mut self, key: (BucketId, AccountId), permission: bool) -> Result<()> {
-        self.readers.insert(key, permission);
+        if let Some(pos) = writers.iter().position(|x| *x == writer) {
+            writers.remove(pos);
+        }
         Ok(())
     }
+
+    // get accounts with permission for bucket reading
+    pub fn get_bucket_readers(&self, key: BucketId) -> Vec<AccountId> {
+        let readers = (*self.readers.get(&key).unwrap()).clone();
+        return readers;
+    }
+
+    // grant permission for bucket reading for some account
+    pub fn grant_reader_permission(&mut self, key: BucketId, reader: AccountId) -> Result<()> {
+        if !self.readers.contains_key(&key) {
+            let empty_vec = Vec::new();
+            self.readers.insert(key, empty_vec);
+        }
+
+        (*self.readers.get_mut(&key).unwrap()).push(reader);
+        Ok(())
+    }
+
+    // revoke permission for bucket writing for some account
+    pub fn revoke_reader_permission(&mut self, key: BucketId, reader: AccountId) -> Result<()> {
+        let readers = &mut *self.readers.get_mut(&key).unwrap();
+
+        if let Some(pos) = readers.iter().position(|x| *x == reader) {
+            readers.remove(pos);
+        }
+        Ok(())
+    }
+
 }
