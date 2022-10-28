@@ -90,10 +90,9 @@ impl DdcBucket {
 
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let writer_ids = vec![bucket.owner_id];
-        let reader_ids = bucket.reader_ids;
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
         let params = self.bucket_params.get(bucket_id)?.clone();
-        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, reader_ids, rent_covered_until_ms })
+        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, rent_covered_until_ms })
     }
 
     pub fn message_bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) ->  Result<()> {
@@ -112,6 +111,34 @@ impl DdcBucket {
         Self::only_owner_or_cluster_manager(bucket, cluster)?;
         bucket.set_availability(public_availability);
         Ok(())
+    }
+
+    pub fn message_bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId, permission: bool) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        self.buckets_perms.set_permission_writer((bucket_id, writer), permission).unwrap();
+        Ok(())
+    }
+
+    pub fn message_bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId, permission: bool) -> Result<()> {
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+
+        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        self.buckets_perms.set_permission_reader((bucket_id, reader), permission).unwrap();
+        Ok(())
+    }
+
+    pub fn message_bucket_get_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<bool> {
+        let granted = self.buckets_perms.get_permission_writer((bucket_id, writer));
+        Ok(granted)
+    }
+
+    pub fn message_bucket_get_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<bool> {
+        let granted = self.buckets_perms.get_permission_reader((bucket_id, writer));
+        Ok(granted)
     }
 
     fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {

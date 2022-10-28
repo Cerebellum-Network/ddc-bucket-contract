@@ -4,7 +4,6 @@ use ink_storage::{
     collections::Vec as InkVec,
     traits,
 };
-use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
@@ -23,8 +22,6 @@ impl BucketStore {
         let bucket = Bucket {
             owner_id,
             cluster_id,
-            writer_ids: Default::default(),
-            reader_ids: Default::default(),
             flow: Flow { from: owner_id, schedule: Schedule::empty() },
             resource_reserved: 0,
             resource_consumption_cap: 0,
