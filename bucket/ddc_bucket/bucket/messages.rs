@@ -10,8 +10,8 @@ use crate::ddc_bucket::node::entity::Resource;
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
 
 impl DdcBucket {
-    pub fn message_bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> Result<BucketId> {
-        let owner_id = Self::env().caller();
+    pub fn message_bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId, owner_id: Option<AccountId>) -> Result<BucketId> {
+        let owner_id = owner_id.unwrap_or(Self::env().caller());
         let record_size0 = self.accounts.create_if_not_exist(owner_id);
         let bucket_id = self.buckets.create(owner_id, cluster_id);
         let (params_id, record_size2) = self.bucket_params.create(bucket_params)?;
