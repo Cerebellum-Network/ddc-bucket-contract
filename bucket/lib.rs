@@ -28,6 +28,7 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
     
+    use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
     use self::cdn_node::entity::CdnNodeStatus;
 
@@ -47,12 +48,14 @@ pub mod ddc_bucket {
     pub mod perm;
     pub mod currency;
     pub mod committer;
+    pub mod buckets_perms;
 
     // ---- Global state ----
     /// The main DDC smart contract.
     #[ink(storage)]
     pub struct DdcBucket {
         buckets: BucketStore,
+        buckets_perms: BucketsPermsStore,
         bucket_params: ParamsStore,
         clusters: ClusterStore,
         cdn_clusters: CdnClusterStore,
@@ -77,6 +80,7 @@ pub mod ddc_bucket {
 
             let mut contract = Self {
                 buckets: BucketStore::default(),
+                buckets_perms: BucketsPermsStore::default(),
                 bucket_params: ParamsStore::default(),
                 clusters: ClusterStore::default(),
                 cluster_params: ParamsStore::default(),
@@ -206,6 +210,42 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) -> () {
             self.message_bucket_set_resource_cap(bucket_id, new_resource_cap).unwrap()
+        }
+
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+            self.message_get_bucket_writers(bucket_id).unwrap()
+        }
+
+        /// Set permission for the writer of the bucket
+        #[ink(message)]
+        pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_grant_writer_permission(bucket_id, writer).unwrap()
+        }
+
+        /// Revoke permission for the writer of the bucket
+        #[ink(message)]
+        pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_revoke_writer_permission(bucket_id, writer).unwrap()
+        }
+
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+            self.message_get_bucket_readers(bucket_id).unwrap()
+        }
+
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
+            self.message_grant_reader_permission(bucket_id, reader).unwrap()
+        }
+
+        /// Revoke permission for the reader of the bucket
+        #[ink(message)]
+        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_revoke_reader_permission(bucket_id, writer).unwrap()
         }
     }
     // ---- End Bucket ----
