@@ -157,8 +157,16 @@ pub mod ddc_bucket {
         ///
         /// The bucket can be connected to a single cluster (currently). Allocate cluster resources with the function `bucket_alloc_into_cluster`
         #[ink(message, payable)]
-        pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId) -> BucketId {
-            self.message_bucket_create(bucket_params, cluster_id).unwrap()
+        pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId, owner_id: Option<AccountId>) -> BucketId {
+            self.message_bucket_create(bucket_params, cluster_id, owner_id).unwrap()
+        }
+
+        /// Change owner of the bucket
+        /// 
+        /// Provide the account of new owner
+        #[ink(message, payable)]
+        pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
+        self.message_bucket_change_owner(bucket_id, owner_id).unwrap()
         }
 
         /// Allocate some resources of a cluster to a bucket.
