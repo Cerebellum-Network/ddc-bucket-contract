@@ -23,8 +23,11 @@ pub struct Bucket {
     pub cluster_id: ClusterId,
     pub flow: Flow,
     pub resource_reserved: Resource,
+    pub public_availability: bool,
+    pub resource_consumption_cap: Resource, 
 }
 
+// Add to status field bucket availability
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct BucketInStatus {
@@ -33,6 +36,8 @@ pub struct BucketInStatus {
     // The field "flow" is not included because it triggers a bug in polkadot.js.
     // TODO: find a fix, then return the entire Bucket structure.
     pub resource_reserved: Resource,
+    pub public_availability: bool,
+    pub resource_consumption_cap: Resource, 
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -56,6 +61,18 @@ impl Bucket {
     pub fn put_resource(&mut self, amount: Resource) {
         self.resource_reserved += amount;
     }
+
+    pub fn set_cap(&mut self, amount: Resource) {
+        self.resource_consumption_cap = amount;
+    }
+
+    pub fn set_availability(&mut self, availability: bool) {
+        self.public_availability = availability;
+    }
+
+    pub fn change_owner(&mut self, owner_id: AccountId) {
+        self.owner_id = owner_id;
+    }
 }
 
 impl From<Bucket> for BucketInStatus {
@@ -64,6 +81,8 @@ impl From<Bucket> for BucketInStatus {
             owner_id: bucket.owner_id,
             cluster_id: bucket.cluster_id,
             resource_reserved: bucket.resource_reserved,
+            public_availability: bucket.public_availability,
+            resource_consumption_cap: bucket.resource_consumption_cap,
         }
     }
 }

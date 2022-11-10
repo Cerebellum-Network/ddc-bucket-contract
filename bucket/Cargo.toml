@@ -27,6 +27,7 @@ ink_lang_macro = { version = "=3.0.0-rc4", default-features = false, optional = 
 
 serde = { version = "1.0.136", optional = true }
 serde_json = { version = "1.0.79", optional = true }
+more-asserts = { version = "0.3.0" }
 
 [lib]
 name = "ddc_bucket"
