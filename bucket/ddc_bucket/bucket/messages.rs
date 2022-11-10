@@ -21,6 +21,14 @@ impl DdcBucket {
         Ok(bucket_id)
     }
 
+    pub fn message_bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> Result<()> {
+        let caller = Self::env().caller();
+        let bucket = self.buckets.get_mut(bucket_id)?;
+        bucket.only_owner(caller)?;
+        bucket.change_owner(owner_id);
+        Ok(())
+    }
+
     pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
         let cluster = self.clusters.get_mut(bucket.cluster_id)?;

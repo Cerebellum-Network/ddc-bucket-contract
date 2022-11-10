@@ -161,6 +161,14 @@ pub mod ddc_bucket {
             self.message_bucket_create(bucket_params, cluster_id, owner_id).unwrap()
         }
 
+        /// Change owner of the bucket
+        /// 
+        /// Provide the account of new owner
+        #[ink(message, payable)]
+        pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
+        self.message_bucket_change_owner(bucket_id, owner_id).unwrap()
+        }
+
         /// Allocate some resources of a cluster to a bucket.
         ///
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).

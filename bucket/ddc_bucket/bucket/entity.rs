@@ -69,6 +69,10 @@ impl Bucket {
     pub fn set_availability(&mut self, availability: bool) {
         self.public_availability = availability;
     }
+
+    pub fn change_owner(&mut self, owner_id: AccountId) {
+        self.owner_id = owner_id;
+    }
 }
 
 impl From<Bucket> for BucketInStatus {
