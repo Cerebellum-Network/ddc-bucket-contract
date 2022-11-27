@@ -620,8 +620,8 @@ pub mod ddc_bucket {
         /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to 
         /// pay for CDN nodes
         #[ink(message, payable)]
-        pub fn account_bond(&mut self, payable: Payable) -> () {
-            self.message_account_bond(payable).unwrap()
+        pub fn account_bond(&mut self, bond_amount: Balance) -> () {
+            self.message_account_bond(bond_amount).unwrap()
         }
 
         /// As user, unbond a specified amount of tokens

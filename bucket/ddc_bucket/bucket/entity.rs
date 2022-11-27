@@ -47,6 +47,7 @@ pub struct BucketStatus {
     pub bucket: BucketInStatus,
     pub params: BucketParams,
     pub writer_ids: Vec<AccountId>,
+    pub reader_ids: Vec<AccountId>,
     pub rent_covered_until_ms: u64,
 }
 

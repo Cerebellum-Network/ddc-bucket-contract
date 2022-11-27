@@ -42,7 +42,8 @@ impl Account {
         self.deposit.increase(cash);
     }
 
-    pub fn bond(&mut self, time_ms: u64, conv: &CurrencyConverter, payable: Payable) -> Result<()> {
+    pub fn bond(&mut self, time_ms: u64, conv: &CurrencyConverter, bond_amount: Balance) -> Result<()> {
+        let payable = Payable(bond_amount);
         if self.get_withdrawable(time_ms, conv) >= payable.peek() {
             let parsed_payable: u128;
             if self.negative.peek() > 0  && payable.peek() >= self.negative.peek() {
