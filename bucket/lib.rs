@@ -208,6 +208,14 @@ pub mod ddc_bucket {
             self.message_bucket_list(offset, limit, filter_owner_id)
         }
 
+        /// Iterate through all buckets and return only those owned by owner
+        ///
+        /// This method returns bucket struct, not the status
+        #[ink(message)]
+        pub fn bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
+            self.message_bucket_list_for_account(owner_id)
+        }
+
         /// Set availiablity of the bucket
         #[ink(message)]
         pub fn bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> () {

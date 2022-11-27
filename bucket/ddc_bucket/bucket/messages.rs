@@ -96,6 +96,14 @@ impl DdcBucket {
         (bucket_statuses, self.buckets.0.len())
     }
 
+    pub fn message_bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
+        self.buckets.0
+            .iter()
+            .filter(|bucket| bucket.owner_id == owner_id)
+            .cloned()
+            .collect()
+    }
+
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let mut writer_ids = self.buckets_perms.get_bucket_readers(bucket_id);
         writer_ids.push(bucket.owner_id);
