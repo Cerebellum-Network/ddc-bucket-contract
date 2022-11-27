@@ -719,6 +719,16 @@ pub mod ddc_bucket {
     }
     // ---- End Admin ----
 
+    // ---- Accounts ----
+    impl DdcBucket {
+        /// Get all Account IDs stored in the SC
+        #[ink(message, payable)]
+        pub fn get_accounts(&self) -> Vec<AccountId> {
+            self.message_get_accounts()
+        }
+    }
+    // ---- End Accounts ----
+
 
     // ---- Utils ----
     /// One token with 10 decimals.

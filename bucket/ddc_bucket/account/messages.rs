@@ -1,5 +1,6 @@
 //! The public interface of Accounts and deposits.
 
+use ink_prelude::vec::Vec;
 use ink_lang::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, DdcBucket, Deposit, Payable, Result, TOKEN};
@@ -7,6 +8,10 @@ use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
 
 impl DdcBucket {
+    pub fn message_get_accounts(&self) -> Vec<AccountId> {
+        self.accounts.0.keys().cloned().collect()
+    }
+
     pub fn message_account_deposit(&mut self) -> Result<()> {
         // Receive the payable value, minus the contract fee.
         let mut cash = Self::receive_cash();
