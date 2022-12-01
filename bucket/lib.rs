@@ -208,6 +208,14 @@ pub mod ddc_bucket {
             self.message_bucket_list(offset, limit, filter_owner_id)
         }
 
+        /// Iterate through all buckets and return only those owned by owner
+        ///
+        /// This method returns bucket struct, not the status
+        #[ink(message)]
+        pub fn bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
+            self.message_bucket_list_for_account(owner_id)
+        }
+
         /// Set availiablity of the bucket
         #[ink(message)]
         pub fn bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> () {
@@ -620,8 +628,8 @@ pub mod ddc_bucket {
         /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to 
         /// pay for CDN nodes
         #[ink(message, payable)]
-        pub fn account_bond(&mut self, payable: Payable) -> () {
-            self.message_account_bond(payable).unwrap()
+        pub fn account_bond(&mut self, bond_amount: Balance) -> () {
+            self.message_account_bond(bond_amount).unwrap()
         }
 
         /// As user, unbond a specified amount of tokens
@@ -718,6 +726,16 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Admin ----
+
+    // ---- Accounts ----
+    impl DdcBucket {
+        /// Get all Account IDs stored in the SC
+        #[ink(message, payable)]
+        pub fn get_accounts(&self) -> Vec<AccountId> {
+            self.message_get_accounts()
+        }
+    }
+    // ---- End Accounts ----
 
 
     // ---- Utils ----

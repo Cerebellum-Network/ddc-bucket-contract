@@ -1,7 +1,7 @@
 //! The public interface to manage Buckets.
 
 use ink_lang::{EmitEvent, StaticEnv};
-use ink_prelude::{vec, vec::Vec};
+use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
@@ -96,11 +96,21 @@ impl DdcBucket {
         (bucket_statuses, self.buckets.0.len())
     }
 
+    pub fn message_bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
+        self.buckets.0
+            .iter()
+            .filter(|bucket| bucket.owner_id == owner_id)
+            .cloned()
+            .collect()
+    }
+
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
-        let writer_ids = vec![bucket.owner_id];
+        let mut writer_ids = self.buckets_perms.get_bucket_readers(bucket_id);
+        writer_ids.push(bucket.owner_id);
         let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
         let params = self.bucket_params.get(bucket_id)?.clone();
-        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, rent_covered_until_ms })
+        let reader_ids = self.buckets_perms.get_bucket_readers(bucket_id);
+        Ok(BucketStatus { bucket_id, bucket: bucket.into(), params, writer_ids, reader_ids, rent_covered_until_ms })
     }
 
     pub fn message_bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) ->  Result<()> {
