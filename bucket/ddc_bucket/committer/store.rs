@@ -16,7 +16,7 @@ pub enum Error {
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Copy, Clone, traits::PackedLayout, traits::SpreadLayout, scale::Encode, scale::Decode)]
+#[derive(Copy, Clone, traits::PackedLayout, traits::SpreadLayout, scale::Encode, scale::Decode, Debug)]
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
 pub struct Commit {
     hash: Hash,
@@ -25,7 +25,7 @@ pub struct Commit {
     to_timestamp: u64,
 } 
 
-#[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode)]
+#[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode, Debug)]
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, traits::StorageLayout))]
 pub struct EraConfig {
     start: u64,
@@ -34,7 +34,7 @@ pub struct EraConfig {
     validation_deadline:u64
 }  
 
-#[derive(traits::SpreadLayout)]
+#[derive(traits::SpreadLayout, Debug)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout))]
 pub struct CommitterStore {
     operator_id: AccountId,

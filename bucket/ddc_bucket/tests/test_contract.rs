@@ -5,6 +5,7 @@ use crate::ddc_bucket::account::entity::Account;
 use crate::ddc_bucket::contract_fee::{calculate_contract_fee, FEE_PER_BYTE, SIZE_PER_RECORD};
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::schedule::{MS_PER_MONTH, Schedule};
+use crate::ddc_bucket::Error::*;
 
 use super::env_utils::*;
 
@@ -99,7 +100,7 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     set_balance(owner_id, 1000 * TOKEN);
 
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    let bucket_id = ctx.contract.bucket_create("{}".to_string(), ctx.cluster_id);
+    let bucket_id = ctx.contract.bucket_create("{}".to_string(), ctx.cluster_id, None);
     pop_caller();
 
     // Reserve some resources for the bucket from the cluster.
@@ -504,9 +505,12 @@ fn bucket_reserve_0_works() {
                 owner_id: AccountId::default(),
                 cluster_id: 0,
                 resource_reserved: 0,
+                public_availability: false,
+                resource_consumption_cap: 0,
             },
             params: "".to_string(),
             writer_ids: vec![AccountId::default()],
+            reader_ids: vec![],
             rent_covered_until_ms: 18446744073709551615,
         }], 1));
 
@@ -556,6 +560,8 @@ fn bucket_create_works() {
             schedule: Schedule::new(0, total_rent),
         },
         resource_reserved: test_bucket.resource,
+        public_availability: false,
+        resource_consumption_cap: 0,
     };
 
     // Check the status of the bucket.
@@ -565,6 +571,7 @@ fn bucket_create_works() {
         bucket: expect_bucket.into(),
         params: "{}".to_string(),
         writer_ids: vec![test_bucket.owner_id],
+        reader_ids: vec![],
         rent_covered_until_ms: 446400000, // TODO: check this value.
     });
 
@@ -610,6 +617,10 @@ fn account_deposit_works() {
     assert_eq!(account, Account {
         deposit: Cash(deposit_after_fee),
         payable_schedule: Schedule::empty(),
+        bonded: Cash(0),
+        unbonded_amount: Cash(0),
+        negative: Cash(0),
+        unbonded_timestamp: 0,
     }, "must take deposit minus creation fee");
 
     // Deposit more value.
@@ -621,6 +632,10 @@ fn account_deposit_works() {
     assert_eq!(account, Account {
         deposit: Cash(deposit_after_fee + deposit),
         payable_schedule: Schedule::empty(),
+        bonded: Cash(0),
+        unbonded_amount: Cash(0),
+        negative: Cash(0),
+        unbonded_timestamp: 0,
     }, "must take more deposits without creation fee");
 
     // Check events.
@@ -729,12 +744,12 @@ fn bucket_list_works() {
     let cluster_id = 0;
 
     push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id);
+    let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id, None);
     let bucket_status1 = ddc_bucket.bucket_get(bucket_id1).unwrap();
     pop_caller();
 
     push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id);
+    let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id, None);
     let bucket_status2 = ddc_bucket.bucket_get(bucket_id2)?;
     pop_caller();
 
@@ -862,7 +877,7 @@ fn contract_fee_works() {
     let cluster_id = 0;
 
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    let bucket_id = ddc_bucket.bucket_create("123".to_string(), cluster_id);
+    let bucket_id = ddc_bucket.bucket_create("123".to_string(), cluster_id, None);
 
     let bucket = ddc_bucket.bucket_get(bucket_id)?;
     let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size() + Account::new().encoded_size()) as Balance;

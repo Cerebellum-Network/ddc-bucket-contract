@@ -1,4 +1,5 @@
 use crate::ddc_bucket::*;
+use crate::ddc_bucket::Error::BucketDoesNotExist;
 
 use super::as_gateway::GATEWAY_ENGINE;
 use super::as_storage::STORAGE_ENGINE;
@@ -30,7 +31,7 @@ impl TestUser {
         let cluster_id = find_cluster(contract, engine_name)?.cluster_id;
 
         push_caller_value(account_id, CONTRACT_FEE_LIMIT);
-        let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap(), cluster_id);
+        let bucket_id = contract.bucket_create(BUCKET_PARAMS.to_string().unwrap(), cluster_id, None);
         pop_caller();
 
         // Allocate the bucket to the cluster.

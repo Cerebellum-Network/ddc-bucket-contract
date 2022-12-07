@@ -54,7 +54,7 @@ impl BucketsPermsStore {
 
     // get accounts with permission for bucket reading
     pub fn get_bucket_readers(&self, key: BucketId) -> Vec<AccountId> {
-        let readers = (*self.readers.get(&key).unwrap()).clone();
+        let readers = (*self.readers.get(&key).unwrap_or(&Vec::new())).clone();
         return readers;
     }
 
