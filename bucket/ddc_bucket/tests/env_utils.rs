@@ -90,6 +90,9 @@ fn _print_events(events: &[Event]) {
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
             Event::GrantPermission(ev) => println!("EVENT {:?}", ev),
             Event::RevokePermission(ev) => println!("EVENT {:?}", ev),
+            Event::CdnClusterCreated(ev) => println!("EVENT {:?}", ev),
+            Event::CdnClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeCreated(ev) => println!("EVENT {:?}", ev),
         }
     }
 }

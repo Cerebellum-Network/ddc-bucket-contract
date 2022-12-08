@@ -4,7 +4,7 @@ use ink_prelude::vec::Vec;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, NodeId, Result};
+use crate::ddc_bucket::{AccountId, Balance, NodeId, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
@@ -23,7 +23,7 @@ pub struct CdnCluster {
     pub cdn_nodes: Vec<NodeId>,
     pub resources_used: Resource,
     pub revenues: Cash,
-    pub usd_per_gb: u128,
+    pub usd_per_gb: Balance,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -41,7 +41,8 @@ impl CdnCluster {
         CdnCluster {
             manager_id,
             cdn_nodes,
-            usd_per_gb: 0,
+            // usd_per_gb: 100_000_000, // setting initially to 1 cent per GB
+            usd_per_gb: 104_857_600, // setting initially to 1 cent per GB
             resources_used: 0,
             revenues: Cash(0),
         }
@@ -60,9 +61,13 @@ impl CdnCluster {
         self.revenues
     }
 
-    pub fn set_rate(&mut self, usd_per_gb: u128) -> Result<()> {
+    pub fn set_rate(&mut self, usd_per_gb: Balance) -> Result<()> {
         self.usd_per_gb = usd_per_gb;
         Ok(())
+    }
+
+    pub fn get_rate(&self) -> Balance {
+        self.usd_per_gb
     }
 
     pub fn put_revenues(&mut self, amount: Cash) {
@@ -81,5 +86,3 @@ impl CdnCluster {
         if self.manager_id == caller { Ok(()) } else { Err(UnauthorizedClusterManager) }
     }
 }
-
-pub const USD_PER_GB: u128 = 1;
