@@ -20,8 +20,9 @@ fn admin_id() -> AccountId {
 
 #[ink::test]
 fn currency_conversion_init_works() {
-    let contract = setup();
-
+    let contract = setup(); 
+    let usd_amount = contract.account_get_usd_per_cere();
+    println!("{}", usd_amount);
     assert_eq!(contract.account_get_usd_per_cere(), 1 * TOKEN,
                "conversion rate must be 1 initially");
 }
@@ -30,6 +31,7 @@ fn currency_conversion_init_works() {
 fn currency_conversion_set_rate_works() {
     let mut contract = setup();
     let usd_per_cere = TOKEN / 10;
+    println!("{}", usd_per_cere);
 
     push_caller(admin_id());
     contract.account_set_usd_per_cere(usd_per_cere);

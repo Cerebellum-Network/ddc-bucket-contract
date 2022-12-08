@@ -27,7 +27,7 @@ impl BucketsPermsStore {
 
     // get accounts with permission for bucket writing
     pub fn get_bucket_writers(&self, key: BucketId) -> Vec<AccountId> {
-        let writers = (*self.writers.get(&key).unwrap()).clone();
+        let writers = (*self.writers.get(&key).unwrap_or(&Vec::new())).clone();
         return writers;
     }
 

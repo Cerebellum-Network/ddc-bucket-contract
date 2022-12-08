@@ -403,14 +403,20 @@ pub mod ddc_bucket {
         ///
         /// `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn cdn_cluster_create(&mut self, _unused: AccountId, node_ids: Vec<NodeId>) -> ClusterId {
+        pub fn cdn_cluster_create(&mut self, node_ids: Vec<NodeId>) -> ClusterId {
             self.message_cdn_cluster_create(node_ids).unwrap()
         }
 
         /// Set rate for streaming (price per gb)
         #[ink(message, payable)]
-        pub fn cdn_set_rate(&mut self,  cluster_id: ClusterId, usd_per_gb: u128) -> () {
+        pub fn cdn_set_rate(&mut self,  cluster_id: ClusterId, usd_per_gb: Balance) -> () {
             self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
+        }
+        
+        /// Get rate for streaming (price per gb)
+        #[ink(message, payable)]
+        pub fn cdn_get_rate(&self,  cluster_id: ClusterId) -> Balance {
+            self.message_cdn_get_rate(cluster_id).unwrap()
         }
 
         /// As manager, reserve more resources for the cluster from the free capacity of nodes.
@@ -450,13 +456,23 @@ pub mod ddc_bucket {
 
     impl DdcBucket {
         #[ink(message)]
-        pub fn get_commit(&self, node: AccountId) -> Commit {
-            self.message_get_commit(node)
+        pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
+            self.message_set_commit(cdn_owner, node_id, commit);
         }
 
         #[ink(message)]
-        pub fn set_commit(&mut self, node: AccountId, commit: Commit) {
-            self.message_set_commit(node, commit);
+        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
+            self.message_get_commit(cdn_owner)
+        }
+
+        #[ink(message)]
+        pub fn set_validated_commit(&mut self, node: AccountId, era: u64) -> () {
+            self.message_set_validated_commit(node, era).unwrap();
+        }
+
+        #[ink(message)]
+        pub fn get_validated_commit(&self, node: AccountId) -> EraAndTimestamp {
+            self.message_get_validated_commit(node)
         }
 
         #[ink(message)]
@@ -465,7 +481,7 @@ pub mod ddc_bucket {
         }
     
         #[ink(message)]
-        pub fn get_era(&self) -> u64 {
+        pub fn get_era(&self) -> EraStatus {
             self.message_get_era()
         }
 

@@ -11,6 +11,8 @@ use crate::ddc_bucket::cdn_node::entity::{CdnNode, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
 
+const KB_PER_GB: Balance = 1_000_000;
+
 impl DdcBucket {
     pub fn message_cdn_cluster_create(
         &mut self,
@@ -46,15 +48,32 @@ impl DdcBucket {
         Ok(())
     }
 
+    // Get the price usd per gb
+    pub fn message_cdn_get_rate(&self, cluster_id: ClusterId) -> Result<Balance> {
+        let cluster = self.cdn_clusters.get(cluster_id)?;
+        let rate = cluster.get_rate();
+        Ok(rate)
+    }
+
     // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
     pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>) -> Result<()> {
         let cluster = self.cdn_clusters.get_mut(cluster_id)?;
-        Self::only_cdn_cluster_manager(cluster)?;
+        // Self::only_cdn_cluster_manager(cluster)?;
 
         let mut cluster_payment = 0;
         let mut _undistributed_payment_accounts = 0;
 
-        for &(client_id, payment) in aggregates_accounts.iter() {
+        let aggregate_payments_accounts;
+        {
+            let conv = &self.accounts.1;
+            aggregate_payments_accounts = aggregates_accounts.iter().map(|(client_id, resources_used)| {
+                let account_id = *client_id;
+                let cere_payment: Balance = conv.to_cere(*resources_used as Balance * cluster.usd_per_gb / KB_PER_GB );
+                (account_id, cere_payment)
+            }).collect::<Vec<(AccountId, Balance)>>();
+        }
+
+        for &(client_id, payment) in aggregate_payments_accounts.iter() {
             let account = self.accounts.0.get_mut(&client_id)
             .ok_or(InsufficientBalance)?;
             account.withdraw_bonded(Payable(payment))?;
@@ -66,7 +85,7 @@ impl DdcBucket {
         for &(node_id, resources_used) in aggregates_nodes.iter() {
             let node = self.cdn_nodes.get_mut(node_id)?;
 
-            let payment = conv.to_cere (resources_used as Balance * cluster.usd_per_gb / 1000000 );
+            let payment = conv.to_cere (resources_used as Balance * cluster.usd_per_gb / KB_PER_GB );
 
             node.put_payment(payment);
             cluster_payment += payment;
