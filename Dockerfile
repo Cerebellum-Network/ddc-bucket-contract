@@ -1,4 +1,3 @@
-# ===== FIRST STAGE ======
 FROM rust:1.54 as builder
 
 RUN apt-get update && \
@@ -30,10 +29,3 @@ RUN cargo test --manifest-path bucket/Cargo.toml
 
 # Build contract
 RUN cargo contract build --manifest-path bucket/Cargo.toml
-
-# ===== SECOND STAGE ======
-FROM phusion/baseimage:0.11
-WORKDIR /contracts
-COPY --from=builder /contracts/target/ink/ddc_bucket.contract /bucket/artifacts/
-COPY --from=builder /contracts/target/ink/ddc_bucket.wasm /bucket/artifacts/
-COPY --from=builder /contracts/target/ink/ddc_bucket.json /bucket/artifacts/
