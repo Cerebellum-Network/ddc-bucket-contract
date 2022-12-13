@@ -4,8 +4,8 @@ FROM rust:1.54 as builder
 RUN apt-get update && \
     apt-get -y upgrade
 
-WORKDIR /bucket
-COPY . /
+WORKDIR /contracts
+COPY . /contracts
 
 # Install binaryen
 RUN curl --silent https://api.github.com/repos/WebAssembly/binaryen/releases/41561408 | \
@@ -26,14 +26,14 @@ RUN rustup toolchain install nightly-2022-06-28 && \
 	cargo install cargo-contract --version ^0.12 --force --locked
 
 # Run tests
-RUN cargo test
+RUN cargo test --manifest-path bucket/Cargo.toml
 
 # Build contract
-RUN cargo contract build
+RUN cargo contract build --manifest-path bucket/Cargo.toml
 
 # ===== SECOND STAGE ======
 FROM phusion/baseimage:0.11
-WORKDIR /bucket
-COPY --from=builder /bucket/target/ink/bucket.contract /bucket/artifacts/
-COPY --from=builder /bucket/target/ink/bucket.wasm /bucket/artifacts/
-COPY --from=builder /bucket/target/ink/metadata.json /bucket/artifacts/
+WORKDIR /contracts
+COPY --from=builder /bucket/target/ink/ddc_bucket.contract /bucket/artifacts/
+COPY --from=builder /bucket/target/ink/ddc_bucket.wasm /bucket/artifacts/
+COPY --from=builder /bucket/target/ink/ddc_bucket.json /bucket/artifacts/
