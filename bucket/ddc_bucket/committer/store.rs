@@ -38,7 +38,7 @@ pub struct  EraStatus {
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
 pub struct Commit {
     hash: Hash,
-    total: u128,
+    total_logs: u128,
     from_timestamp: u64,
     to_timestamp: u64,
 } 
@@ -57,7 +57,7 @@ pub struct EraConfig {
 pub struct CommitterStore {
     operator_id: AccountId,
     commits: StorageHashMap<AccountId, Vec<(NodeId, Commit)>>,
-    validated_commits: StorageHashMap<AccountId, EraAndTimestamp>,
+    validated_commits: StorageHashMap<NodeId, EraAndTimestamp>,
     era_settings: EraConfig
 }
 
@@ -101,14 +101,14 @@ impl CommitterStore {
     }
 
     // Set the last validated commit per CDN node
-    pub fn set_validated_commit(&mut self, node: AccountId, era: u64) -> Result<()> {
+    pub fn set_validated_commit(&mut self, node: NodeId, era: u64) -> Result<()> {
         let prev_era_to_timestamp = self.era_settings.start + self.era_settings.interval * (era + 1);
         self.validated_commits.insert(node, (era, prev_era_to_timestamp));
         Ok(())
     }
 
     // Get the last era & timestamp validated per CDN node
-    pub fn get_validate_commit(&self, node: AccountId) -> EraAndTimestamp {
+    pub fn get_validate_commit(&self, node: NodeId) -> EraAndTimestamp {
         *self.validated_commits.get(&node).unwrap_or(&(0,0))
     }
 
@@ -132,7 +132,7 @@ impl CommitterStore {
         
         let current_phase = if elapsed_time_within_interval < self.era_settings.commit_duration {
             Phase::Commit
-        } else if elapsed_time_within_interval < self.era_settings.validation_duration {
+        } else if elapsed_time_within_interval < self.era_settings.validation_duration + self.era_settings.commit_duration {
             Phase::Valiadation
         } else {
             Phase::Payout
