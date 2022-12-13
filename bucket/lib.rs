@@ -31,6 +31,7 @@ pub mod ddc_bucket {
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
     use self::cdn_node::entity::CdnNodeStatus;
+    use self::protocol::store::ProtocolStore;
 
     pub mod account;
     pub mod flow;
@@ -49,6 +50,7 @@ pub mod ddc_bucket {
     pub mod currency;
     pub mod committer;
     pub mod buckets_perms;
+    pub mod protocol;
 
     // ---- Global state ----
     /// The main DDC smart contract.
@@ -68,6 +70,7 @@ pub mod ddc_bucket {
         perms: PermStore,
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
+        protocol_store: ProtocolStore,
     }
 
     impl DdcBucket {
@@ -93,6 +96,7 @@ pub mod ddc_bucket {
                 perms: PermStore::default(),
                 network_fee: NetworkFeeStore::default(),
                 committer_store: CommitterStore::new(operator),
+                protocol_store: ProtocolStore::new(operator, DEFAULT_BASIS_POINTS),
             };
 
             // Make the creator of this contract a super-admin.
@@ -624,6 +628,34 @@ pub mod ddc_bucket {
     }
     // ---- End Node ----
 
+    // ---- Prtocol ----
+
+    impl DdcBucket {
+        /// Get the Fee Percentage Basis Points that will be charged by the protocol
+        #[ink(message)]
+        pub fn get_fee_bp(&self) -> u32 {
+            self.message_get_fee_bp()
+        }
+
+        /// Return the last commit submitted by CDN node operator
+        #[ink(message)]
+        pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
+            self.message_set_fee_bp(fee_bp).unwrap();
+        }
+
+        /// Return fees accumulated by the protocol
+        #[ink(message)]
+        pub fn get_protocol_revenues(&self) -> Cash {
+            self.message_get_fee_revenues()
+        }
+
+        /// Pay the revenues accumulated by the protocol
+        #[ink(message)]
+        pub fn protocol_withdraw_revenues(&mut self, amount: u128) -> () {
+            self.message_withdraw_revenues(amount).unwrap();
+        }
+    }
+    // ---- End Protocol ----
 
     // ---- Billing ----
 
@@ -761,6 +793,7 @@ pub mod ddc_bucket {
     // ---- Utils ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
+    pub const DEFAULT_BASIS_POINTS: u32 = 500;
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
