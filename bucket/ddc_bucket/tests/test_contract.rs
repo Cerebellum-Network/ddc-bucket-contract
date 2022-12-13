@@ -461,13 +461,44 @@ fn cdn_cluster_payment_works() {
     let mut account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("{:?}", account);
 
-    ctx.contract.cdn_cluster_put_revenue(ctx.cluster_id,vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)], vec![(ctx.node_id0, 1000), (ctx.node_id1, 541643)], vec![]);
+    ctx.contract.cdn_cluster_put_revenue(ctx.cluster_id,vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)], vec![(ctx.node_id0, 1000), (ctx.node_id1, 541643)], vec![], 5);
     account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
+    // let node0 = ctx.contract.cdn_nodes.get(ctx.node_id0).unwrap();
+    // let node1 = ctx.contract.cdn_nodes.get(ctx.node_id1).unwrap();
+    println!("{:?}", account);
+    // println!("{:?}", node0);
+    // println!("{:?}", node1);
+    // let cdn_cluster0 = ctx.contract.cdn_clusters.get(ctx.cluster_id);
+    // print!("{:?}", cdn_cluster0);
+    // let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
+    // print!("{:?}", cdn_cluster0);
+    // print!("{:?}", cdn_cluster_list);
+
+    let validated_commit_node0 = ctx.contract.get_validated_commit(ctx.node_id0);
+    print!("Validated commit {:?}", validated_commit_node0);
+
+    push_caller(ctx.provider_id0);
+    ctx.contract.cdn_cluster_distribute_revenues(0);
+    pop_caller();
+
     let node0 = ctx.contract.cdn_nodes.get(ctx.node_id0).unwrap();
     let node1 = ctx.contract.cdn_nodes.get(ctx.node_id1).unwrap();
-    println!("{:?}", account);
     println!("{:?}", node0);
     println!("{:?}", node1);
+
+    let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
+    print!("{:?}", cdn_cluster_list);
+
+
+    account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
+    // let node0 = ctx.contract.cdn_nodes.get(ctx.node_id0).unwrap();
+    // let node1 = ctx.contract.cdn_nodes.get(ctx.node_id1).unwrap();
+    println!("{:?}", account);
+    // let account1 = ctx.contract.accounts.get(&ctx.provider_id1).unwrap();
+    // println!("{:?}", account1);
+    // let account_balance = ink_env::balance(&ctx.provider_id0);
+    // println!("{:?}", account_balance);
+
 }
 
 fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
@@ -479,7 +510,6 @@ fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
     ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
     pop_caller();
 }
-
 
 #[ink::test]
 fn bucket_pays_cluster() {

@@ -16,14 +16,7 @@ impl DdcBucket {
         self.committer_store.get_commit(cdn_owner)
     }
 
-    pub fn message_set_validated_commit(&mut self, node: AccountId, era: u64) -> Result<()> {
-        match self.committer_store.set_validated_commit(node, era) {
-            Err(_e) => panic!("Setting validated commit failed"), 
-            Ok(_v) => Ok(()),
-        }
-    }
-
-    pub fn message_get_validated_commit(&self, node: AccountId) -> EraAndTimestamp {
+    pub fn message_get_validated_commit(&self, node: NodeId) -> EraAndTimestamp {
         self.committer_store.get_validate_commit(node)
     }
 
