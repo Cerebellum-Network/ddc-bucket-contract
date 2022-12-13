@@ -34,6 +34,6 @@ RUN cargo contract build --manifest-path bucket/Cargo.toml
 # ===== SECOND STAGE ======
 FROM phusion/baseimage:0.11
 WORKDIR /contracts
-COPY --from=builder /bucket/target/ink/ddc_bucket.contract /bucket/artifacts/
-COPY --from=builder /bucket/target/ink/ddc_bucket.wasm /bucket/artifacts/
-COPY --from=builder /bucket/target/ink/ddc_bucket.json /bucket/artifacts/
+COPY --from=builder /contracts/bucket/target/ink/ddc_bucket.contract /bucket/artifacts/
+COPY --from=builder /contracts/bucket/target/ink/ddc_bucket.wasm /bucket/artifacts/
+COPY --from=builder /contracts/bucket/target/ink/ddc_bucket.json /bucket/artifacts/
