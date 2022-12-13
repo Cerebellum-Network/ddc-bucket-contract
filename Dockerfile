@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get -y upgrade
 
 WORKDIR /bucket
-COPY . /bucket-contract
+COPY . /
 
 # Install binaryen
 RUN curl --silent https://api.github.com/repos/WebAssembly/binaryen/releases/41561408 | \
@@ -19,10 +19,10 @@ RUN curl --silent https://api.github.com/repos/WebAssembly/binaryen/releases/415
 	rm -rf binaryen-version_*/
 
 # Install cargo-contract
-RUN rustup toolchain install nightly-2021-09-06 && \
-	rustup default nightly-2021-09-06 && \
-	rustup component add rust-src --toolchain nightly-2021-09-06 && \
-	rustup target add wasm32-unknown-unknown --toolchain nightly-2021-09-06 && \
+RUN rustup toolchain install nightly-2022-06-28 && \
+	rustup default nightly-2022-06-28 && \
+	rustup component add rust-src --toolchain nightly-2022-06-28 && \
+	rustup target add wasm32-unknown-unknown --toolchain nightly-2022-06-28 && \
 	cargo install cargo-contract --version ^0.12 --force --locked
 
 # Run tests
@@ -33,7 +33,7 @@ RUN cargo contract build
 
 # ===== SECOND STAGE ======
 FROM phusion/baseimage:0.11
-WORKDIR /bucket-contract
-COPY --from=builder /bucket-contract/target/ink/bucket.contract /bucket-contract/artifacts/
-COPY --from=builder /bucket-contract/target/ink/bucket.wasm /bucket-contract/artifacts/
-COPY --from=builder /bucket-contract/target/ink/metadata.json /bucket-contract/artifacts/
+WORKDIR /bucket
+COPY --from=builder /bucket/target/ink/bucket.contract /bucket/artifacts/
+COPY --from=builder /bucket/target/ink/bucket.wasm /bucket/artifacts/
+COPY --from=builder /bucket/target/ink/metadata.json /bucket/artifacts/
