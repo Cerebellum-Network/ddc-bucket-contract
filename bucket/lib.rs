@@ -31,6 +31,7 @@ pub mod ddc_bucket {
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
     use self::cdn_node::entity::CdnNodeStatus;
+    use self::protocol::store::ProtocolStore;
 
     pub mod account;
     pub mod flow;
@@ -49,6 +50,7 @@ pub mod ddc_bucket {
     pub mod currency;
     pub mod committer;
     pub mod buckets_perms;
+    pub mod protocol;
 
     // ---- Global state ----
     /// The main DDC smart contract.
@@ -68,6 +70,7 @@ pub mod ddc_bucket {
         perms: PermStore,
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
+        protocol_store: ProtocolStore,
     }
 
     impl DdcBucket {
@@ -93,6 +96,7 @@ pub mod ddc_bucket {
                 perms: PermStore::default(),
                 network_fee: NetworkFeeStore::default(),
                 committer_store: CommitterStore::new(operator),
+                protocol_store: ProtocolStore::new(operator, DEFAULT_BASIS_POINTS),
             };
 
             // Make the creator of this contract a super-admin.
@@ -384,7 +388,7 @@ pub mod ddc_bucket {
         manager: AccountId,
     }
 
-    /// The share of revenues of a cluster for a provider was distributed.
+    /// The respective share of revenues of a CDN cluster for a provider was distributed.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct CdnClusterDistributeRevenues {
@@ -399,12 +403,10 @@ pub mod ddc_bucket {
         ///
         /// The caller will be its first manager.
         ///
-        /// The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
-        ///
-        /// `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// The CDN node ids are provided, which will form a cluster.
         #[ink(message, payable)]
-        pub fn cdn_cluster_create(&mut self, node_ids: Vec<NodeId>) -> ClusterId {
-            self.message_cdn_cluster_create(node_ids).unwrap()
+        pub fn cdn_cluster_create(&mut self, cdn_node_ids: Vec<NodeId>) -> ClusterId {
+            self.message_cdn_cluster_create(cdn_node_ids).unwrap()
         }
 
         /// Set rate for streaming (price per gb)
@@ -419,15 +421,19 @@ pub mod ddc_bucket {
             self.message_cdn_get_rate(cluster_id).unwrap()
         }
 
-        /// As manager, reserve more resources for the cluster from the free capacity of nodes.
-        ///
-        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        /// As validator, charge payments from users and allocate undistributed payments to CDN nodes. 
+        /// 
+        /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
         #[ink(message)]
-        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>) -> () {
-            self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes, aggregates_buckets).unwrap()
+        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>, era: u64) -> () {
+            self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes, aggregates_buckets, era).unwrap()
         }
 
-        /// Trigger the distribution of revenues from the cluster to the providers.
+        /// Trigger the distribution of revenues from the cluster to the CDN node providers. 
+        /// 
+        /// Anyone can call this method.
+        /// 
+        /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
         #[ink(message)]
         pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
             self.message_cdn_cluster_distribute_revenues(cluster_id).unwrap()
@@ -455,36 +461,37 @@ pub mod ddc_bucket {
     // ---- Committer ----
 
     impl DdcBucket {
+        /// CDN node operator sets the commit for current era.
         #[ink(message)]
         pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
             self.message_set_commit(cdn_owner, node_id, commit);
         }
 
+        /// Return the last commit submitted by CDN node operator
         #[ink(message)]
         pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
             self.message_get_commit(cdn_owner)
         }
 
+        /// Return last era validated per CDN node
         #[ink(message)]
-        pub fn set_validated_commit(&mut self, node: AccountId, era: u64) -> () {
-            self.message_set_validated_commit(node, era).unwrap();
-        }
-
-        #[ink(message)]
-        pub fn get_validated_commit(&self, node: AccountId) -> EraAndTimestamp {
+        pub fn get_validated_commit(&self, node: NodeId) -> EraAndTimestamp {
             self.message_get_validated_commit(node)
         }
 
+        /// Set the new configs for era
         #[ink(message)]
         pub fn set_era(&mut self, era_config: EraConfig) -> () {
             self.message_set_era(era_config).unwrap();
         }
     
+        /// Return current status of an era
         #[ink(message)]
         pub fn get_era(&self) -> EraStatus {
             self.message_get_era()
         }
 
+        /// Return current era settings
         #[ink(message)]
         pub fn get_era_settings(&self) -> EraConfig {
             self.message_get_era_settings()
@@ -621,6 +628,34 @@ pub mod ddc_bucket {
     }
     // ---- End Node ----
 
+    // ---- Prtocol ----
+
+    impl DdcBucket {
+        /// Get the Fee Percentage Basis Points that will be charged by the protocol
+        #[ink(message)]
+        pub fn get_fee_bp(&self) -> u32 {
+            self.message_get_fee_bp()
+        }
+
+        /// Return the last commit submitted by CDN node operator
+        #[ink(message)]
+        pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
+            self.message_set_fee_bp(fee_bp).unwrap();
+        }
+
+        /// Return fees accumulated by the protocol
+        #[ink(message)]
+        pub fn get_protocol_revenues(&self) -> Cash {
+            self.message_get_fee_revenues()
+        }
+
+        /// Pay the revenues accumulated by the protocol
+        #[ink(message)]
+        pub fn protocol_withdraw_revenues(&mut self, amount: u128) -> () {
+            self.message_withdraw_revenues(amount).unwrap();
+        }
+    }
+    // ---- End Protocol ----
 
     // ---- Billing ----
 
@@ -641,20 +676,21 @@ pub mod ddc_bucket {
             self.message_account_deposit().unwrap()
         }
 
-        /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to 
-        /// pay for CDN nodes
+        /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to pay for CDN node service.
         #[ink(message, payable)]
         pub fn account_bond(&mut self, bond_amount: Balance) -> () {
             self.message_account_bond(bond_amount).unwrap()
         }
 
-        /// As user, unbond a specified amount of tokens
+        /// As user, unbond a specified amount of tokens. The tokens will be locked for some time, as defined by contract owner.
         #[ink(message, payable)]
         pub fn account_unbond(&mut self, amount_to_unbond: Cash) -> () {
             self.message_account_unbond(amount_to_unbond).unwrap()
         }
 
-        /// As user, move the unbonded tokens back to withdrawable balance state
+        /// As user, move the unbonded tokens back to withdrawable balance state. 
+        /// 
+        /// This can be triggered after unbonded_timestamp
         #[ink(message, payable)]
         pub fn account_withdraw_unbonded(&mut self) -> () {
             self.message_account_withdraw_unbonded().unwrap()
@@ -757,6 +793,7 @@ pub mod ddc_bucket {
     // ---- Utils ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
+    pub const DEFAULT_BASIS_POINTS: u32 = 500;
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
