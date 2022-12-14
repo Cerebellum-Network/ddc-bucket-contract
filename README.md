@@ -69,3 +69,14 @@ See also the custom documentation generator: [ink-doc-gen](https://github.com/Ce
     # Visualize the state of the network.
     # Read this .md file, ideally with a Markdown and Mermaid editor (e.g., VSCode with Markdown Preview Mermaid Support).
     node print_ddc_bucket.js > local/Network_state.md
+
+### How to get artifacts:
+* Run workflow for any branch and wait until build finished
+* Run the command to pull the artifacts:
+```shell
+aws ecr get-login-password --region us-west-2 --profile cere-network-dev | docker login --username AWS --password-stdin 625402836641.dkr.ecr.us-west-2.amazonaws.com
+docker pull "625402836641.dkr.ecr.us-west-2.amazonaws.com/crb-smart-contracts:latest
+id=$(docker create "625402836641.dkr.ecr.us-west-2.amazonaws.com/crb-smart-contracts:latest")
+docker cp "$id":/contracts/target/ink/ddc_bucket/ ./
+docker rm -v "$id"
+```
