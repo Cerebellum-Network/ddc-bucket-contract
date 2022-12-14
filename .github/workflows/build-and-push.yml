@@ -7,7 +7,7 @@ on:
 
 env:
   ECR_REPOSITORY: crb-smart-contracts
-  ECR_REGISTRY: 524725240689.dkr.ecr.us-west-2.amazonaws.com
+  ECR_REGISTRY: 625402836641.dkr.ecr.us-west-2.amazonaws.com
 
 jobs:
   build-and-push:
