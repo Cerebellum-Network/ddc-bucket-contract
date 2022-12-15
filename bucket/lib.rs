@@ -27,7 +27,8 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::committer::store::EraConfig;
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
-    
+    use crate::ddc_bucket::cdn_node_tier::store::CdnNodeTierStore;
+
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
     use self::cdn_node::entity::CdnNodeStatus;
@@ -51,6 +52,7 @@ pub mod ddc_bucket {
     pub mod committer;
     pub mod buckets_perms;
     pub mod protocol;
+    pub mod cdn_node_tier;
 
     // ---- Global state ----
     /// The main DDC smart contract.
@@ -71,6 +73,7 @@ pub mod ddc_bucket {
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
         protocol_store: ProtocolStore,
+        cdn_node_tiers_store: CdnNodeTierStore,
     }
 
     impl DdcBucket {
@@ -97,6 +100,7 @@ pub mod ddc_bucket {
                 network_fee: NetworkFeeStore::default(),
                 committer_store: CommitterStore::new(operator),
                 protocol_store: ProtocolStore::new(operator, DEFAULT_BASIS_POINTS),
+                cdn_node_tiers_store: CdnNodeTierStore::default(),
             };
 
             // Make the creator of this contract a super-admin.
