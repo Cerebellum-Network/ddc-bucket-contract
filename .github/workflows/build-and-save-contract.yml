@@ -17,7 +17,7 @@ jobs:
       - name: Build contract
         run: |
           rustup target add wasm32-unknown-unknown --toolchain nightly
-          rustup component add rust-src --toolchain nightly-apple-darwin
+          rustup component add rust-src --toolchain nightly-unknown-linux-gnu	
           cargo install cargo-contract --version ^0.14 --force --locked
           cargo contract build --release --manifest-path bucket/Cargo.toml
           
