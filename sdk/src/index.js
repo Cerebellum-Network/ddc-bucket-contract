@@ -8,5 +8,5 @@ Object.assign(module.exports, require("./polkadotWrappers.js"));
 module.exports.ddcBucket = require("./bucket/ddcBucket.js");
 module.exports.ddcBucketQuery = require("./bucket/ddcBucketQuery.js");
 module.exports.ddcNftRegistry = require("./ddc_nft_registry/NftRegistry.js");
-
+module.exports.config = require("./config");
 module.exports.lodash = require("lodash");
