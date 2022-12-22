@@ -1,0 +1,43 @@
+name: Build and save DDC SC binaries
+on: [push]
+
+jobs:
+  build-and-save:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            target: x86_64-unknown-linux-gnu	
+            override: true
+            components: rustfmt, clippy
+
+      - name: Build contract
+        run: |
+          rustup target add wasm32-unknown-unknown --toolchain nightly
+          cargo install cargo-contract --version ^0.14 --force --locked
+          cargo contract build --release --manifest-path bucket/Cargo.toml
+          
+          apt-get install binaryen
+
+
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v3
+        with:
+            name: ddc.contract
+            path: ./target/ink/ddc_bucket/ddc_bucket.contract
+
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v3
+        with:
+            name: ddc.wasm
+            path: ./target/ink/ddc_bucket/ddc_bucket.wasm
+
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v3
+        with:
+            name: metadata.json
+            path: ./target/ink/ddc_bucket/metadata.json
+

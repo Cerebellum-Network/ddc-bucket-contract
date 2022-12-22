@@ -38,6 +38,7 @@ pub struct  EraStatus {
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
 pub struct Commit {
     hash: Hash,
+    era: u128,
     total_logs: u128,
     from_timestamp: u64,
     to_timestamp: u64,
