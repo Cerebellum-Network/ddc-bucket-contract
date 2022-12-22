@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "license": "Apache-2.0",
   "dependencies": {
-    "@polkadot/api": "4.3.1",
-    "@polkadot/api-contract": "4.3.1",
+    "@polkadot/api": "8.2.1",
+    "@polkadot/api-contract": "8.2.1",
     "lodash": "^4.17.21"
   }
 }

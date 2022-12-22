@@ -10,6 +10,7 @@ const {
     CERE,
     MGAS,
     ddcBucket,
+    config
 } = require("./sdk");
 
 const fs = require("fs/promises");
@@ -31,10 +32,10 @@ const stash_data = {
 
 const CONSTRUCTOR = "new";
 
-const SEED = "//Alice";
-const RPC = "wss://rpc.testnet.cere.network:9945";
+const SEED = config.seed;
+const RPC = config.rpc;
 
-const ENDOWMENT = 10n * CERE;
+const ENDOWMENT = CERE;
 
 
 async function main() {
@@ -44,8 +45,8 @@ async function main() {
     const account = accountFromUri(SEED);
     log("From account", account.address);
 
-    for (const sc in DDC_CONTRACT_NAMES) {
-        await deployContract(sc, api, account, chainName, getExplorerUrl)
+    for (const i in DDC_CONTRACT_NAMES) {
+        await deployContract(DDC_CONTRACT_NAMES[i], api, account, chainName, getExplorerUrl)
     }
 
     process.exit(0);
@@ -66,10 +67,18 @@ const deployContract = async (contract_name, api, account, chainName, getExplore
         log(`Deploying the code ${wasm_path} (${wasm.length} bytes)`);
 
         const code = getCodeDeployer(api, abi, wasm);
-        const tx = code.tx[CONSTRUCTOR]({});
+        const tx = code.tx.new(
+            {  
+                value: 0,
+                gasLimit: 100_000n * MGAS,
+                storageDepositLimit: 750_000_000_000 
+            },
+            ...[]
+          );
 
         // Deploy the WASM, retrieve a Blueprint
         const result = await sendTx(account, tx);
+        console.log(result);
         const new_code_hash = result.blueprint.codeHash.toString();
         log(getExplorerUrl(result));
         log("Deployed the code. Update stash_data in the script with new code hash:");
@@ -89,8 +98,9 @@ const deployContract = async (contract_name, api, account, chainName, getExplore
         log("Instantiating a contract…");
 
         const txOptions = {
-            value: ENDOWMENT,
-            gasLimit: 100_000n * MGAS,
+            value: ENDOWMENT * 5n,
+            gasLimit:  100_000n * MGAS,
+            storageDepositLimit: 150000000000
         };
 
         const blueprint = getBlueprint(contract_name, api);
