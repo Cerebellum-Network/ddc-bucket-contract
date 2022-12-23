@@ -22,21 +22,21 @@ jobs:
           cargo install cargo-contract --version ^0.14 --force --locked
           cargo contract build --release --manifest-path bucket/Cargo.toml
 
-      - name: Upload wasm artifact
+      - name: Upload contract artifact
         uses: actions/upload-artifact@v3
         with:
-            name: ddc.contract
+            name: ddc.${GITHUB_SHA:0:7}.contract
             path: ./target/ink/ddc_bucket/ddc_bucket.contract
 
       - name: Upload wasm artifact
         uses: actions/upload-artifact@v3
         with:
-            name: ddc.wasm
+            name: ddc.${GITHUB_SHA:0:7}.wasm
             path: ./target/ink/ddc_bucket/ddc_bucket.wasm
 
-      - name: Upload wasm artifact
+      - name: Upload metadata artifact
         uses: actions/upload-artifact@v3
         with:
-            name: metadata.json
+            name: metadata.${GITHUB_SHA:0:7}.json
             path: ./target/ink/ddc_bucket/metadata.json
 
