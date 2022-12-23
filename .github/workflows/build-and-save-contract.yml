@@ -16,10 +16,10 @@ jobs:
 
       - name: Build contract
         run: |
-          sudo rustup target add wasm32-unknown-unknown --toolchain nightly
-          sudo rustup component add rust-src --toolchain nightly-unknown-linux-gnu	
-          sudo apt-get install binaryen
-          sudo cargo install cargo-contract --version ^0.14 --force --locked
+          rustup target add wasm32-unknown-unknown --toolchain nightly
+          rustup component add rust-src --toolchain nightly-unknown-linux-gnu	
+          apt-get install binaryen
+          cargo install cargo-contract --version ^0.14 --force --locked
           sudo cargo contract build --release --manifest-path bucket/Cargo.toml
 
       - name: Upload wasm artifact
