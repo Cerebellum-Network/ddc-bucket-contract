@@ -13,13 +13,20 @@ jobs:
           target: x86_64-unknown-linux-gnu	
           components: rustfmt, clippy
 
-      - name: Build contract
+      - name: Install dependencies
         run: |
           rustup target add wasm32-unknown-unknown --toolchain nightly
           rustup component add rust-src --toolchain nightly-unknown-linux-gnu	
           sudo apt-get install binaryen
           cargo install cargo-contract --version ^0.14 --force --locked
-          cargo test & cargo contract build --release --manifest-path bucket/Cargo.toml
+
+      - name: Run tests
+        run: |
+          cargo test
+
+      - name: Build contract
+        run: |
+          cargo contract build --release --manifest-path bucket/Cargo.toml
 
       - name: Create names linked to commit
         run: |
