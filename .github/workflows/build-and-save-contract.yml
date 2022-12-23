@@ -25,18 +25,18 @@ jobs:
       - name: Upload contract artifact
         uses: actions/upload-artifact@v3
         with:
-            name: ddc.${GITHUB_SHA:0:7}.contract
+            name: ddc.${{ GITHUB_SHA:0:7 }}.contract
             path: ./target/ink/ddc_bucket/ddc_bucket.contract
 
       - name: Upload wasm artifact
         uses: actions/upload-artifact@v3
         with:
-            name: ddc.${GITHUB_SHA:0:7}.wasm
+            name: ddc.${{ GITHUB_SHA:0:7 }}.wasm
             path: ./target/ink/ddc_bucket/ddc_bucket.wasm
 
       - name: Upload metadata artifact
         uses: actions/upload-artifact@v3
         with:
-            name: metadata.${GITHUB_SHA:0:7}.json
+            name: metadata.${{ GITHUB_SHA:0:7 }}.json
             path: ./target/ink/ddc_bucket/metadata.json
 
