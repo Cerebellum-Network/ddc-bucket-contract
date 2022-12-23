@@ -19,7 +19,7 @@ jobs:
           rustup component add rust-src --toolchain nightly-unknown-linux-gnu	
           sudo apt-get install binaryen
           cargo install cargo-contract --version ^0.14 --force --locked
-          cargo contract build --release --manifest-path bucket/Cargo.toml
+          cargo test & cargo contract build --release --manifest-path bucket/Cargo.toml
 
       - name: Create names linked to commit
         run: |
