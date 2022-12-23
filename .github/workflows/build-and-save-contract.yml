@@ -32,19 +32,19 @@ jobs:
           echo DDC_METADATA_NAME=$ddc_metadata_name >> $GITHUB_ENV
 
       - name: Upload contract artifact
-        uses: actions/upload-artifact
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ${{ env.DDC_CONTRACT_NAME }}
           path: ./target/ink/ddc_bucket/ddc_bucket.contract
 
       - name: Upload wasm artifact
-        uses: actions/upload-artifact
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ${{ env.DDC_WASM_NAME }}
           path: ./target/ink/ddc_bucket/ddc_bucket.wasm
 
       - name: Upload metadata artifact
-        uses: actions/upload-artifact
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: ${{ env.DDC_METADATA_NAME }}
           path: ./target/ink/ddc_bucket/metadata.json
