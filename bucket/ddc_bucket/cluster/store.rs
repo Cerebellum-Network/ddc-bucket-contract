@@ -6,7 +6,6 @@ use ink_storage::{
 };
 
 use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
-use crate::ddc_bucket::contract_fee::SIZE_INDEX;
 use crate::ddc_bucket::node::entity::Node;
 
 use super::entity::{Cluster, ClusterId};
@@ -23,23 +22,22 @@ impl ClusterStore {
         manager_id: AccountId,
         vnode_count: u32,
         nodes: &[(NodeId, &Node)],
-    ) -> Result<(ClusterId, usize)> {
+    ) -> Result<ClusterId> {
         if vnode_count > MAX_VNODES {
             return Err(TooManyVNodes);
         }
         let cluster = Cluster::new(manager_id, vnode_count, nodes);
 
-        let record_size = cluster.new_size();
         let cluster_id = self.0.len();
         self.0.push(cluster);
 
-        Ok((cluster_id, record_size))
+        Ok(cluster_id)
     }
 
-    pub fn add_node(&mut self, cluster_id: ClusterId, node_id: NodeId) -> Result<usize> {
+    pub fn add_node(&mut self, cluster_id: ClusterId, node_id: NodeId) -> Result<()> {
         let cluster = self.get_mut(cluster_id)?;
         cluster.vnodes.push(node_id);
-        Ok(SIZE_INDEX)
+        Ok(())
     }
 
     pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {

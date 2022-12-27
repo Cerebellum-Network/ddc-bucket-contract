@@ -4,7 +4,6 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_PER_RECORD};
 use crate::ddc_bucket::params::store::Params;
 
 pub type ProviderId = AccountId;
@@ -27,9 +26,6 @@ pub struct CdnNodeStatus {
 }
 
 impl CdnNode {
-    pub const RECORD_SIZE: usize = SIZE_PER_RECORD
-        + SIZE_ACCOUNT_ID + SIZE_BALANCE;
-
     pub fn cdn_account_id(&self) -> AccountId {
         self.provider_id
     }

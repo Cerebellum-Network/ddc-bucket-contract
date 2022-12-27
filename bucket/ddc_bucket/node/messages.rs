@@ -4,7 +4,7 @@ use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
-use crate::ddc_bucket::node::entity::{Node, NodeStatus, Resource};
+use crate::ddc_bucket::node::entity::{NodeStatus, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 
 use super::entity::{NodeId, NodeParams};
@@ -24,10 +24,9 @@ impl DdcBucket {
         let provider_id = Self::env().caller();
 
         let node_id = self.nodes.create(provider_id, rent_per_month, capacity);
-        let (params_id, recorde_size1) = self.node_params.create(node_params.clone())?;
+        let params_id = self.node_params.create(node_params.clone())?;
         assert_eq!(node_id, params_id);
 
-        Self::capture_fee_and_refund(Node::RECORD_SIZE + recorde_size1)?;
         Self::env().emit_event(NodeCreated { node_id, provider_id, rent_per_month, node_params });
         Ok(node_id)
     }

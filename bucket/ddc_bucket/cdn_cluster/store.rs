@@ -21,14 +21,13 @@ impl CdnClusterStore {
       &mut self,
       manager_id: AccountId,
       cdn_nodes: Vec<NodeId>,
-  ) -> Result<(ClusterId, usize)> {
+  ) -> Result<ClusterId> {
       let cluster = CdnCluster::new(manager_id, cdn_nodes);
 
-      let record_size = cluster.new_size();
       let cluster_id = self.0.len();
       self.0.push(cluster);
 
-      Ok((cluster_id, record_size))
+      Ok(cluster_id)
   }
 
   pub fn get(&self, cluster_id: ClusterId) -> Result<&CdnCluster> {

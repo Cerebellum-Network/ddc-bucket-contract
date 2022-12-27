@@ -42,7 +42,6 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod cluster;
     pub mod cdn_cluster;
-    pub mod contract_fee;
     pub mod network_fee;
     pub mod params;
     pub mod admin;
@@ -628,7 +627,7 @@ pub mod ddc_bucket {
     }
     // ---- End Node ----
 
-    // ---- Prtocol ----
+    // ---- Protocol ----
 
     impl DdcBucket {
         /// Get the Fee Percentage Basis Points that will be charged by the protocol

@@ -3,7 +3,7 @@
 use ink_prelude::vec::Vec;
 use ink_lang::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, contract_fee::calculate_contract_fee, DdcBucket, Deposit, Payable, Result, TOKEN};
+use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Payable, Result, TOKEN};
 use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
 
@@ -14,12 +14,11 @@ impl DdcBucket {
 
     pub fn message_account_deposit(&mut self) -> Result<()> {
         // Receive the payable value, minus the contract fee.
-        let mut cash = Self::receive_cash();
+        let cash = Self::receive_cash();
         let account_id = Self::env().caller();
 
         // Create the account and pay contract fee, if necessary.
-        let record_size = self.accounts.create_if_not_exist(account_id);
-        cash.pay(calculate_contract_fee(record_size))?;
+        self.accounts.create_if_not_exist(account_id);
 
         Self::env().emit_event(Deposit { account_id, value: cash.peek() });
 
@@ -112,12 +111,11 @@ impl DdcBucket {
     }
 
     fn _account_transfer(&mut self, from: AccountId, to: AccountId, amount: Balance) -> Result<()> {
-        let (payable, mut cash) = Cash::borrow_payable_cash(amount);
+        let (payable, cash) = Cash::borrow_payable_cash(amount);
         self._account_withdraw(from, payable)?;
 
-        // Create the account and pay contract fee, if necessary.
-        let record_size = self.accounts.create_if_not_exist(to);
-        cash.pay(calculate_contract_fee(record_size))?;
+        // Create the account, if necessary.
+        self.accounts.create_if_not_exist(to);
 
         self.accounts
             .get_mut(&to)?

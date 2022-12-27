@@ -5,10 +5,9 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{
-    AccountId, ClusterId, contract_fee::SIZE_PER_RECORD,
+    AccountId, ClusterId,
     Error::*, Result,
 };
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_INDEX, SIZE_RESOURCE};
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::params::store::Params;
@@ -52,8 +51,6 @@ pub struct BucketStatus {
 }
 
 impl Bucket {
-    pub const RECORD_SIZE: usize = SIZE_PER_RECORD
-        + SIZE_ACCOUNT_ID + SIZE_INDEX + Flow::RECORD_SIZE + SIZE_RESOURCE;
 
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
