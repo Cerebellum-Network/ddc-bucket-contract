@@ -4,7 +4,6 @@ use ink_lang::StaticEnv;
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, DdcBucket, Result};
-use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::perm::entity::Permission;
 
@@ -23,10 +22,9 @@ impl DdcBucket {
         let provider_id = Self::env().caller();
 
         let node_id = self.cdn_nodes.create(provider_id, 0);
-        let (params_id, recorde_size1) = self.cdn_node_params.create(node_params.clone())?;
+        let params_id = self.cdn_node_params.create(node_params.clone())?;
         assert_eq!(node_id, params_id);
 
-        Self::capture_fee_and_refund(Node::RECORD_SIZE + recorde_size1)?;
         Ok(node_id)
     }
 

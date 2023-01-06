@@ -6,7 +6,6 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
 use crate::ddc_bucket::cash::Cash;
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_BALANCE, SIZE_INDEX, SIZE_PER_RECORD, SIZE_RESOURCE, SIZE_VEC};
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::node::entity::{Node, Resource};
 use crate::ddc_bucket::params::store::Params;
@@ -63,17 +62,6 @@ impl Cluster {
         }
         // TODO: consider using the max rent instead of average rent.
         (vnode_ids, total_rent)
-    }
-
-    pub fn new_size(&self) -> usize {
-        SIZE_PER_RECORD
-            + SIZE_ACCOUNT_ID
-            + SIZE_VEC + self.vnodes.len() * SIZE_INDEX
-            + SIZE_RESOURCE
-            + SIZE_RESOURCE
-            + SIZE_BALANCE
-            + SIZE_BALANCE
-        // Or to be more precise:    SIZE_PER_RECORD + self.encoded_size()
     }
 
     pub fn get_rent(&self, resource: Resource) -> Balance {

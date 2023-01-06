@@ -21,15 +21,14 @@ pub struct AccountStore(
 
 impl AccountStore {
     /// Create a record for the given account if it does not exist yet.
-    /// Return the extra contract storage used.
-    #[must_use]
-    pub fn create_if_not_exist(&mut self, account_id: AccountId) -> usize {
+    /// Does not return extra contract storage used, due to blockchain changes.
+    pub fn create_if_not_exist(&mut self, account_id: AccountId) {
         match self.0.entry(account_id) {
             Vacant(e) => {
                 e.insert(Account::new());
-                Account::RECORD_SIZE
+                ()
             }
-            Occupied(_) => 0,
+            Occupied(_) => (),
         }
     }
 

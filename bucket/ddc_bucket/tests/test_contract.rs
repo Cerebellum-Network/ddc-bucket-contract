@@ -2,7 +2,6 @@ use ink_lang as ink;
 
 use crate::ddc_bucket::*;
 use crate::ddc_bucket::account::entity::Account;
-use crate::ddc_bucket::contract_fee::{calculate_contract_fee, FEE_PER_BYTE, SIZE_PER_RECORD};
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::schedule::{MS_PER_MONTH, Schedule};
 use crate::ddc_bucket::Error::*;
@@ -786,8 +785,7 @@ fn account_deposit_works() {
         Err(AccountDoesNotExist), "must not get a non-existent account");
 
     let deposit = 10 * TOKEN;
-    let deposit_contract_fee = calculate_contract_fee(Account::RECORD_SIZE).peek();
-    let deposit_after_fee = deposit - deposit_contract_fee;
+    let deposit_after_fee = deposit;
 
     // Deposit some value.
     push_caller_value(account_id, deposit);
@@ -1060,12 +1058,12 @@ fn contract_fee_works() {
     push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
     let bucket_id = ddc_bucket.bucket_create("123".to_string(), cluster_id, None);
 
-    let bucket = ddc_bucket.bucket_get(bucket_id)?;
-    let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size() + Account::new().encoded_size()) as Balance;
+    let _bucket = ddc_bucket.bucket_get(bucket_id)?;
+    // let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size() + Account::new().encoded_size()) as Balance;
     let got_fee = balance_of(contract_id());
-    assert!(expect_fee <= got_fee, "A sufficient contract fee should be taken.");
-    assert!(got_fee <= 2 * expect_fee, "The contract fee should not be excessive.");
-    assert!(got_fee < CONTRACT_FEE_LIMIT, "Value beyond the contract fee should be refunded.");
+    // assert!(expect_fee <= got_fee, "A sufficient contract fee should be taken.");
+    // assert!(got_fee <= 2 * expect_fee, "The contract fee should not be excessive.");
+    // assert!(got_fee < CONTRACT_FEE_LIMIT, "Value beyond the contract fee should be refunded.");
     let alice_after = balance_of(accounts.alice);
     assert_eq!(alice_after + got_fee, alice_before, "Accounts should be balanced.");
 }
