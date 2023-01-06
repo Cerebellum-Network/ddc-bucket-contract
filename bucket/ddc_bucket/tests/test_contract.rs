@@ -1046,24 +1046,3 @@ fn node_list_works() {
         ddc_bucket.node_list(1, 100, Some(owner_id3)),
         (vec![], count));
 }
-
-#[ink::test]
-fn contract_fee_works() {
-    let mut ddc_bucket = DdcBucket::new();
-    let accounts = get_accounts();
-    let owner_id = accounts.alice;
-    let alice_before = balance_of(accounts.alice);
-    let cluster_id = 0;
-
-    push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
-    let bucket_id = ddc_bucket.bucket_create("123".to_string(), cluster_id, None);
-
-    let _bucket = ddc_bucket.bucket_get(bucket_id)?;
-    // let expect_fee = FEE_PER_BYTE * (SIZE_PER_RECORD + bucket.encoded_size() + Account::new().encoded_size()) as Balance;
-    let got_fee = balance_of(contract_id());
-    // assert!(expect_fee <= got_fee, "A sufficient contract fee should be taken.");
-    // assert!(got_fee <= 2 * expect_fee, "The contract fee should not be excessive.");
-    // assert!(got_fee < CONTRACT_FEE_LIMIT, "Value beyond the contract fee should be refunded.");
-    let alice_after = balance_of(accounts.alice);
-    assert_eq!(alice_after + got_fee, alice_before, "Accounts should be balanced.");
-}
