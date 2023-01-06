@@ -31,9 +31,8 @@ impl DdcBucket {
             Self::only_cdn_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
-        let (cluster_id, record_size0) = self.cdn_clusters.create(manager, cdn_nodes)?;
+        let cluster_id = self.cdn_clusters.create(manager, cdn_nodes)?;
 
-        Self::capture_fee_and_refund(record_size0)?;
         Self::env().emit_event(CdnClusterCreated { cluster_id, manager });
         Ok(cluster_id)
     }

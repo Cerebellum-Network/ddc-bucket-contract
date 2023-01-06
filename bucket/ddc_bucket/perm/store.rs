@@ -8,7 +8,6 @@ use ink_storage::{
 use scale::Encode;
 
 use crate::ddc_bucket::AccountId;
-use crate::ddc_bucket::contract_fee::{SIZE_ACCOUNT_ID, SIZE_HASHMAP, SIZE_PER_RECORD, SIZE_VEC};
 
 use super::entity::Permission;
 
@@ -24,12 +23,6 @@ pub struct PermStore(pub HashMap<PermKey, bool>);
 
 
 impl PermStore {
-    pub const RECORD_SIZE: usize =
-        SIZE_PER_RECORD + SIZE_HASHMAP + SIZE_VEC // Overhead.
-            + SIZE_ACCOUNT_ID // Grantee.
-            + 1 + SIZE_ACCOUNT_ID // The permission enum and its largest parameter.
-            + 1; // Boolean value.
-
     pub fn grant_permission(&mut self, account_id: AccountId, permission: &Permission) {
         let key = (account_id, permission).encode();
         self.0.insert(key, true);

@@ -31,11 +31,10 @@ impl DdcBucket {
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
-        let (cluster_id, record_size0) = self.clusters.create(manager, vnode_count, &nodes)?;
-        let (params_id, recorde_size1) = self.cluster_params.create(cluster_params.clone())?;
+        let cluster_id = self.clusters.create(manager, vnode_count, &nodes)?;
+        let params_id = self.cluster_params.create(cluster_params.clone())?;
         assert_eq!(cluster_id, params_id);
 
-        Self::capture_fee_and_refund(record_size0 + recorde_size1)?;
         Self::env().emit_event(ClusterCreated { cluster_id, manager, cluster_params });
         Ok(cluster_id)
     }
