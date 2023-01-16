@@ -314,34 +314,33 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        /// Description:
+        /// **Description**:
         ///     Create a new cluster.
         ///
-        /// Logic:
-        ///     The caller will be its first manager.
-        ///     The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. 
+        /// **Logic**:
+        ///     1. The caller will be its first manager.
+        ///     2. The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. 
         /// 
-        /// Permissions:
-        ///     Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
+        /// **Permissions**:
+        ///     1. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
         ///
-        /// Params:
-        ///     `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// **Params**:
+        ///     1. `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         /// 
-        /// Returns:
-        ///     `cluster_id` - id of the newly created cluster.
+        /// **Events**:
+        ///     1. ClusterCreated(cluster id, manager id, cluster params)
         /// 
-        /// Events:
-        ///     ClusterCreated event is triggered, which includes clusterid, managerid, and cluster params
-        /// 
-        /// Storage:
-        ///     Two items are written to storage: 
-        ///         cluster 
-        ///         cluster_params
+        /// **Storage** (items are written to storage):
+        ///     1. cluster 
+        ///     2. cluster_params
         ///     Note: there is currently no methods to delete cluster, hence these items will be stored during the lifetime of the contract
         /// 
-        /// Errors: 
-        ///     a) if caller is not trusted by nodes included in the cluster 
-        ///     b) if cluster id is not the same as params id (may be triggered by faulty logic in other method)
+        /// **Errors**: 
+        ///     1. if caller is not trusted by nodes included in the cluster 
+        ///     2. if cluster id is not the same as params id (may be triggered by faulty logic in other method)
+        /// 
+        /// **Returns**:
+        ///     `cluster_id` - id of the newly created cluster.
        #[ink(message, payable)]
         pub fn cluster_create(&mut self, _unused: AccountId, vnode_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> ClusterId {
             self.message_cluster_create(vnode_count, node_ids, cluster_params).unwrap()
