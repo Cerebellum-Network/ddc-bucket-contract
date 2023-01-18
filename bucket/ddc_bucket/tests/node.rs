@@ -1,5 +1,5 @@
-use crate::ddc_bucket::*;
 use crate::ddc_bucket::tests::topology::Topology;
+use crate::ddc_bucket::*;
 
 use super::env_utils::*;
 
@@ -11,8 +11,17 @@ pub struct TestNode {
 }
 
 impl TestNode {
-    pub fn new(contract: &mut DdcBucket, provider_id: AccountId, manager_id: AccountId, engine_name: &str, node_name: &str) -> Self {
-        let url = format!("https://node-{}.ddc.cere.network/{}/", node_name, engine_name);
+    pub fn new(
+        contract: &mut DdcBucket,
+        provider_id: AccountId,
+        manager_id: AccountId,
+        engine_name: &str,
+        node_name: &str,
+    ) -> Self {
+        let url = format!(
+            "https://node-{}.ddc.cere.network/{}/",
+            node_name, engine_name
+        );
         let node_params = url.clone();
         let rent_per_month: Balance = 10 * TOKEN;
         let capacity = 100;
@@ -22,10 +31,15 @@ impl TestNode {
         pop_caller();
 
         push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
-        let node_id = contract.node_create(rent_per_month, node_params, capacity);
+        let node_id = contract.node_create(rent_per_month, node_params, capacity, NodeTier::Cold);
         pop_caller();
 
-        Self { provider_id, node_id, engine_name: engine_name.into(), url }
+        Self {
+            provider_id,
+            node_id,
+            engine_name: engine_name.into(),
+            url,
+        }
     }
 }
 
@@ -34,7 +48,8 @@ pub fn find_cluster(contract: &DdcBucket, engine_name: &str) -> Result<ClusterSt
     let (clusters, _count) = contract.cluster_list(1, 20, None);
 
     // Pick the first one that provides the right engine.
-    let cluster = clusters.iter()
+    let cluster = clusters
+        .iter()
         .find(|cluster| {
             let topology = Topology::from_str(&cluster.params).unwrap();
             topology.engine_name == engine_name

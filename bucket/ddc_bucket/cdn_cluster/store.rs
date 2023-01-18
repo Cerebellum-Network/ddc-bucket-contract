@@ -1,10 +1,7 @@
 //! The store where to create and access Clusters by ID.
 
-use ink_storage::{
-  collections::Vec as InkVec,
-  traits,
-};
 use ink_prelude::vec::Vec;
+use ink_storage::{collections::Vec as InkVec, traits};
 
 use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
 
@@ -17,24 +14,20 @@ pub const MAX_VNODES: u32 = 300;
 pub struct CdnClusterStore(pub InkVec<CdnCluster>);
 
 impl CdnClusterStore {
-  pub fn create(
-      &mut self,
-      manager_id: AccountId,
-      cdn_nodes: Vec<NodeId>,
-  ) -> Result<ClusterId> {
-      let cluster = CdnCluster::new(manager_id, cdn_nodes);
+    pub fn create(&mut self, manager_id: AccountId, cdn_nodes: Vec<NodeId>) -> Result<ClusterId> {
+        let cluster = CdnCluster::new(manager_id, cdn_nodes);
 
-      let cluster_id = self.0.len();
-      self.0.push(cluster);
+        let cluster_id = self.0.len();
+        self.0.push(cluster);
 
-      Ok(cluster_id)
-  }
+        Ok(cluster_id)
+    }
 
-  pub fn get(&self, cluster_id: ClusterId) -> Result<&CdnCluster> {
-      self.0.get(cluster_id).ok_or(ClusterDoesNotExist)
-  }
+    pub fn get(&self, cluster_id: ClusterId) -> Result<&CdnCluster> {
+        self.0.get(cluster_id).ok_or(ClusterDoesNotExist)
+    }
 
-  pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut CdnCluster> {
-      self.0.get_mut(cluster_id).ok_or(ClusterDoesNotExist)
-  }
+    pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut CdnCluster> {
+        self.0.get_mut(cluster_id).ok_or(ClusterDoesNotExist)
+    }
 }

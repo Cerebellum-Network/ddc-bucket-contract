@@ -3,8 +3,8 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use crate::ddc_bucket::params::store::Params;
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
@@ -13,10 +13,18 @@ pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub enum NodeTier {
+    Cold,
+    Stable,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub free_resource: Resource,
+    pub tier: NodeTier,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -33,7 +41,11 @@ impl Node {
     }
 
     pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
-        if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+        if self.provider_id == provider_id {
+            Ok(())
+        } else {
+            Err(UnauthorizedProvider)
+        }
     }
 
     pub fn put_resource(&mut self, amount: Resource) {
@@ -47,5 +59,9 @@ impl Node {
         } else {
             Err(InsufficientResources)
         }
+    }
+
+    pub fn change_tier(&mut self, tier_id: NodeTier) {
+        self.tier = tier_id;
     }
 }
