@@ -152,119 +152,500 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        /// Create a new bucket and return its `bucket_id`.
+        /// **Description**:
+        ///     Create a new bucket.
         ///
-        /// The caller will be its first owner and payer of resources.
+        /// **Logic**:
+        ///     1. The caller will be its first owner  
+        ///     2. The call will also be the payer of resources.
+        ///     3. The bucket can be connected to a single cluster (currently). 
+        ///     4. To allocate more cluster resources one should use function `bucket_alloc_into_cluster
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone can create a bucket
         ///
-        /// `bucket_params` is configuration used by clients and nodes. See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
-        ///
-        /// The bucket can be connected to a single cluster (currently). Allocate cluster resources with the function `bucket_alloc_into_cluster`
+        /// **Params**:
+        ///     1. `bucket_params` is configuration used by clients and nodes. See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        ///     2. `cluster_id` is the id of the cluster bucket belongs to
+        ///     3. `owner_id` is the optional argument to specify the owner of the bucket (**Note: we should check from security standpoint if it is sound to allow a third party to create buckets for you, which might drain funds; new payment model might be the solution**))
+        /// 
+        /// **Events**:
+        ///     1. BucketCreated(bucket id, owner id)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. account (if owner account doesn't exist prior to call)
+        ///     2. bucket
+        ///     2. bucket_params
+        ///     Note: there is currently no methods to delete bucket, hence these items will be stored during the lifetime of the contract
+        /// 
+        /// **Errors**: 
+        ///     1. if bucket id is not the same as params id (may be triggered by faulty logic in other method)
+        /// 
+        /// **Returns**:
+        ///     `bucket_id` - id of the newly created bucket.
         #[ink(message, payable)]
         pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId, owner_id: Option<AccountId>) -> BucketId {
             self.message_bucket_create(bucket_params, cluster_id, owner_id).unwrap()
         }
 
-        /// Change owner of the bucket
+        /// **Description**:
+        ///     Change owner of the bucket.
+        ///
+        /// **Logic**:
+        ///     1. If owner of the bucket triggers the method, newly provided owner will be assigned 
         /// 
-        /// Provide the account of new owner
+        /// **Permissions**:
+        ///     1. Only bucket owner 
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the id of the bucket of interest
+        ///     2. `owner_id` is the AccoundId of the new bucket owner
+        /// 
+        /// **Events**:
+        ///     1. No events emitted
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. New owner id written to bucket storage
+        /// 
+        /// **Errors**: 
+        ///     1. transaction will revert if the caller is not the owner 
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message, payable)]
         pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
         self.message_bucket_change_owner(bucket_id, owner_id).unwrap()
         }
 
-        /// Allocate some resources of a cluster to a bucket.
+        /// **Description**:
+        ///     Allocate some resources of a cluster to a bucket
         ///
-        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        /// **Logic**:
+        ///     1. The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager 
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the id of the bucket of interest
+        ///     2. `resource` is the amount of resources added to the bucket (**Note: clarify why amount of resource has to be multiplied per vnode**)
+        /// 
+        /// **Events**:
+        ///     1. BucketAllocated(bucket id, cluster id, resource)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cluster storage write
+        ///     2. bucket storage write
+        ///     3. account storage write
+        /// 
+        /// **Errors**: 
+        ///     1. transaction will revert if the cluster does not have enough available resources 
+        ///     2. transaction will revert if the caller is not the owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
             self.message_bucket_alloc_into_cluster(bucket_id, resource).unwrap()
         }
 
-        /// Settle the due costs of a bucket from its payer account to the cluster account.
+        /// **Description**:
+        ///     Settle the due costs of a bucket from its payer account to the cluster account
+        ///
+        /// **Logic**:
+        ///     1. The owner of the bucket is charged the funds with method 'settle_flow'
+        ///     2. Cluster is allocated funds with method 'revenues.increase'
+        ///     **Note: do we actually want to collect payments from buckets this way?**
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the id of the bucket for which payment will be done 
+        /// 
+        /// **Events**:
+        ///     1. BucketSettlePayment(bucket_id, cluster_id)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cluster storage write
+        ///     2. bucket storage write
+        ///     3. account storage write
+        /// 
+        /// **Errors**: 
+        ///     1. transaction will revert if bucket with provided id does not exist
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) {
             self.message_bucket_settle_payment(bucket_id).unwrap()
         }
 
-        /// Change the `bucket_params`, which is configuration used by clients and nodes.
+        /// **Description**:
+        ///     Change the `bucket_params` 
         ///
-        /// See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// **Logic**:
+        ///     1. Bucket params is the configuration used by clients and nodes.
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the id of the bucket of interest
+        ///     2. `params` See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// 
+        /// **Events**:
+        ///     1. None (**Do we want to add event here?**)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. params storage write
+        ///
+        /// **Errors**: 
+        ///     1. transaction will revert if bucket with provided id does not exist
+        ///     2. transaction will revert if the caller is not the owner of the bucket
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message, payable)]
         pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
             self.message_bucket_change_params(bucket_id, params).unwrap();
         }
 
-        /// Get the current status of a bucket.
+        /// **Description**:
+        ///     Get the current status of a bucket 
+        ///
+        /// **Logic**:
+        ///     1. Calculate the current status of the bucket(rent), fetch readers and writers and return
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the id of the bucket of interest
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     BucketStatus(bucket_id, bucket, params, writer_ids, reader_ids, rent_covered_until_ms)
         #[ink(message)]
         pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
             self.message_bucket_get(bucket_id)
         }
 
-        /// Iterate through all buckets.
+        /// **Description**:
+        ///     Iterate through all buckets
         ///
-        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        /// The optimal `limit` depends on the size of params.
+        /// **Logic**:
+        ///     1. The algorithm for paging is: start with `offset = 1` and `limit = 20` 
+        ///     2. The function returns a `(results, max_id)`. 
+        ///     3. Call again with `offset += limit`, until `offset >= max_id`.
+        ///     4. The optimal `limit` depends on the size of params. (**Note: what does it mean?**)
+        ///     5. For all returned buckets the same logic is apllied as for call `bucket_get`
+        ///     6. Result can be filtered by owner
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
         ///
-        /// The results can be filtered by owner. Note that paging must still be completed fully.
+        /// **Params**:
+        ///     1. `offset` is the number of buckets to skip
+        ///     2. `limit` is the number of buckets per page
+        ///     3. `filter_owner_id` is the optional parameter, which filters accounts on the selected page (**Note: filter ideally should be before pagination**) 
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vec<BucketStatus>, vec_length; BucketStatus is (bucket_id, bucket, params, writer_ids, reader_ids, rent_covered_until_ms)
         #[ink(message)]
         pub fn bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
             self.message_bucket_list(offset, limit, filter_owner_id)
         }
 
-        /// Iterate through all buckets and return only those owned by owner
+        /// **Description**:
+        ///     Get the buckets owner by an account
         ///
-        /// This method returns bucket struct, not the status
+        /// **Logic**:
+        ///     1. Iterate through all buckets and return all buckets owned by account
+        ///     2. This method returns bucket struct, not the status
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `owner_id` is the account of the buckets owner 
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vec<Bucket>
         #[ink(message)]
         pub fn bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
             self.message_bucket_list_for_account(owner_id)
         }
 
-        /// Set availiablity of the bucket
+        /// **Description**:
+        ///     Set availiablity of the bucket
+        ///
+        /// **Logic**:
+        ///     1. Update availablity of the bucket. 
+        ///     2. True equals public availability, false means private bucket availability 
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        ///     2. `public_availability` is the bool representing public availability 
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///
+        /// **Errors**: 
+        ///     1. Transaction fails, if it is called by someone who's not a bucket owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> () {
             self.message_bucket_set_availability(bucket_id, public_availability).unwrap()
         }
 
-        /// Set max resource cap to be charged by CDN for public bucket
+        /// **Description**:
+        ///     Set max resource cap to be charged by CDN for public bucket
+        ///
+        /// **Logic**:
+        ///     1. Update availablity of the bucket. 
+        ///     2. True equals public availability, false means private bucket availability 
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        ///     2. `public_availability` is the bool representing public availability 
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///
+        /// **Errors**: 
+        ///     1. Transaction fails, if it is called by someone who's not a bucket owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
+        /// 
         #[ink(message)]
         pub fn bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) -> () {
             self.message_bucket_set_resource_cap(bucket_id, new_resource_cap).unwrap()
         }
 
-        /// Set permission for the reader of the bucket
+        /// **Description**:
+        ///     Method retrieves bucket writers
+        ///
+        /// **Logic**:
+        ///     1. Read from bucket_perms the permission for relevant bucket
+        ///     2. Return vector of AccountIds who have permissions
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///     (**Note: we shall research how to combine this storage with bucket storage**)
+        ///
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vector of AccountIds
         #[ink(message)]
         pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
             self.message_get_bucket_writers(bucket_id).unwrap()
         }
 
-        /// Set permission for the writer of the bucket
+        /// **Description**:
+        ///     Set permission for the writer of the bucket
+        ///
+        /// **Logic**:
+        ///     1. Grant permission for new writer via bucket_perms
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        ///     2. `writer` is the account which will receive write permission
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. bucket_perms storage
+        ///
+        /// **Errors**: 
+        ///     1. Transaction fails, if it is called by someone who's not a bucket owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
             self.message_grant_writer_permission(bucket_id, writer).unwrap()
         }
 
-        /// Revoke permission for the writer of the bucket
+        /// **Description**:
+        ///     Revoke permission for the writer of the bucket
+        ///
+        /// **Logic**:
+        ///     1. Revoke permission for new writer via bucket_perms
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        ///     2. `writer` is the account for whome write permission will be revoked 
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. bucket_perms storage
+        ///
+        /// **Errors**: 
+        ///     1. Transaction fails, if it is called by someone who's not a bucket owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
             self.message_revoke_writer_permission(bucket_id, writer).unwrap()
         }
 
-        /// Set permission for the reader of the bucket
+        /// **Description**:
+        ///     Method retrieves bucket readers
+        ///
+        /// **Logic**:
+        ///     1. Read from bucket_perms the permission for relevant bucket
+        ///     2. Return vector of AccountIds who have permissions
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///     (**Note: we shall research how to combine this storage with bucket storage**)
+        ///
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vector of AccountIds
         #[ink(message)]
         pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
             self.message_get_bucket_readers(bucket_id).unwrap()
         }
 
-        /// Set permission for the reader of the bucket
+        /// **Description**:
+        ///     Set permission for the reader of the bucket
+        ///
+        /// **Logic**:
+        ///     1. Grant permission for new reader via bucket_perms
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        ///     2. `reader` is the account which will receive read permission
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. bucket_perms storage
+        ///
+        /// **Errors**: 
+        ///     1. Transaction fails, if it is called by someone who's not a bucket owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
             self.message_grant_reader_permission(bucket_id, reader).unwrap()
         }
 
+        /// **Description**:
+        ///     Revoke permission for the reader of the bucket
+        ///
+        /// **Logic**:
+        ///     1. Revoke permission for new reader via bucket_perms
+        /// 
+        /// **Permissions**:
+        ///     1. Bucket owner
+        ///     2. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `bucket_id` is the buckets of interest
+        ///     2. `reader` is the account for whome read permission will be revoked 
+        /// 
+        /// **Events**:
+        ///     1. None 
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. bucket_perms storage
+        ///
+        /// **Errors**: 
+        ///     1. Transaction fails, if it is called by someone who's not a bucket owner or cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         /// Revoke permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-            self.message_revoke_reader_permission(bucket_id, writer).unwrap()
+        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
+            self.message_revoke_reader_permission(bucket_id, reader).unwrap()
         }
     }
     // ---- End Bucket ----
@@ -346,48 +727,194 @@ pub mod ddc_bucket {
             self.message_cluster_create(vnode_count, node_ids, cluster_params).unwrap()
         }
 
-        /// As manager, reserve more resources for the cluster from the free capacity of nodes.
+        /// **Description**:
+        ///     Reserve more resources for the cluster from the free capacity of nodes.
         ///
-        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        /// **Logic**:
+        ///     1. The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        ///     2. Each node within cluster has to have higher available free resources then amount of Resource times number of vnodes per node
+        /// 
+        /// **Permissions**:
+        ///     1. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of cluster of interest
+        ///     2. `amount` is the amount of resources to be reserved per vnode
+        /// 
+        /// **Events**:
+        ///     1. ClusterReserveResource(cluster_id, resource)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cluster 
+        ///     2. nodes
+        ///     Note: there is currently no methods to free resources within cluster
+        /// 
+        /// **Errors**: 
+        ///     1. if there are not enough free resources available within some node within a cluster
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
             self.message_cluster_reserve_resource(cluster_id, amount).unwrap()
         }
 
-        /// As manager, re-assign a vnode to another physical node.
+        /// **Description**:
+        ///     Re-assign a vnode to another physical node.
         ///
-        /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
+        /// **Logic**:
+        ///     1. Free resource on the node where vnode was previously hosted 
+        ///     2. Take resources from new node 
+        ///     3. Update vnode
+        ///     4. The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`)
+        /// 
+        /// **Permissions**:
+        ///     1. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of cluster of interest
+        ///     2. `vnode_i` is the index of vnode within the cluster
+        ///     3. `new_node_id` is the id of node to which vnode is moved to
+        /// 
+        /// **Events**:
+        ///     1. ClusterNodeReplaced(cluster_id, node_id: new_node_id, vnode_index)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cluster 
+        ///     2. nodes
+        ///    
+        /// **Errors**: 
+        ///     1. if there are not enough free resources available within some node within a cluster
+        ///     2. vnode with this id should exist
+        ///     3. if the tx is called by one who's not a cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, vnode_i: VNodeIndex, new_node_id: NodeId) -> () {
             self.message_cluster_replace_node(cluster_id, vnode_i, new_node_id).unwrap()
         }
 
-        /// Trigger the distribution of revenues from the cluster to the providers.
+        /// **Description**:
+        ///     Trigger the distribution of revenues from the cluster to the providers.
+        ///
+        /// **Logic**:
+        ///     1. Collect network and cluster management fee
+        ///     2. Decrese undistributed revenue from the cluster
+        ///     3. Payout tokens from SC to accounts who are providers of nodes, which host vnodes
+        ///     (**Note (left by Aurel) TODO: set a maximum node count, or support paging. TODO: aggregate the payments per node_id or per provider_id.**)
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of cluster of interest
+        /// 
+        /// **Events**:
+        ///     1. ClusterDistributeRevenues(cluster_id, provider_id: node.provider_id)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cluster 
+        ///     2. network_fee
+        ///    
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
             self.message_cluster_distribute_revenues(cluster_id).unwrap()
         }
 
-        /// Change the `cluster_params`, which is configuration used by clients and nodes.
+        /// **Description**:
+        ///     Change the `cluster_params`
         ///
-        /// See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// **Logic**:
+        ///     1. Change params for cluster, which are configuration used by clients and nodes
+        ///     2. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// 
+        /// **Permissions**:
+        ///     1. Cluster manager
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of cluster of interest
+        ///     2. `cluster_params` is the configuration used by clients and nodes.
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. params
+        ///    
+        /// **Errors**: 
+        ///     1. if params do not exist for this cluster id
+        ///     3. if the tx is called by one who's not a cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message, payable)]
         pub fn cluster_change_params(&mut self, cluster_id: ClusterId, params: ClusterParams) {
             self.message_cluster_change_params(cluster_id, params).unwrap();
         }
 
-        /// Get the current status of a cluster.
+        /// **Description**:
+        ///     Get the current status of a cluster
+        ///
+        /// **Logic**:
+        ///     1. Fetch cluster structure and cluster params and return them with id
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of cluster of interest
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///    
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     ClusterStatus(cluster_id, cluster, params)
         #[ink(message)]
         pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
             self.message_cluster_get(cluster_id)
         }
 
-        /// Iterate through all clusters.
+        /// **Description**:
+        ///     Get cluster list
         ///
-        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        /// The optimal `limit` depends on the size of params.
+        /// **Logic**:
+        ///     1. Iterate through all clusters
+        ///     2. The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
+        ///     3. The optimal `limit` depends on the size of params
+        ///     4. The results can be filtered by manager. Note that paging must still be completed fully
+        ///     (**Note: same suggestion as for bucket list**)
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
         ///
-        /// The results can be filtered by manager. Note that paging must still be completed fully.
+        /// **Params**:
+        ///     1. `offset` skip a number of cluster
+        ///     2. `limit` number of clusters per page
+        ///     3. `filter_manager_id` optional filter to return only clusters where provided account is the manager
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///    
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vec<ClusterStatus>, u32 where ClusterStatus(cluster_id, cluster, params) and u32 is the number of clusters
         #[ink(message)]
         pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<ClusterStatus>, u32) {
             self.message_cluster_list(offset, limit, filter_manager_id)
@@ -418,58 +945,220 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        /// Create a new cluster and return its `cluster_id`.
+        /// **Description**:
+        ///     Create a new CDN cluster
         ///
-        /// The caller will be its first manager.
+        /// **Logic**:
+        ///     1. The caller will be its first manager
+        ///     2. The CDN node ids are provided, which will form a cluster
+        /// 
+        /// **Permissions**:
+        ///     1. Only CDN nodes of providers that trust the cluster manager can be used (see `cdn_node_trust_manager`)
         ///
-        /// The CDN node ids are provided, which will form a cluster.
+        /// **Params**:
+        ///     1. `cdn_node_ids` are the ids of nodes which will form a cluster
+        /// 
+        /// **Events**:
+        ///     1. CdnClusterCreated(cluster_id, manager)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cdn_cluster 
+        ///     Note: there is currently no methods to delete cluster, hence these items will be stored during the lifetime of the contract
+        /// 
+        /// **Errors**: 
+        ///     1. if caller is not trusted by cdn nodes included in the cluster 
+        /// 
+        /// **Returns**:
+        ///     `cluster_id` - id of the newly created CDN cluster
         #[ink(message, payable)]
         pub fn cdn_cluster_create(&mut self, cdn_node_ids: Vec<NodeId>) -> ClusterId {
             self.message_cdn_cluster_create(cdn_node_ids).unwrap()
         }
 
-        /// Set rate for streaming (price per gb)
+        /// **Description**:
+        ///     Set rate for streaming (price per gb)
+        /// 
+        /// **Logic**:
+        ///     1. The caller will be its first manager
+        ///     2. The CDN node ids are provided, which will form a cluster
+        /// 
+        /// **Permissions**:
+        ///     1. Only nodes of providers that trust the cluster manager can be used (see `cdn_node_trust_manager`)
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` are the id of CDN cluster of interest
+        ///     2. `usd_per_gb` is the rate of USD per gb that the cluster will receive for streaming data (take the $ value and multiply by 10^10, i.e. 10 decimals)
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cdn_cluster 
+        /// 
+        /// **Errors**: 
+        ///     1. if caller is not the CDN cluster manager
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message, payable)]
         pub fn cdn_set_rate(&mut self,  cluster_id: ClusterId, usd_per_gb: Balance) -> () {
             self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
         }
         
-        /// Get rate for streaming (price per gb)
+        /// **Description**:
+        ///     Get rate for streaming (price per gb)
+        /// 
+        /// **Logic**:
+        ///     1. Method reads the rate from cluster storage
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` are the id of CDN cluster of interest
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None 
+        /// 
+        /// **Errors**: 
+        ///     1. if CDN cluster with provided id doesn't exist
+        /// 
+        /// **Returns**:
+        ///     USD per gb (dollar value has 10 decimals)
         #[ink(message, payable)]
         pub fn cdn_get_rate(&self,  cluster_id: ClusterId) -> Balance {
             self.message_cdn_get_rate(cluster_id).unwrap()
         }
 
-        /// As validator, charge payments from users and allocate undistributed payments to CDN nodes. 
+        /// **Description**:
+        ///     Charge payments from users and allocate undistributed payments to CDN nodes
         /// 
-        /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
+        /// **Logic**:
+        ///     1. Users are charged balance from their bonded balances within accounts
+        ///     2. CDN nodes are credited with undistributed revenues
+        ///     3. CDN cluster total revenues are increased,  which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues
+        ///     4. protocol fees are charged here
+        ///     5. Bucket consumption cap is updated for public buckets
+        /// 
+        /// **Permissions**:
+        ///     1. Validator
+        ///
+        /// **Params**:
+        ///     1. `aggregates_accounts` are the tuples consisting of account ids and respective resources consumed
+        ///     2. `aggregates_nodes` are the tuples consisting of node ids and respective resources consumed
+        ///     3. `aggregates_buckets` are the tuples consisting of bucket ids and respective resources consumed
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cdn_cluster 
+        ///     2. cdn_nodes
+        ///     3. buckets
+        ///     4. accounts
+        ///     5. protocol
+        /// 
+        /// **Errors**: 
+        ///     1. if caller is not the validator
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>, era: u64) -> () {
             self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes, aggregates_buckets, era).unwrap()
         }
 
-        /// Trigger the distribution of revenues from the cluster to the CDN node providers. 
+        /// **Description**:
+        ///     Trigger the distribution of revenues from the cluster to the CDN node providers
         /// 
-        /// Anyone can call this method.
+        /// **Logic**:
+        ///     1. Undistributed CDN Node payments will be trasnferred 
+        ///     2. CDN cluster revenue will decrease
+        ///     3. Management fees are charged here
         /// 
-        /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of CDN cluster of interest
+        ///     
+        /// **Events**:
+        ///     1. ClusterDistributeRevenues(cluster_id, provider_id: node.provider_id)
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. cdn_cluster 
+        ///     2. cdn_nodes
+        /// 
+        /// **Errors**: 
+        ///     1. if caller is not the validator
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
             self.message_cdn_cluster_distribute_revenues(cluster_id).unwrap()
         }
 
-        /// Get the current status of a cluster.
+         /// **Description**:
+        ///     Get the current status of a CDN cluster
+        ///
+        /// **Logic**:
+        ///     1. Fetch cluster structure and return ir with id
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. `cluster_id` is the id of CDN cluster of interest
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///    
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     CdnClusterStatus(cluster_id, cluster)
         #[ink(message)]
         pub fn cdn_cluster_get(&self, cluster_id: ClusterId) -> Result<CdnClusterStatus> {
             self.message_cdn_cluster_get(cluster_id)
         }
 
-        /// Iterate through all clusters.
+        /// **Description**:
+        ///     Get CDN cluster list
         ///
-        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        /// The optimal `limit` depends on the size of params.
+        /// **Logic**:
+        ///     1. Iterate through all CDN clusters
+        ///     2. The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
+        ///     3. The optimal `limit` depends on the size of params
+        ///     4. The results can be filtered by manager. Note that paging must still be completed fully
+        ///     (**Note: same suggestion as for bucket list**)
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
         ///
-        /// The results can be filtered by manager. Note that paging must still be completed fully.
+        /// **Params**:
+        ///     1. `offset` skip a number of cluster
+        ///     2. `limit` number of clusters per page
+        ///     3. `filter_manager_id` optional filter to return only clusters where provided account is the manager
+        /// 
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        ///    
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vec<CdnClusterStatus>, u32 where CdnClusterStatus(cluster_id, cluster) and u32 is the number of clusters
         #[ink(message)]
         pub fn cdn_cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<CdnClusterStatus>, u32) {
             self.message_cdn_cluster_list(offset, limit, filter_manager_id)
@@ -480,37 +1169,182 @@ pub mod ddc_bucket {
     // ---- Committer ----
 
     impl DdcBucket {
-        /// CDN node operator sets the commit for current era.
+        /// **Description**:
+        ///     CDN node operator sets the commit for current era
+        /// 
+        /// **Logic**:
+        ///     1. Check if commits exist for provided account
+        ///     2. If not, create an empty vector of commits
+        ///     3. If commits for provided node exists -> remove it from the vector
+        ///     4. Push the latest commit to the vector
+        /// 
+        /// **Permissions**:
+        ///     1. **Add permission: CDN owner or CDN cluster manager**
+        ///
+        /// **Params**:
+        ///     1. `cdn_owner` is the account id of CDN cluster of interest (**Should be optimised and omitted**)
+        ///     2. `node_id` is the CDN node id of interest
+        ///     3. `commit` is the hash representing the root of the Merkle Tree, which consists of all logs for latest era
+        ///     
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. committer
+        /// 
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
             self.message_set_commit(cdn_owner, node_id, commit);
         }
 
-        /// Return the last commit submitted by CDN node operator
+        /// **Description**:
+        ///     Return the latest commits submitted by CDN node operator
+        /// 
+        /// **Logic**:
+        ///     1. Fetch from committer_store the mapping representing commits
+        ///     2. Return commits related to provided account
+        /// 
+        /// **Permissions**:
+        ///     1. None
+        ///
+        /// **Params**:
+        ///     1. `cdn_owner` is the account id of CDN cluster of interest (**Should be optimised and omitted**)
+        ///     2. `node_id` is the CDN node id of interest
+        ///     3. `commit` is the structure, which stores the hash representing the root of the Merkle Tree, which consists of all logs for latest era, as well as timestamps and other data
+        ///     
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        /// 
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Vec<(NodeId, Commit)> where the tuple represents the id of the CDN node, and the commit structure
         #[ink(message)]
         pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
             self.message_get_commit(cdn_owner)
         }
 
-        /// Return last era validated per CDN node
+        /// **Description**:
+        ///     Return last era and timestamp validated for CDN node
+        /// 
+        /// **Logic**:
+        ///     1. Fetch from committer_store the mapping representing validated commits
+        ///     2. Return data for the last validated commit for provided CDN Node
+        /// 
+        /// **Permissions**:
+        ///     1. None
+        ///
+        /// **Params**:
+        ///     1. `node_id` is the CDN node id of interest
+        ///     
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        /// 
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Era and timestamp
         #[ink(message)]
         pub fn get_validated_commit(&self, node: NodeId) -> EraAndTimestamp {
             self.message_get_validated_commit(node)
         }
 
-        /// Set the new configs for era
+        /// **Description**:
+        ///     Set the new configs for era
+        /// 
+        /// **Logic**:
+        ///     1. Era configuration is an important part of the SC
+        ///     2. CDN Node managers will synchronise with it to submit commits
+        ///     3. Validators will synchronise and wait for validation phase
+        /// 
+        /// **Permissions**:
+        ///     1. (**Allow only specific role to adjust this configuration**)
+        ///
+        /// **Params**:
+        ///     1. `era_config` is the configuration of the era for the SC, which consists of start timestamp, interval, commit & validation durations
+        ///     
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. committer
+        /// 
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     Nothing
         #[ink(message)]
         pub fn set_era(&mut self, era_config: EraConfig) -> () {
             self.message_set_era(era_config).unwrap();
         }
     
-        /// Return current status of an era
+        /// **Description**:
+        ///     Return current status of an era
+        /// 
+        /// **Logic**:
+        ///     1. Current era phase is calculated
+        ///     2. Previous era's timestamps are calculated
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. None
+        ///     
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        /// 
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     EraStatus(current_era, current_phase, previous_era, prev_era_from_timestamp, prev_era_to_timestamp)
         #[ink(message)]
         pub fn get_era(&self) -> EraStatus {
             self.message_get_era()
         }
 
-        /// Return current era settings
+        /// **Description**:
+        ///     Return current era settings
+        /// 
+        /// **Logic**:
+        ///     1. Simply return provided era settings
+        ///     2. This data can be used to predict the future phases without fetching data with `get_era` method as Era Configuration is not expected to change often
+        /// 
+        /// **Permissions**:
+        ///     1. Anyone
+        ///
+        /// **Params**:
+        ///     1. None
+        ///     
+        /// **Events**:
+        ///     1. None
+        /// 
+        /// **Storage** (items are written to storage):
+        ///     1. None
+        /// 
+        /// **Errors**: 
+        ///     1. None
+        /// 
+        /// **Returns**:
+        ///     EraConfig(start, interval, commit_duration, validation_duration)
         #[ink(message)]
         pub fn get_era_settings(&self) -> EraConfig {
             self.message_get_era_settings()
