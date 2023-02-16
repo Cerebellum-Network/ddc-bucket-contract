@@ -1,25 +1,25 @@
 //! The data structure of Clusters.
-
+// use ink_storage::Mapping;
 use ink_prelude::vec::Vec;
-use ink_storage::traits::{PackedLayout, SpreadLayout};
+use ink_storage::collections::HashMap;
+use ink_storage::traits::{PackedLayout, SpreadLayout, StorageLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
 use crate::ddc_bucket::cash::Cash;
-use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::node::entity::{Node, Resource};
 use crate::ddc_bucket::params::store::Params;
+use crate::ddc_bucket::Error::UnauthorizedClusterManager;
+use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;
 pub type VNodeIndex = u32;
 pub type VNodeId = (ClusterId, VNodeIndex);
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, PackedLayout, SpreadLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
     pub manager_id: AccountId,
-    pub vnodes: Vec<NodeId>,
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
@@ -35,33 +35,14 @@ pub struct ClusterStatus {
 }
 
 impl Cluster {
-    pub fn new(
-        manager_id: AccountId,
-        vnode_count: u32,
-        nodes: &[(NodeId, &Node)],
-    ) -> Self {
-        let (vnodes, total_rent) = Self::new_vnodes(vnode_count as usize, nodes);
+    pub fn new(manager_id: AccountId) -> Self {
         Cluster {
             manager_id,
-            vnodes,
             resource_per_vnode: 0,
             resource_used: 0,
             revenues: Cash(0),
-            total_rent,
+            total_rent: 0,
         }
-    }
-
-    fn new_vnodes(vnode_count: usize, nodes: &[(NodeId, &Node)]) -> (Vec<NodeId>, Balance) {
-        let node_count = nodes.len();
-        let mut vnode_ids = Vec::with_capacity(vnode_count);
-        let mut total_rent = 0;
-        for i in 0..vnode_count {
-            let (node_id, node) = &nodes[i % node_count];
-            vnode_ids.push(*node_id);
-            total_rent += node.rent_per_month;
-        }
-        // TODO: consider using the max rent instead of average rent.
-        (vnode_ids, total_rent)
     }
 
     pub fn get_rent(&self, resource: Resource) -> Balance {
@@ -73,15 +54,23 @@ impl Cluster {
     }
 
     pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
-        let used = self.resource_used + amount;
-        if used > self.resource_per_vnode {
-            return Err(InsufficientResources);
-        }
-        self.resource_used = used;
+        // let used = self.resource_used + amount;
+        // if used > self.resource_per_vnode {
+        //     return Err(InsufficientResources);
+        // }
+        // self.resource_used = used;
         Ok(())
     }
 
     pub fn only_manager(&self, caller: AccountId) -> Result<()> {
-        if self.manager_id == caller { Ok(()) } else { Err(UnauthorizedClusterManager) }
+        if self.manager_id == caller {
+            Ok(())
+        } else {
+            Err(UnauthorizedClusterManager)
+        }
+    }
+
+    pub fn change_rent(&mut self, rent: Balance) {
+        self.total_rent = rent;
     }
 }
