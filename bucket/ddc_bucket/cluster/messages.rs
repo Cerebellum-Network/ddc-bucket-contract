@@ -8,9 +8,7 @@ use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
-use crate::ddc_bucket::Error::{
-    ClusterManagerIsNotTrusted, UnauthorizedClusterManager, VNodeDoesNotExist,
-};
+use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager};
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterReserveResource,
     DdcBucket, Result,

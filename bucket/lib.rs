@@ -20,7 +20,6 @@ pub mod ddc_bucket {
     use node::{entity::*, store::*};
     use params::store::*;
     use perm::store::*;
-    use topology::store::*;
 
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;

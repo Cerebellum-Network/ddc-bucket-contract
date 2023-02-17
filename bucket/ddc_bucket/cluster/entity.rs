@@ -2,7 +2,6 @@
 // use ink_storage::Mapping;
 // use ink_prelude::vec::Vec;
 use ink_prelude::vec::Vec;
-use ink_storage::collections::HashMap;
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 

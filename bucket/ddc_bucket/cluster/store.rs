@@ -3,10 +3,9 @@
 // use ink_storage::{collections::Vec as InkVec, traits};
 // use ink_storage::{collections::Vec as InkVec, traits};
 use ink_prelude::vec::Vec;
-use ink_storage::traits::SpreadLayout;
-use ink_storage::traits::StorageLayout;
+use ink_storage::traits::{SpreadLayout, StorageLayout};
 
-use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
+use crate::ddc_bucket::{AccountId, Error::*, Result};
 
 use super::entity::{Cluster, ClusterId};
 
@@ -35,6 +34,8 @@ impl ClusterStore {
     }
 
     pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut Cluster> {
-        self.0.get_mut(cluster_id as usize).ok_or(ClusterDoesNotExist)
+        self.0
+            .get_mut(cluster_id as usize)
+            .ok_or(ClusterDoesNotExist)
     }
 }

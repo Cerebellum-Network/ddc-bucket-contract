@@ -1,15 +1,13 @@
 //! The store where to create and access Nodes.
-use ink_prelude::string::String;
 use ink_prelude::vec::Vec as InkVec;
 use ink_storage::collections::HashMap;
 use ink_storage::traits::{SpreadLayout, StorageLayout};
 
 use crate::ddc_bucket::cluster::entity::ClusterId;
-use crate::ddc_bucket::node::entity::{Node, Resource};
+use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::Error::UnknownNode;
-use crate::ddc_bucket::{self, NodeId, Result};
+use crate::ddc_bucket::{NodeId, Result};
 
-// (clusterID + vnode) = nodeID
 #[derive(SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug,))]
 pub struct TopologyStore(HashMap<(ClusterId, u64), NodeId>);
