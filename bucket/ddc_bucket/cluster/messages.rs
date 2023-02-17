@@ -4,7 +4,7 @@ use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus, VNodeIndex};
+use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
@@ -12,8 +12,8 @@ use crate::ddc_bucket::Error::{
     ClusterManagerIsNotTrusted, UnauthorizedClusterManager, VNodeDoesNotExist,
 };
 use crate::ddc_bucket::{
-    AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterNodeReplaced,
-    ClusterReserveResource, DdcBucket, Result,
+    AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterReserveResource,
+    DdcBucket, Result,
 };
 
 use super::entity::{ClusterId, ClusterParams};
@@ -36,9 +36,9 @@ impl DdcBucket {
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
-        let cluster_id = self.clusters.create(manager)?;
+        let cluster_id = self.clusters.create(manager, Vec::<u64>::new())?;
         self.topology_store
-            .create_topology(cluster_id, v_nodes, nodes);
+            .create_topology(cluster_id, v_nodes, nodes)?;
 
         let rent = 0;
         self.clusters.get_mut(cluster_id).unwrap().change_rent(rent);
@@ -63,7 +63,12 @@ impl DdcBucket {
         Self::only_cluster_manager(cluster)?;
         cluster.put_resource(resource);
 
-        for node_id in &cluster.vnodes {
+        for v_node in &cluster.v_nodes {
+            let node_id = self
+                .topology_store
+                .get_node_id(cluster_id, *v_node)
+                .unwrap();
+
             let node = self.nodes.get_mut(*node_id)?;
             node.take_resource(resource)?;
         }
@@ -75,40 +80,40 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_cluster_replace_node(
-        &mut self,
-        cluster_id: ClusterId,
-        vnode_index: VNodeIndex,
-        new_node_id: NodeId,
-    ) -> Result<()> {
-        let cluster = self.clusters.get_mut(cluster_id)?;
-        let manager = Self::only_cluster_manager(cluster)?;
+    // pub fn message_cluster_replace_node(
+    //     &mut self,
+    //     cluster_id: ClusterId,
+    //     vnode_index: VNodeIndex,
+    //     new_node_id: NodeId,
+    // ) -> Result<()> {
+    //     let cluster = self.clusters.get_mut(cluster_id)?;
+    //     let manager = Self::only_cluster_manager(cluster)?;
 
-        // Give back resources to the old node.
-        let old_node_id = cluster
-            .vnodes
-            .get_mut(vnode_index as usize)
-            .ok_or(VNodeDoesNotExist)?;
-        self.nodes
-            .get_mut(*old_node_id)?
-            .put_resource(cluster.resource_per_vnode);
+    //     // Give back resources to the old node.
+    //     let old_node_id = cluster
+    //         .v_nodes
+    //         .get_mut(vnode_index as usize)
+    //         .ok_or(VNodeDoesNotExist)?;
+    //     self.nodes
+    //         .get_mut(*old_node_id)?
+    //         .put_resource(cluster.resource_per_vnode);
 
-        let new_node = self.nodes.get_mut(new_node_id)?;
+    //     let new_node = self.nodes.get_mut(new_node_id)?;
 
-        // Verify that the provider of the new node trusts the cluster manager.
-        Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
+    //     // Verify that the provider of the new node trusts the cluster manager.
+    //     Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
 
-        // Reserve resources on the new node.
-        new_node.take_resource(cluster.resource_per_vnode)?;
-        *old_node_id = new_node_id;
+    //     // Reserve resources on the new node.
+    //     new_node.take_resource(cluster.resource_per_vnode)?;
+    //     *old_node_id = new_node_id;
 
-        Self::env().emit_event(ClusterNodeReplaced {
-            cluster_id,
-            node_id: new_node_id,
-            vnode_index,
-        });
-        Ok(())
-    }
+    //     Self::env().emit_event(ClusterNodeReplaced {
+    //         cluster_id,
+    //         node_id: new_node_id,
+    //         vnode_index,
+    //     });
+    //     Ok(())
+    // }
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
@@ -124,11 +129,16 @@ impl DdcBucket {
         )?;
 
         // Charge the provider payments from the cluster.
-        let num_shares = cluster.vnodes.len() as Balance;
+        let num_shares = cluster.v_nodes.len() as Balance;
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 
-        for node_id in &cluster.vnodes {
+        for v_node in &cluster.v_nodes {
+            let node_id = self
+                .topology_store
+                .get_node_id(cluster_id, *v_node)
+                .unwrap();
+
             let node = self.nodes.get(*node_id)?;
             Self::send_cash(node.provider_id, Cash(per_share))?;
 
@@ -174,7 +184,7 @@ impl DdcBucket {
     ) -> (Vec<ClusterStatus>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
-            let cluster = match self.clusters.0.get(cluster_id) {
+            let cluster = match self.clusters.0.get(cluster_id as usize) {
                 None => break, // No more items, stop.
                 Some(cluster) => cluster,
             };
@@ -192,7 +202,7 @@ impl DdcBucket {
             };
             clusters.push(status);
         }
-        (clusters, self.clusters.0.len())
+        (clusters, self.clusters.0.len().try_into().unwrap())
     }
 
     fn only_cluster_manager(cluster: &Cluster) -> Result<AccountId> {

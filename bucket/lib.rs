@@ -117,7 +117,7 @@ pub mod ddc_bucket {
             let _ = contract.node_params.create("".to_string());
             let _ = contract
                 .clusters
-                .create(AccountId::default(), 0, &[])
+                .create(AccountId::default(), ink_prelude::vec::Vec::<u64>::new())
                 .unwrap();
             let _ = contract.cluster_params.create("".to_string());
             let _ = contract.buckets.create(AccountId::default(), 0);
@@ -379,19 +379,19 @@ pub mod ddc_bucket {
                 .unwrap()
         }
 
-        /// As manager, re-assign a vnode to another physical node.
-        ///
-        /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
-        #[ink(message)]
-        pub fn cluster_replace_node(
-            &mut self,
-            cluster_id: ClusterId,
-            vnode_i: VNodeIndex,
-            new_node_id: NodeId,
-        ) -> () {
-            self.message_cluster_replace_node(cluster_id, vnode_i, new_node_id)
-                .unwrap()
-        }
+        // /// As manager, re-assign a vnode to another physical node.
+        // ///
+        // /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
+        // #[ink(message)]
+        // pub fn cluster_replace_node(
+        //     &mut self,
+        //     cluster_id: ClusterId,
+        //     vnode_i: VNodeIndex,
+        //     new_node_id: NodeId,
+        // ) -> () {
+        //     self.message_cluster_replace_node(cluster_id, vnode_i, new_node_id)
+        //         .unwrap()
+        // }
 
         /// Trigger the distribution of revenues from the cluster to the providers.
         #[ink(message)]

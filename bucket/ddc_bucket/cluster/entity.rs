@@ -1,15 +1,16 @@
 //! The data structure of Clusters.
 // use ink_storage::Mapping;
+// use ink_prelude::vec::Vec;
 use ink_prelude::vec::Vec;
 use ink_storage::collections::HashMap;
-use ink_storage::traits::{PackedLayout, SpreadLayout, StorageLayout};
+use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::cash::Cash;
-use crate::ddc_bucket::node::entity::{Node, Resource};
+use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
-use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, NodeId, Result};
+use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result};
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;
@@ -23,6 +24,7 @@ pub struct Cluster {
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
+    pub v_nodes: Vec<u64>,
     pub total_rent: Balance,
 }
 
@@ -35,12 +37,13 @@ pub struct ClusterStatus {
 }
 
 impl Cluster {
-    pub fn new(manager_id: AccountId) -> Self {
+    pub fn new(manager_id: AccountId, v_nodes: Vec<u64>) -> Self {
         Cluster {
             manager_id,
             resource_per_vnode: 0,
             resource_used: 0,
             revenues: Cash(0),
+            v_nodes,
             total_rent: 0,
         }
     }
@@ -54,11 +57,11 @@ impl Cluster {
     }
 
     pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
-        // let used = self.resource_used + amount;
-        // if used > self.resource_per_vnode {
-        //     return Err(InsufficientResources);
-        // }
-        // self.resource_used = used;
+        let used = self.resource_used + amount;
+        if used > self.resource_per_vnode {
+            return Err(InsufficientResources);
+        }
+        self.resource_used = used;
         Ok(())
     }
 

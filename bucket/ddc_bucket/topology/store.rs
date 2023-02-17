@@ -1,7 +1,8 @@
 //! The store where to create and access Nodes.
 use ink_prelude::string::String;
+use ink_prelude::vec::Vec as InkVec;
+use ink_storage::collections::HashMap;
 use ink_storage::traits::{SpreadLayout, StorageLayout};
-use ink_storage::{collections::HashMap, collections::Vec as InkVec};
 
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::node::entity::{Node, Resource};
@@ -21,26 +22,24 @@ impl TopologyStore {
     pub fn create_topology(
         &mut self,
         cluster_id: ClusterId,
-        v_nodes: Vec<Vec<u64>>,
-        nodes: Vec<NodeId>,
+        v_nodes: InkVec<InkVec<u64>>,
+        nodes: InkVec<(NodeId, &Node)>,
     ) -> Result<u32> {
-        let node_count = nodes.len();
-
         let mut total_rent = 0u32;
-        for (nodeId, node) in nodes {
-            let v_nodes_for_node = v_nodes[*nodeId];
+        for node in &nodes {
+            let v_nodes_for_node = &v_nodes[node.0 as usize];
 
             for v_node in v_nodes_for_node.iter() {
-                self.0.insert((cluster_id, v_node), nodeId);
+                self.0.insert((cluster_id, *v_node), node.0);
 
-                total_rent += node.rent_per_month;
+                total_rent += node.1.rent_per_month as u32;
             }
         }
 
         Ok(total_rent)
     }
 
-    pub fn get_nodeId(&mut self, cluster_id: ClusterId, v_node: u64) -> Result<&NodeId> {
+    pub fn get_node_id(&mut self, cluster_id: ClusterId, v_node: u64) -> Result<&NodeId> {
         self.0.get(&(cluster_id, v_node)).ok_or(UnknownNode)
     }
 }
