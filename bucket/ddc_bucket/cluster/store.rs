@@ -14,7 +14,7 @@ use super::entity::{Cluster, ClusterId};
 pub struct ClusterStore(pub Vec<Cluster>);
 
 impl ClusterStore {
-    pub fn create(&mut self, manager_id: AccountId, v_nodes: Vec<u64>) -> Result<ClusterId> {
+    pub fn create(&mut self, manager_id: AccountId, v_nodes: &Vec<Vec<u64>>) -> Result<ClusterId> {
         let cluster = Cluster::new(manager_id, v_nodes);
 
         let cluster_id = self.0.len();
@@ -22,12 +22,6 @@ impl ClusterStore {
 
         Ok(cluster_id.try_into().unwrap())
     }
-
-    // pub fn add_node(&mut self, cluster_id: ClusterId, node_id: NodeId) -> Result<()> {
-    //     let cluster = self.get_mut(cluster_id)?;
-    //     cluster.vnodes.push(node_id);
-    //     Ok(())
-    // }
 
     pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {
         self.0.get(cluster_id as usize).ok_or(ClusterDoesNotExist)

@@ -34,7 +34,7 @@ impl DdcBucket {
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
-        let cluster_id = self.clusters.create(manager, Vec::<u64>::new())?;
+        let cluster_id = self.clusters.create(manager, &v_nodes)?;
         self.topology_store
             .create_topology(cluster_id, v_nodes, nodes)?;
 
@@ -62,12 +62,9 @@ impl DdcBucket {
         cluster.put_resource(resource);
 
         for v_node in &cluster.v_nodes {
-            let node_id = self
-                .topology_store
-                .get_node_id(cluster_id, *v_node)
-                .unwrap();
-
+            let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
             let node = self.nodes.get_mut(*node_id)?;
+
             node.take_resource(resource)?;
         }
 
@@ -78,40 +75,45 @@ impl DdcBucket {
         Ok(())
     }
 
-    // pub fn message_cluster_replace_node(
-    //     &mut self,
-    //     cluster_id: ClusterId,
-    //     vnode_index: VNodeIndex,
-    //     new_node_id: NodeId,
-    // ) -> Result<()> {
-    //     let cluster = self.clusters.get_mut(cluster_id)?;
-    //     let manager = Self::only_cluster_manager(cluster)?;
+    // v_nodes length should be equal to v_nodes which were assigned to a physical node before
+    pub fn message_cluster_replace_node(
+        &mut self,
+        cluster_id: ClusterId,
+        v_nodes: Vec<u64>,
+        new_node_id: NodeId,
+    ) -> Result<()> {
+        let cluster = self.clusters.get_mut(cluster_id)?;
+        let manager = Self::only_cluster_manager(cluster)?;
 
-    //     // Give back resources to the old node.
-    //     let old_node_id = cluster
-    //         .v_nodes
-    //         .get_mut(vnode_index as usize)
-    //         .ok_or(VNodeDoesNotExist)?;
-    //     self.nodes
-    //         .get_mut(*old_node_id)?
-    //         .put_resource(cluster.resource_per_vnode);
+        // Give back resources to the old node.
+        let old_node_id = self.topology_store.get_node_id(cluster_id, v_node[0]);
 
-    //     let new_node = self.nodes.get_mut(new_node_id)?;
+        // // Give back resources to the old node.
+        // let old_node_id = cluster
+        //     .v_nodes
+        //     .get_mut(vnode_index as usize)
+        //     .ok_or(VNodeDoesNotExist)?;
 
-    //     // Verify that the provider of the new node trusts the cluster manager.
-    //     Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
+        self.nodes
+            .get_mut(*old_node_id)?
+            .put_resource(cluster.resource_per_vnode);
 
-    //     // Reserve resources on the new node.
-    //     new_node.take_resource(cluster.resource_per_vnode)?;
-    //     *old_node_id = new_node_id;
+        let new_node = self.nodes.get_mut(new_node_id)?;
 
-    //     Self::env().emit_event(ClusterNodeReplaced {
-    //         cluster_id,
-    //         node_id: new_node_id,
-    //         vnode_index,
-    //     });
-    //     Ok(())
-    // }
+        // Verify that the provider of the new node trusts the cluster manager.
+        Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
+
+        // Reserve resources on the new node.
+        new_node.take_resource(cluster.resource_per_vnode)?;
+        *old_node_id = new_node_id;
+
+        Self::env().emit_event(ClusterNodeReplaced {
+            cluster_id,
+            node_id: new_node_id,
+            vnode_index,
+        });
+        Ok(())
+    }
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
         let cluster = self.clusters.get_mut(cluster_id)?;
@@ -132,10 +134,7 @@ impl DdcBucket {
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 
         for v_node in &cluster.v_nodes {
-            let node_id = self
-                .topology_store
-                .get_node_id(cluster_id, *v_node)
-                .unwrap();
+            let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
 
             let node = self.nodes.get(*node_id)?;
             Self::send_cash(node.provider_id, Cash(per_share))?;

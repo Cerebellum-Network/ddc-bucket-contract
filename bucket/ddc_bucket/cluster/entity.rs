@@ -36,13 +36,21 @@ pub struct ClusterStatus {
 }
 
 impl Cluster {
-    pub fn new(manager_id: AccountId, v_nodes: Vec<u64>) -> Self {
+    pub fn new(manager_id: AccountId, v_nodes_arr: &Vec<Vec<u64>>) -> Self {
+        let mut v_nodes = Vec::<u64>::new();
+
+        for v_nodes_vec in v_nodes_arr {
+            for v_node in v_nodes_vec {
+                v_nodes.push(*v_node);
+            }
+        }
+
         Cluster {
             manager_id,
             resource_per_vnode: 0,
             resource_used: 0,
             revenues: Cash(0),
-            v_nodes,
+            v_nodes: v_nodes,
             total_rent: 0,
         }
     }
