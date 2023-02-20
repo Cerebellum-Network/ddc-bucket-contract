@@ -37,20 +37,20 @@ impl TopologyStore {
         Ok(total_rent)
     }
 
-    pub fn topology_replace_node(
+    pub fn replace_node(
         &mut self,
-        cluster_id: u64,
-        v_nodes: Vec<u64>,
-        node_id: NodeId,
+        cluster_id: u32,
+        v_nodes: InkVec<u64>,
+        new_node_id: NodeId,
     ) -> Result<()> {
         for v_node in v_nodes {
             let node_id = match self.0.get_mut(&(cluster_id, v_node)) {
                 Some(node_id) => node_id,
-                None => Err(UnknownNode),
+                None => return Err(UnknownNode),
             };
 
             // remap physical node to virtual one
-            node_id = node_id;
+            *node_id = new_node_id;
         }
 
         Ok(())

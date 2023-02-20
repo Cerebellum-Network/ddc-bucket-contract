@@ -8,6 +8,7 @@ use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus};
 use crate::ddc_bucket::node::entity::{Node, NodeId, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
+use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager};
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterReserveResource,
@@ -86,13 +87,10 @@ impl DdcBucket {
         let manager = Self::only_cluster_manager(cluster)?;
 
         // Give back resources to the old node.
-        let old_node_id = self.topology_store.get_node_id(cluster_id, v_node[0]);
-
-        // // Give back resources to the old node.
-        // let old_node_id = cluster
-        //     .v_nodes
-        //     .get_mut(vnode_index as usize)
-        //     .ok_or(VNodeDoesNotExist)?;
+        let old_node_id = self
+            .topology_store
+            .get_node_id(cluster_id, v_nodes[0])
+            .unwrap();
 
         self.nodes
             .get_mut(*old_node_id)?
@@ -105,12 +103,13 @@ impl DdcBucket {
 
         // Reserve resources on the new node.
         new_node.take_resource(cluster.resource_per_vnode)?;
-        *old_node_id = new_node_id;
+
+        self.topology_store
+            .replace_node(cluster_id, v_nodes, new_node_id)?;
 
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,
             node_id: new_node_id,
-            vnode_index,
         });
         Ok(())
     }
