@@ -53,6 +53,43 @@ impl DdcBucket {
         Ok(cluster_id)
     }
 
+    pub fn message_cluster_add_node(
+        &mut self,
+        cluster_id: ClusterId,
+        node_ids: Vec<NodeId>,
+        v_nodes: Vec<Vec<u64>>,
+    ) -> Result<()> {
+        let manager = Self::env().caller();
+        let mut nodes = Vec::<(NodeId, &Node)>::new();
+
+        for node_id in node_ids {
+            let node = self.nodes.get(node_id)?;
+            nodes.push((node_id, node));
+
+            // Verify that the node provider trusts the cluster manager.
+            Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
+        }
+
+        // add node and redistribute v_nodes
+        let cluster = self.clusters.get(cluster_id)?;
+        let total_rent =
+            self.topology_store
+                .add_node(cluster_id, &cluster.v_nodes, &v_nodes, nodes)?;
+
+        // update v_nodes inside cluster entity
+        let mut cluster_v_nodes = Vec::<u64>::new();
+        for v_nodes_for_node in v_nodes {
+            for v_node in v_nodes_for_node {
+                cluster_v_nodes.push(v_node);
+            }
+        }
+
+        let cluster = self.clusters.get_mut(cluster_id)?;
+        cluster.total_rent = total_rent as Balance;
+        cluster.v_nodes = cluster_v_nodes;
+
+        Ok(())
+    }
     pub fn message_cluster_reserve_resource(
         &mut self,
         cluster_id: ClusterId,

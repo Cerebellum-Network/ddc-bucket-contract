@@ -56,6 +56,34 @@ impl TopologyStore {
         Ok(())
     }
 
+    pub fn add_node(
+        &mut self,
+        cluster_id: u32,
+        old_v_nodes: &InkVec<u64>,
+        v_nodes: &InkVec<InkVec<u64>>,
+        nodes: InkVec<(NodeId, &Node)>,
+    ) -> Result<u32> {
+        // remove old nodes from topology
+        for old_v_node in old_v_nodes {
+            self.0.insert((cluster_id, *old_v_node), 0);
+        }
+
+        let mut total_rent = 0u32;
+
+        // reassign v_nodes to physical ones
+        for node in nodes {
+            let v_nodes_for_node = &v_nodes[node.0 as usize];
+
+            for v_node in v_nodes_for_node.iter() {
+                self.0.insert((cluster_id, *v_node), node.0);
+
+                total_rent += node.1.rent_per_month as u32;
+            }
+        }
+
+        Ok(total_rent)
+    }
+
     pub fn get_node_id(&mut self, cluster_id: ClusterId, v_node: u64) -> Result<&NodeId> {
         self.0.get(&(cluster_id, v_node)).ok_or(UnknownNode)
     }
