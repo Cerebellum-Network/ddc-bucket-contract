@@ -3,8 +3,8 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use crate::ddc_bucket::params::store::Params;
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
@@ -33,7 +33,11 @@ impl Node {
     }
 
     pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
-        if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+        if self.provider_id == provider_id {
+            Ok(())
+        } else {
+            Err(UnauthorizedProvider)
+        }
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

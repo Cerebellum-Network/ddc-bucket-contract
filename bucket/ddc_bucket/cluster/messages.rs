@@ -90,6 +90,7 @@ impl DdcBucket {
 
         Ok(())
     }
+
     pub fn message_cluster_reserve_resource(
         &mut self,
         cluster_id: ClusterId,

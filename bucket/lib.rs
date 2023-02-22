@@ -349,6 +349,20 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
+        /// Adds node to an existing cluster
+        ///
+        /// The caller will be its first manager.
+        #[ink(message, payable)]
+        pub fn cluster_add_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_ids: Vec<NodeId>,
+            v_nodes: Vec<Vec<u64>>,
+        ) {
+            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
+                .unwrap()
+        }
+
         /// Create a new cluster and return its `cluster_id`.
         ///
         /// The caller will be its first manager.
