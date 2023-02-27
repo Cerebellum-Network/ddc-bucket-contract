@@ -23,6 +23,14 @@ fn storage_network_works() {
         (accounts.django, "django-1"),
         (accounts.eve, "eve-1"),
     ];
+
+    let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
+    let vnodes_first = vec![1, 2, 3];
+    let vnodes_second = vec![1, 2, 3];
+
+    vnodes_wrapper.push(vnodes_first);
+    vnodes_wrapper.push(vnodes_second);
+
     let vnode_count = node_specs.len() as u32 * 2;
 
     // Provide storage Nodes.
@@ -42,8 +50,8 @@ fn storage_network_works() {
     let mut cluster_manager = ClusterManager::new(manager_id);
 
     // Create storage and gateway Clusters.
-    cluster_manager.create_cluster(&mut contract, STORAGE_ENGINE, vnode_count);
-    cluster_manager.create_cluster(&mut contract, GATEWAY_ENGINE, 1);
+    cluster_manager.create_cluster(&mut contract, STORAGE_ENGINE, vnodes_wrapper);
+    cluster_manager.create_cluster(&mut contract, GATEWAY_ENGINE, vec![vec![1, 2, 3]]);
 
     // Create a user with a storage bucket.
     let user = TestUser::new(&mut contract, accounts.bob)?;
@@ -118,13 +126,13 @@ fn storage_network_works() {
         &[4, 5, 0],
     );
 
-    let vnodes = contract.cluster_get(1).unwrap().cluster.vnodes;
+    let vnodes = contract.cluster_get(1).unwrap().cluster.v_nodes;
     assert_eq!(vnodes, vec![1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6]);
 
     // Replace a node.
     cluster_manager.replace_node(&mut contract, 1);
 
-    let vnodes = contract.cluster_get(1).unwrap().cluster.vnodes;
+    let vnodes = contract.cluster_get(1).unwrap().cluster.v_nodes;
     assert_eq!(vnodes, vec![6, 2, 3, 4, 5, 6, 5, 2, 3, 4, 5, 6]);
     //  ^                 ^
     // Node 1 was replaced by Node 6 and Node 5.

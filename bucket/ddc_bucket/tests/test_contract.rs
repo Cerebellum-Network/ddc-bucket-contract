@@ -75,7 +75,7 @@ fn new_cluster() -> TestCluster {
 
     // Create a Cluster.
     let cluster_params = "{}";
-    let vnodes_wrapper = Vec::<Vec<u64>>::new();
+    let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
 
     let vnodes_for_first_node = vec![1, 2, 3];
     let vnodes_for_second_node = vec![4, 5, 6];
@@ -88,7 +88,7 @@ fn new_cluster() -> TestCluster {
     push_caller_value(manager, CONTRACT_FEE_LIMIT);
     let cluster_id = contract.cluster_create(
         manager,
-        vnodes_wrapper,
+        vnodes_wrapper.clone(),
         vec![node_id0, node_id1, node_id2],
         cluster_params.to_string(),
     );
@@ -304,7 +304,7 @@ fn cluster_create_works() {
                 cluster_id: ctx.cluster_id,
                 cluster: Cluster {
                     manager_id: ctx.manager,
-                    v_nodes: ctx.vnodes,
+                    v_nodes: ctx.vnodes.clone(),
                     resource_per_vnode: ctx.reserved,
                     resource_used: 0,
                     revenues: Cash(0),

@@ -39,7 +39,7 @@ impl TestStorage {
             .cluster;
 
         // Check that this bucket is allocated in the storage cluster of this node.
-        let allocated = cluster.vnodes.contains(&self.node.node_id);
+        let allocated = cluster.v_nodes.contains(&(self.node.node_id as u64));
         assert!(allocated, "bucket is not allocated on this node");
 
         let bucket_id = request.bucket_id;

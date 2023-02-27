@@ -4,14 +4,20 @@ use serde::{Deserialize, Serialize};
 pub struct Topology {
     pub engine_name: String,
     pub vnode_count: usize,
-    pub ring_tokens: Vec<u32>,
+    pub ring_tokens: Vec<u64>,
 }
 
 impl Topology {
-    pub fn new(engine_name: &str, v_nodes: Vec<Vec<u64>>) -> Self {
-        let ring_tokens = (1..1 + vnode_count)
-            .map(|i| (u32::MAX / vnode_count) * i as u32)
-            .collect();
+    pub fn new(engine_name: &str, v_nodes_wrapper: Vec<Vec<u64>>) -> Self {
+        let mut ring_tokens = Vec::<u64>::new();
+        let mut vnode_count = 0u64;
+
+        for v_nodes in v_nodes_wrapper {
+            for v_node in v_nodes {
+                ring_tokens.push(v_node);
+                vnode_count += 1;
+            }
+        }
 
         Self {
             engine_name: engine_name.to_string(),
@@ -38,7 +44,7 @@ impl Topology {
 
     pub fn get_segment_index(&self, routing_key: u32) -> usize {
         for (i, &token) in self.ring_tokens.iter().enumerate() {
-            if routing_key < token {
+            if routing_key < token as u32 {
                 return i;
             }
         }

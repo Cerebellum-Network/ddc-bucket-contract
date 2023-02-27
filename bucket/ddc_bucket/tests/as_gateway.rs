@@ -46,8 +46,12 @@ impl TestGateway {
 
         // Make a request to the right storage nodes.
         for index in replica_indices {
-            let node_id = cluster.cluster.vnodes.get(index).expect("Not enough nodes");
-            let storage_node = contract.node_get(*node_id)?;
+            let node_id = cluster
+                .cluster
+                .v_nodes
+                .get(index)
+                .expect("Not enough nodes");
+            let storage_node = contract.node_get(*node_id as u32)?;
             // Get the URL of the storage node.
             let storage_url = storage_node.params;
             // Prepare a request.

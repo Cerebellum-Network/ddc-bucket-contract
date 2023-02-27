@@ -68,8 +68,8 @@ impl TestUser {
         // Find a gateway cluster.
         let cdn_cluster = find_cluster(contract, GATEWAY_ENGINE)?.cluster;
         // Pick a gateway node.
-        let cdn_node_id = *cdn_cluster.vnodes.first().expect("empty cluster");
-        let cdn_node = contract.node_get(cdn_node_id)?;
+        let cdn_node_id = *cdn_cluster.v_nodes.first().expect("empty cluster");
+        let cdn_node = contract.node_get(cdn_node_id as u32)?;
         // Get the URL of the gateway.
         let url = cdn_node.params;
         // Prepare a request.

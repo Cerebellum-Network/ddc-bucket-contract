@@ -43,7 +43,7 @@ impl ClusterManager {
             .map(|n| n.node_id)
             .collect();
 
-        let topology = Topology::new(engine_name, vnode_count);
+        let topology = Topology::new(engine_name, v_nodes.clone());
 
         push_caller_value(self.account_id, CONTRACT_FEE_LIMIT);
         let _id = contract.cluster_create(
@@ -73,8 +73,9 @@ impl ClusterManager {
                 .unwrap()
                 .cluster
                 .resource_per_vnode;
+
             let new_node_id = self.find_best_storage_node(contract, resource_needed);
-            contract.cluster_replace_node(*cluster_id, *vnode_i, new_node_id);
+            contract.cluster_replace_node(*cluster_id, vec![vnode_i.clone() as u64], new_node_id);
         }
     }
 
@@ -92,8 +93,8 @@ impl ClusterManager {
                 continue; // Not our cluster, skip.
             }
 
-            for (index, &some_node_id) in cluster.cluster.vnodes.iter().enumerate() {
-                if some_node_id == node_id {
+            for (index, &some_node_id) in cluster.cluster.v_nodes.iter().enumerate() {
+                if some_node_id == node_id as u64 {
                     let vnode_id = (cluster.cluster_id, index as VNodeIndex);
                     vnode_ids.push(vnode_id);
                 }
