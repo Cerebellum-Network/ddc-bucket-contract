@@ -6,7 +6,7 @@ use ink_storage::traits::{SpreadLayout, StorageLayout};
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::Error::UnknownNode;
-use crate::ddc_bucket::{NodeId, Result};
+use crate::ddc_bucket::{Balance, NodeId, Result};
 
 #[derive(SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug,))]
@@ -22,15 +22,15 @@ impl TopologyStore {
         cluster_id: ClusterId,
         v_nodes: InkVec<InkVec<u64>>,
         nodes: InkVec<(NodeId, &Node)>,
-    ) -> Result<u32> {
-        let mut total_rent = 0u32;
+    ) -> Result<Balance> {
+        let mut total_rent = 0u128;
         for node in &nodes {
             let v_nodes_for_node = &v_nodes[node.0 as usize];
 
             for v_node in v_nodes_for_node.iter() {
                 self.0.insert((cluster_id, *v_node), node.0);
 
-                total_rent += node.1.rent_per_month as u32;
+                total_rent += node.1.rent_per_month as Balance;
             }
         }
 

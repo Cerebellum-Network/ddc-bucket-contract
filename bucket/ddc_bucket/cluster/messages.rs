@@ -36,10 +36,10 @@ impl DdcBucket {
         }
 
         let cluster_id = self.clusters.create(manager, &v_nodes)?;
-        self.topology_store
+        let rent = self
+            .topology_store
             .create_topology(cluster_id, v_nodes, nodes)?;
 
-        let rent = 0;
         self.clusters.get_mut(cluster_id).unwrap().change_rent(rent);
 
         let params_id = self.cluster_params.create(cluster_params.clone())?;

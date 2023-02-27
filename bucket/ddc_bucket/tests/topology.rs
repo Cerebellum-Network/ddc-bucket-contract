@@ -8,7 +8,7 @@ pub struct Topology {
 }
 
 impl Topology {
-    pub fn new(engine_name: &str, vnode_count: u32) -> Self {
+    pub fn new(engine_name: &str, v_nodes: Vec<Vec<u64>>) -> Self {
         let ring_tokens = (1..1 + vnode_count)
             .map(|i| (u32::MAX / vnode_count) * i as u32)
             .collect();

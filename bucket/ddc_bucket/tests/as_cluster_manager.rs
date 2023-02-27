@@ -27,7 +27,12 @@ impl ClusterManager {
         }
     }
 
-    pub fn create_cluster(&self, contract: &mut DdcBucket, engine_name: &str, vnode_count: u32) {
+    pub fn create_cluster(
+        &self,
+        contract: &mut DdcBucket,
+        engine_name: &str,
+        v_nodes: Vec<Vec<u64>>,
+    ) {
         let (nodes, count) = contract.node_list(0, 20, None);
         if count > 20 {
             unimplemented!("full iteration of contract entities")
@@ -43,7 +48,7 @@ impl ClusterManager {
         push_caller_value(self.account_id, CONTRACT_FEE_LIMIT);
         let _id = contract.cluster_create(
             self.account_id,
-            vnode_count,
+            v_nodes,
             node_ids,
             topology.to_string().unwrap(),
         );
