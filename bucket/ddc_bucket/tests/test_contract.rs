@@ -252,6 +252,7 @@ fn cluster_create_works() {
     // Check the nodes.
     {
         let node0 = ctx.contract.node_get(ctx.node_id0)?;
+
         assert_eq!(
             node0,
             NodeStatus {
@@ -259,8 +260,7 @@ fn cluster_create_works() {
                 node: Node {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
-                    // free_resource: 80
-                    free_resource: ctx.capacity - ctx.reserved * 2,
+                    free_resource: ctx.capacity - ctx.reserved * 3,
                 },
                 params: ctx.node_params0.to_string(),
             }
@@ -274,7 +274,7 @@ fn cluster_create_works() {
                 node: Node {
                     provider_id: ctx.provider_id1,
                     rent_per_month: ctx.rent_per_vnode,
-                    free_resource: ctx.capacity - ctx.reserved * 2,
+                    free_resource: ctx.capacity - ctx.reserved * 3,
                 },
                 params: ctx.node_params1.to_string(),
             }
@@ -288,7 +288,7 @@ fn cluster_create_works() {
                 node: Node {
                     provider_id: ctx.provider_id2,
                     rent_per_month: ctx.rent_per_vnode,
-                    free_resource: ctx.capacity - ctx.reserved * 2,
+                    free_resource: ctx.capacity - ctx.reserved * 3,
                 },
                 params: ctx.node_params2.to_string(),
             }
