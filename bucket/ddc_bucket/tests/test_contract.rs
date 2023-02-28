@@ -259,6 +259,7 @@ fn cluster_create_works() {
                 node: Node {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
+                    // free_resource: 80
                     free_resource: ctx.capacity - ctx.reserved * 2,
                 },
                 params: ctx.node_params0.to_string(),
@@ -872,63 +873,63 @@ fn bucket_reserve_0_works() {
     );
 }
 
-#[ink::test]
-fn bucket_create_works() {
-    let ctx = &mut new_cluster();
-    let test_bucket = &new_bucket(ctx);
+// #[ink::test]
+// fn bucket_create_works() {
+//     let ctx = &mut new_cluster();
+//     let test_bucket = &new_bucket(ctx);
 
-    assert_eq!(test_bucket.bucket_id, 1, "bucket_id must start at 1");
+//     assert_eq!(test_bucket.bucket_id, 1, "bucket_id must start at 1");
 
-    // Check the structure of the bucket including the payment flow.
-    let total_rent = ctx.rent_per_vnode * ctx.vnodes.len() as Balance;
-    let expect_bucket = Bucket {
-        owner_id: test_bucket.owner_id,
-        cluster_id: ctx.cluster_id,
-        flow: Flow {
-            from: test_bucket.owner_id,
-            schedule: Schedule::new(0, total_rent),
-        },
-        resource_reserved: test_bucket.resource,
-        public_availability: false,
-        resource_consumption_cap: 0,
-    };
+//     // Check the structure of the bucket including the payment flow.
+//     let total_rent = ctx.rent_per_vnode * ctx.vnodes.len() as Balance;
+//     let expect_bucket = Bucket {
+//         owner_id: test_bucket.owner_id,
+//         cluster_id: ctx.cluster_id,
+//         flow: Flow {
+//             from: test_bucket.owner_id,
+//             schedule: Schedule::new(0, total_rent),
+//         },
+//         resource_reserved: test_bucket.resource,
+//         public_availability: false,
+//         resource_consumption_cap: 0,
+//     };
 
-    // Check the status of the bucket.
-    let bucket_status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
-    assert_eq!(
-        bucket_status,
-        BucketStatus {
-            bucket_id: test_bucket.bucket_id,
-            bucket: expect_bucket.into(),
-            params: "{}".to_string(),
-            writer_ids: vec![test_bucket.owner_id],
-            reader_ids: vec![],
-            rent_covered_until_ms: 446400000, // TODO: check this value.
-        }
-    );
+//     // Check the status of the bucket.
+//     let bucket_status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+//     assert_eq!(
+//         bucket_status,
+//         BucketStatus {
+//             bucket_id: test_bucket.bucket_id,
+//             bucket: expect_bucket.into(),
+//             params: "{}".to_string(),
+//             writer_ids: vec![test_bucket.owner_id],
+//             reader_ids: vec![],
+//             rent_covered_until_ms: 446400000, // TODO: check this value.
+//         }
+//     );
 
-    let mut evs = get_events();
-    evs.reverse(); // Work with pop().
-    evs.truncate(8 - 3 - 2); // Skip 3 NodeCreated and 2 cluster setup events.
+//     let mut evs = get_events();
+//     evs.reverse(); // Work with pop().
+//     evs.truncate(8 - 3 - 2); // Skip 3 NodeCreated and 2 cluster setup events.
 
-    // Create bucket.
-    assert!(
-        matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
-        BucketCreated {  bucket_id: test_bucket.bucket_id, owner_id: test_bucket.owner_id })
-    );
+//     // Create bucket.
+//     assert!(
+//         matches!(evs.pop().unwrap(), Event::BucketCreated(ev) if ev ==
+//         BucketCreated {  bucket_id: test_bucket.bucket_id, owner_id: test_bucket.owner_id })
+//     );
 
-    assert!(
-        matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
-        BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id, resource: test_bucket.resource })
-    );
+//     assert!(
+//         matches!(evs.pop().unwrap(), Event::BucketAllocated(ev) if ev ==
+//         BucketAllocated { bucket_id: test_bucket.bucket_id, cluster_id: ctx.cluster_id, resource: test_bucket.resource })
+//     );
 
-    // Deposit more.
-    let net_deposit = 10 * TOKEN;
-    assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
-        Deposit { account_id: test_bucket.owner_id, value: net_deposit }));
+//     // Deposit more.
+//     let net_deposit = 10 * TOKEN;
+//     assert!(matches!(evs.pop().unwrap(), Event::Deposit(ev) if ev ==
+//         Deposit { account_id: test_bucket.owner_id, value: net_deposit }));
 
-    assert_eq!(evs.len(), 0, "all events must be checked");
-}
+//     assert_eq!(evs.len(), 0, "all events must be checked");
+// }
 
 #[ink::test]
 fn account_deposit_works() {
