@@ -409,6 +409,29 @@ fn cluster_replace_node_works() {
         (ctx.node_id1, 100 - 10 - 10 + 10),
         (ctx.node_id2, 100 - 10 - 10 - 10),
     ];
+
+    // let expected_resources = [
+    //     (ctx.node_id0, 100 - 10 - 10),
+    //     (ctx.node_id1, 100 - 10 - 10 - 10),
+    //     (ctx.node_id2, 100 - 10 - 10 - 10 - 10),
+    // ];
+    println!("test");
+
+    println!(
+        "{:?}",
+        ctx.contract.node_get(ctx.node_id0)?.node.free_resource
+    );
+    println!(
+        "{:?}",
+        ctx.contract.node_get(ctx.node_id1)?.node.free_resource
+    );
+    println!(
+        "{:?}",
+        ctx.contract.node_get(ctx.node_id2)?.node.free_resource
+    );
+
+    println!("test");
+
     for (node_id, available) in expected_resources {
         assert_eq!(
             ctx.contract.node_get(node_id)?.node.free_resource,
