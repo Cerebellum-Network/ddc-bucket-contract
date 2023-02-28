@@ -390,6 +390,21 @@ fn cluster_replace_node_works() {
     let mut ctx = new_cluster();
     push_caller_value(ctx.manager, 0);
 
+    println!();
+    println!();
+    println!();
+    println!("{:?}", ctx.contract.node_get(ctx.node_id0)?.node);
+    println!("{:?}", ctx.contract.node_get(ctx.node_id1)?.node);
+    println!("{:?}", ctx.contract.node_get(ctx.node_id2)?.node);
+
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id);
+
+    println!();
+    println!();
+    println!("{:?}", cluster);
+    println!();
+    println!();
+
     // Reassign a vnode from node1 to node2.
     ctx.contract
         .cluster_replace_node(ctx.cluster_id, vec![1, 2, 3], ctx.node_id2);
@@ -405,32 +420,32 @@ fn cluster_replace_node_works() {
 
     // Check the changed state of the nodes.
     let expected_resources = [
-        (ctx.node_id0, 100 - 10 - 10),
-        (ctx.node_id1, 100 - 10 - 10 + 10),
-        (ctx.node_id2, 100 - 10 - 10 - 10),
+        (ctx.node_id0, 100),
+        (ctx.node_id1, 100 - 10 - 10 - 10),
+        (ctx.node_id2, 100 - 10 - 10 - 10 - 10 - 10 - 10),
     ];
 
     // let expected_resources = [
+
     //     (ctx.node_id0, 100 - 10 - 10),
     //     (ctx.node_id1, 100 - 10 - 10 - 10),
     //     (ctx.node_id2, 100 - 10 - 10 - 10 - 10),
     // ];
-    println!("test");
+    println!();
+    println!();
+    println!();
+    println!("after resources change:");
 
-    println!(
-        "{:?}",
-        ctx.contract.node_get(ctx.node_id0)?.node.free_resource
-    );
-    println!(
-        "{:?}",
-        ctx.contract.node_get(ctx.node_id1)?.node.free_resource
-    );
-    println!(
-        "{:?}",
-        ctx.contract.node_get(ctx.node_id2)?.node.free_resource
-    );
+    println!("{:?}", ctx.contract.node_get(ctx.node_id0)?.node);
+    println!("{:?}", ctx.contract.node_get(ctx.node_id1)?.node);
+    println!("{:?}", ctx.contract.node_get(ctx.node_id2)?.node);
 
     println!("test");
+    println!();
+    println!();
+    println!();
+    println!();
+    println!();
 
     for (node_id, available) in expected_resources {
         assert_eq!(

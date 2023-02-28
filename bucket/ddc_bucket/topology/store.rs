@@ -88,4 +88,8 @@ impl TopologyStore {
     pub fn get_node_id(&mut self, cluster_id: ClusterId, v_node: u64) -> Result<&NodeId> {
         self.0.get(&(cluster_id, v_node)).ok_or(UnknownNode)
     }
+
+    pub fn get_node_id_mut(&mut self, cluster_id: ClusterId, v_node: u64) -> Result<&mut NodeId> {
+        self.0.get_mut(&(cluster_id, v_node)).ok_or(UnknownNode)
+    }
 }

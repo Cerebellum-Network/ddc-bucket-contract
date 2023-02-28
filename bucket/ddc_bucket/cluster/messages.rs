@@ -123,23 +123,28 @@ impl DdcBucket {
         let cluster = self.clusters.get_mut(cluster_id)?;
         let manager = Self::only_cluster_manager(cluster)?;
 
-        // Give back resources to the old node.
-        let old_node_id = self
-            .topology_store
-            .get_node_id(cluster_id, v_nodes[0])
-            .unwrap();
+        // Give back resources to the old node for all its v_nodes
+        for v_node in v_nodes.clone() {
+            let old_node_id = self
+                .topology_store
+                .get_node_id_mut(cluster_id, v_node)
+                .unwrap();
 
-        self.nodes
-            .get_mut(*old_node_id)?
-            .put_resource(cluster.resource_per_vnode);
+            // Give back resources to the old node
+            self.nodes
+                .get_mut(*old_node_id)?
+                .put_resource(cluster.resource_per_vnode);
 
-        let new_node = self.nodes.get_mut(new_node_id)?;
+            let new_node = self.nodes.get_mut(new_node_id)?;
 
-        // Verify that the provider of the new node trusts the cluster manager.
-        Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
+            // Verify that the provider of the new node trusts the cluster manager.
+            Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
 
-        // Reserve resources on the new node.
-        new_node.take_resource(cluster.resource_per_vnode)?;
+            // Reserve resources on the new node.
+            new_node.take_resource(cluster.resource_per_vnode)?;
+
+            *old_node_id = new_node_id as u32;
+        }
 
         self.topology_store
             .replace_node(cluster_id, v_nodes, new_node_id)?;
