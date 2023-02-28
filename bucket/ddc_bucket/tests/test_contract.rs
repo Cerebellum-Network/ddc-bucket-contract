@@ -390,8 +390,6 @@ fn cluster_replace_node_works() {
     let mut ctx = new_cluster();
     push_caller_value(ctx.manager, 0);
 
-    let cluster = ctx.contract.cluster_get(ctx.cluster_id);
-
     // Reassign a vnode from node1 to node2.
     ctx.contract
         .cluster_replace_node(ctx.cluster_id, vec![1, 2, 3], ctx.node_id2);
