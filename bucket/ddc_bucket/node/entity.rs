@@ -17,6 +17,16 @@ pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub free_resource: Resource,
+    pub node_tag: NodeTag,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub enum NodeTag {
+    ACTIVE,
+    ADDING,
+    DELETING,
+    OFFLINE,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -38,6 +48,10 @@ impl Node {
         } else {
             Err(UnauthorizedProvider)
         }
+    }
+
+    pub fn change_tag(&mut self, new_tag: NodeTag) {
+        self.node_tag = new_tag;
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

@@ -1,9 +1,9 @@
-// use ink_lang as ink;
+use ink_lang as ink;
 
-// use crate::ddc_bucket::tests::as_cluster_manager::ClusterManager;
-// use crate::ddc_bucket::*;
+use crate::ddc_bucket::tests::as_cluster_manager::ClusterManager;
+use crate::ddc_bucket::*;
 
-// use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
+use super::{as_gateway::*, as_storage::*, as_user::*, env_utils::*, node::*};
 
 // #[ink::test]
 // fn storage_network_works() {

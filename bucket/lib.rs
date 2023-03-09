@@ -112,7 +112,9 @@ pub mod ddc_bucket {
             let _ = contract.accounts.create_if_not_exist(AccountId::default());
             let _ = contract.cdn_nodes.create(AccountId::default(), 0);
             let _ = contract.cdn_node_params.create("".to_string());
-            let _ = contract.nodes.create(AccountId::default(), 0, 0);
+            let _ = contract
+                .nodes
+                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE);
             let _ = contract.node_params.create("".to_string());
             let _ = contract
                 .clusters
@@ -389,6 +391,12 @@ pub mod ddc_bucket {
         pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
             self.message_cluster_reserve_resource(cluster_id, amount)
                 .unwrap()
+        }
+
+        /// As manager, change a node tag
+        #[ink(message)]
+        pub fn cluster_change_node_tag(&mut self, node_id: NodeId, new_tag: NodeTag) -> () {
+            self.message_node_change_tag(node_id, new_tag).unwrap()
         }
 
         /// As manager, re-assign a vnode to another physical node.
@@ -695,8 +703,9 @@ pub mod ddc_bucket {
             rent_per_month: Balance,
             node_params: NodeParams,
             capacity: Resource,
+            node_tag: NodeTag,
         ) -> NodeId {
-            self.message_node_create(rent_per_month, node_params, capacity)
+            self.message_node_create(rent_per_month, node_params, capacity, node_tag)
                 .unwrap()
         }
 
