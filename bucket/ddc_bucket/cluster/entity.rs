@@ -6,6 +6,7 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::cash::Cash;
+use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
@@ -23,7 +24,8 @@ pub struct Cluster {
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
-    pub v_nodes: Vec<u64>,
+    pub node_ids: Vec<NodeId>,
+    pub v_nodes: Vec<Vec<u64>>,
     pub total_rent: Balance,
 }
 
@@ -36,21 +38,14 @@ pub struct ClusterStatus {
 }
 
 impl Cluster {
-    pub fn new(manager_id: AccountId, v_nodes_arr: &Vec<Vec<u64>>) -> Self {
-        let mut v_nodes = Vec::<u64>::new();
-
-        for v_nodes_vec in v_nodes_arr {
-            for v_node in v_nodes_vec {
-                v_nodes.push(v_node.clone());
-            }
-        }
-
+    pub fn new(manager_id: AccountId, v_nodes_arr: &Vec<Vec<u64>>, node_ids: &Vec<NodeId>) -> Self {
         Cluster {
             manager_id,
             resource_per_vnode: 0,
             resource_used: 0,
             revenues: Cash(0),
-            v_nodes: v_nodes,
+            v_nodes: v_nodes_arr.clone(),
+            node_ids: node_ids.clone(),
             total_rent: 0,
         }
     }

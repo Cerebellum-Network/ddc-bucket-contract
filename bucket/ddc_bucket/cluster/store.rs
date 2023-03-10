@@ -3,6 +3,7 @@
 use ink_prelude::vec::Vec;
 use ink_storage::traits::{SpreadLayout, StorageLayout};
 
+use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 
 use super::entity::{Cluster, ClusterId};
@@ -12,8 +13,13 @@ use super::entity::{Cluster, ClusterId};
 pub struct ClusterStore(pub Vec<Cluster>);
 
 impl ClusterStore {
-    pub fn create(&mut self, manager_id: AccountId, v_nodes: &Vec<Vec<u64>>) -> Result<ClusterId> {
-        let cluster = Cluster::new(manager_id, v_nodes);
+    pub fn create(
+        &mut self,
+        manager_id: AccountId,
+        v_nodes: &Vec<Vec<u64>>,
+        node_ids: &Vec<NodeId>,
+    ) -> Result<ClusterId> {
+        let cluster = Cluster::new(manager_id, v_nodes, node_ids);
 
         let cluster_id = self.0.len();
         self.0.push(cluster);

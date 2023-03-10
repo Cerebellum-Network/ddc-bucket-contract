@@ -25,7 +25,9 @@ struct TestCluster {
     node_id1: NodeId,
     node_id2: NodeId,
     rent_per_vnode: Balance,
+    vnodes_wrapper: Vec<Vec<u64>>,
     vnodes: Vec<u64>,
+    node_ids: Vec<NodeId>,
     node_params0: &'static str,
     node_params1: &'static str,
     node_params2: &'static str,
@@ -88,6 +90,8 @@ fn new_cluster() -> TestCluster {
     );
     pop_caller();
 
+    let mut node_ids = vec![0, 1, 2];
+
     // Create a Cluster.
     let cluster_params = "{}";
     let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
@@ -133,6 +137,8 @@ fn new_cluster() -> TestCluster {
         node_id1,
         node_id2,
         rent_per_vnode,
+        node_ids,
+        vnodes_wrapper,
         vnodes,
         node_params0,
         node_params1,
@@ -323,7 +329,8 @@ fn cluster_create_works() {
                 cluster_id: ctx.cluster_id,
                 cluster: Cluster {
                     manager_id: ctx.manager,
-                    v_nodes: ctx.vnodes.clone(),
+                    v_nodes: ctx.vnodes_wrapper.clone(),
+                    node_ids: ctx.node_ids.clone(),
                     resource_per_vnode: ctx.reserved,
                     resource_used: 0,
                     revenues: Cash(0),
@@ -749,13 +756,6 @@ fn cluster_pays_providers() {
     let before1 = balance_of(ctx.provider_id1);
     let before2 = balance_of(ctx.provider_id2);
     let before_mgmt = balance_of(ctx.manager);
-
-    println!("From test:");
-    println!("{:?}", to_distribute);
-    println!("{:?}", before0);
-    println!("{:?}", before1);
-    println!("{:?}", before2);
-    println!("From test");
 
     let skip_events = get_events::<Event>().len();
 

@@ -118,7 +118,11 @@ pub mod ddc_bucket {
             let _ = contract.node_params.create("".to_string());
             let _ = contract
                 .clusters
-                .create(AccountId::default(), &Vec::<Vec<u64>>::new())
+                .create(
+                    AccountId::default(),
+                    &Vec::<Vec<u64>>::new(),
+                    &Vec::<NodeId>::new(),
+                )
                 .unwrap();
             let _ = contract.cluster_params.create("".to_string());
             let _ = contract.buckets.create(AccountId::default(), 0);
