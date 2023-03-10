@@ -26,15 +26,15 @@ impl DdcBucket {
         let manager = Self::env().caller();
 
         let mut nodes = Vec::<(NodeId, &Node)>::new();
-        for node_id in node_ids {
-            let node = self.nodes.get(node_id)?;
-            nodes.push((node_id, node));
+        for node_id in &node_ids {
+            let node = self.nodes.get(*node_id)?;
+            nodes.push((*node_id, node));
 
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
-        let cluster_id = self.clusters.create(manager, &v_nodes)?;
+        let cluster_id = self.clusters.create(manager, &v_nodes, &node_ids)?;
         let rent = self
             .topology_store
             .create_topology(cluster_id, v_nodes, nodes)?;
@@ -71,21 +71,22 @@ impl DdcBucket {
 
         // add node and redistribute v_nodes
         let cluster = self.clusters.get(cluster_id)?;
-        let total_rent =
-            self.topology_store
-                .add_node(cluster_id, &cluster.v_nodes, &v_nodes, nodes)?;
 
-        // update v_nodes inside cluster entity
-        let mut cluster_v_nodes = Vec::<u64>::new();
-        for v_nodes_for_node in v_nodes {
-            for v_node in v_nodes_for_node {
-                cluster_v_nodes.push(v_node);
+        let mut old_v_nodes = Vec::<u64>::new();
+        for v_node_wrapper in &cluster.v_nodes {
+            for v_node in v_node_wrapper {
+                old_v_nodes.push(*v_node);
             }
         }
 
+        // TODO: change v_nodes inside cluster entity
+        let total_rent = self
+            .topology_store
+            .add_node(cluster_id, &old_v_nodes, &v_nodes, nodes)?;
+
         let cluster = self.clusters.get_mut(cluster_id)?;
         cluster.total_rent = total_rent as Balance;
-        cluster.v_nodes = cluster_v_nodes;
+        cluster.v_nodes = v_nodes;
 
         Ok(())
     }
@@ -99,11 +100,13 @@ impl DdcBucket {
         Self::only_cluster_manager(cluster)?;
         cluster.put_resource(resource);
 
-        for v_node in &cluster.v_nodes {
-            let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
-            let node = self.nodes.get_mut(*node_id)?;
+        for v_nodes_wrapper in &cluster.v_nodes {
+            for v_node in v_nodes_wrapper {
+                let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
+                let node = self.nodes.get_mut(*node_id)?;
 
-            node.take_resource(resource)?;
+                node.take_resource(resource)?;
+            }
         }
 
         Self::env().emit_event(ClusterReserveResource {
@@ -174,16 +177,18 @@ impl DdcBucket {
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 
-        for v_node in &cluster.v_nodes {
-            let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
+        for v_nodes_wrapper in &cluster.v_nodes {
+            for v_node in v_nodes_wrapper {
+                let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
 
-            let node = self.nodes.get(*node_id)?;
-            Self::send_cash(node.provider_id, Cash(per_share))?;
+                let node = self.nodes.get(*node_id)?;
+                Self::send_cash(node.provider_id, Cash(per_share))?;
 
-            Self::env().emit_event(ClusterDistributeRevenues {
-                cluster_id,
-                provider_id: node.provider_id,
-            });
+                Self::env().emit_event(ClusterDistributeRevenues {
+                    cluster_id,
+                    provider_id: node.provider_id,
+                });
+            }
         }
 
         // TODO: set a maximum node count, or support paging.
