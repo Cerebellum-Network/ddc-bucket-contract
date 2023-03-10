@@ -3,6 +3,7 @@
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
+use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::node::entity::{NodeStatus, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
@@ -46,18 +47,20 @@ impl DdcBucket {
 
     pub fn message_node_change_tag(&mut self, node_id: NodeId, new_tag: NodeTag) -> Result<()> {
         let caller = Self::env().caller();
-        let mut node = self.nodes.get_mut(node_id)?;
+        let node = self.nodes.get_mut(node_id)?;
         node.only_owner(caller)?;
 
         node.change_tag(new_tag);
         Ok(())
     }
 
-    pub fn message_node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
+    pub fn message_node_get(&self, cluster_id: ClusterId, v_node: u64) -> Result<NodeStatus> {
+        let node_id = self.topology_store.get_node_id(cluster_id, v_node)?.clone();
         let node = self.nodes.get(node_id)?.clone();
+
         let params = self.node_params.get(node_id)?.clone();
         Ok(NodeStatus {
-            node_id,
+            node_id: node_id,
             node,
             params,
         })

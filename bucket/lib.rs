@@ -351,6 +351,20 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
+        /// Removes a node to an existing cluster
+        ///
+        /// The caller will be its first manager.
+        #[ink(message, payable)]
+        pub fn cluster_remove_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_ids: Vec<NodeId>,
+            v_nodes: Vec<Vec<u64>>,
+        ) {
+            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
+                .unwrap()
+        }
+
         /// Adds node to an existing cluster
         ///
         /// The caller will be its first manager.
@@ -719,8 +733,8 @@ pub mod ddc_bucket {
 
         /// Get the current status of a node.
         #[ink(message)]
-        pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
-            self.message_node_get(node_id)
+        pub fn node_get(&self, cluster_id: ClusterId, v_node: u64) -> Result<NodeStatus> {
+            self.message_node_get(cluster_id, v_node)
         }
 
         /// Iterate through all nodes.

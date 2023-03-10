@@ -85,7 +85,7 @@ impl TopologyStore {
         Ok(total_rent)
     }
 
-    pub fn get_node_id(&mut self, cluster_id: ClusterId, v_node: u64) -> Result<&NodeId> {
+    pub fn get_node_id(&self, cluster_id: ClusterId, v_node: u64) -> Result<&NodeId> {
         self.0.get(&(cluster_id, v_node)).ok_or(UnknownNode)
     }
 
