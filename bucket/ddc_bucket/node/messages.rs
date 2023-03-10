@@ -54,13 +54,11 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_node_get(&self, cluster_id: ClusterId, v_node: u64) -> Result<NodeStatus> {
-        let node_id = self.topology_store.get_node_id(cluster_id, v_node)?.clone();
+    pub fn message_node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
         let node = self.nodes.get(node_id)?.clone();
-
         let params = self.node_params.get(node_id)?.clone();
         Ok(NodeStatus {
-            node_id: node_id,
+            node_id,
             node,
             params,
         })

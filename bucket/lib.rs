@@ -737,8 +737,8 @@ pub mod ddc_bucket {
 
         /// Get the current status of a node.
         #[ink(message)]
-        pub fn node_get(&self, cluster_id: ClusterId, v_node: u64) -> Result<NodeStatus> {
-            self.message_node_get(cluster_id, v_node)
+        pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
+            self.message_node_get(node_id)
         }
 
         /// Iterate through all nodes.
