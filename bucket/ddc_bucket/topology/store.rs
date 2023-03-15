@@ -70,16 +70,22 @@ impl TopologyStore {
         }
 
         let mut total_rent = 0u32;
+        let mut index = 0u32;
 
         // reassign v_nodes to physical ones
         for node in nodes {
-            let v_nodes_for_node = &v_nodes[node.0 as usize];
+            println!("node.0: {:?}", node.0);
+            println!("index: {:?}", index);
+
+            let v_nodes_for_node = &v_nodes[index as usize];
 
             for v_node in v_nodes_for_node.iter() {
                 self.0.insert((cluster_id, *v_node), node.0);
 
                 total_rent += node.1.rent_per_month as u32;
             }
+
+            index += 1;
         }
 
         Ok(total_rent)

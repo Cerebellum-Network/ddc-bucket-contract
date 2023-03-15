@@ -61,9 +61,9 @@ impl DdcBucket {
         let manager = Self::env().caller();
         let mut nodes = Vec::<(NodeId, &Node)>::new();
 
-        for node_id in node_ids {
-            let node = self.nodes.get(node_id)?;
-            nodes.push((node_id, node));
+        for node_id in &node_ids {
+            let node = self.nodes.get(node_id.clone())?;
+            nodes.push((node_id.clone(), node));
 
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
@@ -87,6 +87,7 @@ impl DdcBucket {
         let cluster = self.clusters.get_mut(cluster_id)?;
         cluster.total_rent = total_rent as Balance;
         cluster.v_nodes = v_nodes;
+        cluster.node_ids = node_ids;
 
         Ok(())
     }

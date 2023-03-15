@@ -946,7 +946,8 @@ pub mod ddc_bucket {
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
-        Unauthorized,
+// 18
+ Unauthorized,
         UnknownNode,
     }
 
