@@ -6,6 +6,7 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::cash::Cash;
+use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::params::store::Params;
@@ -65,6 +66,58 @@ impl Cluster {
         }
         self.resource_used = used;
         Ok(())
+    }
+
+    // v_nodes should be sorted
+    pub fn replace_v_node(&mut self, v_nodes: Vec<u64>, node_id: NodeId) {
+        let old_v_nodes = &self.v_nodes;
+        let old_node_ids = &self.node_ids;
+
+        let mut new_v_nodes = Vec::<Vec<u64>>::new();
+        let mut new_node_ids = Vec::<NodeId>::new();
+
+        let mut new_v_nodes_idx = 0;
+        let mut v_nodes_for_new_node = Vec::<u64>::new();
+
+        for wrapper_idx in 0..old_v_nodes.len() {
+            let mut v_nodes_wrapper = Vec::<u64>::new();
+            for idx in 0..old_v_nodes.get(wrapper_idx).unwrap().len() {
+                let new_v_node = match v_nodes.get(new_v_nodes_idx) {
+                    Some(v) => *v,
+                    None => 0,
+                };
+
+                if old_v_nodes
+                    .get(wrapper_idx)
+                    .unwrap()
+                    .get(idx)
+                    .unwrap()
+                    .clone()
+                    == new_v_node
+                {
+                    v_nodes_for_new_node.push(new_v_node);
+                    new_v_nodes_idx += 1;
+                } else {
+                    v_nodes_wrapper.push(
+                        old_v_nodes
+                            .get(wrapper_idx)
+                            .unwrap()
+                            .get(idx)
+                            .unwrap()
+                            .clone(),
+                    );
+                }
+            }
+
+            new_v_nodes.push(v_nodes_wrapper);
+            new_node_ids.push(*old_node_ids.get(wrapper_idx).unwrap());
+        }
+
+        new_v_nodes.push(v_nodes_for_new_node);
+        new_node_ids.push(node_id);
+
+        self.v_nodes = new_v_nodes;
+        self.node_ids = new_node_ids;
     }
 
     pub fn only_manager(&self, caller: AccountId) -> Result<()> {

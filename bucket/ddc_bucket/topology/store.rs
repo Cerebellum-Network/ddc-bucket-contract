@@ -74,9 +74,6 @@ impl TopologyStore {
 
         // reassign v_nodes to physical ones
         for node in nodes {
-            println!("node.0: {:?}", node.0);
-            println!("index: {:?}", index);
-
             let v_nodes_for_node = &v_nodes[index as usize];
 
             for v_node in v_nodes_for_node.iter() {

@@ -1,4 +1,6 @@
 //! The public interface to manage Clusters.
+use core::num;
+
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
@@ -151,7 +153,9 @@ impl DdcBucket {
         }
 
         self.topology_store
-            .replace_node(cluster_id, v_nodes, new_node_id)?;
+            .replace_node(cluster_id, v_nodes.clone(), new_node_id)?;
+
+        cluster.replace_v_node(v_nodes, new_node_id);
 
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,
@@ -178,20 +182,15 @@ impl DdcBucket {
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 
-        for v_nodes_wrapper in &cluster.v_nodes {
-            for v_node in v_nodes_wrapper {
-                let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
+        for node_id in &cluster.node_ids {
+            let node = self.nodes.get(*node_id)?;
+            Self::send_cash(node.provider_id, Cash(per_share))?;
 
-                let node = self.nodes.get(*node_id)?;
-                Self::send_cash(node.provider_id, Cash(per_share))?;
-
-                Self::env().emit_event(ClusterDistributeRevenues {
-                    cluster_id,
-                    provider_id: node.provider_id,
-                });
-            }
+            Self::env().emit_event(ClusterDistributeRevenues {
+                cluster_id,
+                provider_id: node.provider_id,
+            });
         }
-
         // TODO: set a maximum node count, or support paging.
         // TODO: aggregate the payments per node_id or per provider_id.
 

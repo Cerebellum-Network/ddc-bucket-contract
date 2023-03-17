@@ -420,47 +420,55 @@ fn cluster_replace_node_only_trusted_manager() {
     );
 }
 
-// #[ink::test]
-// fn cluster_replace_node_works() {
-//     let mut ctx = new_cluster();
-//     push_caller_value(ctx.manager, 0);
+#[ink::test]
+fn cluster_replace_node_works() {
+    let mut ctx = new_cluster();
+    push_caller_value(ctx.manager, 0);
 
-//     // Reassign a vnode from node1 to node2.
-//     ctx.contract
-//         .cluster_replace_node(ctx.cluster_id, vec![1, 2, 3], ctx.node_id2);
+    // Reassign a vnode from node1 to node2.
+    ctx.contract
+        .cluster_replace_node(ctx.cluster_id, vec![1, 3], ctx.node_id2);
 
-//     // Check the last event.
-//     let ev = get_events().pop().unwrap();
-//     assert!(matches!(ev, Event::ClusterNodeReplaced(ev) if ev ==
-//         ClusterNodeReplaced { cluster_id: ctx.cluster_id, node_id: ctx.node_id2  }));
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::ClusterNodeReplaced(ev) if ev ==
+        ClusterNodeReplaced { cluster_id: ctx.cluster_id, node_id: ctx.node_id2  }));
 
-//     // Check the changed state of the cluster.
-//     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
-//     assert_eq!(&cluster.v_nodes, &ctx.vnodes, "a vnode must be replaced");
+    let vnodes_for_replaced = vec![2];
+    let vnodes_for_second_node = vec![4, 5, 6];
+    let vnodes_for_third_node = vec![7, 8, 9];
+    let vnodes_for_third_dup = vec![1, 3];
 
-//     // Check the changed state of the nodes.
-//     let expected_resources = [
-//         (ctx.node_id0, 100),
-//         (ctx.node_id1, 100 - 10 - 10 - 10),
-//         (ctx.node_id2, 100 - 10 - 10 - 10 - 10 - 10 - 10),
-//     ];
+    let vnodes = vec![
+        vnodes_for_replaced,
+        vnodes_for_second_node,
+        vnodes_for_third_node,
+        vnodes_for_third_dup,
+    ];
 
-//     for (_, available) in expected_resources {
-//         assert_eq!(
-//             ctx.contract
-//                 .node_get(
-//                     ctx.cluster_id,
-//                     ctx.vnodes_wrapper.get(1).unwrap().get(0).unwrap().clone(),
-//                 )?
-//                 .node
-//                 .free_resource,
-//             available,
-//             "resources must have shifted between nodes"
-//         );
-//     }
-// }
+    // Check the changed state of the cluster.
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
+    println!("cluster.v_nodes: {:?}", cluster.v_nodes.clone());
+    println!("cluster.node_ids: {:?}", cluster.node_ids.clone());
+    assert_eq!(&cluster.v_nodes, &vnodes, "a vnode must be replaced");
 
-// TODO: uncomment
+    // Check the changed state of the nodes.
+    let expected_resources = [
+        (ctx.node_id0, 100 - 10),
+        (ctx.node_id1, 100 - 10 - 10 - 10),
+        (ctx.node_id2, 100 - 10 - 10 - 10 - 10 - 10),
+    ];
+
+    for (node_id, available) in expected_resources {
+        let node_status = ctx.contract.node_get(node_id as u32).unwrap();
+        assert_eq!(
+            node_status.node.free_resource, available,
+            "resources must have shifted between nodes"
+        );
+    }
+}
+
+// // TODO: uncomment
 // #[ink::test]
 // fn cluster_reserve_works() {
 //     let mut ctx = new_cluster();
@@ -785,112 +793,101 @@ fn cluster_add_node() {
     assert!(matches!(cluster_status.clone().cluster.v_nodes.len(), 4));
 }
 
-// #[ink::test]
-// fn cluster_pays_providers() {
-//     let ctx = &mut new_cluster();
-//     let test_bucket = &new_bucket(ctx);
-//     bucket_settle_payment(ctx, &test_bucket);
+#[ink::test]
+fn cluster_pays_providers() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+    bucket_settle_payment(ctx, &test_bucket);
 
-//     // Get state before the distribution.
-//     let to_distribute = ctx
-//         .contract
-//         .cluster_get(ctx.cluster_id)?
-//         .cluster
-//         .revenues
-//         .peek();
-//     let before0 = balance_of(ctx.provider_id0);
-//     let before1 = balance_of(ctx.provider_id1);
-//     let before2 = balance_of(ctx.provider_id2);
-//     let before_mgmt = balance_of(ctx.manager);
+    // Get state before the distribution.
+    let to_distribute = ctx
+        .contract
+        .cluster_get(ctx.cluster_id)?
+        .cluster
+        .revenues
+        .peek();
+    let before0 = balance_of(ctx.provider_id0);
+    let before1 = balance_of(ctx.provider_id1);
+    let before2 = balance_of(ctx.provider_id2);
+    let before_mgmt = balance_of(ctx.manager);
 
-//     let skip_events = get_events::<Event>().len();
+    let skip_events = get_events::<Event>().len();
 
-//     // Set a network fee.
-//     let network_fee_bp = 100; // 1%
-//     let cluster_management_fee_bp = 200; // 2%
-//     ctx.contract.admin_set_fee_config(FeeConfig {
-//         network_fee_bp,
-//         network_fee_destination: AccountId::default(),
-//         cluster_management_fee_bp,
-//     });
+    // Set a network fee.
+    let network_fee_bp = 100; // 1%
+    let cluster_management_fee_bp = 200; // 2%
+    ctx.contract.admin_set_fee_config(FeeConfig {
+        network_fee_bp,
+        network_fee_destination: AccountId::default(),
+        cluster_management_fee_bp,
+    });
 
-//     let burned_fee = to_distribute * network_fee_bp / 10_000;
-//     let manager_fee = (to_distribute - burned_fee) * cluster_management_fee_bp / 10_000;
-//     let provider_fee = (to_distribute - burned_fee - manager_fee) / 3;
+    let burned_fee = to_distribute * network_fee_bp / 10_000;
+    let manager_fee = (to_distribute - burned_fee) * cluster_management_fee_bp / 10_000;
+    let provider_fee = (to_distribute - burned_fee - manager_fee) / 3;
 
-//     // Distribute the revenues of the cluster to providers.
-//     ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
+    // Distribute the revenues of the cluster to providers.
+    ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
 
-//     // Check the last events.
-//     let mut evs = get_events();
-//     evs.reverse(); // Work with pop().
-//     evs.truncate(evs.len() - skip_events);
-//     let expected_recipients = vec![
-//         ctx.provider_id0,
-//         ctx.provider_id0,
-//         ctx.provider_id0,
-//         ctx.provider_id1,
-//         ctx.provider_id1,
-//         ctx.provider_id1,
-//         ctx.provider_id2,
-//         ctx.provider_id2,
-//         ctx.provider_id2,
-//     ];
+    // Check the last events.
+    let mut evs = get_events();
+    evs.reverse(); // Work with pop().
+    evs.truncate(evs.len() - skip_events);
+    let expected_recipients = vec![ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
 
-//     for provider_id in expected_recipients {
-//         assert!(
-//             matches!(evs.pop().unwrap(), Event::ClusterDistributeRevenues(ev) if ev ==
-//             ClusterDistributeRevenues { cluster_id: ctx.cluster_id, provider_id })
-//         );
-//     }
+    for provider_id in expected_recipients {
+        assert!(
+            matches!(evs.pop().unwrap(), Event::ClusterDistributeRevenues(ev) if ev ==
+            ClusterDistributeRevenues { cluster_id: ctx.cluster_id, provider_id })
+        );
+    }
 
-//     assert_eq!(evs.len(), 0, "all events must be checked");
-//     println!("DONE");
+    assert_eq!(evs.len(), 0, "all events must be checked");
 
-//     // Get state after the distribution.
-//     let rounding_error = ctx
-//         .contract
-//         .cluster_get(ctx.cluster_id)?
-//         .cluster
-//         .revenues
-//         .peek();
-//     let earned0 = balance_of(ctx.provider_id0) - before0;
-//     let earned1 = balance_of(ctx.provider_id1) - before1;
-//     let earned2 = balance_of(ctx.provider_id2) - before2;
-//     let earned_mgmt = balance_of(ctx.manager) - before_mgmt;
+    // Get state after the distribution.
+    let rounding_error = ctx
+        .contract
+        .cluster_get(ctx.cluster_id)?
+        .cluster
+        .revenues
+        .peek();
+    let earned0 = balance_of(ctx.provider_id0) - before0;
+    let earned1 = balance_of(ctx.provider_id1) - before1;
+    let earned2 = balance_of(ctx.provider_id2) - before2;
+    let earned_mgmt = balance_of(ctx.manager) - before_mgmt;
 
-//     assert!(provider_fee > 0, "provider must earn something");
-//     assert_eq!(
-//         earned0, provider_fee,
-//         "providers must earn the correct amount"
-//     );
-//     assert_eq!(
-//         earned1, provider_fee,
-//         "providers must earn the correct amount"
-//     );
-//     assert_eq!(
-//         earned2, provider_fee,
-//         "providers must earn the correct amount"
-//     );
+    assert!(provider_fee > 0, "provider must earn something");
+    assert_eq!(
+        earned0, provider_fee,
+        "providers must earn the correct amount"
+    );
+    assert_eq!(
+        earned1, provider_fee,
+        "providers must earn the correct amount"
+    );
+    assert_eq!(
+        earned2, provider_fee,
+        "providers must earn the correct amount"
+    );
 
-//     assert!(burned_fee > 0, "the network must earn something");
-//     assert!(manager_fee > 0, "the manager must earn something");
-//     assert_eq!(
-//         earned_mgmt, manager_fee,
-//         "the manager must earn the correct amount"
-//     );
+    assert!(burned_fee > 0, "the network must earn something");
+    assert!(manager_fee > 0, "the manager must earn something");
+    assert_eq!(
+        earned_mgmt, manager_fee,
+        "the manager must earn the correct amount"
+    );
 
-//     assert!(to_distribute > 0);
-//     assert!(
-//         rounding_error < 10,
-//         "revenues must go out of the cluster (besides rounding)"
-//     );
-//     assert_eq!(
-//         earned0 + earned1 + earned2 + burned_fee + manager_fee + rounding_error,
-//         to_distribute,
-//         "all revenues must go to providers"
-//     );
-// }
+    assert!(to_distribute > 0);
+    assert!(
+        rounding_error < 10,
+        "revenues must go out of the cluster (besides rounding)"
+    );
+    assert_eq!(
+        earned0 + earned1 + earned2 + burned_fee + manager_fee + rounding_error,
+        to_distribute,
+        "all revenues must go to providers"
+    );
+}
 
 // #[ink::test]
 // fn bucket_reserve_0_works() {
