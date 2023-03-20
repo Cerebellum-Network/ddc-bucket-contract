@@ -1,6 +1,4 @@
 //! The public interface to manage Clusters.
-use core::num;
-
 use ink_lang::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 

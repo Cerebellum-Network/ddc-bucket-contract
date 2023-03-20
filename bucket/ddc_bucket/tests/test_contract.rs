@@ -480,7 +480,6 @@ fn cluster_replace_node_works() {
     }
 }
 
-// TODO: uncomment
 #[ink::test]
 fn cluster_reserve_works() {
     let mut ctx = new_cluster();

@@ -6,7 +6,6 @@ use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::cash::Cash;
-use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::params::store::Params;
