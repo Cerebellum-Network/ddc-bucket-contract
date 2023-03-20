@@ -880,67 +880,68 @@ fn cluster_pays_providers() {
     );
 }
 
-// #[ink::test]
-// fn bucket_reserve_0_works() {
-//     let contract = DdcBucket::new();
+#[ink::test]
+fn bucket_reserve_0_works() {
+    let contract = DdcBucket::new();
 
-//     assert_eq!(
-//         contract.bucket_list(0, 10, None),
-//         (
-//             vec![BucketStatus {
-//                 bucket_id: 0,
-//                 bucket: BucketInStatus {
-//                     owner_id: AccountId::default(),
-//                     cluster_id: 0,
-//                     resource_reserved: 0,
-//                     public_availability: false,
-//                     resource_consumption_cap: 0,
-//                 },
-//                 params: "".to_string(),
-//                 writer_ids: vec![AccountId::default()],
-//                 reader_ids: vec![],
-//                 rent_covered_until_ms: 18446744073709551615,
-//             }],
-//             1
-//         )
-//     );
+    assert_eq!(
+        contract.bucket_list(0, 10, None),
+        (
+            vec![BucketStatus {
+                bucket_id: 0,
+                bucket: BucketInStatus {
+                    owner_id: AccountId::default(),
+                    cluster_id: 0,
+                    resource_reserved: 0,
+                    public_availability: false,
+                    resource_consumption_cap: 0,
+                },
+                params: "".to_string(),
+                writer_ids: vec![AccountId::default()],
+                reader_ids: vec![],
+                rent_covered_until_ms: 18446744073709551615,
+            }],
+            1
+        )
+    );
 
-//     assert_eq!(
-//         contract.cluster_list(0, 10, None),
-//         (
-//             vec![ClusterStatus {
-//                 cluster_id: 0,
-//                 cluster: Cluster {
-//                     manager_id: AccountId::default(),
-//                     v_nodes: vec![],
-//                     resource_per_vnode: 0,
-//                     resource_used: 0,
-//                     revenues: Cash(0),
-//                     total_rent: 0,
-//                 },
-//                 params: "".to_string(),
-//             }],
-//             1
-//         )
-//     );
+    assert_eq!(
+        contract.cluster_list(0, 10, None),
+        (
+            vec![ClusterStatus {
+                cluster_id: 0,
+                cluster: Cluster {
+                    manager_id: AccountId::default(),
+                    v_nodes: vec![],
+                    resource_per_vnode: 0,
+                    resource_used: 0,
+                    revenues: Cash(0),
+                    total_rent: 0,
+                    node_ids: vec![]
+                },
+                params: "".to_string(),
+            }],
+            1
+        )
+    );
 
-//     assert_eq!(
-//         contract.node_list(0, 10, None),
-//         (
-//             vec![NodeStatus {
-//                 node_id: 0,
-//                 node: Node {
-//                     provider_id: AccountId::default(),
-//                     rent_per_month: 0,
-//                     free_resource: 0,
-//                     node_tag: NodeTag::ADDING
-//                 },
-//                 params: "".to_string(),
-//             }],
-//             1
-//         )
-//     );
-// }
+    assert_eq!(
+        contract.node_list(0, 10, None),
+        (
+            vec![NodeStatus {
+                node_id: 0,
+                node: Node {
+                    provider_id: AccountId::default(),
+                    rent_per_month: 0,
+                    free_resource: 0,
+                    node_tag: NodeTag::ACTIVE
+                },
+                params: "".to_string(),
+            }],
+            1
+        )
+    );
+}
 
 #[ink::test]
 fn bucket_create_works() {
