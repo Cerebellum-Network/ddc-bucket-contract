@@ -21,7 +21,7 @@ jobs:
           cargo install cargo-contract --version ^0.14 --force --locked
       - name: Run tests
         run: |
-          cargo test
+          RUSTFLAGS=-Awarnings cargo test
       - name: Build contract
         run: |
           cargo contract build --release --manifest-path bucket/Cargo.toml
