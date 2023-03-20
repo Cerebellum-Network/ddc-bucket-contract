@@ -1067,23 +1067,20 @@ fn account_deposit_works() {
     assert_eq!(evs.len(), 0, "all events must be checked");
 }
 
-// #[ink::test]
-// fn node_change_params_works() {
-//     let ctx = &mut new_cluster();
+#[ink::test]
+fn node_change_params_works() {
+    let ctx = &mut new_cluster();
 
-//     // Change params.
-//     push_caller_value(ctx.provider_id0, CONTRACT_FEE_LIMIT);
-//     ctx.contract
-//         .node_change_params(ctx.node_id0, "new params".to_string());
-//     pop_caller();
+    // Change params.
+    push_caller_value(ctx.provider_id0, CONTRACT_FEE_LIMIT);
+    ctx.contract
+        .node_change_params(ctx.node_id0, "new params".to_string());
+    pop_caller();
 
-//     // Check the changed params.
-//     let status = ctx.contract.node_get(
-//         ctx.cluster_id,
-//         ctx.vnodes_wrapper.get(1).unwrap().get(0).unwrap().clone(),
-//     )?;
-//     assert_eq!(status.params, "new params");
-// }
+    // Check the changed params.
+    let status = ctx.contract.node_get(ctx.node_id0)?;
+    assert_eq!(status.params, "new params");
+}
 
 #[ink::test]
 #[should_panic]
