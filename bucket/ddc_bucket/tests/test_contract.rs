@@ -468,38 +468,38 @@ fn cluster_replace_node_works() {
     }
 }
 
-// // TODO: uncomment
-// #[ink::test]
-// fn cluster_reserve_works() {
-//     let mut ctx = new_cluster();
-//     push_caller_value(ctx.manager, 0);
+// TODO: uncomment
+#[ink::test]
+fn cluster_reserve_works() {
+    let mut ctx = new_cluster();
+    push_caller_value(ctx.manager, 0);
 
-//     // Reserve more resources.
-//     ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
+    // Reserve more resources.
+    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
 
-//     // Check the last event.
-//     let ev = get_events().pop().unwrap();
-//     assert!(matches!(ev, Event::ClusterReserveResource(ev) if ev ==
-//         ClusterReserveResource { cluster_id: ctx.cluster_id, resource: 5 }));
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::ClusterReserveResource(ev) if ev ==
+        ClusterReserveResource { cluster_id: ctx.cluster_id, resource: 5 }));
 
-//     // Check the changed state of the cluster.
-//     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
-//     assert_eq!(cluster.resource_per_vnode, 10 + 5);
+    // Check the changed state of the cluster.
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
+    assert_eq!(cluster.resource_per_vnode, 10 + 5);
 
-//     // Check the changed state of the nodes.
-//     let expected_resources = [
-//         (ctx.node_id0, 100 - 10 - 10 - 5 - 5),
-//         (ctx.node_id1, 100 - 10 - 10 - 5 - 5),
-//         (ctx.node_id2, 100 - 10 - 10 - 5 - 5),
-//     ];
-//     for (node_id, available) in expected_resources {
-//         assert_eq!(
-//             ctx.contract.node_get(node_id)?.node.free_resource,
-//             available,
-//             "more resources must be reserved from the nodes"
-//         );
-//     }
-// }
+    // Check the changed state of the nodes.
+    let expected_resources = [
+        (ctx.node_id0, 100 - 40 - 5),
+        (ctx.node_id1, 100 - 40 - 5),
+        (ctx.node_id2, 100 - 40 - 5),
+    ];
+    for (node_id, available) in expected_resources {
+        assert_eq!(
+            ctx.contract.node_get(node_id)?.node.free_resource,
+            available,
+            "more resources must be reserved from the nodes"
+        );
+    }
+}
 
 #[ink::test]
 fn cluster_management_validation_works() {
