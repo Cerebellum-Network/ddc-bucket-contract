@@ -93,7 +93,7 @@ fn new_cluster() -> TestCluster {
     pop_caller();
 
     // Create a Cluster.
-    let node_ids = vec![0, 1, 2];
+    let node_ids = vec![1, 2, 3];
     let cluster_params = "{}";
     let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
 
@@ -260,132 +260,122 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     }
 }
 
-// #[ink::test]
-// fn cluster_create_works() {
-//     let ctx = new_cluster();
-//     let provider_ids = &[ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
-//     let node_ids = &[ctx.node_id0, ctx.node_id1, ctx.node_id2];
-//     let node_params = &[ctx.node_params0, ctx.node_params1, ctx.node_params2];
+#[ink::test]
+fn cluster_create_works() {
+    let ctx = new_cluster();
+    let provider_ids = &[ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
+    let node_ids = &[ctx.node_id0, ctx.node_id1, ctx.node_id2];
+    let node_params = &[ctx.node_params0, ctx.node_params1, ctx.node_params2];
 
-//     assert_eq!(ctx.cluster_id, 1, "cluster_id must start at 1");
-//     assert_eq!(ctx.node_id0, 1, "node_id must start at 1");
-//     assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
+    assert_eq!(ctx.cluster_id, 1, "cluster_id must start at 1");
+    assert_eq!(ctx.node_id0, 1, "node_id must start at 1");
+    assert_ne!(ctx.node_id0, ctx.node_id1, "nodes must have unique IDs");
 
-//     // Check the nodes.
-//     {
-//         let node0 = ctx.contract.node_get(
-//             ctx.cluster_id,
-//             ctx.vnodes_wrapper.get(0).unwrap().get(0).unwrap().clone(),
-//         )?;
+    // Check the nodes.
+    {
+        let node0 = ctx.contract.node_get(ctx.node_id0)?;
 
-//         assert_eq!(
-//             node0,
-//             NodeStatus {
-//                 node_id: ctx.node_id0,
-//                 node: Node {
-//                     provider_id: ctx.provider_id0,
-//                     rent_per_month: ctx.rent_per_vnode,
-//                     free_resource: ctx.capacity - ctx.reserved * 3,
-//                     node_tag: NodeTag::ADDING
-//                 },
-//                 params: ctx.node_params0.to_string(),
-//             }
-//         );
+        assert_eq!(
+            node0,
+            NodeStatus {
+                node_id: ctx.node_id0,
+                node: Node {
+                    provider_id: ctx.provider_id0,
+                    rent_per_month: ctx.rent_per_vnode,
+                    free_resource: ctx.capacity - ctx.reserved * 3,
+                    node_tag: NodeTag::ADDING
+                },
+                params: ctx.node_params0.to_string(),
+            }
+        );
 
-//         let node1 = ctx.contract.node_get(
-//             ctx.cluster_id,
-//             ctx.vnodes_wrapper.get(1).unwrap().get(0).unwrap().clone(),
-//         )?;
-//         assert_eq!(
-//             node1,
-//             NodeStatus {
-//                 node_id: ctx.node_id1,
-//                 node: Node {
-//                     provider_id: ctx.provider_id1,
-//                     rent_per_month: ctx.rent_per_vnode,
-//                     free_resource: ctx.capacity - ctx.reserved * 3,
-//                     node_tag: NodeTag::ADDING
-//                 },
-//                 params: ctx.node_params1.to_string(),
-//             }
-//         );
+        let node1 = ctx.contract.node_get(ctx.node_id1)?;
+        assert_eq!(
+            node1,
+            NodeStatus {
+                node_id: ctx.node_id1,
+                node: Node {
+                    provider_id: ctx.provider_id1,
+                    rent_per_month: ctx.rent_per_vnode,
+                    free_resource: ctx.capacity - ctx.reserved * 3,
+                    node_tag: NodeTag::ADDING
+                },
+                params: ctx.node_params1.to_string(),
+            }
+        );
 
-//         let node2 = ctx.contract.node_get(
-//             ctx.cluster_id,
-//             ctx.vnodes_wrapper.get(2).unwrap().get(0).unwrap().clone(),
-//         )?;
-//         assert_eq!(
-//             node2,
-//             NodeStatus {
-//                 node_id: ctx.node_id2,
-//                 node: Node {
-//                     provider_id: ctx.provider_id2,
-//                     rent_per_month: ctx.rent_per_vnode,
-//                     free_resource: ctx.capacity - ctx.reserved * 3,
-//                     node_tag: NodeTag::ADDING
-//                 },
-//                 params: ctx.node_params2.to_string(),
-//             }
-//         );
-//     }
+        let node2 = ctx.contract.node_get(ctx.node_id2)?;
+        assert_eq!(
+            node2,
+            NodeStatus {
+                node_id: ctx.node_id2,
+                node: Node {
+                    provider_id: ctx.provider_id2,
+                    rent_per_month: ctx.rent_per_vnode,
+                    free_resource: ctx.capacity - ctx.reserved * 3,
+                    node_tag: NodeTag::ADDING
+                },
+                params: ctx.node_params2.to_string(),
+            }
+        );
+    }
 
-//     // Check the initial state of the cluster.
-//     {
-//         let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    // Check the initial state of the cluster.
+    {
+        let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+        assert_eq!(
+            cluster,
+            ClusterStatus {
+                cluster_id: ctx.cluster_id,
+                cluster: Cluster {
+                    manager_id: ctx.manager,
+                    node_ids: ctx.node_ids,
+                    v_nodes: ctx.vnodes_wrapper,
+                    resource_per_vnode: ctx.reserved,
+                    resource_used: 0,
+                    revenues: Cash(0),
+                    total_rent: ctx.rent_per_vnode * ctx.vnodes.len() as Balance,
+                },
+                params: "{}".to_string(),
+            }
+        );
+    }
 
-//         assert_eq!(
-//             cluster,
-//             ClusterStatus {
-//                 cluster_id: ctx.cluster_id,
-//                 cluster: Cluster {
-//                     manager_id: ctx.manager,
-//                     node_ids: ctx.node_ids,
-//                     v_nodes: ctx.vnodes_wrapper,
-//                     resource_per_vnode: ctx.reserved,
-//                     resource_used: 0,
-//                     revenues: Cash(0),
-//                     total_rent: ctx.rent_per_vnode * ctx.vnodes.len() as Balance,
-//                 },
-//                 params: "{}".to_string(),
-//             }
-//         );
-//     }
+    // Check the events.
+    let mut evs = get_events();
+    evs.reverse(); // Work with pop().
 
-//     // Check the events.
-//     let mut evs = get_events();
-//     evs.reverse(); // Work with pop().
+    // Providers trust Manager.
+    for provider_id in provider_ids {
+        assert!(
+            matches!(evs.pop().unwrap(), Event::GrantPermission(ev) if ev ==
+            GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) })
+        );
+    }
 
-//     // Providers trust Manager.
-//     for provider_id in provider_ids {
-//         assert!(
-//             matches!(evs.pop().unwrap(), Event::GrantPermission(ev) if ev ==
-//             GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) })
-//         );
-//     }
+    // Nodes created.
+    for i in 0..3 {
+        assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
+            NodeCreated {
+                node_id: node_ids[i],
+                provider_id: provider_ids[i],
+                rent_per_month: ctx.rent_per_vnode,
+                node_params: node_params[i].to_string() }));
+    }
 
-//     // Nodes created.
-//     for i in 0..3 {
-//         assert!(matches!(evs.pop().unwrap(), Event::NodeCreated(ev) if ev ==
-//             NodeCreated {
-//                 node_id: node_ids[i],
-//                 provider_id: provider_ids[i],
-//                 rent_per_month: ctx.rent_per_vnode,
-//                 node_params: node_params[i].to_string() }));
-//     }
+    // Cluster setup.
+    assert!(
+        matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
+        ClusterCreated { cluster_id: ctx.cluster_id, manager: ctx.manager, cluster_params: "{}".to_string() })
+    );
 
-//     // Cluster setup.
-//     assert!(
-//         matches!(evs.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
-//         ClusterCreated { cluster_id: ctx.cluster_id, manager: ctx.manager, cluster_params: "{}".to_string() })
-//     );
+    assert!(
+        matches!(evs.pop().unwrap(), Event::ClusterReserveResource(ev) if ev ==
+        ClusterReserveResource { cluster_id: ctx.cluster_id, resource: ctx.reserved })
+    );
 
-//     assert!(
-//         matches!(evs.pop().unwrap(), Event::ClusterReserveResource(ev) if ev ==
-//         ClusterReserveResource { cluster_id: ctx.cluster_id, resource: ctx.reserved })
-//     );
-
-//     assert_eq!(evs.len(), 0, "all events must be checked");
-// }
+    assert_eq!(evs.len(), 0, "all events must be checked");
+}
 
 #[ink::test]
 fn cluster_replace_node_only_manager() {
