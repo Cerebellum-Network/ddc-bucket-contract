@@ -545,38 +545,38 @@ fn cluster_management_validation_works() {
     );
 }
 
-// #[ink::test]
-// fn cdn_cluster_gas_converter_works() {
-//     println!("Creating new cdn cluster");
+#[ink::test]
+fn cdn_cluster_gas_converter_works() {
+    println!("Creating new cdn cluster");
 
-//     let mut ctx = new_cluster_cdn();
+    let mut ctx = new_cluster_cdn();
 
-//     println!("Got cdn cluster back");
-//     // The provider stops trusting the manager.
-//     println!("Cdn cluster id is {}", ctx.cluster_id);
-//     push_caller(ctx.manager);
-//     ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000);
-//     pop_caller();
-//     push_caller(ctx.provider_id0);
-//     let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
-//     pop_caller();
+    println!("Got cdn cluster back");
+    // The provider stops trusting the manager.
+    println!("Cdn cluster id is {}", ctx.cluster_id);
+    push_caller(ctx.manager);
+    ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000);
+    pop_caller();
+    push_caller(ctx.provider_id0);
+    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
+    pop_caller();
 
-//     let usd_per_cere = TOKEN / 100;
-//     push_caller(ctx.provider_id0);
-//     ctx.contract.account_set_usd_per_cere(usd_per_cere);
-//     pop_caller();
+    let usd_per_cere = TOKEN / 100;
+    push_caller(ctx.provider_id0);
+    ctx.contract.account_set_usd_per_cere(usd_per_cere);
+    pop_caller();
 
-//     let usd_amount = ctx.contract.account_get_usd_per_cere();
-//     println!("Current usd amount is {}", usd_amount);
+    let usd_amount = ctx.contract.account_get_usd_per_cere();
+    println!("Current usd amount is {}", usd_amount);
 
-//     println!("The current rate is {}", rate);
+    println!("The current rate is {}", rate);
 
-//     let usd_per_kb = rate / KB_PER_GB;
-//     println!("The current rate per kb {}", usd_per_kb);
+    let usd_per_kb = rate / KB_PER_GB;
+    println!("The current rate per kb {}", usd_per_kb);
 
-//     let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
-//     println!("The current cere rate per kb {}", cere_per_kb);
-// }
+    let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
+    println!("The current cere rate per kb {}", cere_per_kb);
+}
 
 #[ink::test]
 fn cdn_cluster_payment_works() {
