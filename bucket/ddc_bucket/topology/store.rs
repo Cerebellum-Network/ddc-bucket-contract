@@ -24,15 +24,17 @@ impl TopologyStore {
         nodes: InkVec<(NodeId, &Node)>,
     ) -> Result<Balance> {
         let mut total_rent = 0u128;
-        for node in &nodes {
-            let vnodes_wrapper_index = node.0 - 1;
-            let v_nodes_for_node = &v_nodes[vnodes_wrapper_index as usize];
+        let mut vnodes_wrapper_index = 0;
 
+        for node in &nodes {
+            let v_nodes_for_node = &v_nodes[vnodes_wrapper_index as usize];
             for v_node in v_nodes_for_node.iter() {
                 self.0.insert((cluster_id, *v_node), node.0);
 
                 total_rent += node.1.rent_per_month as Balance;
             }
+
+            vnodes_wrapper_index += 1;
         }
 
         Ok(total_rent)
