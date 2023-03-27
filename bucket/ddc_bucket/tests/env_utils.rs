@@ -1,15 +1,19 @@
 #![allow(unused_variables, dead_code)]
 
 pub use ink_env::{
-    call,
+    call, test,
+    test::{
+        advance_block, default_accounts, initialize_or_reset_as_default, recorded_events,
+        DefaultAccounts,
+    },
     DefaultEnvironment,
-    test,
-    test::{advance_block, default_accounts, DefaultAccounts, initialize_or_reset_as_default, recorded_events},
 };
 use ink_lang as ink;
 use scale::Decode;
 
 use crate::ddc_bucket::*;
+
+pub type Event = <DdcBucket as ink::BaseEvent>::Type;
 
 /// Recommended contract fee for all operations with reasonable data amounts.
 pub const CONTRACT_FEE_LIMIT: Balance = 10 * TOKEN;
@@ -32,7 +36,7 @@ pub fn push_caller_value(caller: AccountId, transferred_value: Balance) {
         caller,
         callee,
         1000000,
-        transferred_value,                                          // transferred balance
+        transferred_value,                                   // transferred balance
         test::CallData::new(call::Selector::new([0x00; 4])), // dummy
     );
 
@@ -44,9 +48,15 @@ pub fn pop_caller() {
 }
 
 pub fn transfer(from: AccountId, to: AccountId, amount: Balance) {
-    if amount == 0 { return; }
+    if amount == 0 {
+        return;
+    }
     let balance_of_from = balance_of(from);
-    assert!(balance_of_from >= amount, "Insufficient balance in test account {:?}", from);
+    assert!(
+        balance_of_from >= amount,
+        "Insufficient balance in test account {:?}",
+        from
+    );
     set_balance(from, balance_of_from - amount);
     set_balance(to, balance_of(to) + amount);
 }
@@ -73,10 +83,7 @@ pub fn get_events<Event: Decode>() -> Vec<Event> {
     raw_events.iter().map(decode_event).collect()
 }
 
-
-pub type Event = <DdcBucket as ink::BaseEvent>::Type;
-
-fn _print_events(events: &[Event]) {
+pub fn print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),

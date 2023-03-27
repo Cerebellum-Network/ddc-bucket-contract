@@ -16,40 +16,42 @@ pub mod ddc_bucket {
     use bucket::{entity::*, store::*};
     use cash::*;
     use cluster::{entity::*, store::*};
+    use committer::store::*;
     use node::{entity::*, store::*};
-    use params::{store::*};
-    use perm::{store::*};
-    use committer::{store::*};
+    use params::store::*;
+    use perm::store::*;
 
     use crate::ddc_bucket::account::entity::Account;
+    use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
+    use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
+    use crate::ddc_bucket::committer::store::EraConfig;
     use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
-    use crate::ddc_bucket::committer::store::EraConfig;
-    use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
-    use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
-    
+
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
     use self::cdn_node::entity::CdnNodeStatus;
     use self::protocol::store::ProtocolStore;
+    use self::topology::store::TopologyStore;
 
     pub mod account;
-    pub mod flow;
-    pub mod schedule;
-    pub mod cash;
-    pub mod cdn_node;
-    pub mod node;
-    pub mod bucket;
-    pub mod cluster;
-    pub mod cdn_cluster;
-    pub mod network_fee;
-    pub mod params;
     pub mod admin;
-    pub mod perm;
-    pub mod currency;
-    pub mod committer;
+    pub mod bucket;
     pub mod buckets_perms;
+    pub mod cash;
+    pub mod cdn_cluster;
+    pub mod cdn_node;
+    pub mod cluster;
+    pub mod committer;
+    pub mod currency;
+    pub mod flow;
+    pub mod network_fee;
+    pub mod node;
+    pub mod params;
+    pub mod perm;
     pub mod protocol;
+    pub mod schedule;
+    pub mod topology;
 
     // ---- Global state ----
     /// The main DDC smart contract.
@@ -70,6 +72,7 @@ pub mod ddc_bucket {
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
         protocol_store: ProtocolStore,
+        topology_store: TopologyStore,
     }
 
     impl DdcBucket {
@@ -88,7 +91,7 @@ pub mod ddc_bucket {
                 cluster_params: ParamsStore::default(),
                 cdn_nodes: CdnNodeStore::default(),
                 cdn_node_params: ParamsStore::default(),
-                cdn_clusters: CdnClusterStore:: default(),
+                cdn_clusters: CdnClusterStore::default(),
                 nodes: NodeStore::default(),
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
@@ -96,19 +99,31 @@ pub mod ddc_bucket {
                 network_fee: NetworkFeeStore::default(),
                 committer_store: CommitterStore::new(operator),
                 protocol_store: ProtocolStore::new(operator, DEFAULT_BASIS_POINTS),
+                topology_store: TopologyStore::new_topology_store(),
             };
 
             // Make the creator of this contract a super-admin.
             let admin_id = Self::env().caller();
-            contract.perms.grant_permission(admin_id, &Permission::SuperAdmin);
+            contract
+                .perms
+                .grant_permission(admin_id, &Permission::SuperAdmin);
 
             // Reserve IDs 0.
             let _ = contract.accounts.create_if_not_exist(AccountId::default());
             let _ = contract.cdn_nodes.create(AccountId::default(), 0);
             let _ = contract.cdn_node_params.create("".to_string());
-            let _ = contract.nodes.create(AccountId::default(), 0, 0);
+            let _ = contract
+                .nodes
+                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE);
             let _ = contract.node_params.create("".to_string());
-            let _ = contract.clusters.create(AccountId::default(), 0, &[]).unwrap();
+            let _ = contract
+                .clusters
+                .create(
+                    AccountId::default(),
+                    &Vec::<Vec<u64>>::new(),
+                    &Vec::<NodeId>::new(),
+                )
+                .unwrap();
             let _ = contract.cluster_params.create("".to_string());
             let _ = contract.buckets.create(AccountId::default(), 0);
             let _ = contract.bucket_params.create("".to_string());
@@ -160,16 +175,23 @@ pub mod ddc_bucket {
         ///
         /// The bucket can be connected to a single cluster (currently). Allocate cluster resources with the function `bucket_alloc_into_cluster`
         #[ink(message, payable)]
-        pub fn bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId, owner_id: Option<AccountId>) -> BucketId {
-            self.message_bucket_create(bucket_params, cluster_id, owner_id).unwrap()
+        pub fn bucket_create(
+            &mut self,
+            bucket_params: BucketParams,
+            cluster_id: ClusterId,
+            owner_id: Option<AccountId>,
+        ) -> BucketId {
+            self.message_bucket_create(bucket_params, cluster_id, owner_id)
+                .unwrap()
         }
 
         /// Change owner of the bucket
-        /// 
+        ///
         /// Provide the account of new owner
         #[ink(message, payable)]
         pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
-        self.message_bucket_change_owner(bucket_id, owner_id).unwrap()
+            self.message_bucket_change_owner(bucket_id, owner_id)
+                .unwrap()
         }
 
         /// Allocate some resources of a cluster to a bucket.
@@ -177,7 +199,8 @@ pub mod ddc_bucket {
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
         #[ink(message)]
         pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
-            self.message_bucket_alloc_into_cluster(bucket_id, resource).unwrap()
+            self.message_bucket_alloc_into_cluster(bucket_id, resource)
+                .unwrap()
         }
 
         /// Settle the due costs of a bucket from its payer account to the cluster account.
@@ -191,7 +214,8 @@ pub mod ddc_bucket {
         /// See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
         pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
-            self.message_bucket_change_params(bucket_id, params).unwrap();
+            self.message_bucket_change_params(bucket_id, params)
+                .unwrap();
         }
 
         /// Get the current status of a bucket.
@@ -207,7 +231,12 @@ pub mod ddc_bucket {
         ///
         /// The results can be filtered by owner. Note that paging must still be completed fully.
         #[ink(message)]
-        pub fn bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
+        pub fn bucket_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_owner_id: Option<AccountId>,
+        ) -> (Vec<BucketStatus>, u32) {
             self.message_bucket_list(offset, limit, filter_owner_id)
         }
 
@@ -221,14 +250,24 @@ pub mod ddc_bucket {
 
         /// Set availiablity of the bucket
         #[ink(message)]
-        pub fn bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> () {
-            self.message_bucket_set_availability(bucket_id, public_availability).unwrap()
+        pub fn bucket_set_availability(
+            &mut self,
+            bucket_id: BucketId,
+            public_availability: bool,
+        ) -> () {
+            self.message_bucket_set_availability(bucket_id, public_availability)
+                .unwrap()
         }
 
         /// Set max resource cap to be charged by CDN for public bucket
         #[ink(message)]
-        pub fn bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) -> () {
-            self.message_bucket_set_resource_cap(bucket_id, new_resource_cap).unwrap()
+        pub fn bucket_set_resource_cap(
+            &mut self,
+            bucket_id: BucketId,
+            new_resource_cap: Resource,
+        ) -> () {
+            self.message_bucket_set_resource_cap(bucket_id, new_resource_cap)
+                .unwrap()
         }
 
         /// Set permission for the reader of the bucket
@@ -240,13 +279,15 @@ pub mod ddc_bucket {
         /// Set permission for the writer of the bucket
         #[ink(message)]
         pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-            self.message_grant_writer_permission(bucket_id, writer).unwrap()
+            self.message_grant_writer_permission(bucket_id, writer)
+                .unwrap()
         }
 
         /// Revoke permission for the writer of the bucket
         #[ink(message)]
         pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-            self.message_revoke_writer_permission(bucket_id, writer).unwrap()
+            self.message_revoke_writer_permission(bucket_id, writer)
+                .unwrap()
         }
 
         /// Set permission for the reader of the bucket
@@ -258,17 +299,18 @@ pub mod ddc_bucket {
         /// Set permission for the reader of the bucket
         #[ink(message)]
         pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
-            self.message_grant_reader_permission(bucket_id, reader).unwrap()
+            self.message_grant_reader_permission(bucket_id, reader)
+                .unwrap()
         }
 
         /// Revoke permission for the reader of the bucket
         #[ink(message)]
         pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-            self.message_revoke_reader_permission(bucket_id, writer).unwrap()
+            self.message_revoke_reader_permission(bucket_id, writer)
+                .unwrap()
         }
     }
     // ---- End Bucket ----
-
 
     // ---- Cluster ----
 
@@ -291,7 +333,6 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
         #[ink(topic)]
         node_id: NodeId,
-        vnode_index: VNodeIndex,
     }
 
     /// Some resources were reserved for the cluster from the nodes.
@@ -314,6 +355,34 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
+        /// Removes a node to an existing cluster
+        ///
+        /// The caller will be its first manager.
+        #[ink(message, payable)]
+        pub fn cluster_remove_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_ids: Vec<NodeId>,
+            v_nodes: Vec<Vec<u64>>,
+        ) {
+            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
+                .unwrap()
+        }
+
+        /// Adds node to an existing cluster
+        ///
+        /// The caller will be its first manager.
+        #[ink(message, payable)]
+        pub fn cluster_add_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_ids: Vec<NodeId>,
+            v_nodes: Vec<Vec<u64>>,
+        ) {
+            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
+                .unwrap()
+        }
+
         /// Create a new cluster and return its `cluster_id`.
         ///
         /// The caller will be its first manager.
@@ -322,8 +391,15 @@ pub mod ddc_bucket {
         ///
         /// `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn cluster_create(&mut self, _unused: AccountId, vnode_count: u32, node_ids: Vec<NodeId>, cluster_params: ClusterParams) -> ClusterId {
-            self.message_cluster_create(vnode_count, node_ids, cluster_params).unwrap()
+        pub fn cluster_create(
+            &mut self,
+            _unused: AccountId,
+            v_nodes: Vec<Vec<u64>>,
+            node_ids: Vec<NodeId>,
+            cluster_params: ClusterParams,
+        ) -> ClusterId {
+            self.message_cluster_create(v_nodes, node_ids, cluster_params)
+                .unwrap()
         }
 
         /// As manager, reserve more resources for the cluster from the free capacity of nodes.
@@ -331,21 +407,35 @@ pub mod ddc_bucket {
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
         #[ink(message)]
         pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
-            self.message_cluster_reserve_resource(cluster_id, amount).unwrap()
+            self.message_cluster_reserve_resource(cluster_id, amount)
+                .unwrap()
+        }
+
+        /// As manager, change a node tag
+        #[ink(message)]
+        pub fn cluster_change_node_tag(&mut self, node_id: NodeId, new_tag: NodeTag) -> () {
+            self.message_node_change_tag(node_id, new_tag).unwrap()
         }
 
         /// As manager, re-assign a vnode to another physical node.
         ///
         /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
         #[ink(message)]
-        pub fn cluster_replace_node(&mut self, cluster_id: ClusterId, vnode_i: VNodeIndex, new_node_id: NodeId) -> () {
-            self.message_cluster_replace_node(cluster_id, vnode_i, new_node_id).unwrap()
+        pub fn cluster_replace_node(
+            &mut self,
+            cluster_id: ClusterId,
+            v_nodes: Vec<u64>,
+            new_node_id: NodeId,
+        ) -> () {
+            self.message_cluster_replace_node(cluster_id, v_nodes, new_node_id)
+                .unwrap()
         }
 
         /// Trigger the distribution of revenues from the cluster to the providers.
         #[ink(message)]
         pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-            self.message_cluster_distribute_revenues(cluster_id).unwrap()
+            self.message_cluster_distribute_revenues(cluster_id)
+                .unwrap()
         }
 
         /// Change the `cluster_params`, which is configuration used by clients and nodes.
@@ -353,7 +443,8 @@ pub mod ddc_bucket {
         /// See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
         pub fn cluster_change_params(&mut self, cluster_id: ClusterId, params: ClusterParams) {
-            self.message_cluster_change_params(cluster_id, params).unwrap();
+            self.message_cluster_change_params(cluster_id, params)
+                .unwrap();
         }
 
         /// Get the current status of a cluster.
@@ -369,7 +460,12 @@ pub mod ddc_bucket {
         ///
         /// The results can be filtered by manager. Note that paging must still be completed fully.
         #[ink(message)]
-        pub fn cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<ClusterStatus>, u32) {
+        pub fn cluster_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_manager_id: Option<AccountId>,
+        ) -> (Vec<ClusterStatus>, u32) {
             self.message_cluster_list(offset, limit, filter_manager_id)
         }
     }
@@ -410,32 +506,47 @@ pub mod ddc_bucket {
 
         /// Set rate for streaming (price per gb)
         #[ink(message, payable)]
-        pub fn cdn_set_rate(&mut self,  cluster_id: ClusterId, usd_per_gb: Balance) -> () {
+        pub fn cdn_set_rate(&mut self, cluster_id: ClusterId, usd_per_gb: Balance) -> () {
             self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
         }
-        
+
         /// Get rate for streaming (price per gb)
         #[ink(message, payable)]
-        pub fn cdn_get_rate(&self,  cluster_id: ClusterId) -> Balance {
+        pub fn cdn_get_rate(&self, cluster_id: ClusterId) -> Balance {
             self.message_cdn_get_rate(cluster_id).unwrap()
         }
 
-        /// As validator, charge payments from users and allocate undistributed payments to CDN nodes. 
-        /// 
+        /// As validator, charge payments from users and allocate undistributed payments to CDN nodes.
+        ///
         /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
         #[ink(message)]
-        pub fn cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>, era: u64) -> () {
-            self.message_cdn_cluster_put_revenue(cluster_id, aggregates_accounts, aggregates_nodes, aggregates_buckets, era).unwrap()
+        pub fn cdn_cluster_put_revenue(
+            &mut self,
+            cluster_id: ClusterId,
+            aggregates_accounts: Vec<(AccountId, u128)>,
+            aggregates_nodes: Vec<(u32, u128)>,
+            aggregates_buckets: Vec<(BucketId, Resource)>,
+            era: u64,
+        ) -> () {
+            self.message_cdn_cluster_put_revenue(
+                cluster_id,
+                aggregates_accounts,
+                aggregates_nodes,
+                aggregates_buckets,
+                era,
+            )
+            .unwrap()
         }
 
-        /// Trigger the distribution of revenues from the cluster to the CDN node providers. 
-        /// 
+        /// Trigger the distribution of revenues from the cluster to the CDN node providers.
+        ///
         /// Anyone can call this method.
-        /// 
+        ///
         /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
         #[ink(message)]
         pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-            self.message_cdn_cluster_distribute_revenues(cluster_id).unwrap()
+            self.message_cdn_cluster_distribute_revenues(cluster_id)
+                .unwrap()
         }
 
         /// Get the current status of a cluster.
@@ -451,7 +562,12 @@ pub mod ddc_bucket {
         ///
         /// The results can be filtered by manager. Note that paging must still be completed fully.
         #[ink(message)]
-        pub fn cdn_cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<CdnClusterStatus>, u32) {
+        pub fn cdn_cluster_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_manager_id: Option<AccountId>,
+        ) -> (Vec<CdnClusterStatus>, u32) {
             self.message_cdn_cluster_list(offset, limit, filter_manager_id)
         }
     }
@@ -483,7 +599,7 @@ pub mod ddc_bucket {
         pub fn set_era(&mut self, era_config: EraConfig) -> () {
             self.message_set_era(era_config).unwrap();
         }
-    
+
         /// Return current status of an era
         #[ink(message)]
         pub fn get_era(&self) -> EraStatus {
@@ -534,13 +650,13 @@ pub mod ddc_bucket {
             self.message_cdn_node_create(node_params).unwrap()
         }
 
-
         /// Change the `node_params`, which is configuration used by clients and nodes.
         ///
         /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
         pub fn cdn_node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
-            self.message_cdn_node_change_params(node_id, params).unwrap();
+            self.message_cdn_node_change_params(node_id, params)
+                .unwrap();
         }
 
         /// Get the current state of the cdn node
@@ -556,10 +672,14 @@ pub mod ddc_bucket {
         ///
         /// The results can be filtered by owner. Note that paging must still be completed fully.
         #[ink(message)]
-        pub fn cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeStatus>, u32) {
+        pub fn cdn_node_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_provider_id: Option<AccountId>,
+        ) -> (Vec<CdnNodeStatus>, u32) {
             self.message_cdn_node_list(offset, limit, filter_provider_id)
         }
-           
     }
     // ---- End CDN Node ----
 
@@ -596,8 +716,15 @@ pub mod ddc_bucket {
         ///
         /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn node_create(&mut self, rent_per_month: Balance, node_params: NodeParams, capacity: Resource) -> NodeId {
-            self.message_node_create(rent_per_month, node_params, capacity).unwrap()
+        pub fn node_create(
+            &mut self,
+            rent_per_month: Balance,
+            node_params: NodeParams,
+            capacity: Resource,
+            node_tag: NodeTag,
+        ) -> NodeId {
+            self.message_node_create(rent_per_month, node_params, capacity, node_tag)
+                .unwrap()
         }
 
         /// Change the `node_params`, which is configuration used by clients and nodes.
@@ -621,7 +748,12 @@ pub mod ddc_bucket {
         ///
         /// The results can be filtered by owner. Note that paging must still be completed fully.
         #[ink(message)]
-        pub fn node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<NodeStatus>, u32) {
+        pub fn node_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_provider_id: Option<AccountId>,
+        ) -> (Vec<NodeStatus>, u32) {
             self.message_node_list(offset, limit, filter_provider_id)
         }
     }
@@ -687,14 +819,14 @@ pub mod ddc_bucket {
             self.message_account_unbond(amount_to_unbond).unwrap()
         }
 
-        /// As user, move the unbonded tokens back to withdrawable balance state. 
-        /// 
+        /// As user, move the unbonded tokens back to withdrawable balance state.
+        ///
         /// This can be triggered after unbonded_timestamp
         #[ink(message, payable)]
         pub fn account_withdraw_unbonded(&mut self) -> () {
             self.message_account_withdraw_unbonded().unwrap()
         }
-        
+
         /// Get the current status of an account.
         #[ink(message)]
         pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
@@ -716,7 +848,6 @@ pub mod ddc_bucket {
         }
     }
     // ---- End Billing ----
-
 
     // ---- Permissions ----
     /// A permission was granted to the account.
@@ -747,19 +878,20 @@ pub mod ddc_bucket {
     }
     // ---- End Permissions ----
 
-
     // ---- Admin ----
     impl DdcBucket {
         /// As SuperAdmin, grant any permission to any account.
         #[ink(message, payable)]
         pub fn admin_grant_permission(&mut self, grantee: AccountId, permission: Permission) {
-            self.message_admin_grant_permission(grantee, permission, true).unwrap();
+            self.message_admin_grant_permission(grantee, permission, true)
+                .unwrap();
         }
 
         /// As SuperAdmin, revoke any permission to any account.
         #[ink(message)]
         pub fn admin_revoke_permission(&mut self, grantee: AccountId, permission: Permission) {
-            self.message_admin_grant_permission(grantee, permission, false).unwrap();
+            self.message_admin_grant_permission(grantee, permission, false)
+                .unwrap();
         }
 
         /// As SuperAdmin, withdraw the funds held in custody in this contract.
@@ -788,7 +920,6 @@ pub mod ddc_bucket {
     }
     // ---- End Accounts ----
 
-
     // ---- Utils ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
@@ -799,7 +930,6 @@ pub mod ddc_bucket {
     pub enum Error {
         BucketDoesNotExist,
         ClusterDoesNotExist,
-        TooManyVNodes,
         ParamsTooBig,
         VNodeDoesNotExist,
         BondingPeriodNotFinished,
@@ -816,7 +946,9 @@ pub mod ddc_bucket {
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
-        Unauthorized,
+// 18
+ Unauthorized,
+        UnknownNode,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

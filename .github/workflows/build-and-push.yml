@@ -1,43 +1,52 @@
-name: Build and Push
-on:
-  push:
-    branches:
-      - not_exists
-  workflow_dispatch:
-
-env:
-  ECR_REPOSITORY: crb-smart-contracts
-  ECR_REGISTRY: 625402836641.dkr.ecr.us-west-2.amazonaws.com
+name: Build and save DDC SC binaries
+on: [push, release]
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-18.04
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - uses: actions/checkout@v3
+      - name: Install latest nightly
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          aws-access-key-id: ${{ secrets.DEV_NETWORK_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.DEV_NETWORK_AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Cargo Cache
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-            ${{ runner.os }}-cargo
-      - name: Checkout repository
-        uses: actions/checkout@v1
-      - name: Build image and push image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          toolchain: nightly
+          target: x86_64-unknown-linux-gnu
+          components: rustfmt, clippy
+
+      - name: Install dependencies
         run: |
-          docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA"
-          docker image tag $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          rustup target add wasm32-unknown-unknown --toolchain nightly
+          rustup component add rust-src --toolchain nightly-unknown-linux-gnu
+          sudo apt-get install binaryen
+          cargo install cargo-contract --version ^0.14 --force --locked
+      - name: Run tests
+        run: |
+          RUSTFLAGS=-Awarnings cargo test
+      - name: Build contract
+        run: |
+          cargo contract build --release --manifest-path bucket/Cargo.toml
+      - name: Create names linked to commit
+        run: |
+          ddc_contract_name=ddc.${GITHUB_SHA:0:7}.contract
+          echo DDC_CONTRACT_NAME=$ddc_contract_name >> $GITHUB_ENV
+          ddc_wasm_name=ddc.${GITHUB_SHA:0:7}.wasm
+          echo DDC_WASM_NAME=$ddc_wasm_name >> $GITHUB_ENV
+          ddc_metadata_name=ddc.${GITHUB_SHA:0:7}.json
+          echo DDC_METADATA_NAME=$ddc_metadata_name >> $GITHUB_ENV
+      - name: Upload contract artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ${{ env.DDC_CONTRACT_NAME }}
+          path: ./target/ink/ddc_bucket/ddc_bucket.contract
+
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ${{ env.DDC_WASM_NAME }}
+          path: ./target/ink/ddc_bucket/ddc_bucket.wasm
+
+      - name: Upload metadata artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ${{ env.DDC_METADATA_NAME }}
+          path: ./target/ink/ddc_bucket/metadata.json

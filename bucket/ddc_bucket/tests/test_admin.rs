@@ -17,7 +17,6 @@ fn admin_init_works() {
     assert!(!contract.has_permission(not_admin_id(), Permission::SetExchangeRate));
 }
 
-
 #[ink::test]
 fn admin_withdraw_works() {
     let mut contract = setup();
@@ -38,7 +37,6 @@ fn admin_withdraw_only_admin() {
     contract.admin_withdraw(9); // panic.
     pop_caller();
 }
-
 
 #[ink::test]
 fn admin_grant_works() {
@@ -70,7 +68,6 @@ fn admin_grant_only_admin() {
     contract.admin_grant_permission(get_accounts().charlie, Permission::SuperAdmin); // panic.
     pop_caller();
 }
-
 
 #[ink::test]
 #[should_panic]
@@ -106,13 +103,16 @@ fn admin_revoke_only_admin() {
     pop_caller();
 }
 
-
 fn setup() -> DdcBucket {
     let contract = DdcBucket::new();
     set_balance(contract_id(), 10);
     contract
 }
 
-fn admin_id() -> AccountId { get_accounts().alice }
+fn admin_id() -> AccountId {
+    get_accounts().alice
+}
 
-fn not_admin_id() -> AccountId { get_accounts().bob }
+fn not_admin_id() -> AccountId {
+    get_accounts().bob
+}

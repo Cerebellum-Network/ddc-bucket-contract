@@ -3,8 +3,8 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use crate::ddc_bucket::params::store::Params;
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
@@ -17,6 +17,16 @@ pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub free_resource: Resource,
+    pub node_tag: NodeTag,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub enum NodeTag {
+    ACTIVE,
+    ADDING,
+    DELETING,
+    OFFLINE,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -33,7 +43,15 @@ impl Node {
     }
 
     pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
-        if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+        if self.provider_id == provider_id {
+            Ok(())
+        } else {
+            Err(UnauthorizedProvider)
+        }
+    }
+
+    pub fn change_tag(&mut self, new_tag: NodeTag) {
+        self.node_tag = new_tag;
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

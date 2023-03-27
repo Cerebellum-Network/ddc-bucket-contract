@@ -20,11 +20,14 @@ fn admin_id() -> AccountId {
 
 #[ink::test]
 fn currency_conversion_init_works() {
-    let contract = setup(); 
+    let contract = setup();
     let usd_amount = contract.account_get_usd_per_cere();
     println!("{}", usd_amount);
-    assert_eq!(contract.account_get_usd_per_cere(), 1 * TOKEN,
-               "conversion rate must be 1 initially");
+    assert_eq!(
+        contract.account_get_usd_per_cere(),
+        1 * TOKEN,
+        "conversion rate must be 1 initially"
+    );
 }
 
 #[ink::test]
@@ -37,8 +40,11 @@ fn currency_conversion_set_rate_works() {
     contract.account_set_usd_per_cere(usd_per_cere);
     pop_caller();
 
-    assert_eq!(contract.account_get_usd_per_cere(), usd_per_cere,
-               "conversion rate must be changed");
+    assert_eq!(
+        contract.account_get_usd_per_cere(),
+        usd_per_cere,
+        "conversion rate must be changed"
+    );
 }
 
 #[ink::test]
