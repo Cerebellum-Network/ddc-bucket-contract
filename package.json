@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@polkadot/api": "^10.2.1",
+    "@polkadot/api-contract": "^10.2.1",
+    "@polkadot/keyring": "^11.1.2"
+  }
+}

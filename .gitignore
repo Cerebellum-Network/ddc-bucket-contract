@@ -10,4 +10,5 @@ Cargo.lock
 
 local
 .idea
+.node_modules
 ink-doc-gen
