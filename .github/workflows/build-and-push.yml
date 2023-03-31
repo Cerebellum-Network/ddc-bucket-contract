@@ -24,8 +24,7 @@ jobs:
           RUSTFLAGS=-Awarnings cargo test
       - name: Build contract
         run: |
-          RUSTFLAGS=-Awarnings
-          cargo contract build --release --manifest-path bucket/Cargo.toml
+          cargo contract build --release --manifest-path bucket/Cargo.toml 2>/dev/null
       - name: Create names linked to commit
         run: |
           ddc_contract_name=ddc.${GITHUB_SHA:0:7}.contract
