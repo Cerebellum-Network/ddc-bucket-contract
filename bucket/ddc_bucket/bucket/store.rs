@@ -1,9 +1,7 @@
 //! The store to create and access Buckets.
 
-use ink_storage::{
-    collections::Vec as InkVec,
-    traits,
-};
+use ink_storage::{traits};
+use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
@@ -14,7 +12,7 @@ use super::entity::{Bucket, BucketId};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct BucketStore(pub InkVec<Bucket>);
+pub struct BucketStore(pub Vec<Bucket>);
 
 impl BucketStore {
     #[must_use]
@@ -27,16 +25,16 @@ impl BucketStore {
             resource_consumption_cap: 0,
             public_availability: false,
         };
-        let bucket_id = self.0.len();
+        let bucket_id: BucketId = self.0.len().try_into().unwrap();
         self.0.push(bucket);
         bucket_id
     }
 
     pub fn get(&self, bucket_id: BucketId) -> Result<&Bucket> {
-        self.0.get(bucket_id).ok_or(BucketDoesNotExist)
+        self.0.get(bucket_id as usize).ok_or(BucketDoesNotExist)
     }
 
     pub fn get_mut(&mut self, bucket_id: BucketId) -> Result<&mut Bucket> {
-        self.0.get_mut(bucket_id).ok_or(BucketDoesNotExist)
+        self.0.get_mut(bucket_id as usize).ok_or(BucketDoesNotExist)
     }
 }

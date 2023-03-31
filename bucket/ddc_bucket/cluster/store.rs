@@ -21,10 +21,10 @@ impl ClusterStore {
     ) -> Result<ClusterId> {
         let cluster = Cluster::new(manager_id, v_nodes, node_ids);
 
-        let cluster_id = self.0.len();
+        let cluster_id: ClusterId  = self.0.len().try_into().unwrap();
         self.0.push(cluster);
 
-        Ok(cluster_id.try_into().unwrap())
+        Ok(cluster_id)
     }
 
     pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {

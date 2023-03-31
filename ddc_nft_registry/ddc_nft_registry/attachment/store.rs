@@ -1,9 +1,7 @@
 //! The store to create and access Attachments.
 
-use ink_storage::{
-    collections::HashMap as InkHashMap,
-    traits,
-};
+use ink_storage::Mapping;
+use ink_storage::{traits};
 
 use crate::ddc_nft_registry::{AccountId, Error, Error::*};
 use crate::ddc_nft_registry::attachment::entity::{AssetId, NftId, Proof};
@@ -12,7 +10,7 @@ use super::entity::Attachment;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct AttachmentStore(pub InkHashMap<NftId, Attachment>);
+pub struct AttachmentStore(pub Mapping<NftId, Attachment>);
 
 impl AttachmentStore {
     #[must_use]
@@ -31,7 +29,7 @@ impl AttachmentStore {
             }
         }
 
-        self.0.insert(attachment.nft_id.clone(), attachment.clone());
+        self.0.insert(attachment.nft_id.clone(), &attachment);
         Ok(attachment)
     }
 

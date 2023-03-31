@@ -1,9 +1,8 @@
 {
-  "metadataVersion": "0.1.0",
   "source": {
-    "hash": "0x9700fb034126e4e649c8ecbc74eea11a49905b9518b0e7aa6bce735c1bb816bc",
-    "language": "ink! 3.0.0-rc4",
-    "compiler": "rustc 1.59.0-nightly"
+    "hash": "0xad2cf2f6651fdac51576566664c67eb9654a1683aeef49615937eea21023f394",
+    "language": "ink! 3.4.0",
+    "compiler": "rustc 1.64.0-nightly"
   },
   "contract": {
     "name": "ddc_nft_registry",
@@ -13,500 +12,373 @@
       "Anton Volk <anton.volk@cere.io>"
     ]
   },
-  "spec": {
-    "constructors": [
-      {
-        "args": [],
-        "docs": [],
-        "name": [
-          "new"
-        ],
-        "selector": "0x9bae9d5e"
-      }
-    ],
-    "docs": [],
-    "events": [
-      {
-        "args": [
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "reporter_id",
-            "type": {
-              "displayName": [
-                "AccountId"
-              ],
-              "type": 8
-            }
-          },
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "nft_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "asset_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "docs": [],
-            "indexed": false,
-            "name": "proof",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          }
-        ],
-        "docs": [],
-        "name": "Attach"
-      }
-    ],
-    "messages": [
-      {
-        "args": [
-          {
-            "name": "nft_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "name": "asset_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "name": "proof",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          }
-        ],
-        "docs": [
-          " Report and attach an asset ID to an NFT ID.",
-          "",
-          " All attachments are recorded as events.",
-          " There is absolutely no validation, any account can \"attach\" some asset ID.",
-          " Events should be filtered by reporter_id, or by analyzing the proof (not specified here).",
-          "",
-          " The latest attachment is also recorded in contract storage.",
-          " The latest asset ID can be queried from get_by_nft_id.",
-          " The first reporter for an NFT ID can also update the asset ID."
-        ],
-        "mutates": true,
-        "name": [
-          "attach"
-        ],
-        "payable": true,
-        "returnType": null,
-        "selector": "0x82e05a4c"
-      },
-      {
-        "args": [
-          {
-            "name": "nft_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "name": "asset_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          },
-          {
-            "name": "proof",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          }
-        ],
-        "docs": [
-          " Report the attachment of an asset ID to an NFT ID.",
-          "",
-          " This is recorded only as a contract event.",
-          " This can *not* be queried from get_by_nft_id.",
-          "",
-          " There is absolutely no validation, any account can \"report\" some asset ID.",
-          " Events should be filtered by reporter_id, or by analyzing the proof (not specified here)."
-        ],
-        "mutates": true,
-        "name": [
-          "report"
-        ],
-        "payable": true,
-        "returnType": null,
-        "selector": "0xf30f464c"
-      },
-      {
-        "args": [
-          {
-            "name": "nft_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 4
-            }
-          }
-        ],
-        "docs": [],
-        "mutates": true,
-        "name": [
-          "get_by_nft_id"
-        ],
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "AttachmentStatus"
-          ],
-          "type": 11
-        },
-        "selector": "0xb5c41aa2"
-      }
-    ]
-  },
-  "storage": {
-    "struct": {
-      "fields": [
+  "V3": {
+    "spec": {
+      "constructors": [
         {
-          "layout": {
-            "struct": {
+          "args": [],
+          "docs": [],
+          "label": "new",
+          "payable": false,
+          "selector": "0x9bae9d5e"
+        }
+      ],
+      "docs": [],
+      "events": [
+        {
+          "args": [
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "reporter_id",
+              "type": {
+                "displayName": [
+                  "AccountId"
+                ],
+                "type": 3
+              }
+            },
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "nft_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            },
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "asset_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            },
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "proof",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [],
+          "label": "Attach"
+        }
+      ],
+      "messages": [
+        {
+          "args": [
+            {
+              "label": "nft_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            },
+            {
+              "label": "asset_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            },
+            {
+              "label": "proof",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [
+            " Report and attach an asset ID to an NFT ID.",
+            "",
+            " All attachments are recorded as events.",
+            " There is absolutely no validation, any account can \"attach\" some asset ID.",
+            " Events should be filtered by reporter_id, or by analyzing the proof (not specified here).",
+            "",
+            " The latest attachment is also recorded in contract storage.",
+            " The latest asset ID can be queried from get_by_nft_id.",
+            " The first reporter for an NFT ID can also update the asset ID."
+          ],
+          "label": "attach",
+          "mutates": true,
+          "payable": true,
+          "returnType": null,
+          "selector": "0x82e05a4c"
+        },
+        {
+          "args": [
+            {
+              "label": "nft_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            },
+            {
+              "label": "asset_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            },
+            {
+              "label": "proof",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [
+            " Report the attachment of an asset ID to an NFT ID.",
+            "",
+            " This is recorded only as a contract event.",
+            " This can *not* be queried from get_by_nft_id.",
+            "",
+            " There is absolutely no validation, any account can \"report\" some asset ID.",
+            " Events should be filtered by reporter_id, or by analyzing the proof (not specified here)."
+          ],
+          "label": "report",
+          "mutates": true,
+          "payable": true,
+          "returnType": null,
+          "selector": "0xf30f464c"
+        },
+        {
+          "args": [
+            {
+              "label": "nft_id",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [],
+          "label": "get_by_nft_id",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "AttachmentStatus"
+            ],
+            "type": 7
+          },
+          "selector": "0xb5c41aa2"
+        }
+      ]
+    },
+    "storage": {
+      "struct": {
+        "fields": [
+          {
+            "layout": {
+              "struct": {
+                "fields": [
+                  {
+                    "layout": {
+                      "cell": {
+                        "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "ty": 0
+                      }
+                    },
+                    "name": null
+                  }
+                ]
+              }
+            },
+            "name": "attachments"
+          }
+        ]
+      }
+    },
+    "types": [
+      {
+        "id": 0,
+        "type": {
+          "def": {
+            "composite": {
               "fields": [
                 {
-                  "layout": {
-                    "struct": {
-                      "fields": [
-                        {
-                          "layout": {
-                            "struct": {
-                              "fields": [
-                                {
-                                  "layout": {
-                                    "cell": {
-                                      "key": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                                      "ty": 1
-                                    }
-                                  },
-                                  "name": "header"
-                                },
-                                {
-                                  "layout": {
-                                    "struct": {
-                                      "fields": [
-                                        {
-                                          "layout": {
-                                            "cell": {
-                                              "key": "0x0100000000000000000000000000000000000000000000000000000000000000",
-                                              "ty": 2
-                                            }
-                                          },
-                                          "name": "len"
-                                        },
-                                        {
-                                          "layout": {
-                                            "array": {
-                                              "cellsPerElem": 1,
-                                              "layout": {
-                                                "cell": {
-                                                  "key": "0x0100000001000000000000000000000000000000000000000000000000000000",
-                                                  "ty": 3
-                                                }
-                                              },
-                                              "len": 4294967295,
-                                              "offset": "0x0200000000000000000000000000000000000000000000000000000000000000"
-                                            }
-                                          },
-                                          "name": "elems"
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  "name": "entries"
-                                }
-                              ]
-                            }
-                          },
-                          "name": "keys"
-                        },
-                        {
-                          "layout": {
-                            "hash": {
-                              "layout": {
-                                "cell": {
-                                  "key": "0x0200000001000000000000000000000000000000000000000000000000000000",
-                                  "ty": 6
-                                }
-                              },
-                              "offset": "0x0100000001000000000000000000000000000000000000000000000000000000",
-                              "strategy": {
-                                "hasher": "Blake2x256",
-                                "postfix": "",
-                                "prefix": "0x696e6b20686173686d6170"
-                              }
-                            }
-                          },
-                          "name": "values"
-                        }
-                      ]
-                    }
-                  },
-                  "name": null
+                  "name": "offset_key",
+                  "type": 6,
+                  "typeName": "Key"
                 }
               ]
             }
           },
-          "name": "attachments"
-        }
-      ]
-    }
-  },
-  "types": [
-    {
-      "def": {
-        "composite": {
-          "fields": [
+          "params": [
             {
-              "name": "last_vacant",
-              "type": 2,
-              "typeName": "Index"
+              "name": "K",
+              "type": 1
             },
             {
-              "name": "len",
-              "type": 2,
-              "typeName": "u32"
-            },
-            {
-              "name": "len_entries",
-              "type": 2,
-              "typeName": "u32"
+              "name": "V",
+              "type": 2
             }
+          ],
+          "path": [
+            "ink_storage",
+            "lazy",
+            "mapping",
+            "Mapping"
           ]
         }
       },
-      "path": [
-        "ink_storage",
-        "collections",
-        "stash",
-        "Header"
-      ]
-    },
-    {
-      "def": {
-        "primitive": "u32"
-      }
-    },
-    {
-      "def": {
-        "variant": {
-          "variants": [
-            {
+      {
+        "id": 1,
+        "type": {
+          "def": {
+            "primitive": "str"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": {
+          "def": {
+            "composite": {
               "fields": [
                 {
-                  "type": 5,
-                  "typeName": "VacantEntry"
+                  "name": "reporter_id",
+                  "type": 3,
+                  "typeName": "AccountId"
+                },
+                {
+                  "name": "nft_id",
+                  "type": 1,
+                  "typeName": "NftId"
+                },
+                {
+                  "name": "asset_id",
+                  "type": 1,
+                  "typeName": "AssetId"
+                },
+                {
+                  "name": "proof",
+                  "type": 1,
+                  "typeName": "Proof"
                 }
-              ],
-              "name": "Vacant"
-            },
-            {
+              ]
+            }
+          },
+          "path": [
+            "ddc_nft_registry",
+            "ddc_nft_registry",
+            "attachment",
+            "entity",
+            "Attachment"
+          ]
+        }
+      },
+      {
+        "id": 3,
+        "type": {
+          "def": {
+            "composite": {
               "fields": [
                 {
                   "type": 4,
-                  "typeName": "T"
+                  "typeName": "[u8; 32]"
                 }
-              ],
-              "name": "Occupied"
+              ]
             }
+          },
+          "path": [
+            "ink_env",
+            "types",
+            "AccountId"
           ]
         }
       },
-      "params": [
-        4
-      ],
-      "path": [
-        "ink_storage",
-        "collections",
-        "stash",
-        "Entry"
-      ]
-    },
-    {
-      "def": {
-        "primitive": "str"
-      }
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "next",
-              "type": 2,
-              "typeName": "Index"
-            },
-            {
-              "name": "prev",
-              "type": 2,
-              "typeName": "Index"
+      {
+        "id": 4,
+        "type": {
+          "def": {
+            "array": {
+              "len": 32,
+              "type": 5
             }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "type": {
+          "def": {
+            "primitive": "u8"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "type": {
+          "def": {
+            "composite": {
+              "fields": [
+                {
+                  "type": 4,
+                  "typeName": "[u8; 32]"
+                }
+              ]
+            }
+          },
+          "path": [
+            "ink_primitives",
+            "Key"
           ]
         }
       },
-      "path": [
-        "ink_storage",
-        "collections",
-        "stash",
-        "VacantEntry"
-      ]
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "value",
-              "type": 7,
-              "typeName": "V"
-            },
-            {
-              "name": "key_index",
-              "type": 2,
-              "typeName": "KeyIndex"
+      {
+        "id": 7,
+        "type": {
+          "def": {
+            "composite": {
+              "fields": [
+                {
+                  "name": "attachment",
+                  "type": 2,
+                  "typeName": "Attachment"
+                }
+              ]
             }
+          },
+          "path": [
+            "ddc_nft_registry",
+            "ddc_nft_registry",
+            "attachment",
+            "entity",
+            "AttachmentStatus"
           ]
-        }
-      },
-      "params": [
-        7
-      ],
-      "path": [
-        "ink_storage",
-        "collections",
-        "hashmap",
-        "ValueEntry"
-      ]
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "reporter_id",
-              "type": 8,
-              "typeName": "AccountId"
-            },
-            {
-              "name": "nft_id",
-              "type": 4,
-              "typeName": "NftId"
-            },
-            {
-              "name": "asset_id",
-              "type": 4,
-              "typeName": "AssetId"
-            },
-            {
-              "name": "proof",
-              "type": 4,
-              "typeName": "Proof"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_nft_registry",
-        "ddc_nft_registry",
-        "attachment",
-        "entity",
-        "Attachment"
-      ]
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "type": 9,
-              "typeName": "[u8; 32]"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ink_env",
-        "types",
-        "AccountId"
-      ]
-    },
-    {
-      "def": {
-        "array": {
-          "len": 32,
-          "type": 10
         }
       }
-    },
-    {
-      "def": {
-        "primitive": "u8"
-      }
-    },
-    {
-      "def": {
-        "composite": {
-          "fields": [
-            {
-              "name": "attachment",
-              "type": 7,
-              "typeName": "Attachment"
-            }
-          ]
-        }
-      },
-      "path": [
-        "ddc_nft_registry",
-        "ddc_nft_registry",
-        "attachment",
-        "entity",
-        "AttachmentStatus"
-      ]
-    }
-  ]
+    ]
+  }
 }

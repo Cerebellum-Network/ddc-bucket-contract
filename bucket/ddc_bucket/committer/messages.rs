@@ -1,4 +1,4 @@
-use ink_lang::{StaticEnv};
+use ink_lang::codegen::StaticEnv;
 use ink_env::Error;
 use ink_prelude::vec::Vec;
 

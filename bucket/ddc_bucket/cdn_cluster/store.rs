@@ -1,8 +1,7 @@
 //! The store where to create and access Clusters by ID.
 
 use ink_storage::{
-  collections::Vec as InkVec,
-  traits,
+  traits
 };
 use ink_prelude::vec::Vec;
 
@@ -14,7 +13,7 @@ pub const MAX_VNODES: u32 = 300;
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct CdnClusterStore(pub InkVec<CdnCluster>);
+pub struct CdnClusterStore(pub Vec<CdnCluster>);
 
 impl CdnClusterStore {
   pub fn create(
@@ -24,17 +23,17 @@ impl CdnClusterStore {
   ) -> Result<ClusterId> {
       let cluster = CdnCluster::new(manager_id, cdn_nodes);
 
-      let cluster_id = self.0.len();
+      let cluster_id: ClusterId = self.0.len().try_into().unwrap();
       self.0.push(cluster);
 
       Ok(cluster_id)
   }
 
   pub fn get(&self, cluster_id: ClusterId) -> Result<&CdnCluster> {
-      self.0.get(cluster_id).ok_or(ClusterDoesNotExist)
+      self.0.get(cluster_id as usize).ok_or(ClusterDoesNotExist)
   }
 
   pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut CdnCluster> {
-      self.0.get_mut(cluster_id).ok_or(ClusterDoesNotExist)
+      self.0.get_mut(cluster_id as usize).ok_or(ClusterDoesNotExist)
   }
 }

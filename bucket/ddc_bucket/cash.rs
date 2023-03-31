@@ -74,7 +74,7 @@ impl ::scale_info::TypeInfo for Cash {
             .type_params([])
             .composite(
                 ::scale_info::build::Fields::named()
-                    .field_of::<Balance>("value", "Balance"),
+                    .field(|f| f.ty::<Balance>().name("value").type_name("Balance"))
             )
     }
 }

@@ -4,9 +4,17 @@ use crate::ddc_nft_registry::*;
 
 use super::env_utils::*;
 
+fn setup() -> DdcNftRegistry {
+  set_caller(admin_id());
+  set_callee(contract_id());
+  let contract = DdcNftRegistry::new();
+  set_balance(contract_id(), 10);
+  contract
+}
+
 #[ink::test]
 fn attach_works() {
-    let mut contract = DdcNftRegistry::new();
+    let mut contract = setup();
 
     set_balance(get_accounts().alice, 1000 * TOKEN);
     let reporter_id = get_accounts().alice;
@@ -15,9 +23,8 @@ fn attach_works() {
     let proof = "certified by cere";
 
     // Attach asset_id to nft_id
-    push_caller_value(reporter_id, 1000 * TOKEN);
+    set_caller_value(reporter_id, 1000 * TOKEN);
     contract.attach(nft_id.to_string(), asset_id.to_string(), proof.to_string());
-    pop_caller();
 
     // Verify attachment of asset_id to nft_id
     let ev = get_events().pop().unwrap();
@@ -36,9 +43,8 @@ fn attach_works() {
 
     // Attach different attachment to nft_id
     let new_asset_id = "beefbeefbeefbeefbeefbeefbeefbeefbeefbeef";
-    push_caller_value(reporter_id, 900 * TOKEN);
+    set_caller_value(reporter_id, 900 * TOKEN);
     contract.attach(nft_id.to_string(), new_asset_id.to_string(), proof.to_string());
-    pop_caller();
 
     // Verify attachment of new_asset_id to nft_id
     let ev = get_events().pop().unwrap();
@@ -58,7 +64,7 @@ fn attach_works() {
 
 #[ink::test]
 fn reattach_only_owner() {
-    let mut contract = DdcNftRegistry::new();
+    let mut contract = setup();
 
     set_balance(get_accounts().alice, 1000 * TOKEN);
     let reporter_id = get_accounts().alice;
@@ -67,17 +73,15 @@ fn reattach_only_owner() {
     let proof = "certified by cere";
 
     // Attach asset_id to nft_id
-    push_caller_value(reporter_id, 1000 * TOKEN);
+    set_caller_value(reporter_id, 1000 * TOKEN);
     contract.attach(nft_id.to_string(), asset_id.to_string(), proof.to_string());
-    pop_caller();
     let attachment_status = contract.get_by_nft_id(nft_id.to_string());
 
     // Try to attach a different attachment from another account.
     let new_asset_id = "beefbeefbeefbeefbeefbeefbeefbeefbeefbeef";
     let not_reporter_id = get_accounts().bob;
-    push_caller_value(not_reporter_id, 900 * TOKEN);
+    set_caller_value(not_reporter_id, 900 * TOKEN);
     let result = contract.message_attach(nft_id.to_string(), new_asset_id.to_string(), proof.to_string());
-    pop_caller();
     assert_eq!(result, Err(UnauthorizedUpdate));
 
     // The stored attachment did not change.
@@ -88,7 +92,7 @@ fn reattach_only_owner() {
 
 #[ink::test]
 fn report_works() {
-    let mut contract = DdcNftRegistry::new();
+    let mut contract = setup();
 
     set_balance(get_accounts().alice, 1000 * TOKEN);
     let reporter_id = get_accounts().alice;
@@ -97,17 +101,15 @@ fn report_works() {
     let proof = "certified by cere";
 
     // Attach asset_id to nft_id
-    push_caller_value(reporter_id, 1000 * TOKEN);
+    set_caller_value(reporter_id, 1000 * TOKEN);
     contract.attach(nft_id.to_string(), asset_id.to_string(), proof.to_string());
-    pop_caller();
     let attachment_status = contract.get_by_nft_id(nft_id.to_string());
 
     // Report (but not attach) a different attachment from another account.
     let new_asset_id = "beefbeefbeefbeefbeefbeefbeefbeefbeefbeef";
     let new_reporter_id = get_accounts().bob;
-    push_caller_value(new_reporter_id, 900 * TOKEN);
+    set_caller_value(new_reporter_id, 900 * TOKEN);
     contract.report(nft_id.to_string(), new_asset_id.to_string(), proof.to_string());
-    pop_caller();
 
     // Verify attachment of new_asset_id to nft_id
     let ev = get_events().pop().unwrap();

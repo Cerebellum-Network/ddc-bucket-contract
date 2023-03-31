@@ -1,6 +1,6 @@
 //! The store to create and access Accounts.
 
-use ink_storage::{collections::{HashMap, hashmap::Entry::*}, traits, Lazy};
+use ink_storage::Mapping;
 
 use crate::ddc_bucket::{
     AccountId, Balance, cash::Cash, Error::*,
@@ -9,27 +9,28 @@ use crate::ddc_bucket::{
 };
 use crate::ddc_bucket::currency::CurrencyConverter;
 use crate::ddc_bucket::flow::Flow;
-
+use ink_storage::traits::{SpreadLayout, StorageLayout};
+use ink_prelude::vec::Vec;
 use super::entity::Account;
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[derive(SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct AccountStore(
-    pub HashMap<AccountId, Account>,
-    pub Lazy<CurrencyConverter>,
+    pub Mapping<AccountId, Account>,
+    pub CurrencyConverter,
+    // todo: remove this vector as it can store an arbitrary number of elements and easily exceed 16KB limit
+    pub Vec<AccountId>,
 );
 
 impl AccountStore {
     /// Create a record for the given account if it does not exist yet.
     /// Does not return extra contract storage used, due to blockchain changes.
     pub fn create_if_not_exist(&mut self, account_id: AccountId) {
-        match self.0.entry(account_id) {
-            Vacant(e) => {
-                e.insert(Account::new());
-                ()
-            }
-            Occupied(_) => (),
-        }
+        if !self.0.contains(account_id) {
+            let acc = Account::new();
+            self.0.insert(account_id, &acc);
+            self.2.push(account_id);
+        };
     }
 
     pub fn balance(&self, account_id: &AccountId) -> Balance {
@@ -39,13 +40,12 @@ impl AccountStore {
         }
     }
 
-
-    pub fn get(&self, account_id: &AccountId) -> Result<&Account> {
+    pub fn get(&self, account_id: &AccountId) -> Result<Account> {
         self.0.get(account_id).ok_or(AccountDoesNotExist)
     }
 
-    pub fn get_mut(&mut self, account_id: &AccountId) -> Result<&mut Account> {
-        self.0.get_mut(account_id).ok_or(AccountDoesNotExist)
+    pub fn save(&mut self, account_id: &AccountId, account: &Account) {
+        self.0.insert(account_id, account)
     }
 
     /// Increase the rate of the given flow starting from the given time.
@@ -54,8 +54,9 @@ impl AccountStore {
         let extra_schedule = Schedule::new(start_ms, extra_rate);
         flow.schedule.add_schedule(extra_schedule.clone());
 
-        let from_account = self.get_mut(&flow.from)?;
+        let mut from_account = self.get(&flow.from)?;
         from_account.lock_schedule(extra_schedule);
+        self.save(&flow.from, &from_account);
 
         Ok(())
     }
@@ -65,8 +66,10 @@ impl AccountStore {
         let flowed_cere = self.1.to_cere(flowed_usd);
         let (payable, cash) = Cash::borrow_payable_cash(flowed_cere);
 
-        let account = self.get_mut(&flow.from)?;
+        let mut account = self.get(&flow.from)?;
         account.pay_scheduled(payable, flowed_usd)?;
+        self.save(&flow.from, &account);
+
         Ok(cash)
     }
 
