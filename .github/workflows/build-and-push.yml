@@ -24,6 +24,7 @@ jobs:
           RUSTFLAGS=-Awarnings cargo test
       - name: Build contract
         run: |
+          RUSTFLAGS=-Awarnings
           cargo contract build --release --manifest-path bucket/Cargo.toml
       - name: Create names linked to commit
         run: |
