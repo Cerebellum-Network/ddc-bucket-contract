@@ -1,6 +1,6 @@
 //! The public interface to manage Clusters.
 
-use ink_lang::{EmitEvent, StaticEnv};
+use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Balance, BucketId, CdnClusterCreated, ClusterDistributeRevenues, ClusterId, DdcBucket, Result};
@@ -73,11 +73,15 @@ impl DdcBucket {
         }
 
         for &(client_id, payment) in aggregate_payments_accounts.iter() {
-            let account = self.accounts.0.get_mut(&client_id)
-            .ok_or(InsufficientBalance)?;
-            account.withdraw_bonded(Payable(payment))?;
-            _undistributed_payment_accounts += payment;
-        }
+            if let Ok(mut account) = self.accounts.get(&client_id) {
+                account.withdraw_bonded(Payable(payment))?;
+                _undistributed_payment_accounts += payment;
+                self.accounts.save(&client_id, &account);
+            } else {
+                return Err(InsufficientBalance)
+            }
+        };
+
 
         let conv = &self.accounts.1;
         let committer = &mut self.committer_store;
@@ -159,7 +163,7 @@ impl DdcBucket {
     pub fn message_cdn_cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<CdnClusterStatus>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
-            let cluster = match self.cdn_clusters.0.get(cluster_id) {
+            let cluster = match self.cdn_clusters.0.get(cluster_id as usize) {
                 None => break, // No more items, stop.
                 Some(cluster) => cluster,
             };

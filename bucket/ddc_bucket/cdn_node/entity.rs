@@ -1,8 +1,8 @@
 //! The data structure of Nodes.
 
-use ink_storage::traits::{PackedLayout, SpreadLayout};
+use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
 use scale::{Decode, Encode};
-
+use ink_primitives::Key;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use crate::ddc_bucket::params::store::Params;
 
@@ -10,11 +10,17 @@ pub type ProviderId = AccountId;
 pub type NodeId = u32;
 pub type Resource = u32;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct CdnNode {
     pub provider_id: ProviderId,
     pub undistributed_payment: Balance,
+}
+
+impl ink_storage::traits::PackedAllocate for CdnNode {
+    fn allocate_packed(&mut self, at: &Key) {
+        PackedAllocate::allocate_packed(&mut *self, at)
+    }
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]

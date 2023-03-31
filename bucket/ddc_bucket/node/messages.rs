@@ -3,7 +3,7 @@
 use crate::ddc_bucket::node::entity::{NodeStatus, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
-use ink_lang::{EmitEvent, StaticEnv};
+use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use super::entity::{NodeId, NodeParams, NodeTag};
@@ -85,7 +85,7 @@ impl DdcBucket {
     ) -> (Vec<NodeStatus>, u32) {
         let mut nodes = Vec::with_capacity(limit as usize);
         for node_id in offset..offset + limit {
-            let node = match self.nodes.nodes.get(node_id) {
+            let node = match self.nodes.nodes.get(node_id as usize) {
                 None => break, // No more items, stop.
                 Some(node) => node,
             };
@@ -103,15 +103,16 @@ impl DdcBucket {
             };
             nodes.push(status);
         }
-        (nodes, self.nodes.nodes.len())
+
+        (nodes, self.nodes.nodes.len().try_into().unwrap())
     }
 
     pub fn message_node_get_by_pub_key(&self, pubkey: AccountId) -> Result<NodeStatus> {
         let node_id = self.nodes.get_by_pub_key(pubkey).unwrap();
-        let node = self.nodes.get(*node_id)?.clone();
-        let params = self.node_params.get(*node_id)?.clone();
+        let node = self.nodes.get(node_id)?.clone();
+        let params = self.node_params.get(node_id)?.clone();
         Ok(NodeStatus {
-            node_id: *node_id,
+            node_id,
             node,
             params,
         })

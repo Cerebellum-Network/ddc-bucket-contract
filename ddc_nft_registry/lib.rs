@@ -15,6 +15,7 @@ pub mod ddc_nft_registry {
 
     use crate::ddc_nft_registry::attachment::entity::AttachmentStatus;
     use crate::ddc_nft_registry::attachment::store::AttachmentStore;
+    use ink_storage::traits::SpreadAllocate;
 
     pub mod cash;
     pub mod contract_fee;
@@ -22,6 +23,7 @@ pub mod ddc_nft_registry {
 
     // ---- Global state ----
     #[ink(storage)]
+    #[derive(Default, SpreadAllocate)]
     pub struct DdcNftRegistry {
         attachments: AttachmentStore,
     }
@@ -29,10 +31,7 @@ pub mod ddc_nft_registry {
     impl DdcNftRegistry {
         #[ink(constructor)]
         pub fn new() -> Self {
-            let contract = Self {
-                attachments: AttachmentStore::default(),
-            };
-            contract
+            ink_lang::utils::initialize_contract(|_| {})
         }
     }
     // ---- End global state ----

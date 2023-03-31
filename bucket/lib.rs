@@ -20,6 +20,7 @@ pub mod ddc_bucket {
     use node::{entity::*, store::*};
     use params::store::*;
     use perm::store::*;
+    use ink_storage::traits::SpreadAllocate;
 
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
@@ -56,6 +57,7 @@ pub mod ddc_bucket {
     // ---- Global state ----
     /// The main DDC smart contract.
     #[ink(storage)]
+    #[derive(SpreadAllocate, Default)]
     pub struct DdcBucket {
         buckets: BucketStore,
         buckets_perms: BucketsPermsStore,
@@ -81,54 +83,38 @@ pub mod ddc_bucket {
         /// The caller will be admin of the contract.
         #[ink(constructor)]
         pub fn new() -> Self {
-            let operator = Self::env().caller();
+            ink_lang::utils::initialize_contract(|contract: &mut Self| {
+                let operator = Self::env().caller();
+                
+                contract.committer_store.init(operator);
+                contract.protocol_store.init(operator, DEFAULT_BASIS_POINTS);
 
-            let mut contract = Self {
-                buckets: BucketStore::default(),
-                buckets_perms: BucketsPermsStore::default(),
-                bucket_params: ParamsStore::default(),
-                clusters: ClusterStore::default(),
-                cluster_params: ParamsStore::default(),
-                cdn_nodes: CdnNodeStore::default(),
-                cdn_node_params: ParamsStore::default(),
-                cdn_clusters: CdnClusterStore::default(),
-                nodes: NodeStore::default(),
-                node_params: ParamsStore::default(),
-                accounts: AccountStore::default(),
-                perms: PermStore::default(),
-                network_fee: NetworkFeeStore::default(),
-                committer_store: CommitterStore::new(operator),
-                protocol_store: ProtocolStore::new(operator, DEFAULT_BASIS_POINTS),
-                topology_store: TopologyStore::new_topology_store(),
-            };
-
-            // Make the creator of this contract a super-admin.
-            let admin_id = Self::env().caller();
-            contract
-                .perms
-                .grant_permission(admin_id, &Permission::SuperAdmin);
-
-            // Reserve IDs 0.
-            let _ = contract.accounts.create_if_not_exist(AccountId::default());
-            let _ = contract.cdn_nodes.create(AccountId::default(), 0);
-            let _ = contract.cdn_node_params.create("".to_string());
-            let _ = contract
-                .nodes
-                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE, AccountId::default());
-            let _ = contract.node_params.create("".to_string());
-            let _ = contract
-                .clusters
-                .create(
-                    AccountId::default(),
-                    &Vec::<Vec<u64>>::new(),
-                    &Vec::<NodeId>::new(),
-                )
-                .unwrap();
-            let _ = contract.cluster_params.create("".to_string());
-            let _ = contract.buckets.create(AccountId::default(), 0);
-            let _ = contract.bucket_params.create("".to_string());
-
-            contract
+                // Make the creator of this contract a super-admin.
+                let admin_id = Self::env().caller();
+                contract
+                    .perms
+                    .grant_permission(admin_id, &Permission::SuperAdmin);
+    
+                // Reserve IDs 0.
+                let _ = contract.accounts.create_if_not_exist(AccountId::default());
+                let _ = contract.cdn_nodes.create(AccountId::default(), 0);
+                let _ = contract.cdn_node_params.create("".to_string()).unwrap();
+                let _ = contract
+                    .nodes
+                    .create(AccountId::default(), 0, 0, NodeTag::ACTIVE, AccountId::default()).unwrap();
+                let _ = contract.node_params.create("".to_string()).unwrap();
+                let _ = contract
+                    .clusters
+                    .create(
+                        AccountId::default(),
+                        &Vec::<Vec<u64>>::new(),
+                        &Vec::<NodeId>::new(),
+                    )
+                    .unwrap();
+                let _ = contract.cluster_params.create("".to_string()).unwrap();
+                let _ = contract.buckets.create(AccountId::default(), 0);
+                let _ = contract.bucket_params.create("".to_string()).unwrap();
+            })
         }
     }
     // ---- End global state ----

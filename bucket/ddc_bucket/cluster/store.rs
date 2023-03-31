@@ -1,14 +1,14 @@
 //! The store where to create and access Clusters by ID.
 
 use ink_prelude::vec::Vec;
-use ink_storage::traits::{SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 
 use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 
 use super::entity::{Cluster, ClusterId};
 
-#[derive(SpreadLayout, Default)]
+#[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct ClusterStore(pub Vec<Cluster>);
 
@@ -21,10 +21,10 @@ impl ClusterStore {
     ) -> Result<ClusterId> {
         let cluster = Cluster::new(manager_id, v_nodes, node_ids);
 
-        let cluster_id = self.0.len();
+        let cluster_id: ClusterId  = self.0.len().try_into().unwrap();
         self.0.push(cluster);
 
-        Ok(cluster_id.try_into().unwrap())
+        Ok(cluster_id)
     }
 
     pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {

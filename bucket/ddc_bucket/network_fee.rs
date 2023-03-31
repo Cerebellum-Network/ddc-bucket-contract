@@ -1,6 +1,6 @@
 //! This module captures fees on behalf of the entire Cere network.
 
-use ink_storage::{Lazy, traits};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, Result};
@@ -11,10 +11,10 @@ pub type BasisPoints = Balance;
 
 const BP: BasisPoints = 10_000; // 100%
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[derive(SpreadAllocate, SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct NetworkFeeStore(
-    pub Lazy<FeeConfig>,
+    pub FeeConfig,
 );
 
 impl NetworkFeeStore {
@@ -24,8 +24,8 @@ impl NetworkFeeStore {
 }
 
 /// The configuration of fees.
-#[derive(traits::SpreadLayout, Default, Decode, Encode)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug, scale_info::TypeInfo))]
+#[derive(SpreadAllocate, SpreadLayout, Default, Decode, Encode)]
+#[cfg_attr(feature = "std", derive(StorageLayout, Debug, scale_info::TypeInfo))]
 pub struct FeeConfig {
     /// The fee rate from cluster revenues to the overall network. In basis points (1% of 1%).
     pub network_fee_bp: BasisPoints,
@@ -40,7 +40,7 @@ pub struct FeeConfig {
 impl DdcBucket {
     /// Take a network fee from the given revenues (in place).
     pub fn capture_network_fee(store: &NetworkFeeStore, revenues: &mut Cash) -> Result<()> {
-        let config = &*store.0;
+        let config = &store.0;
         Self::capture_fee(config.network_fee_bp, config.network_fee_destination, revenues)
     }
 
@@ -54,7 +54,7 @@ impl DdcBucket {
 
     pub fn message_admin_set_fee_config(&mut self, config: FeeConfig) -> Result<()> {
         self.only_with_permission(Permission::SuperAdmin)?;
-        *self.network_fee.0 = config;
+        self.network_fee.0 = config;
         Ok(())
     }
 }

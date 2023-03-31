@@ -1,12 +1,12 @@
-use ink_storage::traits;
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, StorageLayout};
 
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 
-#[derive(Clone, PartialEq, Encode, Decode, traits::SpreadLayout, traits::PackedLayout)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug, scale_info::TypeInfo))]
+#[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
+#[cfg_attr(feature = "std", derive(StorageLayout, Debug, scale_info::TypeInfo))]
 pub struct ProtocolStore { 
   pub admin: AccountId,
   pub fee_bp: u32,
@@ -14,15 +14,10 @@ pub struct ProtocolStore {
 }
 
 impl ProtocolStore {
-  pub fn new(
-      admin: AccountId,
-      fee_bp: u32,
-  ) -> Self {
-    ProtocolStore {
-      admin,
-      fee_bp,
-      revenues: Cash(0),
-    }
+
+  pub fn init(&mut self, admin: AccountId, fee_bp: u32) {
+      self.admin = admin;
+      self.fee_bp = fee_bp
   }
 
   pub fn get_fee_bp(&self) -> u32 {

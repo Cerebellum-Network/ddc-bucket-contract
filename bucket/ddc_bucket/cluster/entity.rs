@@ -2,9 +2,9 @@
 // use ink_storage::Mapping;
 // use ink_prelude::vec::Vec;
 use ink_prelude::vec::Vec;
-use ink_storage::traits::{PackedLayout, SpreadLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
 use scale::{Decode, Encode};
-
+use ink_primitives::Key;
 use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::node::entity::Resource;
@@ -17,7 +17,7 @@ pub type ClusterParams = Params;
 pub type VNodeIndex = u32;
 pub type VNodeId = (ClusterId, VNodeIndex);
 
-#[derive(Clone, PartialEq, Encode, Decode, PackedLayout, SpreadLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, PackedLayout, SpreadLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
     pub manager_id: AccountId,
@@ -27,6 +27,12 @@ pub struct Cluster {
     pub node_ids: Vec<NodeId>,
     pub v_nodes: Vec<Vec<u64>>,
     pub total_rent: Balance,
+}
+
+impl ink_storage::traits::PackedAllocate for Cluster {
+    fn allocate_packed(&mut self, at: &Key) {
+        PackedAllocate::allocate_packed(&mut *self, at)
+    }
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]

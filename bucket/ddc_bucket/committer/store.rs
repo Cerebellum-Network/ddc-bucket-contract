@@ -1,12 +1,8 @@
 use crate::ddc_bucket::{AccountId, Hash, NodeId};
 
-use ink_storage::{
-    collections::{
-        HashMap as StorageHashMap,
-    },
-    traits,
-};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout, PackedLayout};
 use ink_prelude::vec::Vec;
+use ink_storage::Mapping;
 
 #[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
@@ -34,7 +30,7 @@ pub struct  EraStatus {
     prev_era_to_timestamp: u64,
 }
 
-#[derive(Copy, Clone, traits::PackedLayout, traits::SpreadLayout, scale::Encode, scale::Decode, Debug)]
+#[derive(Copy, Clone, SpreadAllocate, PackedLayout, SpreadLayout, scale::Encode, scale::Decode, Debug)]
 #[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
 pub struct Commit {
     hash: Hash,
@@ -43,8 +39,8 @@ pub struct Commit {
     to_timestamp: u64,
 } 
 
-#[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode, Debug)]
-#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, traits::StorageLayout))]
+#[derive(Default, Copy, Clone, SpreadAllocate, SpreadLayout, scale::Encode, scale::Decode, Debug)]
+#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, StorageLayout))]
 pub struct EraConfig {
     start: u64,
     interval: u64,
@@ -52,12 +48,12 @@ pub struct EraConfig {
     validation_duration:u64
 }  
 
-#[derive(traits::SpreadLayout, Debug)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout))]
+#[derive(Default, SpreadAllocate, SpreadLayout, Debug)]
+#[cfg_attr(feature = "std", derive(StorageLayout))]
 pub struct CommitterStore {
     operator_id: AccountId,
-    commits: StorageHashMap<AccountId, Vec<(NodeId, Commit)>>,
-    validated_commits: StorageHashMap<NodeId, EraAndTimestamp>,
+    commits: Mapping<AccountId, Vec<(NodeId, Commit)>>,
+    validated_commits: Mapping<NodeId, EraAndTimestamp>,
     era_settings: EraConfig
 }
 
@@ -66,50 +62,41 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub type EraAndTimestamp = (u64, u64);
 
 impl CommitterStore {
-    pub fn new(operator_id: AccountId) -> CommitterStore {
-        CommitterStore {
-            operator_id,
-            commits: Default::default(),
-            validated_commits: Default::default(),
-            era_settings: EraConfig {
-                start: 0,
-                interval: 0,
-                commit_duration: 0,
-                validation_duration: 0,
-            }
-        }
+    pub fn init(&mut self, operator_id: AccountId) {
+        self.operator_id = operator_id;
     }
 
     /// The node can set the latest commit with this function
     /// check the sender !!!!
     pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
-        if !self.commits.contains_key(&cdn_owner) {
+        if !self.commits.contains(&cdn_owner) {
             let empty_vec = Vec::<(u32, Commit)>::new();
-            self.commits.insert(cdn_owner, empty_vec);
+            self.commits.insert(cdn_owner, &empty_vec);
         }
 
-        let account_commits = self.commits.get_mut(&cdn_owner).unwrap();
+        let mut account_commits = self.commits.get(&cdn_owner).unwrap();
         let index = account_commits.iter().position(|(node, _)| *node == node_id).unwrap_or(usize::MAX);
         if index != usize::MAX {
             account_commits.remove(index);
         }
         account_commits.push((node_id, commit));
+        self.commits.insert(&cdn_owner, &account_commits);
     }
 
     pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
-        self.commits.get(&cdn_owner).unwrap_or(&Vec::<(u32, Commit)>::new()).clone()
+        self.commits.get(&cdn_owner).unwrap_or(Vec::<(u32, Commit)>::new()).iter().cloned().collect()
     }
 
     // Set the last validated commit per CDN node
     pub fn set_validated_commit(&mut self, node: NodeId, era: u64) -> Result<()> {
         let prev_era_to_timestamp = self.era_settings.start + self.era_settings.interval * (era + 1);
-        self.validated_commits.insert(node, (era, prev_era_to_timestamp));
+        self.validated_commits.insert(&node, &(era, prev_era_to_timestamp));
         Ok(())
     }
 
     // Get the last era & timestamp validated per CDN node
     pub fn get_validate_commit(&self, node: NodeId) -> EraAndTimestamp {
-        *self.validated_commits.get(&node).unwrap_or(&(0,0))
+        self.validated_commits.get(&node).unwrap_or((0,0))
     }
 
     // Akin to modifier
