@@ -4,12 +4,16 @@ use ink_storage::{collections::Vec as InkVec, traits};
 
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use ink_storage::collections::HashMap;
 
 use super::entity::{Node, NodeId, NodeTag};
 
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct NodeStore(pub InkVec<Node>);
+pub struct NodeStore {
+    pub store: HashMap<AccountId, NodeId>,
+    pub keys: InkVec<Node>,
+}
 
 impl NodeStore {
     pub fn create(
@@ -18,8 +22,10 @@ impl NodeStore {
         rent_per_month: Balance,
         capacity: Resource,
         node_tag: NodeTag,
-    ) -> NodeId {
-        let node_id = self.0.len();
+        pubkey: AccountId,
+    ) -> Result<NodeId> {
+        let node_id = self.keys.len();
+
         let node = Node {
             provider_id,
             rent_per_month,
@@ -27,15 +33,26 @@ impl NodeStore {
             node_tag,
         };
 
-        self.0.push(node);
-        node_id
+        let exists = self.store.contains_key(&pubkey);
+        if exists {
+            return Err(NodeAlreadyExists);
+        }
+
+        self.keys.push(node);
+        self.store.insert(pubkey, node_id);
+
+        Ok(node_id)
+    }
+
+    pub fn get_by_pub_key(&self, pubkey: AccountId) -> Result<&NodeId> {
+        self.store.get(&pubkey).ok_or(NodeDoesNotExist)
     }
 
     pub fn get(&self, node_id: NodeId) -> Result<&Node> {
-        self.0.get(node_id).ok_or(NodeDoesNotExist)
+        self.keys.get(node_id).ok_or(NodeDoesNotExist)
     }
 
     pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
-        self.0.get_mut(node_id).ok_or(NodeDoesNotExist)
+        self.keys.get_mut(node_id).ok_or(NodeDoesNotExist)
     }
 }

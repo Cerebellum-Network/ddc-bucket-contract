@@ -25,12 +25,15 @@ impl DdcBucket {
         node_params: NodeParams,
         capacity: Resource,
         node_tag: NodeTag,
+        pubkey: AccountId,
     ) -> Result<NodeId> {
         let provider_id = Self::env().caller();
 
         let node_id = self
             .nodes
-            .create(provider_id, rent_per_month, capacity, node_tag);
+            .create(provider_id, rent_per_month, capacity, node_tag, pubkey)
+            .unwrap();
+
         let params_id = self.node_params.create(node_params.clone())?;
         assert_eq!(node_id, params_id);
 
@@ -82,7 +85,7 @@ impl DdcBucket {
     ) -> (Vec<NodeStatus>, u32) {
         let mut nodes = Vec::with_capacity(limit as usize);
         for node_id in offset..offset + limit {
-            let node = match self.nodes.0.get(node_id) {
+            let node = match self.nodes.keys.get(node_id) {
                 None => break, // No more items, stop.
                 Some(node) => node,
             };
@@ -100,6 +103,17 @@ impl DdcBucket {
             };
             nodes.push(status);
         }
-        (nodes, self.nodes.0.len())
+        (nodes, self.nodes.keys.len())
+    }
+
+    pub fn message_node_get_by_pub_key(&self, pubkey: AccountId) -> Result<NodeStatus> {
+        let node_id = self.nodes.get_by_pub_key(pubkey).unwrap();
+        let node = self.nodes.get(*node_id)?.clone();
+        let params = self.node_params.get(*node_id)?.clone();
+        Ok(NodeStatus {
+            node_id: *node_id,
+            node,
+            params,
+        })
     }
 }
