@@ -1,7 +1,4 @@
-use ink_lang as ink;
-
 use crate::ddc_nft_registry::*;
-
 use super::env_utils::*;
 
 fn setup() -> DdcNftRegistry {

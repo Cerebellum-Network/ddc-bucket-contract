@@ -4,7 +4,6 @@
 #![feature(proc_macro_hygiene)] // for tests in a separate file
 #![deny(unused_must_use, unused_variables)]
 
-use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_nft_registry {
@@ -97,9 +96,9 @@ pub mod ddc_nft_registry {
 
     pub type Result<T> = core::result::Result<T, Error>;
 
-    impl From<Error> for ink_env::Error {
+    impl From<Error> for ink::env::Error {
         fn from(_: Error) -> Self {
-            ink_env::Error::Unknown
+            ink::env::Error::Unknown
         }
     }
     // ---- End Utils ----

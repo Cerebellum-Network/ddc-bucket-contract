@@ -1,6 +1,6 @@
 #![allow(unused_variables, dead_code)]
 
-pub use ink_env::{
+pub use ink::env::{
     call,
     DefaultEnvironment,
     test,
@@ -10,7 +10,7 @@ use scale::Decode;
 
 use crate::ddc_nft_registry::*;
 
-pub type Event = <DdcNftRegistry as ::ink_lang::reflect::ContractEventBase>::Type;
+pub type Event = <DdcNftRegistry as ::ink::reflect::ContractEventBase>::Type;
 
 /// Recommended contract fee for all operations with reasonable data amounts.
 pub const CONTRACT_FEE_LIMIT: Balance = 10 * TOKEN;
@@ -44,7 +44,7 @@ pub fn set_balance(account: AccountId, balance: Balance) {
   test::set_account_balance::<DefaultEnvironment>(account, balance);
 }
 
-pub fn decode_event<Event: Decode>(event: &ink_env::test::EmittedEvent) -> Event {
+pub fn decode_event<Event: Decode>(event: &ink::env::test::EmittedEvent) -> Event {
   <Event as Decode>::decode(&mut &event.data[..])
       .expect("encountered invalid contract event data buffer")
 }

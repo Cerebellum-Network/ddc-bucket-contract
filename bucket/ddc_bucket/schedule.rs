@@ -1,13 +1,10 @@
 //! The Schedule data structure implements a value that increases over time.
-
-use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
 use crate::ddc_bucket::Balance;
 
 #[must_use]
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Schedule {
     rate: Balance,
     offset: Balance,

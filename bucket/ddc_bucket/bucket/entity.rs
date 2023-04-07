@@ -1,9 +1,6 @@
 //! The data structure of Buckets.
-
-use ink_prelude::vec::Vec;
-use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
+use ink_prelude::vec::Vec;
 use crate::ddc_bucket::{
     AccountId, ClusterId,
     Error::*, Result,
@@ -15,8 +12,8 @@ use crate::ddc_bucket::params::store::Params;
 pub type BucketId = u32;
 pub type BucketParams = Params;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Bucket {
     pub owner_id: AccountId,
     pub cluster_id: ClusterId,
@@ -27,8 +24,8 @@ pub struct Bucket {
 }
 
 // Add to status field bucket availability
-#[derive(Clone, PartialEq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, Debug))]
 pub struct BucketInStatus {
     pub owner_id: AccountId,
     pub cluster_id: ClusterId,
@@ -39,8 +36,8 @@ pub struct BucketInStatus {
     pub resource_consumption_cap: Resource, 
 }
 
-#[derive(Clone, PartialEq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, Debug))]
 pub struct BucketStatus {
     pub bucket_id: BucketId,
     pub bucket: BucketInStatus,

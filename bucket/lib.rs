@@ -4,7 +4,6 @@
 #![feature(proc_macro_hygiene)] // for tests in a separate file
 #![deny(unused_must_use, unused_variables)]
 
-use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
@@ -96,10 +95,10 @@ pub mod ddc_bucket {
                 node_params: ParamsStore::default(),
                 accounts: AccountStore::default(),
                 perms: PermStore::default(),
-                network_fee: NetworkFeeStore::default(),
+                network_fee: NetworkFeeStore::new(),
                 committer_store: CommitterStore::new(operator),
                 protocol_store: ProtocolStore::new(operator, DEFAULT_BASIS_POINTS),
-                topology_store: TopologyStore::new_topology_store(),
+                topology_store: TopologyStore::default(),
             };
 
             // Make the creator of this contract a super-admin.
@@ -109,23 +108,24 @@ pub mod ddc_bucket {
                 .grant_permission(admin_id, &Permission::SuperAdmin);
 
             // Reserve IDs 0.
-            let _ = contract.accounts.create_if_not_exist(AccountId::default());
-            let _ = contract.cdn_nodes.create(AccountId::default(), 0);
+            let default_account_id = AccountId::from([0x00; 32]); // todo: must be revised due to https://use.ink/faq/migrating-from-ink-3-to-4#removal-of-accountid-default-implementation
+            let _ = contract.accounts.create_if_not_exist(default_account_id);
+            let _ = contract.cdn_nodes.create(default_account_id, 0);
             let _ = contract.cdn_node_params.create("".to_string());
             let _ = contract
                 .nodes
-                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE);
+                .create(default_account_id, 0, 0, NodeTag::ACTIVE);
             let _ = contract.node_params.create("".to_string());
             let _ = contract
                 .clusters
                 .create(
-                    AccountId::default(),
+                    default_account_id,
                     &Vec::<Vec<u64>>::new(),
                     &Vec::<NodeId>::new(),
                 )
                 .unwrap();
             let _ = contract.cluster_params.create("".to_string());
-            let _ = contract.buckets.create(AccountId::default(), 0);
+            let _ = contract.buckets.create(default_account_id, 0);
             let _ = contract.bucket_params.create("".to_string());
 
             contract
@@ -953,9 +953,9 @@ pub mod ddc_bucket {
 
     pub type Result<T> = core::result::Result<T, Error>;
 
-    impl From<Error> for ink_env::Error {
+    impl From<Error> for ink::env::Error {
         fn from(_: Error) -> Self {
-            ink_env::Error::Unknown
+            ink::env::Error::Unknown
         }
     }
     // ---- End Utils ----

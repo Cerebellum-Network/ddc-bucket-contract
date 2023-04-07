@@ -1,10 +1,6 @@
 //! The store where to create and access Nodes.
-
 use ink_prelude::string::String;
 use ink_prelude::vec::Vec;
-use ink_storage::{
-    traits,
-};
 
 use crate::ddc_bucket::{Error::ParamsDoesNotExist, Result};
 use crate::ddc_bucket::Error::ParamsTooBig;
@@ -14,8 +10,9 @@ pub type Params = String;
 
 pub const PARAMS_MAX_LEN: usize = 100_000;
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct ParamsStore(pub Vec<Params>);
 
 impl ParamsStore {
@@ -38,7 +35,7 @@ impl ParamsStore {
             params.len() - current.len()
         } else { 0 };
 
-        *current = params;      
+        *current = params;
         Ok(record_size)
     }
 

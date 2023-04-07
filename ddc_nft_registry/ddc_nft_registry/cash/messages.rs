@@ -1,4 +1,4 @@
-use ink_lang::codegen::StaticEnv;
+use ink::codegen::StaticEnv;
 
 use crate::ddc_nft_registry::{AccountId, DdcNftRegistry, Result};
 

@@ -1,6 +1,6 @@
 //! The public interface to manage Buckets.
 
-use ink_lang::codegen::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};

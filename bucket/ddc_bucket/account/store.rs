@@ -9,12 +9,12 @@ use crate::ddc_bucket::{
 };
 use crate::ddc_bucket::currency::CurrencyConverter;
 use crate::ddc_bucket::flow::Flow;
-use ink_storage::traits::{SpreadLayout, StorageLayout};
 use ink_prelude::vec::Vec;
 use super::entity::Account;
 
-#[derive(SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct AccountStore(
     pub Mapping<AccountId, Account>,
     pub CurrencyConverter,
@@ -45,7 +45,7 @@ impl AccountStore {
     }
 
     pub fn save(&mut self, account_id: &AccountId, account: &Account) {
-        self.0.insert(account_id, account)
+        self.0.insert(account_id, account);
     }
 
     /// Increase the rate of the given flow starting from the given time.

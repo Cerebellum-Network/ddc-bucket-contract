@@ -1,12 +1,10 @@
-use ink_storage::traits;
-
-use scale::{Decode, Encode};
-
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 
-#[derive(Clone, PartialEq, Encode, Decode, traits::SpreadLayout, traits::PackedLayout)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug, scale_info::TypeInfo))]
+
+#[ink::storage_item]
+#[derive(Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct ProtocolStore { 
   pub admin: AccountId,
   pub fee_bp: u32,

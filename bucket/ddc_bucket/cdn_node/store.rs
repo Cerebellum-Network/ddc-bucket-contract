@@ -1,17 +1,12 @@
 //! The store where to create and access Nodes.
-
-use ink_storage::{
-  traits,
-};
-use ink_prelude::vec::Vec as InkVec;
-
+use ink_prelude::vec::Vec;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-
 use super::entity::{CdnNode, NodeId};
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
-pub struct CdnNodeStore(pub InkVec<CdnNode>);
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct CdnNodeStore(pub Vec<CdnNode>);
 
 impl CdnNodeStore {
   pub fn create(&mut self,

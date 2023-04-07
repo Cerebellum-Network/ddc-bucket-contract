@@ -1,10 +1,9 @@
 use crate::ddc_bucket::{AccountId, Hash, NodeId};
-
-use ink_storage::{traits};
 use ink_prelude::vec::Vec;
 use ink_storage::Mapping;
+use scale::{Encode, Decode};
 
-#[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
+#[derive(Encode, Decode, PartialEq, Debug)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum Error {
     /// The caller is not the authorised operator of the smart contract
@@ -12,17 +11,17 @@ pub enum Error {
 }
 
 /// Within the concept of era we would like to return specific phase to interested agents
-#[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+#[derive(Encode, Decode, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, Debug))]
 pub enum Phase {
     Commit,
     Valiadation,
     Payout
 }
 
-#[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
-#[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
-pub struct  EraStatus {
+#[derive(Encode, Decode, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, Debug))]
+pub struct EraStatus {
     current_era: u64,
     current_phase: Phase,
     previous_era: u64,
@@ -30,8 +29,8 @@ pub struct  EraStatus {
     prev_era_to_timestamp: u64,
 }
 
-#[derive(Copy, Clone, traits::PackedLayout, traits::SpreadLayout, scale::Encode, scale::Decode, Debug)]
-#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo))]
+#[derive(Encode, Decode, Copy, Clone)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Commit {
     hash: Hash,
     total_logs: u128,
@@ -39,8 +38,8 @@ pub struct Commit {
     to_timestamp: u64,
 } 
 
-#[derive(Copy, Clone, traits::SpreadLayout, scale::Encode, scale::Decode, Debug)]
-#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, traits::StorageLayout))]
+#[derive(Encode, Decode, Copy, Clone)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct EraConfig {
     start: u64,
     interval: u64,
@@ -48,8 +47,8 @@ pub struct EraConfig {
     validation_duration:u64
 }  
 
-#[derive(traits::SpreadLayout, Debug)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout))]
+#[ink::storage_item]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct CommitterStore {
     operator_id: AccountId,
     commits: Mapping<AccountId, Vec<(NodeId, Commit)>>,

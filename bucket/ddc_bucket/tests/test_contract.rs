@@ -1,5 +1,3 @@
-use ink_lang as ink;
-
 use crate::ddc_bucket::account::entity::Account;
 use crate::ddc_bucket::cdn_node::entity::NodeId;
 use crate::ddc_bucket::cluster::entity::ClusterStatus;
@@ -658,7 +656,7 @@ fn cdn_cluster_payment_works() {
     println!("{:?}", account);
     // let account1 = ctx.contract.accounts.get(&ctx.provider_id1).unwrap();
     // println!("{:?}", account1);
-    // let account_balance = ink_env::balance(&ctx.provider_id0);
+    // let account_balance = ink::env::balance(&ctx.provider_id0);
     // println!("{:?}", account_balance);
 }
 
@@ -828,7 +826,7 @@ fn cluster_pays_providers() {
     set_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
     ctx.contract.admin_set_fee_config(FeeConfig {
         network_fee_bp,
-        network_fee_destination: AccountId::default(),
+        network_fee_destination: AccountId::from([0x00; 32]),
         cluster_management_fee_bp,
     });
 
@@ -909,14 +907,14 @@ fn bucket_reserve_0_works() {
             vec![BucketStatus {
                 bucket_id: 0,
                 bucket: BucketInStatus {
-                    owner_id: AccountId::default(),
+                    owner_id: AccountId::from([0x00; 32]),
                     cluster_id: 0,
                     resource_reserved: 0,
                     public_availability: false,
                     resource_consumption_cap: 0,
                 },
                 params: "".to_string(),
-                writer_ids: vec![AccountId::default()],
+                writer_ids: vec![AccountId::from([0x00; 32])],
                 reader_ids: vec![],
                 rent_covered_until_ms: 18446744073709551615,
             }],
@@ -930,7 +928,7 @@ fn bucket_reserve_0_works() {
             vec![ClusterStatus {
                 cluster_id: 0,
                 cluster: Cluster {
-                    manager_id: AccountId::default(),
+                    manager_id: AccountId::from([0x00; 32]),
                     v_nodes: vec![],
                     resource_per_vnode: 0,
                     resource_used: 0,
@@ -950,7 +948,7 @@ fn bucket_reserve_0_works() {
             vec![NodeStatus {
                 node_id: 0,
                 node: Node {
-                    provider_id: AccountId::default(),
+                    provider_id: AccountId::from([0x00; 32]),
                     rent_per_month: 0,
                     free_resource: 0,
                     node_tag: NodeTag::ACTIVE

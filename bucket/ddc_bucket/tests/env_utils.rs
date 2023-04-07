@@ -1,6 +1,6 @@
 #![allow(unused_variables, dead_code)]
 
-pub use ink_env::{
+pub use ink::env::{
     call, test, block_timestamp,
     test::{advance_block, DefaultAccounts},
     DefaultEnvironment,
@@ -10,7 +10,7 @@ use scale::Decode;
 use crate::ddc_bucket::*;
 
 
-pub type Event = <DdcBucket as ::ink_lang::reflect::ContractEventBase>::Type;
+pub type Event = <DdcBucket as ::ink::reflect::ContractEventBase>::Type;
 
 
 /// Recommended contract fee for all operations with reasonable data amounts.
@@ -45,7 +45,7 @@ pub fn set_balance(account: AccountId, balance: Balance) {
     test::set_account_balance::<DefaultEnvironment>(account, balance);
 }
 
-pub fn decode_event<Event: Decode>(event: &ink_env::test::EmittedEvent) -> Event {
+pub fn decode_event<Event: Decode>(event: &ink::env::test::EmittedEvent) -> Event {
     <Event as Decode>::decode(&mut &event.data[..])
         .expect("encountered invalid contract event data buffer")
 }

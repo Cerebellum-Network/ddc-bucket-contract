@@ -1,10 +1,6 @@
 //! The store to create and access Accounts.
-
 use ink_prelude::vec::Vec;
-use ink_storage::{
-    traits,
-    Mapping
-};
+use ink_storage::{Mapping};
 use scale::Encode;
 
 use crate::ddc_bucket::AccountId;
@@ -16,8 +12,9 @@ pub type TrustedBy = AccountId;
 
 type PermKey = Vec<u8>;
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct PermStore(pub Mapping<PermKey, bool>);
 // TODO: Switch to Mapping (must upgrade ink first).
 

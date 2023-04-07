@@ -1,7 +1,7 @@
 //! The public interface of Accounts and deposits.
 
 use ink_prelude::vec::Vec;
-use ink_lang::codegen::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Payable, Result, TOKEN};
 use crate::ddc_bucket::Error::InsufficientBalance;

@@ -1,24 +1,21 @@
 //! Cash and Payable represent money and debt.
 //!
 //! These data structures facilitate the correctness of money-related calculations using the Rust type system.
-
-use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
 use crate::ddc_nft_registry::{Balance, InsufficientBalance, Result};
 
 // TODO: remove Clone.
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(ink::storage::traits::StorageLayout, Debug))]
 pub struct Cash(pub Balance);
 
 /// Payable represents some value that was credited to someone, and that must be paid by someone.
 /// Payable must be covered by Cash at all times to guarantee the balance of the contract.
 #[must_use]
-#[derive(PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Payable(pub Balance);
 
 impl Cash {

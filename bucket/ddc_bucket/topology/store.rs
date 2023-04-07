@@ -1,21 +1,18 @@
 //! The store where to create and access Nodes.
 use ink_prelude::vec::Vec;
 use ink_storage::Mapping;
-use ink_storage::traits::{SpreadLayout, StorageLayout};
-
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::node::entity::Node;
 use crate::ddc_bucket::Error::UnknownNode;
 use crate::ddc_bucket::{Balance, NodeId, Result};
 
-#[derive(SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug,))]
+
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct TopologyStore(Mapping<(ClusterId, u64), NodeId>);
 
 impl TopologyStore {
-    pub fn new_topology_store() -> Self {
-        TopologyStore(Mapping::default())
-    }
 
     pub fn create_topology(
         &mut self,
@@ -93,6 +90,6 @@ impl TopologyStore {
     }
 
     pub fn save(&mut self, cluster_id: ClusterId, v_node: u64, node_id: NodeId) {
-        self.0.insert(&(cluster_id, v_node), &node_id)
+        self.0.insert(&(cluster_id, v_node), &node_id);
     }
 }

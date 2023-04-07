@@ -1,6 +1,6 @@
 //! The public interface to manage Nodes.
 
-use ink_lang::codegen::StaticEnv;
+use ink::codegen::StaticEnv;
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, DdcBucket, Result};

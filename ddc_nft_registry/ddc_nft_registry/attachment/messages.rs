@@ -1,6 +1,6 @@
 //! The public interface to manage Attachments.
 
-use ink_lang::codegen::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 
 use crate::ddc_nft_registry::{Attach, DdcNftRegistry, Result};
 use crate::ddc_nft_registry::attachment::entity::{AssetId, AttachmentStatus, NftId, Proof};

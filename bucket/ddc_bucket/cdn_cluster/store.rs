@@ -1,18 +1,14 @@
 //! The store where to create and access Clusters by ID.
 
-use ink_storage::{
-  traits
-};
 use ink_prelude::vec::Vec;
-
 use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
-
 use super::entity::{CdnCluster, ClusterId};
 
 pub const MAX_VNODES: u32 = 300;
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct CdnClusterStore(pub Vec<CdnCluster>);
 
 impl CdnClusterStore {

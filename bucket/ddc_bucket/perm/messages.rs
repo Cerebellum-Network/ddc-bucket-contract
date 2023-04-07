@@ -1,6 +1,6 @@
 //! The public interface for permission management.
 
-use ink_lang::codegen::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{AccountId, DdcBucket, GrantPermission, Result, RevokePermission};
 use crate::ddc_bucket::Error::Unauthorized;

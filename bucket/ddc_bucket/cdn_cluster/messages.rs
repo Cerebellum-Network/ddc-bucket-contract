@@ -1,6 +1,6 @@
 //! The public interface to manage Clusters.
 
-use ink_lang::codegen::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Balance, BucketId, CdnClusterCreated, ClusterDistributeRevenues, ClusterId, DdcBucket, Result};

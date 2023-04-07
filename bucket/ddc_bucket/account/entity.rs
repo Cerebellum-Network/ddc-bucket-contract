@@ -1,8 +1,5 @@
 //! The data structure of Accounts.
-
-use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
 use crate::ddc_bucket::{
     Balance, cash::{Cash, Payable},
     Error::*, Result,
@@ -10,8 +7,9 @@ use crate::ddc_bucket::{
 };
 use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Account {
     pub deposit: Cash,
     pub bonded: Cash,

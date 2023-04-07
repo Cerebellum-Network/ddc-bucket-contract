@@ -1,15 +1,13 @@
 //! The store where to create and access Nodes.
-
-use ink_storage::{traits};
 use ink_prelude::vec::Vec;
-
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 use super::entity::{Node, NodeId, NodeTag};
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct NodeStore(pub Vec<Node>);
 
 impl NodeStore {

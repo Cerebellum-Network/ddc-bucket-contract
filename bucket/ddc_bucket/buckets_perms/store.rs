@@ -1,15 +1,12 @@
 //! The store to adjust write/read permissions for DDC Buckets
-
 use crate::ddc_bucket::{AccountId, BucketId, Result};
-
 use ink_prelude::vec::Vec;
-use ink_storage::{
-    traits,
-};
 use ink_storage::Mapping;
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+
+#[ink::storage_item]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct BucketsPermsStore {
     writers: Mapping<BucketId, Vec<AccountId>>,
     readers: Mapping<BucketId, Vec<AccountId>>

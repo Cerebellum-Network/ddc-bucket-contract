@@ -1,8 +1,5 @@
 //! The data structure of Nodes.
-
-use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
@@ -11,8 +8,8 @@ pub type NodeId = u32;
 pub type NodeParams = Params;
 pub type Resource = u32;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
@@ -20,8 +17,8 @@ pub struct Node {
     pub node_tag: NodeTag,
 }
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub enum NodeTag {
     ACTIVE,
     ADDING,
@@ -29,8 +26,8 @@ pub enum NodeTag {
     OFFLINE,
 }
 
-#[derive(Clone, PartialEq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, Debug))]
 pub struct NodeStatus {
     pub node_id: NodeId,
     pub node: Node,
