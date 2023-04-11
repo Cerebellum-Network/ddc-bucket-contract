@@ -1,6 +1,6 @@
 //! This module captures fees necessary to pay for the storage of the contract state.
 
-use ink_lang::StaticEnv;
+use ink::codegen::StaticEnv;
 
 use crate::ddc_nft_registry::{Balance, DdcNftRegistry, Result, TOKEN};
 use crate::ddc_nft_registry::cash::entity::Payable;

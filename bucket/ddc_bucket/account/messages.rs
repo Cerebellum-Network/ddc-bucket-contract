@@ -1,15 +1,17 @@
 //! The public interface of Accounts and deposits.
 
 use ink_prelude::vec::Vec;
-use ink_lang::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 
 use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Payable, Result, TOKEN};
 use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
 
 impl DdcBucket {
+
+    // todo: remove this method as we can not support iterable data structures of arbitrary data size
     pub fn message_get_accounts(&self) -> Vec<AccountId> {
-        self.accounts.0.keys().cloned().collect()
+        self.accounts.2.iter().cloned().collect()
     }
 
     pub fn message_account_deposit(&mut self) -> Result<()> {
@@ -22,31 +24,35 @@ impl DdcBucket {
 
         Self::env().emit_event(Deposit { account_id, value: cash.peek() });
 
-        self.accounts
-            .get_mut(&account_id)?
-            .deposit(cash);
+        let mut account = self.accounts.get(&account_id)?;
+        account.deposit(cash);
+        self.accounts.save(&account_id, &account);
+
         Ok(())
     }
 
     pub fn message_account_bond(&mut self, bond_amount: Balance) -> Result<()> {
         let time_ms = Self::env().block_timestamp();
         let account_id = Self::env().caller();
-        let account = self.accounts.0.get_mut(&account_id)
-            .ok_or(InsufficientBalance)?;
 
-        let conv = &self.accounts.1;
-        
-        account.bond(time_ms, conv, bond_amount)?;
-        Ok(())
+        if let Ok(mut account) = self.accounts.get(&account_id) {
+            let conv = &self.accounts.1;
+            account.bond(time_ms, conv, bond_amount)?;
+            self.accounts.save(&account_id, &account);
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
     }
 
     pub fn message_account_unbond(&mut self, amount_to_unbond: Cash) -> Result<()> {
         let time_ms = Self::env().block_timestamp();
         let account_id = Self::env().caller();
 
-        self.accounts
-            .get_mut(&account_id)?
-            .unbond(amount_to_unbond, time_ms).unwrap();
+        let mut account = self.accounts.get(&account_id)?;
+        account.unbond(amount_to_unbond, time_ms)?;
+        self.accounts.save(&account_id, &account);
+
         Ok(())
     }
 
@@ -54,9 +60,10 @@ impl DdcBucket {
         let time_ms = Self::env().block_timestamp();
         let account_id = Self::env().caller();
 
-        self.accounts
-            .get_mut(&account_id)?
-            .withdraw_unbonded(time_ms).unwrap();
+        let mut account = self.accounts.get(&account_id)?;
+        account.withdraw_unbonded(time_ms)?;
+        self.accounts.save(&account_id, &account);
+
         Ok(())
     }
 
@@ -70,7 +77,7 @@ impl DdcBucket {
     }
 
     pub fn receive_cash() -> Cash {
-        Cash(Self::env().transferred_balance())
+        Cash(Self::env().transferred_value())
     }
 
     pub fn send_cash(destination: AccountId, cash: Cash) -> Result<()> {
@@ -82,21 +89,25 @@ impl DdcBucket {
     }
 
     fn _account_withdraw(&mut self, from: AccountId, payable: Payable) -> Result<()> {
-        let account = self.accounts.0.get_mut(&from)
-            .ok_or(InsufficientBalance)?;
-
-        let time_ms = Self::env().block_timestamp();
-        let conv = &self.accounts.1;
-        account.withdraw(time_ms, conv, payable)?;
-        Ok(())
+        if let Ok(mut account) = self.accounts.get(&from) {
+            let time_ms = Self::env().block_timestamp();
+            let conv = &self.accounts.1;
+            account.withdraw(time_ms, conv, payable)?;
+            self.accounts.save(&from, &account);
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
     }
 
     fn _account_withdraw_bonded(&mut self, account_id: AccountId, payable: Payable) -> Result<()> {
-        let account = self.accounts.0.get_mut(&account_id)
-            .ok_or(InsufficientBalance)?;
-        
-        account.withdraw_bonded(payable)?;
-        Ok(())
+        if let Ok(mut account) = self.accounts.get(&account_id) {
+            account.withdraw_bonded(payable)?;
+            self.accounts.save(&account_id, &account);
+            Ok(())
+        } else {
+            Err(InsufficientBalance)
+        }
     }
 
     fn _account_get_net(&self, from: AccountId) -> Balance {
@@ -117,9 +128,9 @@ impl DdcBucket {
         // Create the account, if necessary.
         self.accounts.create_if_not_exist(to);
 
-        self.accounts
-            .get_mut(&to)?
-            .deposit(cash);
+        let mut account = self.accounts.get(&to)?;
+        account.deposit(cash);
+        self.accounts.save(&to, &account);
         Ok(())
     }
 }

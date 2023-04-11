@@ -1,25 +1,22 @@
 //! Cash and Payable represent money and debt.
 //!
 //! These data structures facilitate the correctness of money-related calculations using the Rust type system.
-
-use ink_storage::traits;
 use scale::{Decode, Encode};
-
 use crate::ddc_bucket::{Balance, Result};
 use crate::ddc_bucket::Error::InsufficientBalance;
 
 // TODO: remove Clone.
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
-#[derive(Clone, Copy, PartialEq, Encode, Decode, traits::SpreadLayout, traits::PackedLayout)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[derive(Encode, Decode, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "std", derive(ink::storage::traits::StorageLayout, Debug))]
 pub struct Cash(pub Balance);
 
 /// Payable represents some value that was credited to someone, and that must be paid by someone.
 /// Payable must be covered by Cash at all times to guarantee the balance of the contract.
 #[must_use]
-#[derive(PartialEq, Encode, Decode, traits::SpreadLayout, traits::PackedLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Payable(pub Balance);
 
 impl Cash {
@@ -74,7 +71,7 @@ impl ::scale_info::TypeInfo for Cash {
             .type_params([])
             .composite(
                 ::scale_info::build::Fields::named()
-                    .field_of::<Balance>("value", "Balance"),
+                    .field(|f| f.ty::<Balance>().name("value").type_name("Balance"))
             )
     }
 }

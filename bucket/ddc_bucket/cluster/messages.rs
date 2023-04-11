@@ -1,5 +1,5 @@
 //! The public interface to manage Clusters.
-use ink_lang::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::cash::{Cash, Payable};
@@ -37,7 +37,7 @@ impl DdcBucket {
         let cluster_id = self.clusters.create(manager, &v_nodes, &node_ids)?;
         let rent = self
             .topology_store
-            .create_topology(cluster_id, v_nodes, nodes)?;
+            .create_topology(cluster_id, v_nodes, nodes.iter().map(|(id, node)| (*id, *node)).collect())?;
 
         self.clusters.get_mut(cluster_id).unwrap().change_rent(rent);
 
@@ -62,8 +62,8 @@ impl DdcBucket {
         let mut nodes = Vec::<(NodeId, &Node)>::new();
 
         for node_id in &node_ids {
-            let node = self.nodes.get(node_id.clone())?;
-            nodes.push((node_id.clone(), node));
+            let node = self.nodes.get(*node_id)?;
+            nodes.push((*node_id, node));
 
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
@@ -82,7 +82,7 @@ impl DdcBucket {
         // TODO: change v_nodes inside cluster entity
         let total_rent = self
             .topology_store
-            .add_node(cluster_id, &old_v_nodes, &v_nodes, nodes)?;
+            .add_node(cluster_id, &old_v_nodes, &v_nodes, nodes.iter().map(|(id, node)| (*id, *node)).collect())?;
 
         let cluster = self.clusters.get_mut(cluster_id)?;
         cluster.total_rent = total_rent as Balance;
@@ -102,10 +102,9 @@ impl DdcBucket {
         cluster.put_resource(resource);
 
         for v_nodes_wrapper in &cluster.v_nodes {
-            for v_node in v_nodes_wrapper {
-                let node_id = self.topology_store.get_node_id(cluster_id, *v_node)?;
-                let node = self.nodes.get_mut(*node_id)?;
-
+            for &v_node in v_nodes_wrapper {
+                let node_id = self.topology_store.get(cluster_id, v_node)?;
+                let node = self.nodes.get_mut(node_id)?;
                 node.take_resource(resource)?;
             }
         }
@@ -129,15 +128,11 @@ impl DdcBucket {
 
         // Give back resources to the old node for all its v_nodes
         for v_node in v_nodes.clone() {
-            let old_node_id = self
-                .topology_store
-                .get_node_id_mut(cluster_id, v_node)
-                .unwrap();
+            let old_node_id = self.topology_store.get(cluster_id, v_node)?;
 
             // Give back resources to the old node
-            self.nodes
-                .get_mut(*old_node_id)?
-                .put_resource(cluster.resource_per_vnode);
+            let old_node = self.nodes.get_mut(old_node_id)?;
+            old_node.put_resource(cluster.resource_per_vnode);
 
             let new_node = self.nodes.get_mut(new_node_id)?;
 
@@ -147,7 +142,7 @@ impl DdcBucket {
             // Reserve resources on the new node.
             new_node.take_resource(cluster.resource_per_vnode)?;
 
-            *old_node_id = new_node_id as u32;
+            self.topology_store.save(cluster_id, v_node, new_node_id);
         }
 
         self.topology_store

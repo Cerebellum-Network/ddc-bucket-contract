@@ -1,6 +1,6 @@
 //! The public interface to manage Nodes.
 
-use ink_lang::StaticEnv;
+use ink::codegen::StaticEnv;
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, DdcBucket, Result};
@@ -16,9 +16,7 @@ impl DdcBucket {
         self.impl_grant_permission(manager, permission, is_trusted)
     }
 
-    pub fn message_cdn_node_create(&mut self,
-                               node_params: Params,
-    ) -> Result<NodeId> {
+    pub fn message_cdn_node_create(&mut self, node_params: Params) -> Result<NodeId> {
         let provider_id = Self::env().caller();
 
         let node_id = self.cdn_nodes.create(provider_id, 0);
@@ -45,7 +43,7 @@ impl DdcBucket {
     pub fn message_cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeStatus>, u32) {
         let mut cdn_nodes = Vec::with_capacity(limit as usize);
         for node_id in offset..offset + limit {
-            let node = match self.cdn_nodes.0.get(node_id) {
+            let node = match self.cdn_nodes.0.get(node_id as usize) {
                 None => break, // No more items, stop.
                 Some(node) => node,
             };
@@ -65,6 +63,6 @@ impl DdcBucket {
             
             cdn_nodes.push(status);
         }
-        (cdn_nodes, self.cdn_nodes.0.len())
+        (cdn_nodes, self.cdn_nodes.0.len().try_into().unwrap())
     }
 }

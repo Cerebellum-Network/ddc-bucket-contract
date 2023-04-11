@@ -1,6 +1,6 @@
 //! The public interface to manage Buckets.
 
-use ink_lang::{EmitEvent, StaticEnv};
+use ink::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};
@@ -75,7 +75,7 @@ impl DdcBucket {
     pub fn message_bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
         let mut bucket_statuses = Vec::with_capacity(limit as usize);
         for bucket_id in offset..offset + limit {
-            let bucket = match self.buckets.0.get(bucket_id) {
+            let bucket = match self.buckets.0.get(bucket_id as usize) {
                 None => break, // No more buckets, stop.
                 Some(bucket) => bucket,
             };
@@ -92,7 +92,7 @@ impl DdcBucket {
                     bucket_statuses.push(status),
             };
         }
-        (bucket_statuses, self.buckets.0.len())
+        (bucket_statuses, self.buckets.0.len().try_into().unwrap())
     }
 
     pub fn message_bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {

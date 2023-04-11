@@ -1,10 +1,6 @@
 //! The data structure of Clusters.
-// use ink_storage::Mapping;
-// use ink_prelude::vec::Vec;
-use ink_prelude::vec::Vec;
-use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
+use ink_prelude::vec::Vec;
 use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::node::entity::NodeId;
 use crate::ddc_bucket::node::entity::Resource;
@@ -17,8 +13,8 @@ pub type ClusterParams = Params;
 pub type VNodeIndex = u32;
 pub type VNodeId = (ClusterId, VNodeIndex);
 
-#[derive(Clone, PartialEq, Encode, Decode, PackedLayout, SpreadLayout)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout, Debug))]
 pub struct Cluster {
     pub manager_id: AccountId,
     pub resource_per_vnode: Resource,
@@ -29,8 +25,8 @@ pub struct Cluster {
     pub total_rent: Balance,
 }
 
-#[derive(Clone, PartialEq, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+#[derive(Encode, Decode, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(scale_info::TypeInfo, Debug))]
 pub struct ClusterStatus {
     pub cluster_id: ClusterId,
     pub cluster: Cluster,

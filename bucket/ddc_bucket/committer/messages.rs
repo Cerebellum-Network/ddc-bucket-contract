@@ -1,5 +1,5 @@
-use ink_lang::{StaticEnv};
-use ink_env::Error;
+use ink::codegen::StaticEnv;
+use ink::env::Error;
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, DdcBucket, NodeId};
