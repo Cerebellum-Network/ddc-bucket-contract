@@ -11,8 +11,8 @@ use super::entity::{Node, NodeId, NodeTag};
 #[derive(traits::SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
 pub struct NodeStore {
-    pub store: HashMap<AccountId, NodeId>,
-    pub keys: InkVec<Node>,
+    pub account_node: HashMap<AccountId, NodeId>,
+    pub nodes: InkVec<Node>,
 }
 
 impl NodeStore {
@@ -24,7 +24,7 @@ impl NodeStore {
         node_tag: NodeTag,
         pubkey: AccountId,
     ) -> Result<NodeId> {
-        let node_id = self.keys.len();
+        let node_id = self.nodes.len();
 
         let node = Node {
             provider_id,
@@ -33,26 +33,26 @@ impl NodeStore {
             node_tag,
         };
 
-        let exists = self.store.contains_key(&pubkey);
+        let exists = self.account_node.contains_key(&pubkey);
         if exists {
             return Err(NodeAlreadyExists);
         }
 
-        self.keys.push(node);
-        self.store.insert(pubkey, node_id);
+        self.nodes.push(node);
+        self.account_node.insert(pubkey, node_id);
 
         Ok(node_id)
     }
 
     pub fn get_by_pub_key(&self, pubkey: AccountId) -> Result<&NodeId> {
-        self.store.get(&pubkey).ok_or(NodeDoesNotExist)
+        self.account_node.get(&pubkey).ok_or(NodeDoesNotExist)
     }
 
     pub fn get(&self, node_id: NodeId) -> Result<&Node> {
-        self.keys.get(node_id).ok_or(NodeDoesNotExist)
+        self.nodes.get(node_id).ok_or(NodeDoesNotExist)
     }
 
     pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
-        self.keys.get_mut(node_id).ok_or(NodeDoesNotExist)
+        self.nodes.get_mut(node_id).ok_or(NodeDoesNotExist)
     }
 }

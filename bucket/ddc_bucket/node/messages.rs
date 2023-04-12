@@ -85,7 +85,7 @@ impl DdcBucket {
     ) -> (Vec<NodeStatus>, u32) {
         let mut nodes = Vec::with_capacity(limit as usize);
         for node_id in offset..offset + limit {
-            let node = match self.nodes.keys.get(node_id) {
+            let node = match self.nodes.nodes.get(node_id) {
                 None => break, // No more items, stop.
                 Some(node) => node,
             };
@@ -103,7 +103,7 @@ impl DdcBucket {
             };
             nodes.push(status);
         }
-        (nodes, self.nodes.keys.len())
+        (nodes, self.nodes.nodes.len())
     }
 
     pub fn message_node_get_by_pub_key(&self, pubkey: AccountId) -> Result<NodeStatus> {
