@@ -68,6 +68,7 @@ fn new_cluster() -> TestCluster {
         node_params0.to_string(),
         capacity,
         NodeTag::ADDING,
+        provider_id0,
     );
     pop_caller();
 
@@ -79,6 +80,7 @@ fn new_cluster() -> TestCluster {
         node_params1.to_string(),
         capacity,
         NodeTag::ADDING,
+        provider_id1,
     );
     pop_caller();
 
@@ -90,6 +92,7 @@ fn new_cluster() -> TestCluster {
         node_params2.to_string(),
         capacity,
         NodeTag::ADDING,
+        provider_id2,
     );
     pop_caller();
 
@@ -783,9 +786,13 @@ fn cluster_add_node() {
     let capacity = 1000;
     let node_tag = NodeTag::ACTIVE;
 
-    let new_node_id =
-        ctx.contract
-            .node_create(rent_per_month, node_params.to_string(), capacity, node_tag);
+    let new_node_id = ctx.contract.node_create(
+        rent_per_month,
+        node_params.to_string(),
+        capacity,
+        node_tag,
+        ctx.manager,
+    );
 
     let mut node_ids = Vec::<u32>::new();
     node_ids.push(ctx.node_id0);
@@ -1261,6 +1268,7 @@ fn node_list_works() {
         node_params1.to_string(),
         capacity,
         NodeTag::ADDING,
+        owner_id1,
     );
     pop_caller();
 
@@ -1271,8 +1279,12 @@ fn node_list_works() {
         node_params2.to_string(),
         capacity,
         NodeTag::ADDING,
+        owner_id2,
     );
     pop_caller();
+
+    let node_status = ddc_bucket.node_get_by_pubkey(owner_id1).unwrap();
+    assert_eq!(owner_id1, node_status.node.provider_id.clone());
 
     assert_ne!(node_id1, node_id2);
     let count = 3;

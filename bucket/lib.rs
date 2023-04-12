@@ -114,7 +114,7 @@ pub mod ddc_bucket {
             let _ = contract.cdn_node_params.create("".to_string());
             let _ = contract
                 .nodes
-                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE);
+                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE, AccountId::default());
             let _ = contract.node_params.create("".to_string());
             let _ = contract
                 .clusters
@@ -722,8 +722,9 @@ pub mod ddc_bucket {
             node_params: NodeParams,
             capacity: Resource,
             node_tag: NodeTag,
+            pubkey: AccountId,
         ) -> NodeId {
-            self.message_node_create(rent_per_month, node_params, capacity, node_tag)
+            self.message_node_create(rent_per_month, node_params, capacity, node_tag, pubkey)
                 .unwrap()
         }
 
@@ -739,6 +740,12 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
             self.message_node_get(node_id)
+        }
+
+        /// Get the current status of a node by a public key.
+        #[ink(message)]
+        pub fn node_get_by_pubkey(&self, pubkey: AccountId) -> Result<NodeStatus> {
+            self.message_node_get_by_pub_key(pubkey)
         }
 
         /// Iterate through all nodes.
@@ -936,6 +943,7 @@ pub mod ddc_bucket {
         BucketClusterAlreadyConnected,
         BucketClusterNotSetup,
         NodeDoesNotExist,
+        NodeAlreadyExists,
         FlowDoesNotExist,
         AccountDoesNotExist,
         ParamsDoesNotExist,
@@ -946,8 +954,7 @@ pub mod ddc_bucket {
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
-// 18
- Unauthorized,
+        Unauthorized,
         UnknownNode,
     }
 
