@@ -25,19 +25,23 @@ impl DdcBucket {
     ) -> Result<ClusterId> {
         let manager = Self::env().caller();
 
-        let mut nodes = Vec::<(NodeId, &Node)>::new();
+        let cluster_id = self.clusters.create(manager, &v_nodes, &node_ids)?;
+
+        let mut nodes = Vec::<(NodeId, Node)>::new();
         for node_id in &node_ids {
-            let node = self.nodes.get(*node_id)?;
-            nodes.push((*node_id, node));
+            let node = self.nodes.get_mut(*node_id)?;
+            node.assign_cluster_id(cluster_id);
+
+            nodes.push((*node_id, node.clone()));
 
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
         }
 
-        let cluster_id = self.clusters.create(manager, &v_nodes, &node_ids)?;
+        // let rent = 0;
         let rent = self
             .topology_store
-            .create_topology(cluster_id, v_nodes, nodes)?;
+            .create_topology(cluster_id, v_nodes, nodes.clone())?;
 
         self.clusters.get_mut(cluster_id).unwrap().change_rent(rent);
 
@@ -59,11 +63,13 @@ impl DdcBucket {
         v_nodes: Vec<Vec<u64>>,
     ) -> Result<()> {
         let manager = Self::env().caller();
-        let mut nodes = Vec::<(NodeId, &Node)>::new();
+        let mut nodes = Vec::<(NodeId, Node)>::new();
 
         for node_id in &node_ids {
-            let node = self.nodes.get(node_id.clone())?;
-            nodes.push((node_id.clone(), node));
+            let node = self.nodes.get_mut(node_id.clone())?;
+
+            nodes.push((node_id.clone(), node.clone()));
+            node.assign_cluster_id(cluster_id);
 
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id)?;
@@ -139,7 +145,16 @@ impl DdcBucket {
                 .get_mut(*old_node_id)?
                 .put_resource(cluster.resource_per_vnode);
 
+            self.nodes.assign_cluster_id(new_node_id, cluster_id);
+            self.nodes.assign_cluster_id(*old_node_id, 0);
+
             let new_node = self.nodes.get_mut(new_node_id)?;
+
+            // self.nodes
+            //     .get_mut(old_node_id.clone())
+            //     .unwrap()
+            //     .assign_cluster_id(0);
+            // old_node.assign_cluster_id(0);
 
             // Verify that the provider of the new node trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;

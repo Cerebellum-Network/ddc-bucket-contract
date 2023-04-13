@@ -21,7 +21,7 @@ impl TopologyStore {
         &mut self,
         cluster_id: ClusterId,
         v_nodes: InkVec<InkVec<u64>>,
-        nodes: InkVec<(NodeId, &Node)>,
+        nodes: InkVec<(NodeId, Node)>,
     ) -> Result<Balance> {
         let mut total_rent = 0u128;
         let mut vnodes_wrapper_index = 0;
@@ -64,7 +64,7 @@ impl TopologyStore {
         cluster_id: u32,
         old_v_nodes: &InkVec<u64>,
         v_nodes: &InkVec<InkVec<u64>>,
-        nodes: InkVec<(NodeId, &Node)>,
+        nodes: InkVec<(NodeId, Node)>,
     ) -> Result<u32> {
         // remove old nodes from topology
         for old_v_node in old_v_nodes {

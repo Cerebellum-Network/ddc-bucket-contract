@@ -2,6 +2,8 @@
 
 use ink_storage::{collections::Vec as InkVec, traits};
 
+use crate::ddc_bucket::cdn_cluster::entity::ClusterId;
+use crate::ddc_bucket::cluster::entity::Cluster;
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use ink_storage::collections::HashMap;
@@ -31,6 +33,7 @@ impl NodeStore {
             rent_per_month,
             free_resource: capacity,
             node_tag,
+            cluster_id: ClusterId::default(),
         };
 
         let exists = self.account_node.contains_key(&pubkey);
@@ -54,5 +57,12 @@ impl NodeStore {
 
     pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
         self.nodes.get_mut(node_id).ok_or(NodeDoesNotExist)
+    }
+
+    pub fn assign_cluster_id(&mut self, node_id: NodeId, cluster_id: ClusterId) {
+        self.nodes
+            .get_mut(node_id)
+            .unwrap()
+            .assign_cluster_id(cluster_id)
     }
 }

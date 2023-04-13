@@ -3,6 +3,7 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
+use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
@@ -18,6 +19,7 @@ pub struct Node {
     pub rent_per_month: Balance,
     pub free_resource: Resource,
     pub node_tag: NodeTag,
+    pub cluster_id: ClusterId,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
@@ -56,6 +58,10 @@ impl Node {
 
     pub fn put_resource(&mut self, amount: Resource) {
         self.free_resource += amount;
+    }
+
+    pub fn assign_cluster_id(&mut self, cluster_id: ClusterId) {
+        self.cluster_id = cluster_id;
     }
 
     pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
