@@ -47,13 +47,15 @@ pub struct EraConfig {
     validation_duration:u64
 }  
 
-#[ink::storage_item]
+pub const COMMITER_STORE_KEY: u32 = openbrush::storage_unique_key!(CommitterStore);
+#[openbrush::upgradeable_storage(COMMITER_STORE_KEY)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct CommitterStore {
     operator_id: AccountId,
     commits: Mapping<AccountId, Vec<(NodeId, Commit)>>,
     validated_commits: Mapping<NodeId, EraAndTimestamp>,
-    era_settings: EraConfig
+    era_settings: EraConfig,
+    _reserved: Option<()>
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -71,7 +73,8 @@ impl CommitterStore {
                 interval: 0,
                 commit_duration: 0,
                 validation_duration: 0,
-            }
+            },
+            _reserved: None
         }
     }
 

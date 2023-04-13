@@ -64,7 +64,7 @@ impl DdcBucket {
 
         let aggregate_payments_accounts;
         {
-            let conv = &self.accounts.1;
+            let conv = &self.accounts.curr_converter;
             aggregate_payments_accounts = aggregates_accounts.iter().map(|(client_id, resources_used)| {
                 let account_id = *client_id;
                 let cere_payment: Balance = conv.to_cere(*resources_used as Balance * cluster.usd_per_gb / KB_PER_GB );
@@ -83,7 +83,7 @@ impl DdcBucket {
         };
 
 
-        let conv = &self.accounts.1;
+        let conv = &self.accounts.curr_converter;
         let committer = &mut self.committer_store;
 
         for &(node_id, resources_used) in aggregates_nodes.iter() {
@@ -163,7 +163,7 @@ impl DdcBucket {
     pub fn message_cdn_cluster_list(&self, offset: u32, limit: u32, filter_manager_id: Option<AccountId>) -> (Vec<CdnClusterStatus>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
-            let cluster = match self.cdn_clusters.0.get(cluster_id as usize) {
+            let cluster = match self.cdn_clusters.clusters.get(cluster_id as usize) {
                 None => break, // No more items, stop.
                 Some(cluster) => cluster,
             };
@@ -180,7 +180,7 @@ impl DdcBucket {
             };
             clusters.push(status);
         }
-        (clusters, self.clusters.0.len().try_into().unwrap())
+        (clusters, self.clusters.clusters.len().try_into().unwrap())
     }
 
     fn only_cdn_cluster_manager(cluster: &CdnCluster) -> Result<AccountId> {

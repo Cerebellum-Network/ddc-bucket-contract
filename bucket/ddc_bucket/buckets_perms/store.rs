@@ -4,19 +4,22 @@ use ink_prelude::vec::Vec;
 use ink_storage::Mapping;
 
 
-#[ink::storage_item]
+pub const BUCKETS_PERMS_STORE_KEY: u32 = openbrush::storage_unique_key!(BucketsPermsStore);
+#[openbrush::upgradeable_storage(BUCKETS_PERMS_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct BucketsPermsStore {
     writers: Mapping<BucketId, Vec<AccountId>>,
-    readers: Mapping<BucketId, Vec<AccountId>>
+    readers: Mapping<BucketId, Vec<AccountId>>,
+    _reserved: Option<()>
 }
 
 impl BucketsPermsStore {
     pub fn new() -> BucketsPermsStore {
         BucketsPermsStore {
             writers: Default::default(),
-            readers: Default::default()
+            readers: Default::default(),
+            _reserved: None
         }
     }
 

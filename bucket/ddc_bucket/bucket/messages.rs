@@ -6,7 +6,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
-
+use crate::ddc_bucket::params::store::ParamsStoreTrait;
 use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
 
 impl DdcBucket {
@@ -64,7 +64,7 @@ impl DdcBucket {
         let bucket = self.buckets.get(bucket_id)?;
         bucket.only_owner(caller)?;
 
-        Self::impl_change_params(&mut self.bucket_params, bucket_id, params)
+        Self::impl_change_bucket_params(&mut self.bucket_params, bucket_id, params)
     }
 
     pub fn message_bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
@@ -75,7 +75,7 @@ impl DdcBucket {
     pub fn message_bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
         let mut bucket_statuses = Vec::with_capacity(limit as usize);
         for bucket_id in offset..offset + limit {
-            let bucket = match self.buckets.0.get(bucket_id as usize) {
+            let bucket = match self.buckets.buckets.get(bucket_id as usize) {
                 None => break, // No more buckets, stop.
                 Some(bucket) => bucket,
             };
@@ -92,11 +92,11 @@ impl DdcBucket {
                     bucket_statuses.push(status),
             };
         }
-        (bucket_statuses, self.buckets.0.len().try_into().unwrap())
+        (bucket_statuses, self.buckets.buckets.len().try_into().unwrap())
     }
 
     pub fn message_bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
-        self.buckets.0
+        self.buckets.buckets
             .iter()
             .filter(|bucket| bucket.owner_id == owner_id)
             .cloned()
@@ -130,7 +130,7 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_get_bucket_writers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
+    pub fn message_get_bucket_writers(&self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
         let writers = self.buckets_perms.get_bucket_writers(bucket_id);
         Ok(writers)
     }

@@ -7,10 +7,14 @@ use crate::ddc_bucket::Error::UnknownNode;
 use crate::ddc_bucket::{Balance, NodeId, Result};
 
 
-#[ink::storage_item]
+pub const TOPOLOGY_STORE_KEY: u32 = openbrush::storage_unique_key!(TopologyStore);
+#[openbrush::upgradeable_storage(TOPOLOGY_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct TopologyStore(Mapping<(ClusterId, u64), NodeId>);
+pub struct TopologyStore {
+    topology: Mapping<(ClusterId, u64), NodeId>,
+    _reserved: Option<()>
+}
 
 impl TopologyStore {
 
@@ -26,7 +30,7 @@ impl TopologyStore {
         for node in &nodes {
             let v_nodes_for_node = &v_nodes[vnodes_wrapper_index as usize];
             for v_node in v_nodes_for_node.iter() {
-                self.0.insert((cluster_id, *v_node), &(node.0));
+                self.topology.insert((cluster_id, *v_node), &(node.0));
 
                 total_rent += node.1.rent_per_month as Balance;
             }
@@ -44,8 +48,8 @@ impl TopologyStore {
         new_node_id: NodeId,
     ) -> Result<()> {
         for v_node in v_nodes {
-            if self.0.contains(&(cluster_id, v_node)) {
-                self.0.insert(&(cluster_id, v_node), &new_node_id);
+            if self.topology.contains(&(cluster_id, v_node)) {
+                self.topology.insert(&(cluster_id, v_node), &new_node_id);
             } else {
                 return Err(UnknownNode)
             }
@@ -63,7 +67,7 @@ impl TopologyStore {
     ) -> Result<u32> {
         // remove old nodes from topology
         for &old_v_node in old_v_nodes {
-            self.0.insert((cluster_id, old_v_node), &0);
+            self.topology.insert((cluster_id, old_v_node), &0);
         }
 
         let mut total_rent = 0u32;
@@ -74,7 +78,7 @@ impl TopologyStore {
             let v_nodes_for_node = &v_nodes[index as usize];
 
             for v_node in v_nodes_for_node.iter() {
-                self.0.insert((cluster_id, *v_node), &(node.0));
+                self.topology.insert((cluster_id, *v_node), &(node.0));
 
                 total_rent += node.1.rent_per_month as u32;
             }
@@ -86,10 +90,10 @@ impl TopologyStore {
     }
 
     pub fn get(&self, cluster_id: ClusterId, v_node: u64) -> Result<NodeId> {
-        self.0.get((cluster_id, v_node)).ok_or(UnknownNode)
+        self.topology.get((cluster_id, v_node)).ok_or(UnknownNode)
     }
 
     pub fn save(&mut self, cluster_id: ClusterId, v_node: u64, node_id: NodeId) {
-        self.0.insert(&(cluster_id, v_node), &node_id);
+        self.topology.insert(&(cluster_id, v_node), &node_id);
     }
 }

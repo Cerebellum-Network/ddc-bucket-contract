@@ -7,10 +7,15 @@ use crate::ddc_bucket::schedule::Schedule;
 
 use super::entity::{Bucket, BucketId};
 
-#[ink::storage_item]
+
+pub const BUCKET_STORE_KEY: u32 = openbrush::storage_unique_key!(BucketStore);
+#[openbrush::upgradeable_storage(BUCKET_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct BucketStore(pub Vec<Bucket>);
+pub struct BucketStore {
+    pub buckets: Vec<Bucket>,
+    _reserved: Option<()>
+}
 
 impl BucketStore {
     #[must_use]
@@ -23,16 +28,16 @@ impl BucketStore {
             resource_consumption_cap: 0,
             public_availability: false,
         };
-        let bucket_id: BucketId = self.0.len().try_into().unwrap();
-        self.0.push(bucket);
+        let bucket_id: BucketId = self.buckets.len().try_into().unwrap();
+        self.buckets.push(bucket);
         bucket_id
     }
 
     pub fn get(&self, bucket_id: BucketId) -> Result<&Bucket> {
-        self.0.get(bucket_id as usize).ok_or(BucketDoesNotExist)
+        self.buckets.get(bucket_id as usize).ok_or(BucketDoesNotExist)
     }
 
     pub fn get_mut(&mut self, bucket_id: BucketId) -> Result<&mut Bucket> {
-        self.0.get_mut(bucket_id as usize).ok_or(BucketDoesNotExist)
+        self.buckets.get_mut(bucket_id as usize).ok_or(BucketDoesNotExist)
     }
 }

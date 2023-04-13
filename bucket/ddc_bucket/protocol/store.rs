@@ -2,13 +2,15 @@ use crate::ddc_bucket::{AccountId, Error::*, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 
 
-#[ink::storage_item]
+pub const PROTOCOL_STORE_KEY: u32 = openbrush::storage_unique_key!(ProtocolStore);
+#[openbrush::upgradeable_storage(PROTOCOL_STORE_KEY)]
 #[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ProtocolStore { 
   pub admin: AccountId,
   pub fee_bp: u32,
   pub revenues: Cash,
+  _reserved: Option<()>
 }
 
 impl ProtocolStore {
@@ -20,6 +22,7 @@ impl ProtocolStore {
       admin,
       fee_bp,
       revenues: Cash(0),
+      _reserved: None
     }
   }
 

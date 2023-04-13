@@ -5,10 +5,14 @@ use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 use super::entity::{Node, NodeId, NodeTag};
 
-#[ink::storage_item]
+pub const NODE_STORE_KEY: u32 = openbrush::storage_unique_key!(NodeStore);
+#[openbrush::upgradeable_storage(NODE_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct NodeStore(pub Vec<Node>);
+pub struct NodeStore {
+    pub nodes: Vec<Node>,
+    _reserved: Option<()>
+}
 
 impl NodeStore {
     pub fn create(
@@ -18,7 +22,7 @@ impl NodeStore {
         capacity: Resource,
         node_tag: NodeTag,
     ) -> NodeId {
-        let node_id: NodeId = self.0.len().try_into().unwrap();
+        let node_id: NodeId = self.nodes.len().try_into().unwrap();
         let node = Node {
             provider_id,
             rent_per_month,
@@ -26,15 +30,15 @@ impl NodeStore {
             node_tag,
         };
 
-        self.0.push(node);
+        self.nodes.push(node);
         node_id
     }
 
     pub fn get(&self, node_id: NodeId) -> Result<&Node> {
-        self.0.get(node_id as usize).ok_or(NodeDoesNotExist)
+        self.nodes.get(node_id as usize).ok_or(NodeDoesNotExist)
     }
 
     pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
-        self.0.get_mut(node_id as usize).ok_or(NodeDoesNotExist)
+        self.nodes.get_mut(node_id as usize).ok_or(NodeDoesNotExist)
     }
 }

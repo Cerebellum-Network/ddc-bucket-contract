@@ -13,7 +13,7 @@ use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterReserveResource,
     DdcBucket, Result,
 };
-
+use crate::ddc_bucket::params::store::ParamsStoreTrait;
 use super::entity::{ClusterId, ClusterParams};
 
 impl DdcBucket {
@@ -199,7 +199,7 @@ impl DdcBucket {
         let cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
 
-        Self::impl_change_params(&mut self.cluster_params, cluster_id, params)
+        Self::impl_change_cluster_params(&mut self.cluster_params, cluster_id, params)
     }
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
@@ -220,7 +220,7 @@ impl DdcBucket {
     ) -> (Vec<ClusterStatus>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
-            let cluster = match self.clusters.0.get(cluster_id as usize) {
+            let cluster = match self.clusters.clusters.get(cluster_id as usize) {
                 None => break, // No more items, stop.
                 Some(cluster) => cluster,
             };
@@ -238,7 +238,7 @@ impl DdcBucket {
             };
             clusters.push(status);
         }
-        (clusters, self.clusters.0.len().try_into().unwrap())
+        (clusters, self.clusters.clusters.len().try_into().unwrap())
     }
 
     fn only_cluster_manager(cluster: &Cluster) -> Result<AccountId> {

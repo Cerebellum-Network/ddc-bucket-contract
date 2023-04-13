@@ -16,14 +16,14 @@ ink_metadata = { version = "4.1.0", default-features = false, features = ["deriv
 ink_env = { version = "4.1.0", default-features = false }
 ink_storage = { version = "4.1.0", default-features = false }
 ink_prelude = { version = "4.1.0", default-features = false }
-
-
 # Transitive dependencies necessary to fix the version.
 ink_allocator = { version = "4.1.0", default-features = false, optional = true }
 
 serde = { version = "1.0.136", optional = true }
 serde_json = { version = "1.0.79", optional = true }
 more-asserts = { version = "0.3.0" }
+
+openbrush = { git = "https://github.com/727-Ventures/openbrush-contracts", version = "~3.0.0", default-features = false }
 
 [lib]
 name = "ddc_bucket"

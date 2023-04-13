@@ -8,20 +8,25 @@ pub type BasisPoints = Balance;
 
 const BP: BasisPoints = 10_000; // 100%
 
-#[ink::storage_item]
+pub const NETWORK_FEE_STORE_KEY: u32 = openbrush::storage_unique_key!(NetworkFeeStore);
+#[openbrush::upgradeable_storage(NETWORK_FEE_STORE_KEY)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct NetworkFeeStore(
-    pub FeeConfig,
-);
+pub struct NetworkFeeStore {
+    pub fee_config: FeeConfig,
+    _reserved: Option<()>
+}
 
 impl NetworkFeeStore {
 
     pub fn new() -> Self {
-        Self(FeeConfig::new())
+        Self {
+            fee_config: FeeConfig::new(),
+            _reserved: None
+        }
     }
 
     pub fn cluster_management_fee_bp(&self) -> BasisPoints {
-        self.0.cluster_management_fee_bp
+        self.fee_config.cluster_management_fee_bp
     }
 }
 
@@ -51,7 +56,7 @@ impl FeeConfig {
 impl DdcBucket {
     /// Take a network fee from the given revenues (in place).
     pub fn capture_network_fee(store: &NetworkFeeStore, revenues: &mut Cash) -> Result<()> {
-        let config = &store.0;
+        let config = &store.fee_config;
         Self::capture_fee(config.network_fee_bp, config.network_fee_destination, revenues)
     }
 
@@ -65,7 +70,7 @@ impl DdcBucket {
 
     pub fn message_admin_set_fee_config(&mut self, config: FeeConfig) -> Result<()> {
         self.only_with_permission(Permission::SuperAdmin)?;
-        self.network_fee.0 = config;
+        self.network_fee.fee_config = config;
         Ok(())
     }
 }

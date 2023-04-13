@@ -6,10 +6,14 @@ use super::entity::{CdnCluster, ClusterId};
 
 pub const MAX_VNODES: u32 = 300;
 
-#[ink::storage_item]
+pub const CDN_CLUSTER_STORE_KEY: u32 = openbrush::storage_unique_key!(CdnClusterStore);
+#[openbrush::upgradeable_storage(CDN_CLUSTER_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct CdnClusterStore(pub Vec<CdnCluster>);
+pub struct CdnClusterStore {
+    pub clusters: Vec<CdnCluster>,
+    _reserved: Option<()>
+}
 
 impl CdnClusterStore {
   pub fn create(
@@ -19,17 +23,17 @@ impl CdnClusterStore {
   ) -> Result<ClusterId> {
       let cluster = CdnCluster::new(manager_id, cdn_nodes);
 
-      let cluster_id: ClusterId = self.0.len().try_into().unwrap();
-      self.0.push(cluster);
+      let cluster_id: ClusterId = self.clusters.len().try_into().unwrap();
+      self.clusters.push(cluster);
 
       Ok(cluster_id)
   }
 
   pub fn get(&self, cluster_id: ClusterId) -> Result<&CdnCluster> {
-      self.0.get(cluster_id as usize).ok_or(ClusterDoesNotExist)
+      self.clusters.get(cluster_id as usize).ok_or(ClusterDoesNotExist)
   }
 
   pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut CdnCluster> {
-      self.0.get_mut(cluster_id as usize).ok_or(ClusterDoesNotExist)
+      self.clusters.get_mut(cluster_id as usize).ok_or(ClusterDoesNotExist)
   }
 }

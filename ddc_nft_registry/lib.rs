@@ -5,7 +5,7 @@
 #![deny(unused_must_use, unused_variables)]
 
 
-#[ink::contract]
+#[openbrush::contract]
 pub mod ddc_nft_registry {
     use ink_prelude::string::String;
     use scale::{Decode, Encode};
@@ -15,23 +15,46 @@ pub mod ddc_nft_registry {
     use crate::ddc_nft_registry::attachment::entity::AttachmentStatus;
     use crate::ddc_nft_registry::attachment::store::AttachmentStore;
 
+    use openbrush::{traits::Storage};
+
     pub mod cash;
     pub mod contract_fee;
     pub mod attachment;
 
     // ---- Global state ----
+    #[derive(Storage)]
     #[ink(storage)]
     pub struct DdcNftRegistry {
+        admin_id: AccountId,
+        #[storage_field]
         attachments: AttachmentStore,
     }
 
     impl DdcNftRegistry {
         #[ink(constructor)]
         pub fn new() -> Self {
+            let admin_id = Self::env().caller();
             let contract = Self {
                 attachments: AttachmentStore::default(),
+                admin_id
             };
             contract
+        }
+
+        #[ink(message)]
+        pub fn set_code(&mut self, code_hash: [u8; 32]) {
+            let caller = Self::env().caller();
+
+            if caller != self.admin_id {
+                panic!("Failed to `set_code`, the method is restricted to the contract admin")
+            };
+
+            ink::env::set_code_hash(&code_hash).unwrap_or_else(|err| {
+                panic!(
+                    "Failed to `set_code_hash` to {:?} due to {:?}",
+                    code_hash, err
+                )
+            });
         }
     }
     // ---- End global state ----

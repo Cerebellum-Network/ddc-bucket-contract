@@ -9,34 +9,36 @@ use super::entity::Permission;
 
 pub type TrustedBy = AccountId;
 
-
 type PermKey = Vec<u8>;
 
-#[ink::storage_item]
+pub const PERMS_STORE_KEY: u32 = openbrush::storage_unique_key!(PermStore);
+#[openbrush::upgradeable_storage(PERMS_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct PermStore(pub Mapping<PermKey, bool>);
-// TODO: Switch to Mapping (must upgrade ink first).
+pub struct PermStore {
+    pub perms: Mapping<PermKey, bool>,
+    _reserved: Option<()>
+}
 
 
 impl PermStore {
     pub fn grant_permission(&mut self, account_id: AccountId, permission: &Permission) {
         let key = (account_id, permission).encode();
-        self.0.insert(key, &true);
+        self.perms.insert(key, &true);
     }
 
     pub fn revoke_permission(&mut self, account_id: AccountId, permission: &Permission) {
         let key = (account_id, permission).encode();
-        self.0.remove(&key);
+        self.perms.remove(&key);
     }
 
     pub fn has_permission(&self, account_id: AccountId, permission: Permission) -> bool {
         let key = (account_id, permission).encode();
-        if self.0.contains(&key) {
+        if self.perms.contains(&key) {
             return true;
         }
 
         let admin_key = (account_id, Permission::SuperAdmin).encode();
-        self.0.contains(&admin_key)
+        self.perms.contains(&admin_key)
     }
 }

@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xc9f8c1252859bf662d3e819e4263c578233bc5e9ac65ac6afc076c966d94eaa3",
+    "hash": "0x60c141b8d3d40e78e289c9095bc93e59aaebbbf2de1b25aa58d2f6294bc7402a",
     "language": "ink! 4.1.0",
     "compiler": "rustc 1.66.0-nightly",
     "build_info": {
@@ -33,7 +33,7 @@
             "ink_primitives",
             "ConstructorResult"
           ],
-          "type": 4
+          "type": 5
         },
         "selector": "0x9bae9d5e"
       }
@@ -102,6 +102,29 @@
       {
         "args": [
           {
+            "label": "code_hash",
+            "type": {
+              "displayName": [],
+              "type": 1
+            }
+          }
+        ],
+        "docs": [],
+        "label": "set_code",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x694fb50f"
+      },
+      {
+        "args": [
+          {
             "label": "nft_id",
             "type": {
               "displayName": [
@@ -148,7 +171,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 4
+          "type": 5
         },
         "selector": "0x82e05a4c"
       },
@@ -199,7 +222,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 4
+          "type": 5
         },
         "selector": "0xf30f464c"
       },
@@ -237,6 +260,15 @@
           "fields": [
             {
               "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 0
+                }
+              },
+              "name": "admin_id"
+            },
+            {
+              "layout": {
                 "struct": {
                   "fields": [
                     {
@@ -248,7 +280,7 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0xd1633886",
+                                      "key": "0xea0e12d2",
                                       "ty": 0
                                     }
                                   },
@@ -257,7 +289,7 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0xd1633886",
+                                      "key": "0xea0e12d2",
                                       "ty": 3
                                     }
                                   },
@@ -266,7 +298,7 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0xd1633886",
+                                      "key": "0xea0e12d2",
                                       "ty": 3
                                     }
                                   },
@@ -275,7 +307,7 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0xd1633886",
+                                      "key": "0xea0e12d2",
                                       "ty": 3
                                     }
                                   },
@@ -285,10 +317,39 @@
                               "name": "Attachment"
                             }
                           },
-                          "root_key": "0xd1633886"
+                          "root_key": "0xea0e12d2"
                         }
                       },
-                      "name": "0"
+                      "name": "attachments"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 4
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "AttachmentStore"
@@ -355,12 +416,20 @@
       "id": 4,
       "type": {
         "def": {
+          "tuple": []
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": {
+        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 5
+                    "type": 4
                   }
                 ],
                 "index": 0,
@@ -381,7 +450,7 @@
         "params": [
           {
             "name": "T",
-            "type": 5
+            "type": 4
           },
           {
             "name": "E",
@@ -391,14 +460,6 @@
         "path": [
           "Result"
         ]
-      }
-    },
-    {
-      "id": 5,
-      "type": {
-        "def": {
-          "tuple": []
-        }
       }
     },
     {

@@ -5,7 +5,7 @@ use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
 use ink::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
-
+use crate::ddc_bucket::params::store::ParamsStoreTrait;
 use super::entity::{NodeId, NodeParams, NodeTag};
 
 impl DdcBucket {
@@ -71,7 +71,7 @@ impl DdcBucket {
         let node = self.nodes.get(node_id)?;
         node.only_owner(caller)?;
 
-        Self::impl_change_params(&mut self.node_params, node_id, params)
+        Self::impl_change_node_params(&mut self.node_params, node_id, params)
     }
 
     pub fn message_node_list(
@@ -82,7 +82,7 @@ impl DdcBucket {
     ) -> (Vec<NodeStatus>, u32) {
         let mut nodes = Vec::with_capacity(limit as usize);
         for node_id in offset..offset + limit {
-            let node = match self.nodes.0.get(node_id as usize) {
+            let node = match self.nodes.nodes.get(node_id as usize) {
                 None => break, // No more items, stop.
                 Some(node) => node,
             };
@@ -101,6 +101,6 @@ impl DdcBucket {
             nodes.push(status);
         }
 
-        (nodes, self.nodes.0.len().try_into().unwrap())
+        (nodes, self.nodes.nodes.len().try_into().unwrap())
     }
 }

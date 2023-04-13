@@ -5,7 +5,7 @@
 #![deny(unused_must_use, unused_variables)]
 
 
-#[ink::contract]
+#[openbrush::contract]
 pub mod ddc_bucket {
     use ink_prelude::string::ToString;
     use ink_prelude::vec::Vec;
@@ -33,6 +33,8 @@ pub mod ddc_bucket {
     use self::protocol::store::ProtocolStore;
     use self::topology::store::TopologyStore;
 
+    use openbrush::{traits::Storage};
+
     pub mod account;
     pub mod admin;
     pub mod bucket;
@@ -54,23 +56,40 @@ pub mod ddc_bucket {
 
     // ---- Global state ----
     /// The main DDC smart contract.
+    #[derive(Storage)]
     #[ink(storage)]
     pub struct DdcBucket {
+        #[storage_field]
         buckets: BucketStore,
+        #[storage_field]
         buckets_perms: BucketsPermsStore,
-        bucket_params: ParamsStore,
+        #[storage_field]
+        bucket_params: BucketParamsStore,
+        #[storage_field]
         clusters: ClusterStore,
+        #[storage_field]
         cdn_clusters: CdnClusterStore,
-        cluster_params: ParamsStore,
+        #[storage_field]
+        cluster_params: ClusterParamsStore,
+        #[storage_field]
         cdn_nodes: CdnNodeStore,
-        cdn_node_params: ParamsStore,
+        #[storage_field]
+        cdn_node_params: CdnNodeParamsStore,
+        #[storage_field]
         nodes: NodeStore,
-        node_params: ParamsStore,
+        #[storage_field]
+        node_params: NodeParamsStore,
+        #[storage_field]
         accounts: AccountStore,
+        #[storage_field]
         perms: PermStore,
+        #[storage_field]
         network_fee: NetworkFeeStore,
+        #[storage_field]
         committer_store: CommitterStore,
+        #[storage_field]
         protocol_store: ProtocolStore,
+        #[storage_field]
         topology_store: TopologyStore,
     }
 
@@ -85,14 +104,14 @@ pub mod ddc_bucket {
             let mut contract = Self {
                 buckets: BucketStore::default(),
                 buckets_perms: BucketsPermsStore::default(),
-                bucket_params: ParamsStore::default(),
+                bucket_params: BucketParamsStore::default(),
                 clusters: ClusterStore::default(),
-                cluster_params: ParamsStore::default(),
+                cluster_params: ClusterParamsStore::default(),
                 cdn_nodes: CdnNodeStore::default(),
-                cdn_node_params: ParamsStore::default(),
+                cdn_node_params: CdnNodeParamsStore::default(),
                 cdn_clusters: CdnClusterStore::default(),
                 nodes: NodeStore::default(),
-                node_params: ParamsStore::default(),
+                node_params: NodeParamsStore::default(),
                 accounts: AccountStore::default(),
                 perms: PermStore::default(),
                 network_fee: NetworkFeeStore::new(),
@@ -130,6 +149,25 @@ pub mod ddc_bucket {
 
             contract
         }
+
+
+        #[ink(message)]
+        pub fn set_code(&mut self, code_hash: [u8; 32]) {
+            self.only_with_permission(Permission::SuperAdmin).unwrap_or_else(|err| {
+                panic!(
+                    "Failed to `set_code` due to {:?}",
+                     err
+                )
+            });
+
+            ink::env::set_code_hash(&code_hash).unwrap_or_else(|err| {
+                panic!(
+                    "Failed to `set_code_hash` to {:?} due to {:?}",
+                    code_hash, err
+                )
+            });
+        }
+
     }
     // ---- End global state ----
 

@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x5910096521f5a51ac80f54587fdaa5cfbc1a93fafd3216c6b15ee8c7948d670f",
+    "hash": "0xc9aa59fce16ec68fb553205ac4b24fa0aa4ba6eb8b6192c2e2ae0693685c01ef",
     "language": "ink! 4.1.0",
     "compiler": "rustc 1.66.0-nightly",
     "build_info": {
@@ -38,7 +38,7 @@
             "ink_primitives",
             "ConstructorResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x9bae9d5e"
       }
@@ -178,7 +178,7 @@
               "displayName": [
                 "ClusterParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -421,7 +421,7 @@
               "displayName": [
                 "NodeParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -532,12 +532,35 @@
       {
         "args": [
           {
+            "label": "code_hash",
+            "type": {
+              "displayName": [],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [],
+        "label": "set_code",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 32
+        },
+        "selector": "0x694fb50f"
+      },
+      {
+        "args": [
+          {
             "label": "bucket_params",
             "type": {
               "displayName": [
                 "BucketParams"
               ],
-              "type": 12
+              "type": 13
             }
           },
           {
@@ -614,7 +637,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xc7d0c2cd"
       },
@@ -652,7 +675,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x4c482d19"
       },
@@ -679,7 +702,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x15974555"
       },
@@ -700,7 +723,7 @@
               "displayName": [
                 "BucketParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -717,7 +740,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x9f2d075b"
       },
@@ -859,7 +882,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x053eb3ce"
       },
@@ -895,7 +918,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x85010c6d"
       },
@@ -958,7 +981,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xea2e477a"
       },
@@ -994,7 +1017,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x2b3d8dd1"
       },
@@ -1057,7 +1080,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xfc0e94ea"
       },
@@ -1093,7 +1116,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xe9bfed5a"
       },
@@ -1114,7 +1137,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 16
+              "type": 17
             }
           },
           {
@@ -1123,7 +1146,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 17
+              "type": 18
             }
           }
         ],
@@ -1140,7 +1163,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x793e0778"
       },
@@ -1161,7 +1184,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 16
+              "type": 17
             }
           },
           {
@@ -1170,7 +1193,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 17
+              "type": 18
             }
           }
         ],
@@ -1187,7 +1210,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xf7496bdc"
       },
@@ -1208,7 +1231,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 17
+              "type": 18
             }
           },
           {
@@ -1217,7 +1240,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 16
+              "type": 17
             }
           },
           {
@@ -1226,7 +1249,7 @@
               "displayName": [
                 "ClusterParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -1285,7 +1308,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xb5e38125"
       },
@@ -1306,7 +1329,7 @@
               "displayName": [
                 "NodeTag"
               ],
-              "type": 26
+              "type": 27
             }
           }
         ],
@@ -1321,7 +1344,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x9640d48e"
       },
@@ -1342,7 +1365,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 18
+              "type": 19
             }
           },
           {
@@ -1368,7 +1391,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x48194ab1"
       },
@@ -1395,7 +1418,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xe71e66fc"
       },
@@ -1416,7 +1439,7 @@
               "displayName": [
                 "ClusterParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -1433,7 +1456,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x1207912c"
       },
@@ -1522,7 +1545,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 16
+              "type": 17
             }
           }
         ],
@@ -1577,7 +1600,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x7578922a"
       },
@@ -1652,7 +1675,7 @@
               "displayName": [
                 "u64"
               ],
-              "type": 19
+              "type": 20
             }
           }
         ],
@@ -1669,7 +1692,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x7219be3f"
       },
@@ -1700,7 +1723,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xfa8d570d"
       },
@@ -1807,7 +1830,7 @@
               "displayName": [
                 "Commit"
               ],
-              "type": 29
+              "type": 30
             }
           }
         ],
@@ -1822,7 +1845,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xe445e1fd"
       },
@@ -1903,7 +1926,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x49a5b8f7"
       },
@@ -1964,7 +1987,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x372daa96"
       },
@@ -1991,7 +2014,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xf67f5438"
       },
@@ -2003,7 +2026,7 @@
               "displayName": [
                 "Params"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -2043,7 +2066,7 @@
               "displayName": [
                 "NodeParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -2060,7 +2083,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xf52c20f5"
       },
@@ -2164,7 +2187,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x6fd54a01"
       },
@@ -2191,7 +2214,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x40912279"
       },
@@ -2212,7 +2235,7 @@
               "displayName": [
                 "NodeParams"
               ],
-              "type": 12
+              "type": 13
             }
           },
           {
@@ -2230,7 +2253,7 @@
               "displayName": [
                 "NodeTag"
               ],
-              "type": 26
+              "type": 27
             }
           }
         ],
@@ -2270,7 +2293,7 @@
               "displayName": [
                 "NodeParams"
               ],
-              "type": 12
+              "type": 13
             }
           }
         ],
@@ -2287,7 +2310,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x258ccb2a"
       },
@@ -2408,7 +2431,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xc5e3e2ca"
       },
@@ -2452,7 +2475,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x85c6fa6d"
       },
@@ -2470,7 +2493,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xc311af62"
       },
@@ -2497,7 +2520,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xe9fad0bf"
       },
@@ -2509,7 +2532,7 @@
               "displayName": [
                 "Cash"
               ],
-              "type": 15
+              "type": 16
             }
           }
         ],
@@ -2524,7 +2547,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xf7ea2c67"
       },
@@ -2543,7 +2566,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x98173716"
       },
@@ -2616,7 +2639,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x48d45ee8"
       },
@@ -2689,7 +2712,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0xbe41ea55"
       },
@@ -2725,7 +2748,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x6b150666"
       },
@@ -2754,7 +2777,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x2f6e0868"
       },
@@ -2781,7 +2804,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 32
         },
         "selector": "0x00d441e7"
       },
@@ -2820,7 +2843,36 @@
                           "ty": 0
                         }
                       },
-                      "name": "0"
+                      "name": "buckets"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "BucketStore"
@@ -2837,11 +2889,11 @@
                         "root": {
                           "layout": {
                             "leaf": {
-                              "key": "0x5507d9ed",
-                              "ty": 10
+                              "key": "0xbb244d5e",
+                              "ty": 11
                             }
                           },
-                          "root_key": "0x5507d9ed"
+                          "root_key": "0xbb244d5e"
                         }
                       },
                       "name": "writers"
@@ -2851,14 +2903,43 @@
                         "root": {
                           "layout": {
                             "leaf": {
-                              "key": "0xef202b35",
-                              "ty": 10
+                              "key": "0x92fae7a1",
+                              "ty": 11
                             }
                           },
-                          "root_key": "0xef202b35"
+                          "root_key": "0x92fae7a1"
                         }
                       },
                       "name": "readers"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "BucketsPermsStore"
@@ -2874,13 +2955,42 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 11
+                          "ty": 12
                         }
                       },
-                      "name": "0"
+                      "name": "params"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
-                  "name": "ParamsStore"
+                  "name": "BucketParamsStore"
                 }
               },
               "name": "bucket_params"
@@ -2893,10 +3003,39 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 13
+                          "ty": 14
                         }
                       },
-                      "name": "0"
+                      "name": "clusters"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "ClusterStore"
@@ -2912,10 +3051,39 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 20
+                          "ty": 21
                         }
                       },
-                      "name": "0"
+                      "name": "clusters"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "CdnClusterStore"
@@ -2931,13 +3099,42 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 11
+                          "ty": 12
                         }
                       },
-                      "name": "0"
+                      "name": "params"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
-                  "name": "ParamsStore"
+                  "name": "ClusterParamsStore"
                 }
               },
               "name": "cluster_params"
@@ -2950,10 +3147,39 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 22
+                          "ty": 23
                         }
                       },
-                      "name": "0"
+                      "name": "nodes"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "CdnNodeStore"
@@ -2969,13 +3195,42 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 11
+                          "ty": 12
                         }
                       },
-                      "name": "0"
+                      "name": "params"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
-                  "name": "ParamsStore"
+                  "name": "CdnNodeParamsStore"
                 }
               },
               "name": "cdn_node_params"
@@ -2988,10 +3243,39 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 24
+                          "ty": 25
                         }
                       },
-                      "name": "0"
+                      "name": "nodes"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "NodeStore"
@@ -3007,13 +3291,42 @@
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 11
+                          "ty": 12
                         }
                       },
-                      "name": "0"
+                      "name": "params"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
-                  "name": "ParamsStore"
+                  "name": "NodeParamsStore"
                 }
               },
               "name": "node_params"
@@ -3035,7 +3348,7 @@
                                         {
                                           "layout": {
                                             "leaf": {
-                                              "key": "0xa1f097d3",
+                                              "key": "0xe09f6ada",
                                               "ty": 8
                                             }
                                           },
@@ -3054,7 +3367,7 @@
                                         {
                                           "layout": {
                                             "leaf": {
-                                              "key": "0xa1f097d3",
+                                              "key": "0xe09f6ada",
                                               "ty": 8
                                             }
                                           },
@@ -3073,7 +3386,7 @@
                                         {
                                           "layout": {
                                             "leaf": {
-                                              "key": "0xa1f097d3",
+                                              "key": "0xe09f6ada",
                                               "ty": 8
                                             }
                                           },
@@ -3092,7 +3405,7 @@
                                         {
                                           "layout": {
                                             "leaf": {
-                                              "key": "0xa1f097d3",
+                                              "key": "0xe09f6ada",
                                               "ty": 8
                                             }
                                           },
@@ -3107,8 +3420,8 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0xa1f097d3",
-                                      "ty": 19
+                                      "key": "0xe09f6ada",
+                                      "ty": 20
                                     }
                                   },
                                   "name": "unbonded_timestamp"
@@ -3120,7 +3433,7 @@
                                         {
                                           "layout": {
                                             "leaf": {
-                                              "key": "0xa1f097d3",
+                                              "key": "0xe09f6ada",
                                               "ty": 8
                                             }
                                           },
@@ -3129,7 +3442,7 @@
                                         {
                                           "layout": {
                                             "leaf": {
-                                              "key": "0xa1f097d3",
+                                              "key": "0xe09f6ada",
                                               "ty": 8
                                             }
                                           },
@@ -3145,10 +3458,10 @@
                               "name": "Account"
                             }
                           },
-                          "root_key": "0xa1f097d3"
+                          "root_key": "0xe09f6ada"
                         }
                       },
-                      "name": "0"
+                      "name": "accounts"
                     },
                     {
                       "layout": {
@@ -3167,16 +3480,45 @@
                           "name": "CurrencyConverter"
                         }
                       },
-                      "name": "1"
+                      "name": "curr_converter"
                     },
                     {
                       "layout": {
                         "leaf": {
                           "key": "0x00000000",
-                          "ty": 10
+                          "ty": 11
                         }
                       },
-                      "name": "2"
+                      "name": "account_ids"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "AccountStore"
@@ -3193,14 +3535,43 @@
                         "root": {
                           "layout": {
                             "leaf": {
-                              "key": "0xcd7703f0",
+                              "key": "0xae06102d",
                               "ty": 9
                             }
                           },
-                          "root_key": "0xcd7703f0"
+                          "root_key": "0xae06102d"
                         }
                       },
-                      "name": "0"
+                      "name": "perms"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "PermStore"
@@ -3247,7 +3618,36 @@
                           "name": "FeeConfig"
                         }
                       },
-                      "name": "0"
+                      "name": "fee_config"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "NetworkFeeStore"
@@ -3273,11 +3673,11 @@
                         "root": {
                           "layout": {
                             "leaf": {
-                              "key": "0x804f8320",
-                              "ty": 27
+                              "key": "0x6cd23ad3",
+                              "ty": 28
                             }
                           },
-                          "root_key": "0x804f8320"
+                          "root_key": "0x6cd23ad3"
                         }
                       },
                       "name": "commits"
@@ -3291,8 +3691,8 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0x50469c9a",
-                                      "ty": 19
+                                      "key": "0xfd47e1a1",
+                                      "ty": 20
                                     }
                                   },
                                   "name": "0"
@@ -3300,8 +3700,8 @@
                                 {
                                   "layout": {
                                     "leaf": {
-                                      "key": "0x50469c9a",
-                                      "ty": 19
+                                      "key": "0xfd47e1a1",
+                                      "ty": 20
                                     }
                                   },
                                   "name": "1"
@@ -3310,7 +3710,7 @@
                               "name": "(A, B)"
                             }
                           },
-                          "root_key": "0x50469c9a"
+                          "root_key": "0xfd47e1a1"
                         }
                       },
                       "name": "validated_commits"
@@ -3323,7 +3723,7 @@
                               "layout": {
                                 "leaf": {
                                   "key": "0x00000000",
-                                  "ty": 19
+                                  "ty": 20
                                 }
                               },
                               "name": "start"
@@ -3332,7 +3732,7 @@
                               "layout": {
                                 "leaf": {
                                   "key": "0x00000000",
-                                  "ty": 19
+                                  "ty": 20
                                 }
                               },
                               "name": "interval"
@@ -3341,7 +3741,7 @@
                               "layout": {
                                 "leaf": {
                                   "key": "0x00000000",
-                                  "ty": 19
+                                  "ty": 20
                                 }
                               },
                               "name": "commit_duration"
@@ -3350,7 +3750,7 @@
                               "layout": {
                                 "leaf": {
                                   "key": "0x00000000",
-                                  "ty": 19
+                                  "ty": 20
                                 }
                               },
                               "name": "validation_duration"
@@ -3360,6 +3760,35 @@
                         }
                       },
                       "name": "era_settings"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "CommitterStore"
@@ -3407,6 +3836,35 @@
                         }
                       },
                       "name": "revenues"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "ProtocolStore"
@@ -3423,14 +3881,43 @@
                         "root": {
                           "layout": {
                             "leaf": {
-                              "key": "0x09999189",
+                              "key": "0x6f72ee77",
                               "ty": 5
                             }
                           },
-                          "root_key": "0x09999189"
+                          "root_key": "0x6f72ee77"
                         }
                       },
-                      "name": "0"
+                      "name": "topology"
+                    },
+                    {
+                      "layout": {
+                        "enum": {
+                          "dispatchKey": "0x00000000",
+                          "name": "Option",
+                          "variants": {
+                            "0": {
+                              "fields": [],
+                              "name": "None"
+                            },
+                            "1": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 10
+                                    }
+                                  },
+                                  "name": "0"
+                                }
+                              ],
+                              "name": "Some"
+                            }
+                          }
+                        }
+                      },
+                      "name": "_reserved"
                     }
                   ],
                   "name": "TopologyStore"
@@ -3625,9 +4112,7 @@
       "id": 10,
       "type": {
         "def": {
-          "sequence": {
-            "type": 2
-          }
+          "tuple": []
         }
       }
     },
@@ -3636,7 +4121,7 @@
       "type": {
         "def": {
           "sequence": {
-            "type": 12
+            "type": 2
           }
         }
       }
@@ -3645,7 +4130,9 @@
       "id": 12,
       "type": {
         "def": {
-          "primitive": "str"
+          "sequence": {
+            "type": 13
+          }
         }
       }
     },
@@ -3653,14 +4140,22 @@
       "id": 13,
       "type": {
         "def": {
-          "sequence": {
-            "type": 14
-          }
+          "primitive": "str"
         }
       }
     },
     {
       "id": 14,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 15
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
       "type": {
         "def": {
           "composite": {
@@ -3682,17 +4177,17 @@
               },
               {
                 "name": "revenues",
-                "type": 15,
+                "type": 16,
                 "typeName": "Cash"
               },
               {
                 "name": "node_ids",
-                "type": 16,
+                "type": 17,
                 "typeName": "Vec<NodeId>"
               },
               {
                 "name": "v_nodes",
-                "type": 17,
+                "type": 18,
                 "typeName": "Vec<Vec<u64>>"
               },
               {
@@ -3713,7 +4208,7 @@
       }
     },
     {
-      "id": 15,
+      "id": 16,
       "type": {
         "def": {
           "composite": {
@@ -3735,21 +4230,11 @@
       }
     },
     {
-      "id": 16,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 5
-          }
-        }
-      }
-    },
-    {
       "id": 17,
       "type": {
         "def": {
           "sequence": {
-            "type": 18
+            "type": 5
           }
         }
       }
@@ -3768,7 +4253,9 @@
       "id": 19,
       "type": {
         "def": {
-          "primitive": "u64"
+          "sequence": {
+            "type": 20
+          }
         }
       }
     },
@@ -3776,14 +4263,22 @@
       "id": 20,
       "type": {
         "def": {
-          "sequence": {
-            "type": 21
-          }
+          "primitive": "u64"
         }
       }
     },
     {
       "id": 21,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 22
+          }
+        }
+      }
+    },
+    {
+      "id": 22,
       "type": {
         "def": {
           "composite": {
@@ -3795,7 +4290,7 @@
               },
               {
                 "name": "cdn_nodes",
-                "type": 16,
+                "type": 17,
                 "typeName": "Vec<NodeId>"
               },
               {
@@ -3805,7 +4300,7 @@
               },
               {
                 "name": "revenues",
-                "type": 15,
+                "type": 16,
                 "typeName": "Cash"
               },
               {
@@ -3826,17 +4321,17 @@
       }
     },
     {
-      "id": 22,
+      "id": 23,
       "type": {
         "def": {
           "sequence": {
-            "type": 23
+            "type": 24
           }
         }
       }
     },
     {
-      "id": 23,
+      "id": 24,
       "type": {
         "def": {
           "composite": {
@@ -3864,17 +4359,17 @@
       }
     },
     {
-      "id": 24,
+      "id": 25,
       "type": {
         "def": {
           "sequence": {
-            "type": 25
+            "type": 26
           }
         }
       }
     },
     {
-      "id": 25,
+      "id": 26,
       "type": {
         "def": {
           "composite": {
@@ -3896,7 +4391,7 @@
               },
               {
                 "name": "node_tag",
-                "type": 26,
+                "type": 27,
                 "typeName": "NodeTag"
               }
             ]
@@ -3912,7 +4407,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 27,
       "type": {
         "def": {
           "variant": {
@@ -3946,23 +4441,12 @@
       }
     },
     {
-      "id": 27,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 28
-          }
-        }
-      }
-    },
-    {
       "id": 28,
       "type": {
         "def": {
-          "tuple": [
-            5,
-            29
-          ]
+          "sequence": {
+            "type": 29
+          }
         }
       }
     },
@@ -3970,11 +4454,22 @@
       "id": 29,
       "type": {
         "def": {
+          "tuple": [
+            5,
+            30
+          ]
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": {
+        "def": {
           "composite": {
             "fields": [
               {
                 "name": "hash",
-                "type": 30,
+                "type": 31,
                 "typeName": "Hash"
               },
               {
@@ -3984,12 +4479,12 @@
               },
               {
                 "name": "from_timestamp",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
                 "name": "to_timestamp",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               }
             ]
@@ -4005,7 +4500,7 @@
       }
     },
     {
-      "id": 30,
+      "id": 31,
       "type": {
         "def": {
           "composite": {
@@ -4025,7 +4520,7 @@
       }
     },
     {
-      "id": 31,
+      "id": 32,
       "type": {
         "def": {
           "variant": {
@@ -4033,7 +4528,7 @@
               {
                 "fields": [
                   {
-                    "type": 32
+                    "type": 10
                   }
                 ],
                 "index": 0,
@@ -4054,7 +4549,7 @@
         "params": [
           {
             "name": "T",
-            "type": 32
+            "type": 10
           },
           {
             "name": "E",
@@ -4064,14 +4559,6 @@
         "path": [
           "Result"
         ]
-      }
-    },
-    {
-      "id": 32,
-      "type": {
-        "def": {
-          "tuple": []
-        }
       }
     },
     {
@@ -4270,22 +4757,22 @@
               },
               {
                 "name": "params",
-                "type": 12,
+                "type": 13,
                 "typeName": "BucketParams"
               },
               {
                 "name": "writer_ids",
-                "type": 10,
+                "type": 11,
                 "typeName": "Vec<AccountId>"
               },
               {
                 "name": "reader_ids",
-                "type": 10,
+                "type": 11,
                 "typeName": "Vec<AccountId>"
               },
               {
                 "name": "rent_covered_until_ms",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               }
             ]
@@ -4553,7 +5040,7 @@
               {
                 "fields": [
                   {
-                    "type": 10
+                    "type": 11
                   }
                 ],
                 "index": 0,
@@ -4574,7 +5061,7 @@
         "params": [
           {
             "name": "T",
-            "type": 10
+            "type": 11
           },
           {
             "name": "E",
@@ -4683,12 +5170,12 @@
               },
               {
                 "name": "cluster",
-                "type": 14,
+                "type": 15,
                 "typeName": "Cluster"
               },
               {
                 "name": "params",
-                "type": 12,
+                "type": 13,
                 "typeName": "Params"
               }
             ]
@@ -4968,7 +5455,7 @@
               },
               {
                 "name": "cluster",
-                "type": 21,
+                "type": 22,
                 "typeName": "CdnCluster"
               }
             ]
@@ -5055,7 +5542,7 @@
               {
                 "fields": [
                   {
-                    "type": 27
+                    "type": 28
                   }
                 ],
                 "index": 0,
@@ -5076,7 +5563,7 @@
         "params": [
           {
             "name": "T",
-            "type": 27
+            "type": 28
           },
           {
             "name": "E",
@@ -5135,8 +5622,8 @@
       "type": {
         "def": {
           "tuple": [
-            19,
-            19
+            20,
+            20
           ]
         }
       }
@@ -5149,22 +5636,22 @@
             "fields": [
               {
                 "name": "start",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
                 "name": "interval",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
                 "name": "commit_duration",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
                 "name": "validation_duration",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               }
             ]
@@ -5229,7 +5716,7 @@
             "fields": [
               {
                 "name": "current_era",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
@@ -5239,17 +5726,17 @@
               },
               {
                 "name": "previous_era",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
                 "name": "prev_era_from_timestamp",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {
                 "name": "prev_era_to_timestamp",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               }
             ]
@@ -5433,12 +5920,12 @@
               },
               {
                 "name": "node",
-                "type": 23,
+                "type": 24,
                 "typeName": "CdnNode"
               },
               {
                 "name": "params",
-                "type": 12,
+                "type": 13,
                 "typeName": "Params"
               }
             ]
@@ -5613,12 +6100,12 @@
               },
               {
                 "name": "node",
-                "type": 25,
+                "type": 26,
                 "typeName": "Node"
               },
               {
                 "name": "params",
-                "type": 12,
+                "type": 13,
                 "typeName": "Params"
               }
             ]
@@ -5705,7 +6192,7 @@
               {
                 "fields": [
                   {
-                    "type": 15
+                    "type": 16
                   }
                 ],
                 "index": 0,
@@ -5726,7 +6213,7 @@
         "params": [
           {
             "name": "T",
-            "type": 15
+            "type": 16
           },
           {
             "name": "E",
@@ -5830,27 +6317,27 @@
             "fields": [
               {
                 "name": "deposit",
-                "type": 15,
+                "type": 16,
                 "typeName": "Cash"
               },
               {
                 "name": "bonded",
-                "type": 15,
+                "type": 16,
                 "typeName": "Cash"
               },
               {
                 "name": "negative",
-                "type": 15,
+                "type": 16,
                 "typeName": "Cash"
               },
               {
                 "name": "unbonded_amount",
-                "type": 15,
+                "type": 16,
                 "typeName": "Cash"
               },
               {
                 "name": "unbonded_timestamp",
-                "type": 19,
+                "type": 20,
                 "typeName": "u64"
               },
               {

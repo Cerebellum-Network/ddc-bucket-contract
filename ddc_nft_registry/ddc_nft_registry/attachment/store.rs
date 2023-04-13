@@ -7,10 +7,14 @@ use crate::ddc_nft_registry::attachment::entity::{AssetId, NftId, Proof};
 
 use super::entity::Attachment;
 
-#[ink::storage_item]
+pub const ATTACHMENTS_STORE_KEY: u32 = openbrush::storage_unique_key!(AttachmentStore);
+#[openbrush::upgradeable_storage(ATTACHMENTS_STORE_KEY)]
 #[derive(Default)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct AttachmentStore(pub Mapping<NftId, Attachment>);
+pub struct AttachmentStore {
+    pub attachments: Mapping<NftId, Attachment>,
+    _reserved: Option<()>
+}
 
 impl AttachmentStore {
     #[must_use]
@@ -23,17 +27,17 @@ impl AttachmentStore {
         };
 
         // If exists, check that this is the same reporter.
-        if let Some(previous) = self.0.get(&attachment.nft_id) {
+        if let Some(previous) = self.attachments.get(&attachment.nft_id) {
             if previous.reporter_id != reporter_id {
                 return Err(UnauthorizedUpdate);
             }
         }
 
-        self.0.insert(attachment.nft_id.clone(), &attachment);
+        self.attachments.insert(attachment.nft_id.clone(), &attachment);
         Ok(attachment)
     }
 
     pub fn get_by_nft_id(&mut self, nft_id: NftId) -> Result<Attachment, Error> {
-        return self.0.get(&nft_id).map(|a| a.clone()).ok_or(AttachmentDoesNotExist);
+        return self.attachments.get(&nft_id).map(|a| a.clone()).ok_or(AttachmentDoesNotExist);
     }
 }
