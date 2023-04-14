@@ -49,8 +49,8 @@ impl DdcBucket {
     pub fn message_node_change_tag(&mut self, node_id: NodeId, new_tag: NodeTag) -> Result<()> {
         let caller = Self::env().caller();
         let node = self.nodes.get_mut(node_id)?;
-        node.only_owner(caller)?;
 
+        node.only_owner(caller)?;
         node.change_tag(new_tag);
         Ok(())
     }

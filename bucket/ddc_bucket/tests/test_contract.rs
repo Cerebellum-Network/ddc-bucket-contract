@@ -308,7 +308,8 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING
+                    node_tag: NodeTag::ADDING,
+                    cluster_id: ctx.cluster_id
                 },
                 params: ctx.node_params0.to_string(),
             }
@@ -323,7 +324,8 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id1,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING
+                    node_tag: NodeTag::ADDING,
+                    cluster_id: ctx.cluster_id
                 },
                 params: ctx.node_params1.to_string(),
             }
@@ -338,7 +340,8 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id2,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING
+                    node_tag: NodeTag::ADDING,
+                    cluster_id: ctx.cluster_id
                 },
                 params: ctx.node_params2.to_string(),
             }
@@ -521,6 +524,7 @@ fn cluster_management_validation_works() {
 
     let not_manager = ctx.provider_id0;
     push_caller_value(not_manager, 0);
+    println!("{:?}", "debug 1");
     assert_eq!(
         ctx.contract
             .message_cluster_replace_node(ctx.cluster_id, vec![1, 2, 3], 1),
@@ -531,6 +535,7 @@ fn cluster_management_validation_works() {
 
     push_caller_value(ctx.manager, 0);
 
+    println!("{:?}", "debug 2");
     let bad_node_id = ctx.node_id2 + 1;
     assert_eq!(
         ctx.contract
@@ -538,6 +543,7 @@ fn cluster_management_validation_works() {
         Err(NodeDoesNotExist),
         "cluster replacement node must exist"
     );
+    println!("{:?}", "debug 3");
 
     assert_eq!(
         ctx.contract
@@ -961,7 +967,8 @@ fn bucket_reserve_0_works() {
                     provider_id: AccountId::default(),
                     rent_per_month: 0,
                     free_resource: 0,
-                    node_tag: NodeTag::ACTIVE
+                    node_tag: NodeTag::ACTIVE,
+                    cluster_id: 0
                 },
                 params: "".to_string(),
             }],
@@ -1296,6 +1303,7 @@ fn node_list_works() {
             rent_per_month,
             free_resource: capacity,
             node_tag: NodeTag::ADDING,
+            cluster_id: 0,
         },
         params: node_params1.to_string(),
     };
@@ -1307,6 +1315,7 @@ fn node_list_works() {
             rent_per_month,
             free_resource: capacity,
             node_tag: NodeTag::ADDING,
+            cluster_id: 0,
         },
         params: node_params2.to_string(),
     };

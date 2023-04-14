@@ -145,16 +145,10 @@ impl DdcBucket {
                 .get_mut(*old_node_id)?
                 .put_resource(cluster.resource_per_vnode);
 
-            self.nodes.assign_cluster_id(new_node_id, cluster_id);
-            self.nodes.assign_cluster_id(*old_node_id, 0);
+            self.nodes.assign_cluster_id(new_node_id, cluster_id)?;
+            self.nodes.assign_cluster_id(*old_node_id, 0)?;
 
             let new_node = self.nodes.get_mut(new_node_id)?;
-
-            // self.nodes
-            //     .get_mut(old_node_id.clone())
-            //     .unwrap()
-            //     .assign_cluster_id(0);
-            // old_node.assign_cluster_id(0);
 
             // Verify that the provider of the new node trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;

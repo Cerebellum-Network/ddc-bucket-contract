@@ -112,9 +112,13 @@ pub mod ddc_bucket {
             let _ = contract.accounts.create_if_not_exist(AccountId::default());
             let _ = contract.cdn_nodes.create(AccountId::default(), 0);
             let _ = contract.cdn_node_params.create("".to_string());
-            let _ = contract
-                .nodes
-                .create(AccountId::default(), 0, 0, NodeTag::ACTIVE, AccountId::default());
+            let _ = contract.nodes.create(
+                AccountId::default(),
+                0,
+                0,
+                NodeTag::ACTIVE,
+                AccountId::default(),
+            );
             let _ = contract.node_params.create("".to_string());
             let _ = contract
                 .clusters
@@ -682,8 +686,6 @@ pub mod ddc_bucket {
         }
     }
     // ---- End CDN Node ----
-
-    // ---- Node ----
 
     /// A node was created. The given account is its owner and recipient of revenues.
     #[ink(event)]
