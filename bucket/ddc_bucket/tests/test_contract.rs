@@ -11,8 +11,12 @@ use crate::ddc_bucket::*;
 
 use super::env_utils::*;
 
-fn admin_id() -> AccountId {
-    get_accounts().alice
+fn setup() -> DdcBucket {
+    set_caller(admin_id());
+    set_callee(contract_id());
+    let contract = DdcBucket::new();
+    set_balance(contract_id(), 10);
+    contract
 }
 
 const KB_PER_GB: Balance = 1_048_576;
@@ -47,7 +51,7 @@ fn new_cluster() -> TestCluster {
     let provider_id2 = accounts.charlie;
     let manager = accounts.django;
 
-    let mut contract = DdcBucket::new();
+    let mut contract = setup();
 
     // Provide a Node.
     let rent_per_vnode: Balance = 10 * TOKEN;
@@ -55,14 +59,13 @@ fn new_cluster() -> TestCluster {
     let capacity = 100;
 
     for provider_id in [provider_id0, provider_id1, provider_id2] {
-        push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
+        set_caller_value(provider_id, CONTRACT_FEE_LIMIT);
         contract.node_trust_manager(manager);
         let expected_perm = Permission::ManagerTrustedBy(provider_id);
         assert!(contract.has_permission(manager, expected_perm));
-        pop_caller();
     }
 
-    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
     let node_id0 = contract.node_create(
         rent_per_vnode,
         node_params0.to_string(),
@@ -70,11 +73,11 @@ fn new_cluster() -> TestCluster {
         NodeTag::ADDING,
         provider_id0,
     );
-    pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
-    push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+
     let node_id1 = contract.node_create(
         rent_per_vnode,
         node_params1.to_string(),
@@ -82,11 +85,11 @@ fn new_cluster() -> TestCluster {
         NodeTag::ADDING,
         provider_id1,
     );
-    pop_caller();
 
     // Provide another Node.
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    push_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+
     let node_id2 = contract.node_create(
         rent_per_vnode,
         node_params2.to_string(),
@@ -94,7 +97,6 @@ fn new_cluster() -> TestCluster {
         NodeTag::ADDING,
         provider_id2,
     );
-    pop_caller();
 
     // Create a Cluster.
     let node_ids = vec![1, 2, 3];
@@ -109,19 +111,17 @@ fn new_cluster() -> TestCluster {
     vnodes_wrapper.push(vnodes_for_second_node);
     vnodes_wrapper.push(vnodes_for_third_node);
 
-    push_caller_value(manager, CONTRACT_FEE_LIMIT);
+    set_caller_value(manager, CONTRACT_FEE_LIMIT);
+
     let cluster_id = contract.cluster_create(
         manager,
         vnodes_wrapper.clone(),
         vec![node_id0, node_id1, node_id2],
         cluster_params.to_string(),
     );
-    pop_caller();
 
-    push_caller_value(manager, 0);
     let reserved = 10;
     contract.cluster_reserve_resource(cluster_id, reserved);
-    pop_caller();
 
     let mut vnodes = Vec::<u64>::new();
 
@@ -162,7 +162,7 @@ fn new_cluster_cdn() -> TestCluster {
     let provider_id2 = accounts.charlie;
     let manager = accounts.django;
 
-    let mut contract = DdcBucket::new();
+    let mut contract = setup();
 
     // Provide a Node.
     let rent_per_vnode: Balance = 10 * TOKEN;
@@ -170,28 +170,28 @@ fn new_cluster_cdn() -> TestCluster {
     let capacity = 100;
 
     for provider_id in [provider_id0, provider_id1, provider_id2] {
-        push_caller_value(provider_id, CONTRACT_FEE_LIMIT);
+        set_caller_value(provider_id, CONTRACT_FEE_LIMIT);
+
         contract.node_trust_manager(manager);
         let expected_perm = Permission::ManagerTrustedBy(provider_id);
         assert!(contract.has_permission(manager, expected_perm));
-        pop_caller();
     }
 
-    push_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+
     let node_id0 = contract.cdn_node_create(node_params0.to_string());
-    pop_caller();
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
-    push_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+
     let node_id1 = contract.cdn_node_create(node_params1.to_string());
-    pop_caller();
 
     // Provide another Node.
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    push_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+
     let node_id2 = contract.cdn_node_create(node_params2.to_string());
-    pop_caller();
 
     // Create a Cluster.
     let _cluster_params = "{}";
@@ -214,9 +214,9 @@ fn new_cluster_cdn() -> TestCluster {
     vnodes_wrapper.push(vnodes_for_second_node);
     vnodes_wrapper.push(vnodes_for_third_node);
 
-    push_caller_value(manager, CONTRACT_FEE_LIMIT);
+    set_caller_value(manager, CONTRACT_FEE_LIMIT);
+
     let cluster_id = contract.cdn_cluster_create(vec![node_id0, node_id1, node_id2]);
-    pop_caller();
 
     let reserved = 10;
 
@@ -260,23 +260,20 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     let accounts = get_accounts();
     let owner_id = accounts.django;
     set_balance(owner_id, 1000 * TOKEN);
+    set_caller_value(owner_id, CONTRACT_FEE_LIMIT);
 
-    push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
     let bucket_id = ctx
         .contract
         .bucket_create("{}".to_string(), ctx.cluster_id, None);
-    pop_caller();
 
     // Reserve some resources for the bucket from the cluster.
-    push_caller_value(owner_id, CONTRACT_FEE_LIMIT);
+    set_caller_value(owner_id, CONTRACT_FEE_LIMIT);
     let resource = 1;
     ctx.contract.bucket_alloc_into_cluster(bucket_id, resource);
-    pop_caller();
 
     // Deposit some value to pay for buckets.
-    push_caller_value(owner_id, 10 * TOKEN);
+    set_caller_value(owner_id, 10 * TOKEN);
     ctx.contract.account_deposit();
-    pop_caller();
 
     TestBucket {
         bucket_id,
@@ -406,7 +403,7 @@ fn cluster_create_works() {
 fn cluster_replace_node_only_manager() {
     let mut ctx = new_cluster();
     let not_manager = get_accounts().alice;
-    push_caller_value(not_manager, 0);
+    set_caller_value(not_manager, 0);
 
     // Reassign a vnode from node1 to node2.
     assert_eq!(
@@ -421,11 +418,10 @@ fn cluster_replace_node_only_trusted_manager() {
     let mut ctx = new_cluster();
 
     // The provider stops trusting the manager.
-    push_caller(ctx.provider_id2);
+    set_caller(ctx.provider_id2);
     ctx.contract.node_distrust_manager(ctx.manager);
-    pop_caller();
 
-    push_caller_value(ctx.manager, 0);
+    set_caller_value(ctx.manager, 0);
 
     // The manager cannot use nodes of the provider.
     assert_eq!(
@@ -438,7 +434,7 @@ fn cluster_replace_node_only_trusted_manager() {
 #[ink::test]
 fn cluster_replace_node_works() {
     let mut ctx = new_cluster();
-    push_caller_value(ctx.manager, 0);
+    set_caller_value(ctx.manager, 0);
 
     // Reassign a vnode from node1 to node2.
     ctx.contract
@@ -486,7 +482,7 @@ fn cluster_replace_node_works() {
 #[ink::test]
 fn cluster_reserve_works() {
     let mut ctx = new_cluster();
-    push_caller_value(ctx.manager, 0);
+    set_caller_value(ctx.manager, 0);
 
     // Reserve more resources.
     ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
@@ -520,16 +516,16 @@ fn cluster_management_validation_works() {
     let mut ctx = new_cluster();
 
     let not_manager = ctx.provider_id0;
-    push_caller_value(not_manager, 0);
+    set_caller_value(not_manager, 0);
+
     assert_eq!(
         ctx.contract
             .message_cluster_replace_node(ctx.cluster_id, vec![1, 2, 3], 1),
         Err(UnauthorizedClusterManager),
         "only the manager can modify the cluster"
     );
-    pop_caller();
 
-    push_caller_value(ctx.manager, 0);
+    set_caller_value(ctx.manager, 0);
 
     let bad_node_id = ctx.node_id2 + 1;
     assert_eq!(
@@ -556,17 +552,14 @@ fn cdn_cluster_gas_converter_works() {
     println!("Got cdn cluster back");
     // The provider stops trusting the manager.
     println!("Cdn cluster id is {}", ctx.cluster_id);
-    push_caller(ctx.manager);
+    set_caller(ctx.manager);
     ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000);
-    pop_caller();
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
-    pop_caller();
 
     let usd_per_cere = TOKEN / 100;
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     ctx.contract.account_set_usd_per_cere(usd_per_cere);
-    pop_caller();
 
     let usd_amount = ctx.contract.account_get_usd_per_cere();
     println!("Current usd amount is {}", usd_amount);
@@ -589,14 +582,12 @@ fn cdn_cluster_payment_works() {
     println!("Got cdn cluster back");
     // The provider stops trusting the manager.
     println!("Cdn cluster id is {}", ctx.cluster_id);
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
-    pop_caller();
 
     let usd_per_cere = TOKEN / 100;
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     ctx.contract.account_set_usd_per_cere(usd_per_cere);
-    pop_caller();
 
     let usd_amount = ctx.contract.account_get_usd_per_cere();
     println!("Current usd amount is {}", usd_amount);
@@ -609,17 +600,14 @@ fn cdn_cluster_payment_works() {
     let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
     println!("The current cere rate per kb {}", cere_per_kb);
 
-    push_caller_value(ctx.provider_id0, 10 * TOKEN);
+    set_caller_value(ctx.provider_id0, 10 * TOKEN);
     ctx.contract.account_deposit();
-    pop_caller();
 
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     ctx.contract.account_bond(5 * TOKEN);
-    pop_caller();
 
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     ctx.contract.set_fee_bp(1_000);
-    pop_caller();
 
     let mut account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("{:?}", account);
@@ -656,9 +644,8 @@ fn cdn_cluster_payment_works() {
     let protocol_revenues = ctx.contract.get_protocol_revenues();
     print!("Protocol revenues are {:?}", protocol_revenues);
 
-    push_caller(ctx.provider_id0);
+    set_caller(ctx.provider_id0);
     ctx.contract.cdn_cluster_distribute_revenues(0);
-    pop_caller();
 
     let node0 = ctx.contract.cdn_nodes.get(ctx.node_id0).unwrap();
     let node1 = ctx.contract.cdn_nodes.get(ctx.node_id1).unwrap();
@@ -680,12 +667,10 @@ fn cdn_cluster_payment_works() {
 
 fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
     // Go to the future when some revenues are due.
-    advance_block::<DefaultEnvironment>().unwrap();
-
+    advance_block::<DefaultEnvironment>();
     // Pay the due thus far.
-    push_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
+    set_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
     ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
-    pop_caller();
 }
 
 #[ink::test]
@@ -701,16 +686,14 @@ fn bucket_pays_cluster_at_new_rate() {
     let test_bucket = &new_bucket(ctx);
 
     // Set up an exchange rate manager.
-    push_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
+    set_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
     ctx.contract
         .admin_grant_permission(admin_id(), Permission::SetExchangeRate);
-    pop_caller();
 
     // Change the currency exchange rate.
     let usd_per_cere = 2;
-    push_caller(admin_id());
+    set_caller(admin_id());
     ctx.contract.account_set_usd_per_cere(usd_per_cere * TOKEN);
-    pop_caller();
 
     do_bucket_pays_cluster(ctx, test_bucket, usd_per_cere).unwrap();
 }
@@ -737,7 +720,9 @@ fn do_bucket_pays_cluster(
                    schedule: Schedule::new(0, expected_rent),
                });
     */
+    let timestamp_before = block_timestamp::<DefaultEnvironment>();
     bucket_settle_payment(ctx, &test_bucket);
+    let timestamp_after = block_timestamp::<DefaultEnvironment>();
 
     // Check the last event.
     let ev = get_events().pop().unwrap();
@@ -759,7 +744,8 @@ fn do_bucket_pays_cluster(
                    schedule: Schedule::new(BLOCK_TIME, expected_rent),
                });
     */
-    let expect_revenues_usd = expected_rent * BLOCK_TIME as u128 / MS_PER_MONTH as u128;
+    let timespan = timestamp_after - timestamp_before;
+    let expect_revenues_usd = expected_rent * timespan as u128 / MS_PER_MONTH as u128;
     let expect_revenues = expect_revenues_usd / usd_per_cere;
     assert!(expect_revenues > 0);
     assert_eq!(
@@ -781,17 +767,28 @@ fn do_bucket_pays_cluster(
 fn cluster_add_node() {
     let ctx = &mut new_cluster();
 
+    let new_provider_id = get_accounts().frank;
+    set_balance(new_provider_id, 1000 * TOKEN);
+
     let rent_per_month = 100;
     let node_params = "new_node";
     let capacity = 1000;
     let node_tag = NodeTag::ACTIVE;
 
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     let new_node_id = ctx.contract.node_create(
-        rent_per_month,
-        node_params.to_string(),
-        capacity,
-        node_tag,
-        ctx.manager,
+      rent_per_month,
+      node_params.to_string(),
+      capacity,
+      node_tag,
+      ctx.manager,
+    );
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.node_trust_manager(ctx.manager);
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::GrantPermission(ev) if ev ==
+        GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(new_provider_id) })
     );
 
     let mut node_ids = Vec::<u32>::new();
@@ -803,6 +800,7 @@ fn cluster_add_node() {
     let mut v_nodes = ctx.vnodes_wrapper.clone();
     v_nodes.push(vec![10, 11, 12]);
 
+    set_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
     ctx.contract
         .cluster_add_node(ctx.cluster_id, node_ids.clone(), v_nodes.clone());
 
@@ -834,6 +832,7 @@ fn cluster_pays_providers() {
     // Set a network fee.
     let network_fee_bp = 100; // 1%
     let cluster_management_fee_bp = 200; // 2%
+    set_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
     ctx.contract.admin_set_fee_config(FeeConfig {
         network_fee_bp,
         network_fee_destination: AccountId::default(),
@@ -909,7 +908,7 @@ fn cluster_pays_providers() {
 
 #[ink::test]
 fn bucket_reserve_0_works() {
-    let contract = DdcBucket::new();
+    let contract = setup();
 
     assert_eq!(
         contract.bucket_list(0, 10, None),
@@ -1031,7 +1030,7 @@ fn bucket_create_works() {
 #[ink::test]
 fn account_deposit_works() {
     let account_id = get_accounts().alice;
-    let mut contract = DdcBucket::new();
+    let mut contract = setup();
 
     assert_eq!(
         contract.account_get(account_id),
@@ -1043,9 +1042,8 @@ fn account_deposit_works() {
     let deposit_after_fee = deposit;
 
     // Deposit some value.
-    push_caller_value(account_id, deposit);
+    set_caller_value(account_id, deposit);
     contract.account_deposit();
-    pop_caller();
 
     let account = contract.account_get(account_id)?;
     assert_eq!(
@@ -1062,9 +1060,8 @@ fn account_deposit_works() {
     );
 
     // Deposit more value.
-    push_caller_value(account_id, deposit);
+    set_caller_value(account_id, deposit);
     contract.account_deposit();
-    pop_caller();
 
     let account = contract.account_get(account_id)?;
     assert_eq!(
@@ -1100,10 +1097,9 @@ fn node_change_params_works() {
     let ctx = &mut new_cluster();
 
     // Change params.
-    push_caller_value(ctx.provider_id0, CONTRACT_FEE_LIMIT);
+    set_caller_value(ctx.provider_id0, CONTRACT_FEE_LIMIT);
     ctx.contract
         .node_change_params(ctx.node_id0, "new params".to_string());
-    pop_caller();
 
     // Check the changed params.
     let status = ctx.contract.node_get(ctx.node_id0)?;
@@ -1116,7 +1112,7 @@ fn node_change_params_only_owner() {
     let ctx = &mut new_cluster();
 
     // Change params.
-    push_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
+    set_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
     ctx.contract
         .node_change_params(ctx.node_id0, "new params".to_string());
     // Panic.
@@ -1127,10 +1123,9 @@ fn cluster_change_params_works() {
     let ctx = &mut new_cluster();
 
     // Change params.
-    push_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
+    set_caller_value(ctx.manager, CONTRACT_FEE_LIMIT);
     ctx.contract
         .cluster_change_params(ctx.cluster_id, "new params".to_string());
-    pop_caller();
 
     // Check the changed params.
     let status = ctx.contract.cluster_get(ctx.cluster_id)?;
@@ -1143,7 +1138,7 @@ fn cluster_change_params_only_owner() {
     let ctx = &mut new_cluster();
 
     // Change params.
-    push_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
+    set_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
     ctx.contract
         .cluster_change_params(ctx.cluster_id, "new params".to_string());
     // Panic.
@@ -1155,10 +1150,9 @@ fn bucket_change_params_works() {
     let test_bucket = &new_bucket(ctx);
 
     // Change params.
-    push_caller_value(test_bucket.owner_id, CONTRACT_FEE_LIMIT);
+    set_caller_value(test_bucket.owner_id, CONTRACT_FEE_LIMIT);
     ctx.contract
         .bucket_change_params(test_bucket.bucket_id, "new params".to_string());
-    pop_caller();
 
     // Check the changed params.
     let status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
@@ -1172,7 +1166,7 @@ fn bucket_change_params_only_owner() {
     let test_bucket = &new_bucket(ctx);
 
     // Change params.
-    push_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
+    set_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
     ctx.contract
         .bucket_change_params(test_bucket.bucket_id, "new params".to_string());
     // Panic.
@@ -1180,22 +1174,20 @@ fn bucket_change_params_only_owner() {
 
 #[ink::test]
 fn bucket_list_works() {
-    let mut ddc_bucket = DdcBucket::new();
+    let mut ddc_bucket = setup();
     let accounts = get_accounts();
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
     let owner_id3 = accounts.charlie;
     let cluster_id = 0;
 
-    push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
+    set_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id, None);
     let bucket_status1 = ddc_bucket.bucket_get(bucket_id1).unwrap();
-    pop_caller();
 
-    push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
+    set_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
     let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id, None);
     let bucket_status2 = ddc_bucket.bucket_get(bucket_id2)?;
-    pop_caller();
 
     assert_ne!(bucket_id1, bucket_id2);
     let count = 3;
@@ -1252,7 +1244,7 @@ fn bucket_list_works() {
 
 #[ink::test]
 fn node_list_works() {
-    let mut ddc_bucket = DdcBucket::new();
+    let mut ddc_bucket = setup();
     let accounts = get_accounts();
     let owner_id1 = accounts.alice;
     let owner_id2 = accounts.bob;
@@ -1262,7 +1254,7 @@ fn node_list_works() {
     // Create two Nodes.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
     let capacity = 100;
-    push_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
+    set_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
     let node_id1 = ddc_bucket.node_create(
         rent_per_month,
         node_params1.to_string(),
@@ -1270,10 +1262,9 @@ fn node_list_works() {
         NodeTag::ADDING,
         owner_id1,
     );
-    pop_caller();
 
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-    push_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
+    set_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
     let node_id2 = ddc_bucket.node_create(
         rent_per_month,
         node_params2.to_string(),
@@ -1281,7 +1272,6 @@ fn node_list_works() {
         NodeTag::ADDING,
         owner_id2,
     );
-    pop_caller();
 
     let node_status = ddc_bucket.node_get_by_pubkey(owner_id1).unwrap();
     assert_eq!(owner_id1, node_status.node.provider_id.clone());

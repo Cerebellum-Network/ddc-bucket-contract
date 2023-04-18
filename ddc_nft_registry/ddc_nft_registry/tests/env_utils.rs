@@ -4,68 +4,49 @@ pub use ink_env::{
     call,
     DefaultEnvironment,
     test,
-    test::{advance_block, default_accounts, DefaultAccounts, initialize_or_reset_as_default, recorded_events},
+    test::{advance_block, default_accounts, DefaultAccounts, recorded_events},
 };
-use ink_lang as ink;
 use scale::Decode;
 
 use crate::ddc_nft_registry::*;
 
+pub type Event = <DdcNftRegistry as ::ink_lang::reflect::ContractEventBase>::Type;
+
 /// Recommended contract fee for all operations with reasonable data amounts.
 pub const CONTRACT_FEE_LIMIT: Balance = 10 * TOKEN;
 
-pub const BLOCK_TIME: u64 = 5;
-
 pub fn get_accounts() -> DefaultAccounts<DefaultEnvironment> {
-    // The default account is "alice"
-    default_accounts::<DefaultEnvironment>().unwrap()
+  test::default_accounts::<DefaultEnvironment>()
 }
 
-pub fn push_caller(caller: AccountId) {
-    push_caller_value(caller, 0);
+pub fn set_caller_value(account: AccountId, value: Balance) {
+  set_caller(account);
+  set_value(value);
 }
 
-pub fn push_caller_value(caller: AccountId, transferred_value: Balance) {
-    let callee = ink_env::account_id::<DefaultEnvironment>().unwrap_or([0x0; 32].into());
-
-    test::push_execution_context::<DefaultEnvironment>(
-        caller,
-        callee,
-        1000000,
-        transferred_value,                                          // transferred balance
-        test::CallData::new(call::Selector::new([0x00; 4])), // dummy
-    );
-
-    transfer(caller, callee, transferred_value);
+pub fn set_value(value: Balance) {
+  test::set_value_transferred::<DefaultEnvironment>(value);
 }
 
-pub fn pop_caller() {
-    test::pop_execution_context();
+pub fn set_callee(account: AccountId) {
+  test::set_callee::<DefaultEnvironment>(account);
 }
 
-pub fn transfer(from: AccountId, to: AccountId, amount: Balance) {
-    if amount == 0 { return; }
-    let balance_of_from = balance_of(from);
-    assert!(balance_of_from >= amount, "Insufficient balance in test account {:?}", from);
-    set_balance(from, balance_of_from - amount);
-    set_balance(to, balance_of(to) + amount);
+pub fn set_caller(account: AccountId) {
+  test::set_caller::<DefaultEnvironment>(account);
 }
 
 pub fn balance_of(account: AccountId) -> Balance {
-    test::get_account_balance::<DefaultEnvironment>(account).unwrap()
+  test::get_account_balance::<DefaultEnvironment>(account).unwrap()
 }
 
 pub fn set_balance(account: AccountId, balance: Balance) {
-    ink_env::test::set_account_balance::<DefaultEnvironment>(account, balance).unwrap();
-}
-
-pub fn contract_id() -> AccountId {
-    ink_env::test::get_current_contract_account_id::<DefaultEnvironment>().unwrap()
+  test::set_account_balance::<DefaultEnvironment>(account, balance);
 }
 
 pub fn decode_event<Event: Decode>(event: &ink_env::test::EmittedEvent) -> Event {
-    <Event as Decode>::decode(&mut &event.data[..])
-        .expect("encountered invalid contract event data buffer")
+  <Event as Decode>::decode(&mut &event.data[..])
+      .expect("encountered invalid contract event data buffer")
 }
 
 pub fn get_events<Event: Decode>() -> Vec<Event> {
@@ -73,5 +54,10 @@ pub fn get_events<Event: Decode>() -> Vec<Event> {
     raw_events.iter().map(decode_event).collect()
 }
 
+pub fn admin_id() -> AccountId {
+    get_accounts().alice
+}
 
-pub type Event = <DdcNftRegistry as ink::BaseEvent>::Type;
+pub fn contract_id() -> AccountId {
+    AccountId::from([0x09; 32])
+}

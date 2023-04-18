@@ -1,9 +1,9 @@
 //! The data structure of Clusters.
 
 use ink_prelude::vec::Vec;
-use ink_storage::traits::{PackedLayout, SpreadLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
 use scale::{Decode, Encode};
-
+use ink_primitives::Key;
 use crate::ddc_bucket::{AccountId, Balance, NodeId, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
@@ -15,7 +15,7 @@ pub type ClusterParams = Params;
 pub type VNodeIndex = u32;
 pub type VNodeId = (ClusterId, VNodeIndex);
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct CdnCluster {
     pub manager_id: AccountId,
@@ -23,6 +23,12 @@ pub struct CdnCluster {
     pub resources_used: Resource,
     pub revenues: Cash,
     pub usd_per_gb: Balance,
+}
+
+impl ink_storage::traits::PackedAllocate for CdnCluster {
+    fn allocate_packed(&mut self, at: &Key) {
+        PackedAllocate::allocate_packed(&mut *self, at)
+    }
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]

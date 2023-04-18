@@ -1,18 +1,19 @@
 //! The store where to create and access Nodes.
 
-use ink_storage::{collections::Vec as InkVec, traits};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_prelude::vec::Vec;
+use ink_storage::Mapping;
 
 use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-use ink_storage::collections::HashMap;
 
 use super::entity::{Node, NodeId, NodeTag};
 
-#[derive(traits::SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(traits::StorageLayout, Debug))]
+#[derive(SpreadAllocate, SpreadLayout, Default)]
+#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct NodeStore {
-    pub account_node: HashMap<AccountId, NodeId>,
-    pub nodes: InkVec<Node>,
+    pub account_node: Mapping<AccountId, NodeId>,
+    pub nodes: Vec<Node>,
 }
 
 impl NodeStore {
@@ -24,8 +25,7 @@ impl NodeStore {
         node_tag: NodeTag,
         pubkey: AccountId,
     ) -> Result<NodeId> {
-        let node_id = self.nodes.len();
-
+        let node_id: NodeId = self.nodes.len().try_into().unwrap();
         let node = Node {
             provider_id,
             rent_per_month,
@@ -33,26 +33,26 @@ impl NodeStore {
             node_tag,
         };
 
-        let exists = self.account_node.contains_key(&pubkey);
+        let exists = self.account_node.contains(&pubkey);
         if exists {
             return Err(NodeAlreadyExists);
         }
 
         self.nodes.push(node);
-        self.account_node.insert(pubkey, node_id);
+        self.account_node.insert(&pubkey, &node_id);
 
         Ok(node_id)
     }
 
-    pub fn get_by_pub_key(&self, pubkey: AccountId) -> Result<&NodeId> {
+    pub fn get_by_pub_key(&self, pubkey: AccountId) -> Result<NodeId> {
         self.account_node.get(&pubkey).ok_or(NodeDoesNotExist)
     }
 
     pub fn get(&self, node_id: NodeId) -> Result<&Node> {
-        self.nodes.get(node_id).ok_or(NodeDoesNotExist)
+        self.nodes.get(node_id as usize).ok_or(NodeDoesNotExist)
     }
 
     pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
-        self.nodes.get_mut(node_id).ok_or(NodeDoesNotExist)
+        self.nodes.get_mut(node_id as usize).ok_or(NodeDoesNotExist)
     }
 }

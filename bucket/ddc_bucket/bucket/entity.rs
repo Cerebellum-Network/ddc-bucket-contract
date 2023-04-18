@@ -1,9 +1,9 @@
 //! The data structure of Buckets.
 
 use ink_prelude::vec::Vec;
-use ink_storage::traits::{PackedLayout, SpreadLayout};
+use ink_storage::traits::{SpreadAllocate, PackedAllocate, PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
-
+use ink_primitives::Key;
 use crate::ddc_bucket::{
     AccountId, ClusterId,
     Error::*, Result,
@@ -15,7 +15,7 @@ use crate::ddc_bucket::params::store::Params;
 pub type BucketId = u32;
 pub type BucketParams = Params;
 
-#[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Bucket {
     pub owner_id: AccountId,
@@ -24,6 +24,12 @@ pub struct Bucket {
     pub resource_reserved: Resource,
     pub public_availability: bool,
     pub resource_consumption_cap: Resource, 
+}
+
+impl ink_storage::traits::PackedAllocate for Bucket {
+    fn allocate_packed(&mut self, at: &Key) {
+        PackedAllocate::allocate_packed(&mut *self, at)
+    }
 }
 
 // Add to status field bucket availability
