@@ -17,10 +17,10 @@ pub mod ddc_bucket {
     use cash::*;
     use cluster::{entity::*, store::*};
     use committer::store::*;
+    use ink_storage::traits::SpreadAllocate;
     use node::{entity::*, store::*};
     use params::store::*;
     use perm::store::*;
-    use ink_storage::traits::SpreadAllocate;
 
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
@@ -85,7 +85,7 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 let operator = Self::env().caller();
-                
+
                 contract.committer_store.init(operator);
                 contract.protocol_store.init(operator, DEFAULT_BASIS_POINTS);
 
@@ -94,14 +94,21 @@ pub mod ddc_bucket {
                 contract
                     .perms
                     .grant_permission(admin_id, &Permission::SuperAdmin);
-    
+
                 // Reserve IDs 0.
                 let _ = contract.accounts.create_if_not_exist(AccountId::default());
                 let _ = contract.cdn_nodes.create(AccountId::default(), 0);
                 let _ = contract.cdn_node_params.create("".to_string()).unwrap();
                 let _ = contract
                     .nodes
-                    .create(AccountId::default(), 0, 0, NodeTag::ACTIVE, AccountId::default()).unwrap();
+                    .create(
+                        AccountId::default(),
+                        0,
+                        0,
+                        NodeTag::ACTIVE,
+                        AccountId::default(),
+                    )
+                    .unwrap();
                 let _ = contract.node_params.create("".to_string()).unwrap();
                 let _ = contract
                     .clusters
@@ -150,6 +157,16 @@ pub mod ddc_bucket {
         bucket_id: BucketId,
         #[ink(topic)]
         cluster_id: ClusterId,
+    }
+
+    /// The availiablity of the bucket was updated.
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketAvailabilityUpdated {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        #[ink(topic)]
+        public_availability: bool,
     }
 
     impl DdcBucket {

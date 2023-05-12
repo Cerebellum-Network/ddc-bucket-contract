@@ -777,11 +777,11 @@ fn cluster_add_node() {
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     let new_node_id = ctx.contract.node_create(
-      rent_per_month,
-      node_params.to_string(),
-      capacity,
-      node_tag,
-      ctx.manager,
+        rent_per_month,
+        node_params.to_string(),
+        capacity,
+        node_tag,
+        ctx.manager,
     );
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
@@ -1240,6 +1240,27 @@ fn bucket_list_works() {
         ddc_bucket.bucket_list(1, 100, Some(owner_id3)),
         (vec![], count)
     );
+}
+
+#[ink::test]
+fn bucket_set_availability_works() {
+    let ctx = &mut new_cluster();
+    let test_bucket = &new_bucket(ctx);
+    let status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    assert_eq!(status.bucket.public_availability, false);
+
+    // Set public availability
+    ctx.contract
+        .bucket_set_availability(test_bucket.bucket_id, true);
+
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::BucketAvailabilityUpdated(ev) if ev ==
+                     BucketAvailabilityUpdated { bucket_id: test_bucket.bucket_id, public_availability: true }));
+
+    // Check the changed params.
+    let status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
+    assert_eq!(status.bucket.public_availability, true);
 }
 
 #[ink::test]
