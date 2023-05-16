@@ -3,7 +3,7 @@
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, BucketAvailabilityUpdated, DdcBucket, Result};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
 
@@ -127,6 +127,7 @@ impl DdcBucket {
 
         Self::only_owner_or_cluster_manager(bucket, cluster)?;
         bucket.set_availability(public_availability);
+        Self::env().emit_event(BucketAvailabilityUpdated { bucket_id, public_availability });
         Ok(())
     }
 
