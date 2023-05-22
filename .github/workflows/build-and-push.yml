@@ -18,6 +18,7 @@ jobs:
           rustup target add wasm32-unknown-unknown --toolchain nightly-2023-02-07
           rustup component add rust-src --toolchain nightly-2023-02-07-unknown-linux-gnu
           sudo apt-get install binaryen
+          cargo install cargo-dylint
           cargo install cargo-contract --version 1.5.0 --force --locked
       - name: Run tests
         run: |
