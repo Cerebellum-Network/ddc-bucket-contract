@@ -26,6 +26,8 @@ pub struct Bucket {
     pub resource_consumption_cap: Resource, 
 }
 
+// https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
+#[allow(unconditional_recursion)]
 impl ink_storage::traits::PackedAllocate for Bucket {
     fn allocate_packed(&mut self, at: &Key) {
         PackedAllocate::allocate_packed(&mut *self, at)
