@@ -8,60 +8,46 @@ These smart contracts orchestrate the DDC network around clusters and buckets.
 
 ## Dependencies
 
-Note: the substrate node version may be upgraded and the contract may not deploy, so if this is the case you can check if the ink version in [Cargo.toml](https://github.com/Cerebellum-Network/ddc-bucket-contract/blob/main/bucket/Cargo.toml) is supported by the current node version
-
+Note: The ink! version specidied in the [Cargo.toml](https://github.com/Cerebellum-Network/ddc-bucket-contract/blob/main/bucket/Cargo.toml) must be compatible with the `pallet_contracts` version, which in its turn depends on the underlying substrate version. Currently, the Devnet, the QAnet and EDC environments support `ink! 3.4.0`
 
 ```bash
-# configure rust toolchain
-rustup toolchain install nightly
+# Configure the compatible rust toolchain
+rustup toolchain install nightly-2023-02-07
+rustup component add rust-src --toolchain nightly-2023-02-07
+rustup target add wasm32-unknown-unknown --toolchain nightly-2023-02-07
 
-rustup component add rust-src --toolchain nightly
-rustup target add wasm32-unknown-unknown --toolchain nightly
-
+# Install cargo-contract with its dependencies
+cargo install cargo-dylint
+cargo install dylint-link
 cargo install cargo-contract --version 1.5.0 --force --locked
 
 # Install binaryen in a version >= 99
-brew install binaryen # apt-get install binaryen
+brew install binaryen 
+# For Debian\Ubuntu:
+# apt-get install binaryen
 
 # Install the documentation generator
 git clone https://github.com/Cerebellum-Network/ink-doc-gen.git
-(cd ink-doc-gen && git checkout v0.1.0 && yarn)
+cd ink-doc-gen && git checkout v0.1.0 && yarn
 ```
 
-## How to build
-
-Note: this contract can be build with errors due to different processor architecture, so we use docker container for unified build process. It's not necessary to use build through docker all the time, but it is important in order if you want to deploy the contract
+## Building
 
 ```bash
-# contract testing and building
-cargo test &&
-cargo contract build --release --manifest-path bucket/Cargo.toml
-
-# build docker image
-docker build -t ink-contract-builder .
-
-# build the bucket contract
-docker run --cpus=4 --memory=8g --rm -it -v $(pwd):/sources ink-contract-builder cargo +nightly contract build --manifest-path=/sources/bucket/Cargo.toml
-
+# Build DDC Bucket and DDC NFT Registry contracts
+cargo +nightly-2023-02-07 test &&
+cargo +nightly-2023-02-07 contract build --release --manifest-path bucket/Cargo.toml &&
+cargo +nightly-2023-02-07 contract build --release --manifest-path ddc_nft_registry/Cargo.toml
 ```
+
+Note: if you are encountering errors during build process, they may be related to your specific processor's architecture. If this is the case, try out the *Instalation using Docker image* option, [described in the official docs](https://github.com/paritytech/cargo-contract#installation-using-docker-image)
+
 
 ## Deployment
 
-Generated artifacts will be located in the target folder. Go to [EDC-1](https://explorer.cere.network/?rpc=wss%3A%2F%2Fext-devs-node-1.cluster-1.cere.network%3A9945#/explorer), select the developer tab and click the Upload & deploy code button, then deploy the contract.
+Generated artifacts will be located in the `./target/ink` folder. Go to [Devnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.devnet.cere.network%2Fws#/contracts), select the `Developer -> Contracts` tab, and click the `Upload & deploy code button`. Use the `.contract` file for deployment.
 
 Envs tested with deploy:
 - [QAnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.qanet.cere.network%2Fws#/contracts)
-- [Dev](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.devnet.cere.network%2Fws#/contracts)
+- [Devnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.devnet.cere.network%2Fws#/contracts)
 - [EDC-1](https://explorer.cere.network/?rpc=wss%3A%2F%2Fext-devs-node-1.cluster-1.cere.network%3A9945#/explorer)
-
-
-## How to get artifacts:
-* Run workflow for any branch and wait until build finished
-* Run the command to pull the artifacts:
-```shell
-aws ecr get-login-password --region us-west-2 --profile cere-network-dev | docker login --username AWS --password-stdin 625402836641.dkr.ecr.us-west-2.amazonaws.com
-docker pull "625402836641.dkr.ecr.us-west-2.amazonaws.com/crb-smart-contracts:latest
-id=$(docker create "625402836641.dkr.ecr.us-west-2.amazonaws.com/crb-smart-contracts:latest")
-docker cp "$id":/contracts/target/ink/ddc_bucket/ ./
-docker rm -v "$id"
-```
