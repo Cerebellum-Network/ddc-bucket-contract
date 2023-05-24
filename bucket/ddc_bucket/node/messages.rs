@@ -117,4 +117,12 @@ impl DdcBucket {
             params,
         })
     }
+
+    pub fn message_remove_node(&mut self, node_id: NodeId) -> Result<()> {
+        let caller = Self::env().caller();
+        let node = self.nodes.get_mut(node_id)?;
+        node.only_owner(caller)?;
+
+        self.nodes.remove_node(node_id)
+    }
 }

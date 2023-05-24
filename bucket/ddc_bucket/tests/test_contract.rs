@@ -179,19 +179,19 @@ fn new_cluster_cdn() -> TestCluster {
 
     set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
 
-    let node_id0 = contract.cdn_node_create(node_params0.to_string());
+    let node_id0 = contract.cdn_node_create(node_params0.to_string(), provider_id0);
 
     // Provide another Node.
     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
     set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
 
-    let node_id1 = contract.cdn_node_create(node_params1.to_string());
+    let node_id1 = contract.cdn_node_create(node_params1.to_string(), provider_id1);
 
     // Provide another Node.
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
     set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
 
-    let node_id2 = contract.cdn_node_create(node_params2.to_string());
+    let node_id2 = contract.cdn_node_create(node_params2.to_string(), provider_id2);
 
     // Create a Cluster.
     let _cluster_params = "{}";
@@ -305,7 +305,8 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING
+                    node_tag: NodeTag::ADDING,
+                    node_pub_key: ctx.provider_id0,
                 },
                 params: ctx.node_params0.to_string(),
             }
@@ -320,7 +321,8 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id1,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING
+                    node_tag: NodeTag::ADDING,
+                    node_pub_key: ctx.provider_id1,
                 },
                 params: ctx.node_params1.to_string(),
             }
@@ -335,7 +337,8 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id2,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING
+                    node_tag: NodeTag::ADDING,
+                    node_pub_key: ctx.provider_id2,
                 },
                 params: ctx.node_params2.to_string(),
             }
@@ -960,7 +963,8 @@ fn bucket_reserve_0_works() {
                     provider_id: AccountId::default(),
                     rent_per_month: 0,
                     free_resource: 0,
-                    node_tag: NodeTag::ACTIVE
+                    node_tag: NodeTag::ACTIVE,
+                    node_pub_key: AccountId::default(),
                 },
                 params: "".to_string(),
             }],
@@ -1307,6 +1311,7 @@ fn node_list_works() {
             rent_per_month,
             free_resource: capacity,
             node_tag: NodeTag::ADDING,
+            node_pub_key: owner_id1,
         },
         params: node_params1.to_string(),
     };
@@ -1318,6 +1323,7 @@ fn node_list_works() {
             rent_per_month,
             free_resource: capacity,
             node_tag: NodeTag::ADDING,
+            node_pub_key: owner_id2,
         },
         params: node_params2.to_string(),
     };

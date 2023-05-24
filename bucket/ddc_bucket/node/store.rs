@@ -31,6 +31,7 @@ impl NodeStore {
             rent_per_month,
             free_resource: capacity,
             node_tag,
+            node_pub_key: pubkey,
         };
 
         let exists = self.account_node.contains(&pubkey);
@@ -54,5 +55,13 @@ impl NodeStore {
 
     pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
         self.nodes.get_mut(node_id as usize).ok_or(NodeDoesNotExist)
+    }
+
+    pub fn remove_node(&mut self, node_id: NodeId) -> Result<()> {
+        let total_nodes = self.nodes.len();
+        let last_node = self.nodes.get(total_nodes - 1).ok_or(NodeDoesNotExist).unwrap();
+        self.account_node.insert(&last_node.node_pub_key, &node_id);
+        self.nodes.swap_remove(node_id.try_into().unwrap());
+        Ok(())
     }
 }

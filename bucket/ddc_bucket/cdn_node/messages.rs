@@ -16,10 +16,10 @@ impl DdcBucket {
         self.impl_grant_permission(manager, permission, is_trusted)
     }
 
-    pub fn message_cdn_node_create(&mut self, node_params: Params) -> Result<NodeId> {
+    pub fn message_cdn_node_create(&mut self, node_params: Params, pubkey: AccountId) -> Result<NodeId> {
         let provider_id = Self::env().caller();
 
-        let node_id = self.cdn_nodes.create(provider_id, 0);
+        let node_id = self.cdn_nodes.create(provider_id, 0, pubkey).unwrap();
         let params_id = self.cdn_node_params.create(node_params.clone())?;
         assert_eq!(node_id, params_id);
 
@@ -43,7 +43,7 @@ impl DdcBucket {
     pub fn message_cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeStatus>, u32) {
         let mut cdn_nodes = Vec::with_capacity(limit as usize);
         for node_id in offset..offset + limit {
-            let node = match self.cdn_nodes.0.get(node_id as usize) {
+            let node = match self.cdn_nodes.cdn_nodes.get(node_id as usize) {
                 None => break, // No more items, stop.
                 Some(node) => node,
             };
@@ -63,6 +63,25 @@ impl DdcBucket {
             
             cdn_nodes.push(status);
         }
-        (cdn_nodes, self.cdn_nodes.0.len().try_into().unwrap())
+        (cdn_nodes, self.cdn_nodes.cdn_nodes.len().try_into().unwrap())
+    }
+
+    pub fn message_cdn_node_get_by_pub_key(&self, pubkey: AccountId) -> Result<CdnNodeStatus> {
+        let node_id = self.cdn_nodes.get_by_pub_key(pubkey).unwrap();
+        let node = self.cdn_nodes.get(node_id)?.clone();
+        let params = self.cdn_node_params.get(node_id)?.clone();
+        Ok(CdnNodeStatus {
+            node_id,
+            node,
+            params,
+        })
+    }
+
+    pub fn message_remove_cdn_node(&mut self, node_id: NodeId) -> Result<()> {
+        let caller = Self::env().caller();
+        let node = self.cdn_nodes.get_mut(node_id)?;
+        node.only_owner(caller)?;
+
+        self.cdn_nodes.remove_node(node_id)
     }
 }
