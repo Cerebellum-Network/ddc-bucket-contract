@@ -6,25 +6,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install latest nightly
+      - name: Install compatible nightly toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2023-02-07
           target: x86_64-unknown-linux-gnu
           components: rustfmt, clippy
 
       - name: Install dependencies
         run: |
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-          rustup component add rust-src --toolchain nightly-unknown-linux-gnu
+          rustup target add wasm32-unknown-unknown --toolchain nightly-2023-02-07
+          rustup component add rust-src --toolchain nightly-2023-02-07-unknown-linux-gnu
           sudo apt-get install binaryen
-          cargo install cargo-contract --version ^0.14 --force --locked
+          cargo install cargo-dylint
+          cargo install dylint-link
+          cargo install cargo-contract --version 1.5.0 --force --locked
       - name: Run tests
         run: |
-          RUSTFLAGS=-Awarnings cargo test
+          RUSTFLAGS=-Awarnings cargo +nightly-2023-02-07 test
       - name: Build contract
         run: |
-          cargo contract build --release --manifest-path bucket/Cargo.toml
+          cargo +nightly-2023-02-07 contract build --release --manifest-path bucket/Cargo.toml
       - name: Create names linked to commit
         run: |
           ddc_contract_name=ddc.${GITHUB_SHA:0:7}.contract

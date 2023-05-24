@@ -17,6 +17,8 @@ pub struct CdnNode {
     pub undistributed_payment: Balance,
 }
 
+// https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
+#[allow(unconditional_recursion)]
 impl ink_storage::traits::PackedAllocate for CdnNode {
     fn allocate_packed(&mut self, at: &Key) {
         PackedAllocate::allocate_packed(&mut *self, at)
