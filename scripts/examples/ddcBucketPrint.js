@@ -3,14 +3,17 @@ const {
     getContract,
     ddcBucketQuery,
     lodash: _,
-} = require("./sdk");
+    deploymentRegistry,
+    config
+} = require("./../sdk");
 const log = console.log;
 
-const CONTRACT_NAME = "ddc_bucket";
-const RPC = "wss://rpc.testnet.cere.network:9945";
 
+const CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
+const RPC = config.DEVNET_RPC_ENDPOINT;
 const ACCOUNT_FILTER = null; // get data about all accounts.
 
+deploymentRegistry.initContracts();
 
 async function main() {
     const {api, chainName} = await connect(RPC);
@@ -105,41 +108,41 @@ function printGraph(clusters, nodes, buckets) {
     log();
 
     for (status of nodes) {
-        let {node_id, node} = status;
+        let {nodeId, node} = status;
         // Define
-        log(`Node_${node_id}[(Node ${node_id})]`);
+        log(`Node_${nodeId}[(Node ${nodeId})]`);
 
         // Node to Provider.
-        log(`Node_${node_id} -. owned by .-> Account_${node.provider_id.substr(0, 8)}`);
+        log(`Node_${nodeId} -. owned by .-> Account_${node.providerId.substr(0, 8)}`);
         log();
     }
 
     for (status of clusters) {
-        let {cluster_id, cluster} = status;
+        let {clusterId, cluster} = status;
         // Define
-        log(`Cluster_${cluster_id}((Cluster ${cluster_id}))`);
+        log(`Cluster_${clusterId}((Cluster ${clusterId}))`);
 
         // Cluster to Manager.
-        log(`Cluster_${cluster_id} -. managed by ..-> Account_${cluster.manager_id.substr(0, 8)}`);
+        log(`Cluster_${clusterId} -. managed by ..-> Account_${cluster.managerId.substr(0, 8)}`);
 
         // Cluster to Node.
-        for (i = 0; i < cluster.vnodes.length; i++) {
-            let node_id = cluster.vnodes[i];
-            log(`Cluster_${cluster_id} -- P${i} --> Node_${node_id}`);
+        for (i = 0; i < cluster.vNodes.length; i++) {
+            let vNodeId = cluster.vNodes[i];
+            log(`Cluster_${clusterId} -- P${i} --> Node_${vNodeId}`);
         }
         log();
     }
 
     for (status of buckets) {
-        let {bucket_id, bucket} = status;
-        // Define
-        log(`Bucket_${bucket_id}[[Bucket ${bucket_id}]]`);
+        let {bucketId, bucket} = status;
+
+        log(`Bucket_${bucketId}[[Bucket ${bucketId}]]`);
 
         // Bucket to Owner.
-        log(`Bucket_${bucket_id} -. owned by ...-> Account_${bucket.owner_id.substr(0, 8)}`);
+        log(`Bucket_${bucketId} -. owned by ...-> Account_${bucket.ownerId.substr(0, 8)}`);
 
         // Bucket to Cluster.
-        log(`Bucket_${bucket_id} -- allocated into --> Cluster_${bucket.cluster_id}`);
+        log(`Bucket_${bucketId} -- allocated into --> Cluster_${bucket.clusterId}`);
         log();
     }
 

@@ -1,0 +1,14 @@
+{
+  "name": "@cere/ddc-bucket-scripts",
+  "description": "Collection of scripts that can be used for example purposes and contracts deployment",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "scripts": {
+    "ensure-deps": "yarn --cwd sdk",
+    "demo-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketDemo.js",
+    "demo-nft-registry": "yarn ensure-deps && node examples/ddcNftRegistryDemo.js",
+    "deploy-ddc-bucket": "yarn ensure-deps && node deployment/ddcBucketDeploy.js",
+    "deploy-ddc-nft-registry": "yarn ensure-deps && node deployment/ddcNftRegistryDeploy.js",
+    "print-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketPrint.js"
+  }
+}
