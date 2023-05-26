@@ -1,7 +1,6 @@
 // todo: introduce Dotenv
 
-// const ACTOR_SEED = "//Alice";
-const ACTOR_SEED = "lemon bundle cricket slab notice country lizard mango alcohol visual identify school"
+const ACTOR_SEED = "//Alice";
 
 const EXPLORER_URL = "https://explorer.cere.network";
 const DDC_BUCKET_CONTRACT_NAME = "ddc_bucket";

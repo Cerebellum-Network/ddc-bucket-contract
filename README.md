@@ -47,7 +47,10 @@ Note: if you are encountering errors during build process, they may be related t
 
 Generated artifacts will be located in the `./target/ink` folder. Go to [Devnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.devnet.cere.network%2Fws#/contracts), select the `Developer -> Contracts` tab, and click the `Upload & deploy code button`. Use the `.contract` file for deployment.
 
-Envs tested with deploy:
-- [QAnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.qanet.cere.network%2Fws#/contracts)
+Additionally, there are scripts that allow you to deploy contracts from your local environment to remote network. [Check the guide](./scripts/README.md) for more details.
+
+Environment tested with deploy:
+- [EDC-1](https://explorer.cere.network/?rpc=wss%3A%2F%2Fext-devs-node-1.cluster-1.cere.network%3A9945#/contracts)
 - [Devnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.devnet.cere.network%2Fws#/contracts)
-- [EDC-1](https://explorer.cere.network/?rpc=wss%3A%2F%2Fext-devs-node-1.cluster-1.cere.network%3A9945#/explorer)
+- [QAnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.qanet.cere.network%2Fws#/contracts)
+- [Testnet](https://explorer.cere.network/?rpc=wss%3A%2F%2Farchive.testnet.cere.network%2Fws#/contracts)
