@@ -13,9 +13,9 @@ function getABI(name) {
     return ABIS[name] || null;
 }
 
-function getBlueprint(name, api) {
+function getBlueprint(name, api, hash) {
     const abi = ABIS[name];
-    const codeHash = CODE_HASHES[name];
+    const codeHash = hash || CODE_HASHES[name];
     if (!(abi && codeHash)) return null;
     return new BlueprintPromise(api, abi, codeHash);
 }

@@ -1,8 +1,8 @@
 {
   "source": {
-    "hash": "0xad2cf2f6651fdac51576566664c67eb9654a1683aeef49615937eea21023f394",
+    "hash": "0x6c9783a07ddbc3bad9d23f4e8ce41aafa1d2fa509fa4a397c4b21a5ab4e56cbc",
     "language": "ink! 3.4.0",
-    "compiler": "rustc 1.64.0-nightly"
+    "compiler": "rustc 1.69.0-nightly"
   },
   "contract": {
     "name": "ddc_nft_registry",

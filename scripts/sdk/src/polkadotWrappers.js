@@ -1,8 +1,8 @@
 const {ApiPromise, WsProvider} = require('@polkadot/api');
 const {Keyring} = require('@polkadot/api');
 const cereTypes = require("./cere_custom_types.json");
-const EXPLORER_URL = "https://explorer.cere.network";
-
+const config = require("./config");
+const { mnemonicGenerate } = require('@polkadot/util-crypto');
 
 async function connect(rpcUrl) {
     const wsProvider = new WsProvider(rpcUrl);
@@ -14,11 +14,18 @@ async function connect(rpcUrl) {
 
     const getExplorerUrl = (result) => {
         const blockHash = result.status.asInBlock.toString();
-        const blockUrl = `${EXPLORER_URL}/?rpc=${rpcUrl}#/explorer/query/${blockHash}`;
+        const blockUrl = `${config.EXPLORER_URL}/?rpc=${rpcUrl}#/explorer/query/${blockHash}`;
         return blockUrl;
     };
 
     return {api, chainName, getExplorerUrl};
+}
+
+function randomAccount() {
+    const mnemonic = mnemonicGenerate(12);
+    const keyring = new Keyring({type: 'sr25519'});
+    const account =keyring.addFromMnemonic(mnemonic);
+    return account;
 }
 
 function accountFromUri(uri) {
@@ -44,4 +51,5 @@ module.exports = {
     connect,
     accountFromUri,
     sendTx,
+    randomAccount,
 };
