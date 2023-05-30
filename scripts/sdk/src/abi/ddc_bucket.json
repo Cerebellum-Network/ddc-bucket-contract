@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x89bcf7ab14df699f511b76c97cec6ab5b79f0bb690424523f14711a59159c7f6",
+    "hash": "0x32df7d1f3306bfb13288f664c47e1ab76b925e630823f07fe1a787e406be7c4f",
     "language": "ink! 3.4.0",
     "compiler": "rustc 1.69.0-nightly"
   },
@@ -890,10 +890,10 @@
             }
           ],
           "docs": [
-            " Set permission for the reader of the bucket"
+            " Get permissions for the writers of the bucket"
           ],
           "label": "get_bucket_writers",
-          "mutates": true,
+          "mutates": false,
           "payable": false,
           "returnType": {
             "displayName": [
@@ -982,10 +982,10 @@
             }
           ],
           "docs": [
-            " Set permission for the reader of the bucket"
+            " Get permissions for the readers of the bucket"
           ],
           "label": "get_bucket_readers",
-          "mutates": true,
+          "mutates": false,
           "payable": false,
           "returnType": {
             "displayName": [
@@ -2281,7 +2281,7 @@
             }
           ],
           "docs": [
-            " Return the last commit submitted by CDN node operator"
+            " Set the Fee Percentage Basis Points that will be charged by the protocol"
           ],
           "label": "set_fee_bp",
           "mutates": true,

@@ -273,9 +273,9 @@ pub mod ddc_bucket {
                 .unwrap()
         }
 
-        /// Set permission for the reader of the bucket
+        /// Get permissions for the writers of the bucket
         #[ink(message)]
-        pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+        pub fn get_bucket_writers(&self, bucket_id: BucketId) -> Vec<AccountId> {
             self.message_get_bucket_writers(bucket_id).unwrap()
         }
 
@@ -293,9 +293,9 @@ pub mod ddc_bucket {
                 .unwrap()
         }
 
-        /// Set permission for the reader of the bucket
+        /// Get permissions for the readers of the bucket
         #[ink(message)]
-        pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+        pub fn get_bucket_readers(&self, bucket_id: BucketId) -> Vec<AccountId> {
             self.message_get_bucket_readers(bucket_id).unwrap()
         }
 
@@ -368,6 +368,7 @@ pub mod ddc_bucket {
             node_ids: Vec<NodeId>,
             v_nodes: Vec<Vec<u64>>,
         ) {
+            // TODO: needs to be clarified why there is no 'message_cluster_remove_node' method and we add a node instead of removing
             self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
                 .unwrap()
         }
@@ -396,7 +397,7 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn cluster_create(
             &mut self,
-            _unused: AccountId,
+            _unused: AccountId, // TODO: needs to be clarified why do we keep it here if it's not used
             v_nodes: Vec<Vec<u64>>,
             node_ids: Vec<NodeId>,
             cluster_params: ClusterParams,
@@ -778,7 +779,7 @@ pub mod ddc_bucket {
             self.message_get_fee_bp()
         }
 
-        /// Return the last commit submitted by CDN node operator
+        /// Set the Fee Percentage Basis Points that will be charged by the protocol
         #[ink(message)]
         pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
             self.message_set_fee_bp(fee_bp).unwrap();

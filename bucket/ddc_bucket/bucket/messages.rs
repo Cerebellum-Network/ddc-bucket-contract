@@ -131,7 +131,7 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_get_bucket_writers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
+    pub fn message_get_bucket_writers(&self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
         let writers = self.buckets_perms.get_bucket_writers(bucket_id);
         Ok(writers)
     }
@@ -154,7 +154,7 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_get_bucket_readers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
+    pub fn message_get_bucket_readers(&self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
         let readers = self.buckets_perms.get_bucket_readers(bucket_id);
         Ok(readers)
     }
