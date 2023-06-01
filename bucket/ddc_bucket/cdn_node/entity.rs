@@ -8,6 +8,7 @@ use crate::ddc_bucket::params::store::Params;
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
+pub type CdnNodePublicKey = AccountId;
 pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
@@ -15,6 +16,7 @@ pub type Resource = u32;
 pub struct CdnNode {
     pub provider_id: ProviderId,
     pub undistributed_payment: Balance,
+    pub node_pub_key: CdnNodePublicKey,
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures

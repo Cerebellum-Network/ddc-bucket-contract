@@ -97,7 +97,7 @@ pub mod ddc_bucket {
 
                 // Reserve IDs 0.
                 let _ = contract.accounts.create_if_not_exist(AccountId::default());
-                let _ = contract.cdn_nodes.create(AccountId::default(), 0);
+                let _ = contract.cdn_nodes.create(AccountId::default(), 0, AccountId::default());
                 let _ = contract.cdn_node_params.create("".to_string()).unwrap();
                 let _ = contract
                     .nodes
@@ -649,8 +649,8 @@ pub mod ddc_bucket {
         ///
         /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn cdn_node_create(&mut self, node_params: Params) -> NodeId {
-            self.message_cdn_node_create(node_params).unwrap()
+        pub fn cdn_node_create(&mut self, node_params: Params, pubkey: AccountId) -> NodeId {
+            self.message_cdn_node_create(node_params, pubkey).unwrap()
         }
 
         /// Change the `node_params`, which is configuration used by clients and nodes.
@@ -668,6 +668,12 @@ pub mod ddc_bucket {
             self.message_cdn_node_get(node_id)
         }
 
+        /// Get the current state of a cdn node by a public key.
+        #[ink(message)]
+        pub fn cdn_node_get_by_pubkey(&self, pubkey: AccountId) -> Result<CdnNodeStatus> {
+            self.message_cdn_node_get_by_pub_key(pubkey)
+        }
+
         /// Iterate through all nodes.
         ///
         /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
@@ -682,6 +688,16 @@ pub mod ddc_bucket {
             filter_provider_id: Option<AccountId>,
         ) -> (Vec<CdnNodeStatus>, u32) {
             self.message_cdn_node_list(offset, limit, filter_provider_id)
+        }
+
+        /// Remove cdn node by id 
+        /// 
+        /// Only the provider of the node can remove the node (not related to the public key)
+        /// 
+        /// The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated
+        #[ink(message)]
+        pub fn cdn_node_remove(&mut self, node_id: NodeId) -> Result<()> {
+            self.message_remove_cdn_node(node_id)
         }
     }
     // ---- End CDN Node ----
@@ -765,6 +781,16 @@ pub mod ddc_bucket {
             filter_provider_id: Option<AccountId>,
         ) -> (Vec<NodeStatus>, u32) {
             self.message_node_list(offset, limit, filter_provider_id)
+        }
+
+        /// Remove node by id 
+        /// 
+        /// Only the provider of the node can remove the node (not related to the public key)
+        /// 
+        /// The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated
+        #[ink(message)]
+        pub fn node_remove(&mut self, node_id: NodeId) -> Result<()> {
+            self.message_remove_node(node_id)
         }
     }
     // ---- End Node ----

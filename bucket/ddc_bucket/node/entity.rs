@@ -10,6 +10,7 @@ use ink_primitives::Key;
 
 pub type ProviderId = AccountId;
 pub type NodeId = u32;
+pub type NodePublicKey = AccountId;
 pub type NodeParams = Params;
 pub type Resource = u32;
 
@@ -20,6 +21,7 @@ pub struct Node {
     pub rent_per_month: Balance,
     pub free_resource: Resource,
     pub node_tag: NodeTag,
+    pub node_pub_key: NodePublicKey,
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
