@@ -16,7 +16,6 @@ pub mod ddc_bucket {
     use bucket::{entity::*, store::*};
     use cash::*;
     use cluster::{entity::*, store::*};
-    use committer::store::*;
     use ink_storage::traits::SpreadAllocate;
     use node::{entity::*, store::*};
     use params::store::*;
@@ -25,7 +24,6 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
-    use crate::ddc_bucket::committer::store::EraConfig;
     use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
 
@@ -43,7 +41,6 @@ pub mod ddc_bucket {
     pub mod cdn_cluster;
     pub mod cdn_node;
     pub mod cluster;
-    pub mod committer;
     pub mod currency;
     pub mod flow;
     pub mod network_fee;
@@ -72,7 +69,6 @@ pub mod ddc_bucket {
         accounts: AccountStore,
         perms: PermStore,
         network_fee: NetworkFeeStore,
-        committer_store: CommitterStore,
         protocol_store: ProtocolStore,
         topology_store: TopologyStore,
     }
@@ -86,7 +82,6 @@ pub mod ddc_bucket {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 let operator = Self::env().caller();
 
-                contract.committer_store.init(operator);
                 contract.protocol_store.init(operator, DEFAULT_BASIS_POINTS);
 
                 // Make the creator of this contract a super-admin.
@@ -529,14 +524,12 @@ pub mod ddc_bucket {
             aggregates_accounts: Vec<(AccountId, u128)>,
             aggregates_nodes: Vec<(u32, u128)>,
             aggregates_buckets: Vec<(BucketId, Resource)>,
-            era: u64,
         ) -> () {
             self.message_cdn_cluster_put_revenue(
                 cluster_id,
                 aggregates_accounts,
                 aggregates_nodes,
                 aggregates_buckets,
-                era,
             )
             .unwrap()
         }
@@ -575,47 +568,6 @@ pub mod ddc_bucket {
         }
     }
     // ---- End CDN Cluster ----
-
-    // ---- Committer ----
-
-    impl DdcBucket {
-        /// CDN node operator sets the commit for current era.
-        #[ink(message)]
-        pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
-            self.message_set_commit(cdn_owner, node_id, commit);
-        }
-
-        /// Return the last commit submitted by CDN node operator
-        #[ink(message)]
-        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
-            self.message_get_commit(cdn_owner)
-        }
-
-        /// Return last era validated per CDN node
-        #[ink(message)]
-        pub fn get_validated_commit(&self, node: NodeId) -> EraAndTimestamp {
-            self.message_get_validated_commit(node)
-        }
-
-        /// Set the new configs for era
-        #[ink(message)]
-        pub fn set_era(&mut self, era_config: EraConfig) -> () {
-            self.message_set_era(era_config).unwrap();
-        }
-
-        /// Return current status of an era
-        #[ink(message)]
-        pub fn get_era(&self) -> EraStatus {
-            self.message_get_era()
-        }
-
-        /// Return current era settings
-        #[ink(message)]
-        pub fn get_era_settings(&self) -> EraConfig {
-            self.message_get_era_settings()
-        }
-    }
-    // ---- End Committer ----
 
     // ---- CDN Node ----
 

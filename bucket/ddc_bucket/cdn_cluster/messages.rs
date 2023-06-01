@@ -55,7 +55,7 @@ impl DdcBucket {
     }
 
     // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
-    pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>, era: u64) -> Result<()> {
+    pub fn message_cdn_cluster_put_revenue(&mut self, cluster_id: ClusterId, aggregates_accounts: Vec<(AccountId, u128)>, aggregates_nodes: Vec<(u32, u128)>, aggregates_buckets: Vec<(BucketId, Resource)>) -> Result<()> {
         let cluster = self.cdn_clusters.get_mut(cluster_id)?;
         // Self::only_cdn_cluster_manager(cluster)?;
 
@@ -84,7 +84,6 @@ impl DdcBucket {
 
 
         let conv = &self.accounts.1;
-        let committer = &mut self.committer_store;
 
         for &(node_id, resources_used) in aggregates_nodes.iter() {
             let node = self.cdn_nodes.get_mut(node_id)?;
@@ -100,7 +99,6 @@ impl DdcBucket {
             node.put_payment(node_payment);
             protocol.put_revenues(Cash(protocol_payment));
 
-            committer.set_validated_commit(node_id, era).unwrap();
             cluster_payment += node_payment;
         }
         // Add check that two payments should equal?

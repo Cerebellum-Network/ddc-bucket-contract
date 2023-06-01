@@ -620,7 +620,6 @@ fn cdn_cluster_payment_works() {
         vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)],
         vec![(ctx.node_id0, 1000), (ctx.node_id1, 541643)],
         vec![],
-        5,
     );
     account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("{:?}", account);
@@ -637,9 +636,6 @@ fn cdn_cluster_payment_works() {
     // let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
     // print!("{:?}", cdn_cluster0);
     // print!("{:?}", cdn_cluster_list);
-
-    let validated_commit_node0 = ctx.contract.get_validated_commit(ctx.node_id0);
-    print!("Validated commit {:?}", validated_commit_node0);
 
     let fee = ctx.contract.get_fee_bp();
     print!("Protocol fee in basis points {:?}", fee);
