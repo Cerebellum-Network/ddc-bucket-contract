@@ -9,8 +9,7 @@ use ink_storage::traits::KeyPtr;
 use ink_primitives::Key;
 
 pub type ProviderId = AccountId;
-pub type NodeId = u32;
-pub type NodePublicKey = AccountId;
+pub type NodeKey = AccountId;
 pub type NodeParams = Params;
 pub type Resource = u32;
 
@@ -21,7 +20,7 @@ pub struct Node {
     pub rent_per_month: Balance,
     pub free_resource: Resource,
     pub node_tag: NodeTag,
-    pub node_pub_key: NodePublicKey,
+    pub node_params: NodeParams
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -57,9 +56,8 @@ impl Default for NodeTag {
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct NodeStatus {
-    pub node_id: NodeId,
+    pub node_key: NodeKey,
     pub node: Node,
-    pub params: Params,
 }
 
 impl Node {

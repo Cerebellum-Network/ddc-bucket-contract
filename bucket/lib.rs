@@ -31,7 +31,7 @@ pub mod ddc_bucket {
 
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
-    use self::cdn_node::entity::CdnNodeStatus;
+    use self::cdn_node::entity::{CdnNodeStatus, NodeId};
     use self::protocol::store::ProtocolStore;
     use self::topology::store::TopologyStore;
 
@@ -68,7 +68,6 @@ pub mod ddc_bucket {
         cdn_nodes: CdnNodeStore,
         cdn_node_params: ParamsStore,
         nodes: NodeStore,
-        node_params: ParamsStore,
         accounts: AccountStore,
         perms: PermStore,
         network_fee: NetworkFeeStore,
@@ -103,19 +102,19 @@ pub mod ddc_bucket {
                     .nodes
                     .create(
                         AccountId::default(),
+                        AccountId::default(),
                         0,
+                        "".to_string(),
                         0,
                         NodeTag::ACTIVE,
-                        AccountId::default(),
                     )
                     .unwrap();
-                let _ = contract.node_params.create("".to_string()).unwrap();
                 let _ = contract
                     .clusters
                     .create(
                         AccountId::default(),
                         &Vec::<Vec<u64>>::new(),
-                        &Vec::<NodeId>::new(),
+                        &Vec::<NodeKey>::new(),
                     )
                     .unwrap();
                 let _ = contract.cluster_params.create("".to_string()).unwrap();
@@ -335,7 +334,7 @@ pub mod ddc_bucket {
         #[ink(topic)]
         cluster_id: ClusterId,
         #[ink(topic)]
-        node_id: NodeId,
+        node_key: NodeKey,
     }
 
     /// Some resources were reserved for the cluster from the nodes.
@@ -365,10 +364,10 @@ pub mod ddc_bucket {
         pub fn cluster_remove_node(
             &mut self,
             cluster_id: ClusterId,
-            node_ids: Vec<NodeId>,
+            node_keys: Vec<NodeKey>,
             v_nodes: Vec<Vec<u64>>,
         ) {
-            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
+            self.message_cluster_add_node(cluster_id, node_keys, v_nodes)
                 .unwrap()
         }
 
@@ -379,10 +378,10 @@ pub mod ddc_bucket {
         pub fn cluster_add_node(
             &mut self,
             cluster_id: ClusterId,
-            node_ids: Vec<NodeId>,
+            node_keys: Vec<NodeKey>,
             v_nodes: Vec<Vec<u64>>,
         ) {
-            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
+            self.message_cluster_add_node(cluster_id, node_keys, v_nodes)
                 .unwrap()
         }
 
@@ -398,10 +397,10 @@ pub mod ddc_bucket {
             &mut self,
             _unused: AccountId,
             v_nodes: Vec<Vec<u64>>,
-            node_ids: Vec<NodeId>,
+            node_keys: Vec<NodeKey>,
             cluster_params: ClusterParams,
         ) -> ClusterId {
-            self.message_cluster_create(v_nodes, node_ids, cluster_params)
+            self.message_cluster_create(v_nodes, node_keys, cluster_params)
                 .unwrap()
         }
 
@@ -416,8 +415,8 @@ pub mod ddc_bucket {
 
         /// As manager, change a node tag
         #[ink(message)]
-        pub fn cluster_change_node_tag(&mut self, node_id: NodeId, new_tag: NodeTag) -> () {
-            self.message_node_change_tag(node_id, new_tag).unwrap()
+        pub fn cluster_change_node_tag(&mut self, node_key: NodeKey, new_tag: NodeTag) -> () {
+            self.message_node_change_tag(node_key, new_tag).unwrap()
         }
 
         /// As manager, re-assign a vnode to another physical node.
@@ -428,9 +427,9 @@ pub mod ddc_bucket {
             &mut self,
             cluster_id: ClusterId,
             v_nodes: Vec<u64>,
-            new_node_id: NodeId,
+            new_node_key: NodeKey,
         ) -> () {
-            self.message_cluster_replace_node(cluster_id, v_nodes, new_node_id)
+            self.message_cluster_replace_node(cluster_id, v_nodes, new_node_key)
                 .unwrap()
         }
 
@@ -709,7 +708,7 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct NodeCreated {
         #[ink(topic)]
-        node_id: NodeId,
+        node_key: NodeKey,
         #[ink(topic)]
         provider_id: AccountId,
         rent_per_month: Balance,
@@ -737,13 +736,13 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn node_create(
             &mut self,
+            node_key: NodeKey,
             rent_per_month: Balance,
             node_params: NodeParams,
             capacity: Resource,
             node_tag: NodeTag,
-            pubkey: AccountId,
-        ) -> NodeId {
-            self.message_node_create(rent_per_month, node_params, capacity, node_tag, pubkey)
+        ) -> NodeKey {
+            self.message_node_create(node_key, rent_per_month, node_params, capacity, node_tag)
                 .unwrap()
         }
 
@@ -751,20 +750,14 @@ pub mod ddc_bucket {
         ///
         /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
-            self.message_node_change_params(node_id, params).unwrap();
+        pub fn node_change_params(&mut self, node_key: NodeKey, params: NodeParams) {
+            self.message_node_change_params(node_key, params).unwrap();
         }
 
         /// Get the current status of a node.
         #[ink(message)]
-        pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
-            self.message_node_get(node_id)
-        }
-
-        /// Get the current status of a node by a public key.
-        #[ink(message)]
-        pub fn node_get_by_pubkey(&self, pubkey: AccountId) -> Result<NodeStatus> {
-            self.message_node_get_by_pub_key(pubkey)
+        pub fn node_get(&self, node_key: NodeKey) -> Result<NodeStatus> {
+            self.message_node_get(node_key)
         }
 
         /// Iterate through all nodes.
@@ -789,8 +782,8 @@ pub mod ddc_bucket {
         /// 
         /// The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated
         #[ink(message)]
-        pub fn node_remove(&mut self, node_id: NodeId) -> Result<()> {
-            self.message_remove_node(node_id)
+        pub fn node_remove(&mut self, node_key: NodeKey) -> Result<()> {
+            self.message_remove_node(node_key)
         }
     }
     // ---- End Node ----

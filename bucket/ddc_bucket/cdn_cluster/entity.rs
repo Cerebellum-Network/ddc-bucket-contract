@@ -4,10 +4,10 @@ use ink_prelude::vec::Vec;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
 use scale::{Decode, Encode};
 use ink_primitives::Key;
-use crate::ddc_bucket::{AccountId, Balance, NodeId, Result};
+use crate::ddc_bucket::{AccountId, Balance, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
-use crate::ddc_bucket::cdn_node::entity::Resource;
+use crate::ddc_bucket::cdn_node::entity::{Resource, NodeId};
 use crate::ddc_bucket::params::store::Params;
 
 pub type ClusterId = u32;

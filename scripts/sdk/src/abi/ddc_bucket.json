@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x89bcf7ab14df699f511b76c97cec6ab5b79f0bb690424523f14711a59159c7f6",
+    "hash": "0x18503c5dfa90d2550281e403227f06fa25d25cb370f0bc19b9652aed48e0a2dc",
     "language": "ink! 3.4.0",
     "compiler": "rustc 1.69.0-nightly"
   },
@@ -218,12 +218,12 @@
             {
               "docs": [],
               "indexed": true,
-              "label": "node_id",
+              "label": "node_key",
               "type": {
                 "displayName": [
-                  "NodeId"
+                  "NodeKey"
                 ],
-                "type": 5
+                "type": 2
               }
             }
           ],
@@ -398,12 +398,12 @@
             {
               "docs": [],
               "indexed": true,
-              "label": "node_id",
+              "label": "node_key",
               "type": {
                 "displayName": [
-                  "NodeId"
+                  "NodeKey"
                 ],
-                "type": 5
+                "type": 2
               }
             },
             {
@@ -496,7 +496,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 77
+                "type": 78
               }
             }
           ],
@@ -526,7 +526,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 77
+                "type": 78
               }
             }
           ],
@@ -1073,12 +1073,12 @@
               }
             },
             {
-              "label": "node_ids",
+              "label": "node_keys",
               "type": {
                 "displayName": [
                   "Vec"
                 ],
-                "type": 18
+                "type": 11
               }
             },
             {
@@ -1087,7 +1087,7 @@
                 "displayName": [
                   "Vec"
                 ],
-                "type": 19
+                "type": 18
               }
             }
           ],
@@ -1114,12 +1114,12 @@
               }
             },
             {
-              "label": "node_ids",
+              "label": "node_keys",
               "type": {
                 "displayName": [
                   "Vec"
                 ],
-                "type": 18
+                "type": 11
               }
             },
             {
@@ -1128,7 +1128,7 @@
                 "displayName": [
                   "Vec"
                 ],
-                "type": 19
+                "type": 18
               }
             }
           ],
@@ -1160,16 +1160,16 @@
                 "displayName": [
                   "Vec"
                 ],
-                "type": 19
+                "type": 18
               }
             },
             {
-              "label": "node_ids",
+              "label": "node_keys",
               "type": {
                 "displayName": [
                   "Vec"
                 ],
-                "type": 18
+                "type": 11
               }
             },
             {
@@ -1240,12 +1240,12 @@
         {
           "args": [
             {
-              "label": "node_id",
+              "label": "node_key",
               "type": {
                 "displayName": [
-                  "NodeId"
+                  "NodeKey"
                 ],
-                "type": 5
+                "type": 2
               }
             },
             {
@@ -1287,16 +1287,16 @@
                 "displayName": [
                   "Vec"
                 ],
-                "type": 20
+                "type": 19
               }
             },
             {
-              "label": "new_node_id",
+              "label": "new_node_key",
               "type": {
                 "displayName": [
-                  "NodeId"
+                  "NodeKey"
                 ],
-                "type": 5
+                "type": 2
               }
             }
           ],
@@ -1448,7 +1448,7 @@
                 "displayName": [
                   "Vec"
                 ],
-                "type": 18
+                "type": 23
               }
             }
           ],
@@ -1573,7 +1573,7 @@
                 "displayName": [
                   "u64"
                 ],
-                "type": 21
+                "type": 20
               }
             }
           ],
@@ -1888,6 +1888,15 @@
                 ],
                 "type": 14
               }
+            },
+            {
+              "label": "pubkey",
+              "type": {
+                "displayName": [
+                  "AccountId"
+                ],
+                "type": 2
+              }
             }
           ],
           "docs": [
@@ -1969,6 +1978,32 @@
         {
           "args": [
             {
+              "label": "pubkey",
+              "type": {
+                "displayName": [
+                  "AccountId"
+                ],
+                "type": 2
+              }
+            }
+          ],
+          "docs": [
+            " Get the current state of a cdn node by a public key."
+          ],
+          "label": "cdn_node_get_by_pubkey",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 68
+          },
+          "selector": "0x17d7ffe8"
+        },
+        {
+          "args": [
+            {
               "label": "offset",
               "type": {
                 "displayName": [
@@ -2016,6 +2051,36 @@
         {
           "args": [
             {
+              "label": "node_id",
+              "type": {
+                "displayName": [
+                  "NodeId"
+                ],
+                "type": 5
+              }
+            }
+          ],
+          "docs": [
+            " Remove cdn node by id ",
+            " ",
+            " Only the provider of the node can remove the node (not related to the public key)",
+            " ",
+            " The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated"
+          ],
+          "label": "cdn_node_remove",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 72
+          },
+          "selector": "0xe068fb34"
+        },
+        {
+          "args": [
+            {
               "label": "manager",
               "type": {
                 "displayName": [
@@ -2058,6 +2123,15 @@
         {
           "args": [
             {
+              "label": "node_key",
+              "type": {
+                "displayName": [
+                  "NodeKey"
+                ],
+                "type": 2
+              }
+            },
+            {
               "label": "rent_per_month",
               "type": {
                 "displayName": [
@@ -2092,15 +2166,6 @@
                 ],
                 "type": 29
               }
-            },
-            {
-              "label": "pubkey",
-              "type": {
-                "displayName": [
-                  "AccountId"
-                ],
-                "type": 2
-              }
             }
           ],
           "docs": [
@@ -2115,21 +2180,21 @@
           "payable": true,
           "returnType": {
             "displayName": [
-              "NodeId"
+              "NodeKey"
             ],
-            "type": 5
+            "type": 2
           },
           "selector": "0xb77ac1bb"
         },
         {
           "args": [
             {
-              "label": "node_id",
+              "label": "node_key",
               "type": {
                 "displayName": [
-                  "NodeId"
+                  "NodeKey"
                 ],
-                "type": 5
+                "type": 2
               }
             },
             {
@@ -2156,12 +2221,12 @@
         {
           "args": [
             {
-              "label": "node_id",
+              "label": "node_key",
               "type": {
                 "displayName": [
-                  "NodeId"
+                  "NodeKey"
                 ],
-                "type": 5
+                "type": 2
               }
             }
           ],
@@ -2175,35 +2240,9 @@
             "displayName": [
               "Result"
             ],
-            "type": 72
+            "type": 73
           },
           "selector": "0x847f3997"
-        },
-        {
-          "args": [
-            {
-              "label": "pubkey",
-              "type": {
-                "displayName": [
-                  "AccountId"
-                ],
-                "type": 2
-              }
-            }
-          ],
-          "docs": [
-            " Get the current status of a node by a public key."
-          ],
-          "label": "node_get_by_pubkey",
-          "mutates": false,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "Result"
-            ],
-            "type": 72
-          },
-          "selector": "0x7f6c82d4"
         },
         {
           "args": [
@@ -2248,9 +2287,39 @@
           "payable": false,
           "returnType": {
             "displayName": [],
-            "type": 74
+            "type": 75
           },
           "selector": "0x423286d6"
+        },
+        {
+          "args": [
+            {
+              "label": "node_key",
+              "type": {
+                "displayName": [
+                  "NodeKey"
+                ],
+                "type": 2
+              }
+            }
+          ],
+          "docs": [
+            " Remove node by id ",
+            " ",
+            " Only the provider of the node can remove the node (not related to the public key)",
+            " ",
+            " The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated"
+          ],
+          "label": "node_remove",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 72
+          },
+          "selector": "0x42e5f273"
         },
         {
           "args": [],
@@ -2433,7 +2502,7 @@
             "displayName": [
               "Result"
             ],
-            "type": 76
+            "type": 77
           },
           "selector": "0x1d4220fa"
         },
@@ -2493,7 +2562,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 77
+                "type": 78
               }
             }
           ],
@@ -2529,7 +2598,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 77
+                "type": 78
               }
             }
           ],
@@ -2559,7 +2628,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 77
+                "type": 78
               }
             }
           ],
@@ -2603,7 +2672,7 @@
                 "displayName": [
                   "FeeConfig"
                 ],
-                "type": 78
+                "type": 79
               }
             }
           ],
@@ -2726,7 +2795,7 @@
                     "layout": {
                       "cell": {
                         "key": "0x0500000000000000000000000000000000000000000000000000000000000000",
-                        "ty": 22
+                        "ty": 21
                       }
                     },
                     "name": null
@@ -2765,7 +2834,16 @@
                         "ty": 24
                       }
                     },
-                    "name": null
+                    "name": "pub_key_to_node"
+                  },
+                  {
+                    "layout": {
+                      "cell": {
+                        "key": "0x0800000000000000000000000000000000000000000000000000000000000000",
+                        "ty": 25
+                      }
+                    },
+                    "name": "cdn_nodes"
                   }
                 ]
               }
@@ -2779,7 +2857,7 @@
                   {
                     "layout": {
                       "cell": {
-                        "key": "0x0800000000000000000000000000000000000000000000000000000000000000",
+                        "key": "0x0900000000000000000000000000000000000000000000000000000000000000",
                         "ty": 13
                       }
                     },
@@ -2797,43 +2875,25 @@
                   {
                     "layout": {
                       "cell": {
-                        "key": "0x0900000000000000000000000000000000000000000000000000000000000000",
-                        "ty": 26
-                      }
-                    },
-                    "name": "account_node"
-                  },
-                  {
-                    "layout": {
-                      "cell": {
                         "key": "0x0a00000000000000000000000000000000000000000000000000000000000000",
                         "ty": 27
                       }
                     },
                     "name": "nodes"
+                  },
+                  {
+                    "layout": {
+                      "cell": {
+                        "key": "0x0b00000000000000000000000000000000000000000000000000000000000000",
+                        "ty": 11
+                      }
+                    },
+                    "name": "keys"
                   }
                 ]
               }
             },
             "name": "nodes"
-          },
-          {
-            "layout": {
-              "struct": {
-                "fields": [
-                  {
-                    "layout": {
-                      "cell": {
-                        "key": "0x0b00000000000000000000000000000000000000000000000000000000000000",
-                        "ty": 13
-                      }
-                    },
-                    "name": null
-                  }
-                ]
-              }
-            },
-            "name": "node_params"
           },
           {
             "layout": {
@@ -2982,7 +3042,7 @@
                             "layout": {
                               "cell": {
                                 "key": "0x1600000000000000000000000000000000000000000000000000000000000000",
-                                "ty": 21
+                                "ty": 20
                               }
                             },
                             "name": "start"
@@ -2991,7 +3051,7 @@
                             "layout": {
                               "cell": {
                                 "key": "0x1700000000000000000000000000000000000000000000000000000000000000",
-                                "ty": 21
+                                "ty": 20
                               }
                             },
                             "name": "interval"
@@ -3000,7 +3060,7 @@
                             "layout": {
                               "cell": {
                                 "key": "0x1800000000000000000000000000000000000000000000000000000000000000",
-                                "ty": 21
+                                "ty": 20
                               }
                             },
                             "name": "commit_duration"
@@ -3009,7 +3069,7 @@
                             "layout": {
                               "cell": {
                                 "key": "0x1900000000000000000000000000000000000000000000000000000000000000",
-                                "ty": 21
+                                "ty": 20
                               }
                             },
                             "name": "validation_duration"
@@ -3382,13 +3442,13 @@
                   "typeName": "Cash"
                 },
                 {
-                  "name": "node_ids",
-                  "type": 18,
-                  "typeName": "Vec<NodeId>"
+                  "name": "node_keys",
+                  "type": 11,
+                  "typeName": "Vec<NodeKey>"
                 },
                 {
                   "name": "v_nodes",
-                  "type": 19,
+                  "type": 18,
                   "typeName": "Vec<Vec<u64>>"
                 },
                 {
@@ -3435,7 +3495,7 @@
         "type": {
           "def": {
             "sequence": {
-              "type": 5
+              "type": 19
             }
           }
         }
@@ -3454,9 +3514,7 @@
         "id": 20,
         "type": {
           "def": {
-            "sequence": {
-              "type": 21
-            }
+            "primitive": "u64"
           }
         }
       },
@@ -3464,22 +3522,14 @@
         "id": 21,
         "type": {
           "def": {
-            "primitive": "u64"
-          }
-        }
-      },
-      {
-        "id": 22,
-        "type": {
-          "def": {
             "sequence": {
-              "type": 23
+              "type": 22
             }
           }
         }
       },
       {
-        "id": 23,
+        "id": 22,
         "type": {
           "def": {
             "composite": {
@@ -3491,7 +3541,7 @@
                 },
                 {
                   "name": "cdn_nodes",
-                  "type": 18,
+                  "type": 23,
                   "typeName": "Vec<NodeId>"
                 },
                 {
@@ -3522,45 +3572,17 @@
         }
       },
       {
-        "id": 24,
+        "id": 23,
         "type": {
           "def": {
             "sequence": {
-              "type": 25
+              "type": 5
             }
           }
         }
       },
       {
-        "id": 25,
-        "type": {
-          "def": {
-            "composite": {
-              "fields": [
-                {
-                  "name": "provider_id",
-                  "type": 2,
-                  "typeName": "ProviderId"
-                },
-                {
-                  "name": "undistributed_payment",
-                  "type": 8,
-                  "typeName": "Balance"
-                }
-              ]
-            }
-          },
-          "path": [
-            "ddc_bucket",
-            "ddc_bucket",
-            "cdn_node",
-            "entity",
-            "CdnNode"
-          ]
-        }
-      },
-      {
-        "id": 26,
+        "id": 24,
         "type": {
           "def": {
             "composite": {
@@ -3592,13 +3614,78 @@
         }
       },
       {
-        "id": 27,
+        "id": 25,
         "type": {
           "def": {
             "sequence": {
-              "type": 28
+              "type": 26
             }
           }
+        }
+      },
+      {
+        "id": 26,
+        "type": {
+          "def": {
+            "composite": {
+              "fields": [
+                {
+                  "name": "provider_id",
+                  "type": 2,
+                  "typeName": "ProviderId"
+                },
+                {
+                  "name": "undistributed_payment",
+                  "type": 8,
+                  "typeName": "Balance"
+                },
+                {
+                  "name": "node_pub_key",
+                  "type": 2,
+                  "typeName": "CdnNodePublicKey"
+                }
+              ]
+            }
+          },
+          "path": [
+            "ddc_bucket",
+            "ddc_bucket",
+            "cdn_node",
+            "entity",
+            "CdnNode"
+          ]
+        }
+      },
+      {
+        "id": 27,
+        "type": {
+          "def": {
+            "composite": {
+              "fields": [
+                {
+                  "name": "offset_key",
+                  "type": 12,
+                  "typeName": "Key"
+                }
+              ]
+            }
+          },
+          "params": [
+            {
+              "name": "K",
+              "type": 2
+            },
+            {
+              "name": "V",
+              "type": 28
+            }
+          ],
+          "path": [
+            "ink_storage",
+            "lazy",
+            "mapping",
+            "Mapping"
+          ]
         }
       },
       {
@@ -3626,6 +3713,11 @@
                   "name": "node_tag",
                   "type": 29,
                   "typeName": "NodeTag"
+                },
+                {
+                  "name": "node_params",
+                  "type": 14,
+                  "typeName": "NodeParams"
                 }
               ]
             }
@@ -3737,7 +3829,7 @@
                 },
                 {
                   "name": "unbonded_timestamp",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
@@ -3870,12 +3962,12 @@
                 },
                 {
                   "name": "from_timestamp",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
                   "name": "to_timestamp",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 }
               ]
@@ -3947,8 +4039,8 @@
         "type": {
           "def": {
             "tuple": [
-              21,
-              21
+              20,
+              20
             ]
           }
         }
@@ -3974,7 +4066,7 @@
             },
             {
               "name": "V",
-              "type": 5
+              "type": 2
             }
           ],
           "path": [
@@ -3991,7 +4083,7 @@
           "def": {
             "tuple": [
               5,
-              21
+              20
             ]
           }
         }
@@ -4112,7 +4204,7 @@
                 },
                 {
                   "name": "rent_covered_until_ms",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 }
               ]
@@ -4505,7 +4597,7 @@
                 },
                 {
                   "name": "cluster",
-                  "type": 23,
+                  "type": 22,
                   "typeName": "CdnCluster"
                 }
               ]
@@ -4549,22 +4641,22 @@
               "fields": [
                 {
                   "name": "start",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
                   "name": "interval",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
                   "name": "commit_duration",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
                   "name": "validation_duration",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 }
               ]
@@ -4587,7 +4679,7 @@
               "fields": [
                 {
                   "name": "current_era",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
@@ -4597,17 +4689,17 @@
                 },
                 {
                   "name": "previous_era",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
                   "name": "prev_era_from_timestamp",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 },
                 {
                   "name": "prev_era_to_timestamp",
-                  "type": 21,
+                  "type": 20,
                   "typeName": "u64"
                 }
               ]
@@ -4707,7 +4799,7 @@
                 },
                 {
                   "name": "node",
-                  "type": 25,
+                  "type": 26,
                   "typeName": "CdnNode"
                 },
                 {
@@ -4757,7 +4849,7 @@
                 {
                   "fields": [
                     {
-                      "type": 73
+                      "type": 44
                     }
                   ],
                   "index": 0,
@@ -4778,7 +4870,7 @@
           "params": [
             {
               "name": "T",
-              "type": 73
+              "type": 44
             },
             {
               "name": "E",
@@ -4794,22 +4886,59 @@
         "id": 73,
         "type": {
           "def": {
+            "variant": {
+              "variants": [
+                {
+                  "fields": [
+                    {
+                      "type": 74
+                    }
+                  ],
+                  "index": 0,
+                  "name": "Ok"
+                },
+                {
+                  "fields": [
+                    {
+                      "type": 48
+                    }
+                  ],
+                  "index": 1,
+                  "name": "Err"
+                }
+              ]
+            }
+          },
+          "params": [
+            {
+              "name": "T",
+              "type": 74
+            },
+            {
+              "name": "E",
+              "type": 48
+            }
+          ],
+          "path": [
+            "Result"
+          ]
+        }
+      },
+      {
+        "id": 74,
+        "type": {
+          "def": {
             "composite": {
               "fields": [
                 {
-                  "name": "node_id",
-                  "type": 5,
-                  "typeName": "NodeId"
+                  "name": "node_key",
+                  "type": 2,
+                  "typeName": "NodeKey"
                 },
                 {
                   "name": "node",
                   "type": 28,
                   "typeName": "Node"
-                },
-                {
-                  "name": "params",
-                  "type": 14,
-                  "typeName": "Params"
                 }
               ]
             }
@@ -4824,28 +4953,28 @@
         }
       },
       {
-        "id": 74,
+        "id": 75,
         "type": {
           "def": {
             "tuple": [
-              75,
+              76,
               5
             ]
           }
         }
       },
       {
-        "id": 75,
+        "id": 76,
         "type": {
           "def": {
             "sequence": {
-              "type": 73
+              "type": 74
             }
           }
         }
       },
       {
-        "id": 76,
+        "id": 77,
         "type": {
           "def": {
             "variant": {
@@ -4887,7 +5016,7 @@
         }
       },
       {
-        "id": 77,
+        "id": 78,
         "type": {
           "def": {
             "variant": {
@@ -4923,7 +5052,7 @@
         }
       },
       {
-        "id": 78,
+        "id": 79,
         "type": {
           "def": {
             "composite": {

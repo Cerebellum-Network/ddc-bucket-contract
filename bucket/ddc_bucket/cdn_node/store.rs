@@ -8,7 +8,7 @@ use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
 use super::entity::{CdnNode, NodeId};
 
-pub type NodePublicKey = AccountId;
+pub type NodeKey = AccountId;
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]

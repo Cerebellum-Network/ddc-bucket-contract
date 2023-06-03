@@ -3,8 +3,8 @@
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Error::*, NodeId, Result};
-
+use crate::ddc_bucket::{AccountId, Error::*, Result};
+use crate::ddc_bucket::cdn_node::entity::{NodeId};
 use super::entity::{CdnCluster, ClusterId};
 
 pub const MAX_VNODES: u32 = 300;
