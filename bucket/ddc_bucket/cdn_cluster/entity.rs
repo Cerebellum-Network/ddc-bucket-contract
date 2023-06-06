@@ -7,7 +7,7 @@ use ink_primitives::Key;
 use crate::ddc_bucket::{AccountId, Balance, Result};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
-use crate::ddc_bucket::cdn_node::entity::{Resource, NodeId};
+use crate::ddc_bucket::cdn_node::entity::{Resource, CdnNodeKey};
 use crate::ddc_bucket::params::store::Params;
 
 pub type ClusterId = u32;
@@ -19,7 +19,7 @@ pub type VNodeId = (ClusterId, VNodeIndex);
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct CdnCluster {
     pub manager_id: AccountId,
-    pub cdn_nodes: Vec<NodeId>,
+    pub cdn_nodes: Vec<CdnNodeKey>,
     pub resources_used: Resource,
     pub revenues: Cash,
     pub usd_per_gb: Balance,
@@ -43,7 +43,7 @@ pub struct CdnClusterStatus {
 impl CdnCluster {
     pub fn new(
         manager_id: AccountId,
-        cdn_nodes: Vec<NodeId>,
+        cdn_nodes: Vec<CdnNodeKey>,
     ) -> Self {
         CdnCluster {
             manager_id,

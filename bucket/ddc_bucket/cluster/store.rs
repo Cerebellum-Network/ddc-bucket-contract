@@ -17,11 +17,11 @@ impl ClusterStore {
         &mut self,
         manager_id: AccountId,
         v_nodes: &Vec<Vec<u64>>,
-        node_ids: &Vec<NodeKey>,
+        node_keys: &Vec<NodeKey>,
     ) -> Result<ClusterId> {
-        let cluster = Cluster::new(manager_id, v_nodes, node_ids);
+        let cluster = Cluster::new(manager_id, v_nodes, node_keys);
 
-        let cluster_id: ClusterId  = self.0.len().try_into().unwrap();
+        let cluster_id: ClusterId = self.0.len().try_into().unwrap();
         self.0.push(cluster);
 
         Ok(cluster_id)

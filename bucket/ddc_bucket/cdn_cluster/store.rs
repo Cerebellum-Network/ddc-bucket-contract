@@ -4,7 +4,7 @@ use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::{AccountId, Error::*, Result};
-use crate::ddc_bucket::cdn_node::entity::{NodeId};
+use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 use super::entity::{CdnCluster, ClusterId};
 
 pub const MAX_VNODES: u32 = 300;
@@ -17,9 +17,9 @@ impl CdnClusterStore {
   pub fn create(
       &mut self,
       manager_id: AccountId,
-      cdn_nodes: Vec<NodeId>,
+      cdn_nodes_keys: Vec<CdnNodeKey>,
   ) -> Result<ClusterId> {
-      let cluster = CdnCluster::new(manager_id, cdn_nodes);
+      let cluster = CdnCluster::new(manager_id, cdn_nodes_keys);
 
       let cluster_id: ClusterId = self.0.len().try_into().unwrap();
       self.0.push(cluster);

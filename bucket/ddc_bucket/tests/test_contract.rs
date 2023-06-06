@@ -1,7 +1,7 @@
 use ink_lang as ink;
 
 use crate::ddc_bucket::account::entity::Account;
-use crate::ddc_bucket::cdn_node::entity::NodeId;
+// use crate::ddc_bucket::cdn_node::entity::CdnNodeKey;
 use crate::ddc_bucket::cluster::entity::ClusterStatus;
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::node::entity::{NodeTag, NodeKey};
@@ -157,108 +157,114 @@ fn new_cluster() -> TestCluster {
     }
 }
 
-// fn new_cluster_cdn() -> TestCluster {
-//     let accounts = get_accounts();
-//     set_balance(accounts.charlie, 1000 * TOKEN);
-//     set_balance(accounts.django, 1000 * TOKEN);
-//     let provider_id0 = accounts.alice;
-//     let provider_id1 = accounts.bob;
-//     let provider_id2 = accounts.charlie;
-//     let manager = accounts.django;
+fn new_cluster_cdn() -> TestCluster {
+    let accounts = get_accounts();
+    set_balance(accounts.charlie, 1000 * TOKEN);
+    set_balance(accounts.django, 1000 * TOKEN);
+    let provider_id0 = accounts.alice;
+    let provider_id1 = accounts.bob;
+    let provider_id2 = accounts.charlie;
+    let manager = accounts.django;
 
-//     let mut contract = setup();
+    let mut contract = setup();
 
-//     // Provide a Node.
-//     let rent_per_vnode: Balance = 10 * TOKEN;
-//     let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
-//     let capacity = 100;
+    // Provide a Node.
+    let rent_per_vnode: Balance = 10 * TOKEN;
+    let node_params0 = "{\"url\":\"https://ddc.cere.network/bucket/{BUCKET_ID}\"}";
+    let capacity = 100;
 
-//     for provider_id in [provider_id0, provider_id1, provider_id2] {
-//         set_caller_value(provider_id, CONTRACT_FEE_LIMIT);
+    for provider_id in [provider_id0, provider_id1, provider_id2] {
+        set_caller_value(provider_id, CONTRACT_FEE_LIMIT);
 
-//         contract.node_trust_manager(manager);
-//         let expected_perm = Permission::ManagerTrustedBy(provider_id);
-//         assert!(contract.has_permission(manager, expected_perm));
-//     }
+        contract.node_trust_manager(manager);
+        let expected_perm = Permission::ManagerTrustedBy(provider_id);
+        assert!(contract.has_permission(manager, expected_perm));
+    }
 
-//     set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
+    set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
 
-//     let node_key0 = contract.cdn_node_create(node_params0.to_string(), provider_id0);
+    let cdn_node_key0 = AccountId::from([0x0a; 32]);
 
-//     // Provide another Node.
-//     let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
-//     set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
+    let node_key0 = contract.cdn_node_create(cdn_node_key0, node_params0.to_string());
 
-//     let node_key1 = contract.cdn_node_create(node_params1.to_string(), provider_id1);
+    // Provide another Node.
+    let node_params1 = "{\"url\":\"https://ddc-1.cere.network/bucket/{BUCKET_ID}\"}";
+    set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
 
-//     // Provide another Node.
-//     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
-//     set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+    let cdn_node_key1 = AccountId::from([0x0b; 32]);
 
-//     let node_key2 = contract.cdn_node_create(node_params2.to_string(), provider_id2);
+    let node_key1 = contract.cdn_node_create(cdn_node_key1, node_params1.to_string());
 
-//     // Create a Cluster.
-//     let _cluster_params = "{}";
+    // Provide another Node.
+    let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
+    set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
+    
+    let cdn_node_key2 = AccountId::from([0x0c; 32]);
 
-//     // TODO: adjust after cdn cluster topology and node addition
+    let node_key2 = contract.cdn_node_create(cdn_node_key2, node_params2.to_string());
 
-//     let vnodes = vec![1, 2, 3, 4, 5, 6];
+    // Create a Cluster.
+    let _cluster_params = "{}";
 
-//     let node_keys = vec![node_key0, node_key1, node_key2];
-//     let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
-//     vnodes_wrapper.push(vnodes);
+    // TODO: adjust after cdn cluster topology and node addition
 
-//     let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
+    let vnodes = vec![1, 2, 3, 4, 5, 6];
 
-//     let vnodes_for_first_node = vec![1, 2, 3];
-//     let vnodes_for_second_node = vec![4, 5, 6];
-//     let vnodes_for_third_node = vec![7, 8, 9];
+    let node_keys = vec![node_key0, node_key1, node_key2];
+    let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
+    vnodes_wrapper.push(vnodes);
 
-//     vnodes_wrapper.push(vnodes_for_first_node);
-//     vnodes_wrapper.push(vnodes_for_second_node);
-//     vnodes_wrapper.push(vnodes_for_third_node);
+    let mut vnodes_wrapper = Vec::<Vec<u64>>::new();
 
-//     set_caller_value(manager, CONTRACT_FEE_LIMIT);
+    let vnodes_for_first_node = vec![1, 2, 3];
+    let vnodes_for_second_node = vec![4, 5, 6];
+    let vnodes_for_third_node = vec![7, 8, 9];
 
-//     let cluster_id = contract.cdn_cluster_create(
-//         vec![
-//             AccountId::from([0x0a; 32]), 
-//             AccountId::from([0x0b; 32]), 
-//             AccountId::from([0x0c; 32])
-//         ]
-//     );
+    vnodes_wrapper.push(vnodes_for_first_node);
+    vnodes_wrapper.push(vnodes_for_second_node);
+    vnodes_wrapper.push(vnodes_for_third_node);
 
-//     let reserved = 10;
+    set_caller_value(manager, CONTRACT_FEE_LIMIT);
 
-//     let mut vnodes = Vec::<u64>::new();
+    let cluster_id = contract.cdn_cluster_create(
+        vec![
+            AccountId::from([0x0a; 32]), 
+            AccountId::from([0x0b; 32]), 
+            AccountId::from([0x0c; 32])
+        ]
+    );
 
-//     for v_nodes_vec in vnodes_wrapper.clone() {
-//         for v_node in v_nodes_vec {
-//             vnodes.push(v_node.clone());
-//         }
-//     }
+    let reserved = 10;
 
-//     TestCluster {
-//         contract,
-//         manager,
-//         cluster_id,
-//         provider_id0,
-//         provider_id1,
-//         provider_id2,
-//         node_key0,
-//         node_key1,
-//         node_key2,
-//         rent_per_vnode,
-//         vnodes_wrapper,
-//         node_params0,
-//         node_params1,
-//         node_params2,
-//         capacity,
-//         reserved,
-//         node_keys,
-//         vnodes,
-//     }
-// }
+    let mut vnodes = Vec::<u64>::new();
+
+    for v_nodes_vec in vnodes_wrapper.clone() {
+        for v_node in v_nodes_vec {
+            vnodes.push(v_node.clone());
+        }
+    }
+
+    TestCluster {
+        contract,
+        manager,
+        cluster_id,
+        provider_id0,
+        provider_id1,
+        provider_id2,
+        node_key0,
+        node_key1,
+        node_key2,
+        rent_per_vnode,
+        vnodes_wrapper,
+        node_params0,
+        node_params1,
+        node_params2,
+        capacity,
+        reserved,
+        node_keys,
+        vnodes,
+    }
+}
 
 struct TestBucket {
     bucket_id: BucketId,
@@ -573,127 +579,127 @@ fn cluster_management_validation_works() {
     );
 }
 
-// #[ink::test]
-// fn cdn_cluster_gas_converter_works() {
-//     println!("Creating new cdn cluster");
+#[ink::test]
+fn cdn_cluster_gas_converter_works() {
+    println!("Creating new cdn cluster");
 
-//     let mut ctx = new_cluster_cdn();
+    let mut ctx = new_cluster_cdn();
 
-//     println!("Got cdn cluster back");
-//     // The provider stops trusting the manager.
-//     println!("Cdn cluster id is {}", ctx.cluster_id);
-//     set_caller(ctx.manager);
-//     ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000);
-//     set_caller(ctx.provider_id0);
-//     let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
+    println!("Got cdn cluster back");
+    // The provider stops trusting the manager.
+    println!("Cdn cluster id is {}", ctx.cluster_id);
+    set_caller(ctx.manager);
+    ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000);
+    set_caller(ctx.provider_id0);
+    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
 
-//     let usd_per_cere = TOKEN / 100;
-//     set_caller(ctx.provider_id0);
-//     ctx.contract.account_set_usd_per_cere(usd_per_cere);
+    let usd_per_cere = TOKEN / 100;
+    set_caller(ctx.provider_id0);
+    ctx.contract.account_set_usd_per_cere(usd_per_cere);
 
-//     let usd_amount = ctx.contract.account_get_usd_per_cere();
-//     println!("Current usd amount is {}", usd_amount);
+    let usd_amount = ctx.contract.account_get_usd_per_cere();
+    println!("Current usd amount is {}", usd_amount);
 
-//     println!("The current rate is {}", rate);
+    println!("The current rate is {}", rate);
 
-//     let usd_per_kb = rate / KB_PER_GB;
-//     println!("The current rate per kb {}", usd_per_kb);
+    let usd_per_kb = rate / KB_PER_GB;
+    println!("The current rate per kb {}", usd_per_kb);
 
-//     let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
-//     println!("The current cere rate per kb {}", cere_per_kb);
-// }
+    let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
+    println!("The current cere rate per kb {}", cere_per_kb);
+}
 
-// #[ink::test]
-// fn cdn_cluster_payment_works() {
-//     println!("Creating new cdn cluster");
+#[ink::test]
+fn cdn_cluster_payment_works() {
+    println!("Creating new cdn cluster");
 
-//     let mut ctx = new_cluster_cdn();
+    let mut ctx = new_cluster_cdn();
 
-//     println!("Got cdn cluster back");
-//     // The provider stops trusting the manager.
-//     println!("Cdn cluster id is {}", ctx.cluster_id);
-//     set_caller(ctx.provider_id0);
-//     let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
+    println!("Got cdn cluster back");
+    // The provider stops trusting the manager.
+    println!("Cdn cluster id is {}", ctx.cluster_id);
+    set_caller(ctx.provider_id0);
+    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
 
-//     let usd_per_cere = TOKEN / 100;
-//     set_caller(ctx.provider_id0);
-//     ctx.contract.account_set_usd_per_cere(usd_per_cere);
+    let usd_per_cere = TOKEN / 100;
+    set_caller(ctx.provider_id0);
+    ctx.contract.account_set_usd_per_cere(usd_per_cere);
 
-//     let usd_amount = ctx.contract.account_get_usd_per_cere();
-//     println!("Current usd amount is {}", usd_amount);
+    let usd_amount = ctx.contract.account_get_usd_per_cere();
+    println!("Current usd amount is {}", usd_amount);
 
-//     println!("The current rate is {}", rate);
+    println!("The current rate is {}", rate);
 
-//     let usd_per_kb = rate / KB_PER_GB;
-//     println!("The current rate per kb {}", usd_per_kb);
+    let usd_per_kb = rate / KB_PER_GB;
+    println!("The current rate per kb {}", usd_per_kb);
 
-//     let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
-//     println!("The current cere rate per kb {}", cere_per_kb);
+    let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
+    println!("The current cere rate per kb {}", cere_per_kb);
 
-//     set_caller_value(ctx.provider_id0, 10 * TOKEN);
-//     ctx.contract.account_deposit();
+    set_caller_value(ctx.provider_id0, 10 * TOKEN);
+    ctx.contract.account_deposit();
 
-//     set_caller(ctx.provider_id0);
-//     ctx.contract.account_bond(5 * TOKEN);
+    set_caller(ctx.provider_id0);
+    ctx.contract.account_bond(5 * TOKEN);
 
-//     set_caller(ctx.provider_id0);
-//     ctx.contract.set_fee_bp(1_000);
+    set_caller(ctx.provider_id0);
+    ctx.contract.set_fee_bp(1_000);
 
-//     let mut account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
-//     println!("{:?}", account);
+    let mut account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
+    println!("{:?}", account);
 
-//     ctx.contract.cdn_cluster_put_revenue(
-//         ctx.cluster_id,
-//         vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)],
-//         vec![(ctx.node_key0, 1000), (ctx.node_key1, 541643)],
-//         vec![],
-//         5,
-//     );
-//     account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
-//     println!("{:?}", account);
+    ctx.contract.cdn_cluster_put_revenue(
+        ctx.cluster_id,
+        vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)],
+        vec![(ctx.node_key0, 1000), (ctx.node_key1, 541643)],
+        vec![],
+        5,
+    );
+    account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
+    println!("{:?}", account);
 
-//     let cdn_cluster_list_one = ctx.contract.cdn_cluster_list(0, 10, None);
-//     print!("Cluster list one {:?}", cdn_cluster_list_one);
-//     let node0 = ctx.contract.cdn_nodes.get(ctx.node_key0).unwrap();
-//     let node1 = ctx.contract.cdn_nodes.get(ctx.node_key1).unwrap();
+    let cdn_cluster_list_one = ctx.contract.cdn_cluster_list(0, 10, None);
+    print!("Cluster list one {:?}", cdn_cluster_list_one);
+    let node0 = ctx.contract.cdn_nodes.get(ctx.node_key0).unwrap();
+    let node1 = ctx.contract.cdn_nodes.get(ctx.node_key1).unwrap();
 
-//     println!("Node 1 {:?}", node0);
-//     println!("Node 2 {:?}", node1);
-//     // let cdn_cluster0 = ctx.contract.cdn_clusters.get(ctx.cluster_id);
-//     // print!("{:?}", cdn_cluster0);
-//     // let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
-//     // print!("{:?}", cdn_cluster0);
-//     // print!("{:?}", cdn_cluster_list);
+    println!("Node 1 {:?}", node0);
+    println!("Node 2 {:?}", node1);
+    // let cdn_cluster0 = ctx.contract.cdn_clusters.get(ctx.cluster_id);
+    // print!("{:?}", cdn_cluster0);
+    // let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
+    // print!("{:?}", cdn_cluster0);
+    // print!("{:?}", cdn_cluster_list);
 
-//     let validated_commit_node0 = ctx.contract.get_validated_commit(ctx.node_key0);
-//     print!("Validated commit {:?}", validated_commit_node0);
+    let validated_commit_node0 = ctx.contract.get_validated_commit(ctx.node_key0);
+    print!("Validated commit {:?}", validated_commit_node0);
 
-//     let fee = ctx.contract.get_fee_bp();
-//     print!("Protocol fee in basis points {:?}", fee);
+    let fee = ctx.contract.get_fee_bp();
+    print!("Protocol fee in basis points {:?}", fee);
 
-//     let protocol_revenues = ctx.contract.get_protocol_revenues();
-//     print!("Protocol revenues are {:?}", protocol_revenues);
+    let protocol_revenues = ctx.contract.get_protocol_revenues();
+    print!("Protocol revenues are {:?}", protocol_revenues);
 
-//     set_caller(ctx.provider_id0);
-//     ctx.contract.cdn_cluster_distribute_revenues(0);
+    set_caller(ctx.provider_id0);
+    ctx.contract.cdn_cluster_distribute_revenues(0);
 
-//     let node0 = ctx.contract.cdn_nodes.get(ctx.node_key0).unwrap();
-//     let node1 = ctx.contract.cdn_nodes.get(ctx.node_key1).unwrap();
-//     println!("{:?}", node0);
-//     println!("{:?}", node1);
+    let node0 = ctx.contract.cdn_nodes.get(ctx.node_key0).unwrap();
+    let node1 = ctx.contract.cdn_nodes.get(ctx.node_key1).unwrap();
+    println!("{:?}", node0);
+    println!("{:?}", node1);
 
-//     let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
-//     print!("{:?}", cdn_cluster_list);
+    let cdn_cluster_list = ctx.contract.cdn_cluster_list(0, 10, None);
+    print!("{:?}", cdn_cluster_list);
 
-//     account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
-//     // let node0 = ctx.contract.cdn_nodes.get(ctx.node_key0).unwrap();
-//     // let node1 = ctx.contract.cdn_nodes.get(ctx.node_key1).unwrap();
-//     println!("{:?}", account);
-//     // let account1 = ctx.contract.accounts.get(&ctx.provider_id1).unwrap();
-//     // println!("{:?}", account1);
-//     // let account_balance = ink_env::balance(&ctx.provider_id0);
-//     // println!("{:?}", account_balance);
-// }
+    account = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
+    // let node0 = ctx.contract.cdn_nodes.get(ctx.node_key0).unwrap();
+    // let node1 = ctx.contract.cdn_nodes.get(ctx.node_key1).unwrap();
+    println!("{:?}", account);
+    // let account1 = ctx.contract.accounts.get(&ctx.provider_id1).unwrap();
+    // println!("{:?}", account1);
+    // let account_balance = ink_env::balance(&ctx.provider_id0);
+    // println!("{:?}", account_balance);
+}
 
 fn bucket_settle_payment(ctx: &mut TestCluster, test_bucket: &TestBucket) {
     // Go to the future when some revenues are due.

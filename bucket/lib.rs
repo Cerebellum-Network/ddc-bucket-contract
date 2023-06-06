@@ -31,7 +31,7 @@ pub mod ddc_bucket {
 
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_cluster::store::CdnClusterStore;
-    use self::cdn_node::entity::{CdnNodeStatus, NodeId};
+    use self::cdn_node::entity::{CdnNodeStatus, CdnNodeKey, CdnNodeParams};
     use self::protocol::store::ProtocolStore;
     use self::topology::store::TopologyStore;
 
@@ -66,7 +66,6 @@ pub mod ddc_bucket {
         cdn_clusters: CdnClusterStore,
         cluster_params: ParamsStore,
         cdn_nodes: CdnNodeStore,
-        cdn_node_params: ParamsStore,
         nodes: NodeStore,
         accounts: AccountStore,
         perms: PermStore,
@@ -96,8 +95,7 @@ pub mod ddc_bucket {
 
                 // Reserve IDs 0.
                 let _ = contract.accounts.create_if_not_exist(AccountId::default());
-                let _ = contract.cdn_nodes.create(AccountId::default(), 0, AccountId::default());
-                let _ = contract.cdn_node_params.create("".to_string()).unwrap();
+                let _ = contract.cdn_nodes.create(AccountId::default(), AccountId::default(), "".to_string(), 0);
                 let _ = contract
                     .nodes
                     .create(
@@ -502,8 +500,8 @@ pub mod ddc_bucket {
         ///
         /// The CDN node ids are provided, which will form a cluster.
         #[ink(message, payable)]
-        pub fn cdn_cluster_create(&mut self, cdn_node_ids: Vec<NodeId>) -> ClusterId {
-            self.message_cdn_cluster_create(cdn_node_ids).unwrap()
+        pub fn cdn_cluster_create(&mut self, cdn_node_keys: Vec<CdnNodeKey>) -> ClusterId {
+            self.message_cdn_cluster_create(cdn_node_keys).unwrap()
         }
 
         /// Set rate for streaming (price per gb)
@@ -526,7 +524,7 @@ pub mod ddc_bucket {
             &mut self,
             cluster_id: ClusterId,
             aggregates_accounts: Vec<(AccountId, u128)>,
-            aggregates_nodes: Vec<(u32, u128)>,
+            aggregates_nodes: Vec<(CdnNodeKey, u128)>,
             aggregates_buckets: Vec<(BucketId, Resource)>,
             era: u64,
         ) -> () {
@@ -580,20 +578,20 @@ pub mod ddc_bucket {
     impl DdcBucket {
         /// CDN node operator sets the commit for current era.
         #[ink(message)]
-        pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
-            self.message_set_commit(cdn_owner, node_id, commit);
+        pub fn set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) {
+            self.message_set_commit(cdn_owner, cdn_node_key, commit);
         }
 
         /// Return the last commit submitted by CDN node operator
         #[ink(message)]
-        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
+        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(CdnNodeKey, Commit)> {
             self.message_get_commit(cdn_owner)
         }
 
         /// Return last era validated per CDN node
         #[ink(message)]
-        pub fn get_validated_commit(&self, node: NodeId) -> EraAndTimestamp {
-            self.message_get_validated_commit(node)
+        pub fn get_validated_commit(&self, cdn_node_key: CdnNodeKey) -> EraAndTimestamp {
+            self.message_get_validated_commit(cdn_node_key)
         }
 
         /// Set the new configs for era
@@ -623,9 +621,10 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct CdnNodeCreated {
         #[ink(topic)]
-        node_id: NodeId,
+        cdn_node_key: CdnNodeKey,
         #[ink(topic)]
         provider_id: AccountId,
+        cdn_node_params: CdnNodeParams,
         undistributed_payment: Balance,
     }
 
@@ -648,29 +647,23 @@ pub mod ddc_bucket {
         ///
         /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn cdn_node_create(&mut self, node_params: Params, pubkey: AccountId) -> NodeId {
-            self.message_cdn_node_create(node_params, pubkey).unwrap()
+        pub fn cdn_node_create(&mut self, cdn_node_key: CdnNodeKey, cdn_node_params: CdnNodeParams) -> CdnNodeKey {
+            self.message_cdn_node_create(cdn_node_key, cdn_node_params).unwrap()
         }
 
         /// Change the `node_params`, which is configuration used by clients and nodes.
         ///
         /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn cdn_node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
-            self.message_cdn_node_change_params(node_id, params)
+        pub fn cdn_node_change_params(&mut self, cdn_node_key: CdnNodeKey, cdn_node_params: CdnNodeParams) {
+            self.message_cdn_node_change_params(cdn_node_key, cdn_node_params)
                 .unwrap();
         }
 
         /// Get the current state of the cdn node
         #[ink(message)]
-        pub fn cdn_node_get(&self, node_id: NodeId) -> Result<CdnNodeStatus> {
-            self.message_cdn_node_get(node_id)
-        }
-
-        /// Get the current state of a cdn node by a public key.
-        #[ink(message)]
-        pub fn cdn_node_get_by_pubkey(&self, pubkey: AccountId) -> Result<CdnNodeStatus> {
-            self.message_cdn_node_get_by_pub_key(pubkey)
+        pub fn cdn_node_get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNodeStatus> {
+            self.message_cdn_node_get(cdn_node_key)
         }
 
         /// Iterate through all nodes.
@@ -695,8 +688,8 @@ pub mod ddc_bucket {
         /// 
         /// The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated
         #[ink(message)]
-        pub fn cdn_node_remove(&mut self, node_id: NodeId) -> Result<()> {
-            self.message_remove_cdn_node(node_id)
+        pub fn cdn_node_remove(&mut self, node_key: CdnNodeKey) -> Result<()> {
+            self.message_remove_cdn_node(node_key)
         }
     }
     // ---- End CDN Node ----
@@ -750,8 +743,8 @@ pub mod ddc_bucket {
         ///
         /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn node_change_params(&mut self, node_key: NodeKey, params: NodeParams) {
-            self.message_node_change_params(node_key, params).unwrap();
+        pub fn node_change_params(&mut self, node_key: NodeKey, node_params: NodeParams) {
+            self.message_node_change_params(node_key, node_params).unwrap();
         }
 
         /// Get the current status of a node.
@@ -965,7 +958,9 @@ pub mod ddc_bucket {
         BucketClusterAlreadyConnected,
         BucketClusterNotSetup,
         NodeDoesNotExist,
+        CdnNodeDoesNotExist,
         NodeAlreadyExists,
+        CdnNodeAlreadyExists,
         FlowDoesNotExist,
         AccountDoesNotExist,
         ParamsDoesNotExist,
