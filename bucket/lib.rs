@@ -355,50 +355,70 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        /// Removes a node to an existing cluster
+        /// Adds a Storage node to the targeting cluster.
         ///
-        /// The caller will be its first manager.
-        #[ink(message, payable)]
-        pub fn cluster_remove_node(
-            &mut self,
-            cluster_id: ClusterId,
-            node_keys: Vec<NodeKey>,
-            v_nodes: Vec<Vec<u64>>,
-        ) {
-            self.message_cluster_add_node(cluster_id, node_keys, v_nodes)
-                .unwrap()
-        }
-
-        /// Adds node to an existing cluster
+        /// This endpoint adds a physical Storage node along with its virtual nodes to the targeting cluster.
+        /// The node will be added to the end of the cluster nodes list.
+        /// Virtual nodes determines a token (position) on the ring in terms of Consistent Hashing.
         ///
-        /// The caller will be its first manager.
+        /// # Arguments
+        ///
+        /// * `cluster_id` - ID of the targeting cluster
+        /// * `node_key` - Public Key associated with the Storage node
+        /// * `v_nodes` - List of tokens (positions) related to the Storage node
+        ///
+        /// # Errors
+        ///
+        /// This endpoint will return `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
             cluster_id: ClusterId,
-            node_keys: Vec<NodeKey>,
-            v_nodes: Vec<Vec<u64>>,
+            node_key: NodeKey,
+            v_nodes: Vec<u64>,
         ) {
-            self.message_cluster_add_node(cluster_id, node_keys, v_nodes)
+            self.message_cluster_add_node(cluster_id, node_key, v_nodes)
                 .unwrap()
         }
 
-        /// Create a new cluster and return its `cluster_id`.
+        /// Removes a Storage node from the targeting cluster.
+        ///
+        /// This endpoint removes a physical Storage node along with its virtual nodes from the targeting cluster.
+        ///
+        /// # Arguments
+        ///
+        /// * `cluster_id` - ID of the targeting cluster
+        /// * `node_key` - Public Key associated with the Storage node
+        ///
+        /// # Errors
+        ///
+        /// This endpoint will return `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        #[ink(message, payable)]
+        pub fn cluster_remove_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+        ) {
+            self.message_cluster_remove_node(cluster_id, node_key)
+                .unwrap()
+        }
+
+        /// Creates a new cluster and returns its `cluster_id`.
         ///
         /// The caller will be its first manager.
         ///
-        /// The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
+        /// The cluster can contain both Storage and CDN nodes. The `v_nodes` are assigned to the given Storage physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
         ///
         /// `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
         pub fn cluster_create(
             &mut self,
-            _unused: AccountId,
+            nodes_keys: Vec<NodeKey>,
             v_nodes: Vec<Vec<u64>>,
-            node_keys: Vec<NodeKey>,
+            cdn_nodes_keys: Vec<CdnNodeKey>,
             cluster_params: ClusterParams,
         ) -> ClusterId {
-            self.message_cluster_create(v_nodes, node_keys, cluster_params)
+            self.message_cluster_create(nodes_keys, v_nodes, cdn_nodes_keys, cluster_params)
                 .unwrap()
         }
 

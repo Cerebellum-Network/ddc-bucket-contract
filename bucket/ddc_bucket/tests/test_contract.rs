@@ -571,9 +571,7 @@ fn cluster_management_validation_works() {
 
     assert_eq!(
         ctx.contract
-            .message_cluster_create(vec![
-                vec![1, 2, 3], 
-            ], vec![bad_node_id], "".to_string()),
+            .message_cluster_create(vec![vec![1, 2, 3]], vec![bad_node_id], vec![1, 2, 3], "".to_string()),
         Err(NodeDoesNotExist),
         "cluster initial nodes must exist"
     );

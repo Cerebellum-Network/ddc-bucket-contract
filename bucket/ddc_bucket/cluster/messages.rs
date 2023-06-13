@@ -5,6 +5,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
+use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
 use crate::ddc_bucket::ClusterNodeReplaced;
@@ -19,22 +20,22 @@ use super::entity::{ClusterId, ClusterParams};
 impl DdcBucket {
     pub fn message_cluster_create(
         &mut self,
+        nodes_keys: Vec<NodeKey>,
         v_nodes: Vec<Vec<u64>>,
-        node_keys: Vec<NodeKey>,
+        cdn_nodes_keys: Vec<CdnNodeKey>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
         let manager = Self::env().caller();
 
         let mut nodes = Vec::<(NodeKey, Node)>::new();
-        for node_key in &node_keys {
+        for node_key in &nodes_keys {
             let node = self.nodes.get(*node_key)?;
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id.clone())?;
-
             nodes.push((*node_key, node));
         }
 
-        let cluster_id = self.clusters.create(manager, &v_nodes, &node_keys)?;
+        let cluster_id = self.clusters.create(manager, &v_nodes, &nodes_keys)?;
         let rent = self
             .topology_store
             .create_topology(cluster_id, v_nodes, nodes.into_iter().map(|(key, node)| (key, node)).collect())?;
@@ -65,7 +66,6 @@ impl DdcBucket {
             let node = self.nodes.get(*node_key)?;
             // Verify that the node provider trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, node.provider_id.clone())?;
-
             nodes.push((*node_key, node));
         }
 

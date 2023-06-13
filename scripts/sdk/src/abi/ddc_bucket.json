@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x19a976019a0941557f65c9b14590151e8683acea62f0fb378fdc3d71c154a28e",
+    "hash": "0x74f1167a7247be04958655c6d3cfdee21a73146f183cabd7964ddddb5aaec722",
     "language": "ink! 3.4.0",
     "compiler": "rustc 1.69.0-nightly"
   },
@@ -1084,7 +1084,7 @@
               }
             },
             {
-              "label": "node_keys",
+              "label": "nodes_keys",
               "type": {
                 "displayName": [
                   "Vec"
@@ -1103,9 +1103,11 @@
             }
           ],
           "docs": [
-            " Removes a node to an existing cluster",
+            " Removes a set of Storage nodes from an existing cluster",
             "",
-            " The caller will be its first manager."
+            " The index of virtual nodes in the `v_nodes` param must be aligned with the corresponding physical Storage node in the `nodes_keys` param",
+            "",
+            " The caller must be its manager"
           ],
           "label": "cluster_remove_node",
           "mutates": true,
@@ -1144,9 +1146,9 @@
             }
           ],
           "docs": [
-            " Adds node to an existing cluster",
+            " Adds a set of Storage nodes to an existing cluster",
             "",
-            " The caller will be its first manager."
+            " The caller must be its manager"
           ],
           "label": "cluster_add_node",
           "mutates": true,
@@ -1157,12 +1159,12 @@
         {
           "args": [
             {
-              "label": "_unused",
+              "label": "nodes_keys",
               "type": {
                 "displayName": [
-                  "AccountId"
+                  "Vec"
                 ],
-                "type": 2
+                "type": 11
               }
             },
             {
@@ -1175,7 +1177,7 @@
               }
             },
             {
-              "label": "node_keys",
+              "label": "cdn_nodes_keys",
               "type": {
                 "displayName": [
                   "Vec"
@@ -1194,11 +1196,11 @@
             }
           ],
           "docs": [
-            " Create a new cluster and return its `cluster_id`.",
+            " Creates a new cluster and returns its `cluster_id`.",
             "",
             " The caller will be its first manager.",
             "",
-            " The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.",
+            " The cluster can contain both Storage and CDN nodes. The `v_nodes` are assigned to the given Storage physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.",
             "",
             " `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)"
           ],
