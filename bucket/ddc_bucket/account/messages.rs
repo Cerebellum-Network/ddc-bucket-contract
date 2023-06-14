@@ -6,12 +6,17 @@ use ink_lang::codegen::{EmitEvent, StaticEnv};
 use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Payable, Result, TOKEN};
 use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
+use super::entity::Account;
 
 impl DdcBucket {
 
     // todo: remove this method as we can not support iterable data structures of arbitrary data size
     pub fn message_get_accounts(&self) -> Vec<AccountId> {
         self.accounts.2.iter().cloned().collect()
+    }
+
+    pub fn message_get_account(&self, account_id: AccountId) -> Result<Account> {
+        self.accounts.get(&account_id)
     }
 
     pub fn message_account_deposit(&mut self) -> Result<()> {

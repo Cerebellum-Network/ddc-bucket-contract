@@ -69,8 +69,8 @@ pub mod ddc_bucket {
         cdn_node_params: ParamsStore,
         nodes: NodeStore,
         node_params: ParamsStore,
-        accounts: AccountStore,
         perms: PermStore,
+        accounts: AccountStore,
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
         protocol_store: ProtocolStore,
@@ -97,6 +97,7 @@ pub mod ddc_bucket {
 
                 // Reserve IDs 0.
                 let _ = contract.accounts.create_if_not_exist(AccountId::default());
+                let _ = contract.accounts.create_if_not_exist(AccountId::from([0x8e, 0xaf, 0x04, 0x15, 0x16, 0x87, 0x73, 0x63, 0x26, 0xc9, 0xfe, 0xa1, 0x7e, 0x25, 0xfc, 0x52, 0x87, 0x61, 0x36, 0x93, 0xc9, 0x12, 0x90, 0x9c, 0xb2, 0x26, 0xaa, 0x47, 0x94, 0xf2, 0x6a, 0x48]));
                 let _ = contract.cdn_nodes.create(AccountId::default(), 0, AccountId::default());
                 let _ = contract.cdn_node_params.create("".to_string()).unwrap();
                 let _ = contract
@@ -953,6 +954,12 @@ pub mod ddc_bucket {
         pub fn get_accounts(&self) -> Vec<AccountId> {
             self.message_get_accounts()
         }
+
+        #[ink(message, payable)]
+        pub fn get_account(&self, account_id: AccountId) -> Account {
+            self.message_get_account(account_id).unwrap()
+        }
+
     }
     // ---- End Accounts ----
 
