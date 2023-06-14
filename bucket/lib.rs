@@ -59,6 +59,7 @@ pub mod ddc_bucket {
     #[ink(storage)]
     #[derive(SpreadAllocate, Default)]
     pub struct DdcBucket {
+        perms: PermStore,
         buckets: BucketStore,
         buckets_perms: BucketsPermsStore,
         bucket_params: ParamsStore,
@@ -70,7 +71,6 @@ pub mod ddc_bucket {
         nodes: NodeStore,
         node_params: ParamsStore,
         accounts: AccountStore,
-        perms: PermStore,
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
         protocol_store: ProtocolStore,
@@ -84,16 +84,12 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
-                let operator = Self::env().caller();
-
-                contract.committer_store.init(operator);
-                contract.protocol_store.init(operator, DEFAULT_BASIS_POINTS);
-
-                // Make the creator of this contract a super-admin.
                 let admin_id = Self::env().caller();
-                contract
-                    .perms
-                    .grant_permission(admin_id, &Permission::SuperAdmin);
+                // Make the creator of this contract a super-admin.
+                contract.perms.grant_permission(admin_id, &Permission::SuperAdmin);
+
+                contract.committer_store.init(admin_id);
+                contract.protocol_store.init(admin_id, DEFAULT_BASIS_POINTS);
 
                 // Reserve IDs 0.
                 let _ = contract.accounts.create_if_not_exist(AccountId::default());
