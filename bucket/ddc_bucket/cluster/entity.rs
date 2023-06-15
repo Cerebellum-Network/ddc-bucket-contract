@@ -38,7 +38,7 @@ impl ink_storage::traits::PackedAllocate for Cluster {
 
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub struct ClusterStatus {
+pub struct ClusterInfo {
     pub cluster_id: ClusterId,
     pub cluster: Cluster,
     pub params: Params,

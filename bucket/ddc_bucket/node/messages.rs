@@ -1,6 +1,6 @@
 //! The public interface to manage Nodes.
 
-use crate::ddc_bucket::node::entity::{NodeStatus, Resource, NodeKey, NodeParams, NodeTag};
+use crate::ddc_bucket::node::entity::{NodeInfo, Resource, NodeKey, NodeParams, NodeStatus};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, Result};
 use ink_lang::codegen::{EmitEvent, StaticEnv};
@@ -24,7 +24,7 @@ impl DdcBucket {
         rent_per_month: Balance,
         node_params: NodeParams,
         capacity: Resource,
-        node_tag: NodeTag,
+        node_tag: NodeStatus,
     ) -> Result<NodeKey> {
         let provider_id = Self::env().caller();
 
@@ -43,7 +43,7 @@ impl DdcBucket {
         Ok(node_key)
     }
 
-    pub fn message_node_change_tag(&mut self, node_key: NodeKey, new_tag: NodeTag) -> Result<()> {
+    pub fn message_node_change_tag(&mut self, node_key: NodeKey, new_tag: NodeStatus) -> Result<()> {
         let caller = Self::env().caller();
         let mut node = self.nodes.get(node_key)?;
         node.only_owner(caller)?;
@@ -52,9 +52,9 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_node_get(&self, node_key: NodeKey) -> Result<NodeStatus> {
+    pub fn message_node_get(&self, node_key: NodeKey) -> Result<NodeInfo> {
         let node = self.nodes.get(node_key)?;
-        Ok(NodeStatus {
+        Ok(NodeInfo {
             node_key,
             node,
         })
@@ -79,7 +79,7 @@ impl DdcBucket {
         offset: u32,
         limit: u32,
         filter_provider_id: Option<AccountId>,
-    ) -> (Vec<NodeStatus>, u32) {
+    ) -> (Vec<NodeInfo>, u32) {
         let mut nodes = Vec::with_capacity(limit as usize);
         for idx in offset..offset + limit {
             let node_key = match self.nodes.keys.get(idx as usize) {
@@ -97,7 +97,7 @@ impl DdcBucket {
             }
             
             // Include the complete status of matched items.
-            let status = NodeStatus {
+            let status = NodeInfo {
                 node_key,
                 node,
             };

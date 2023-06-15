@@ -2,9 +2,9 @@ use ink_lang as ink;
 
 use crate::ddc_bucket::account::entity::Account;
 // use crate::ddc_bucket::cdn_node::entity::CdnNodeKey;
-use crate::ddc_bucket::cluster::entity::ClusterStatus;
+use crate::ddc_bucket::cluster::entity::ClusterInfo;
 use crate::ddc_bucket::flow::Flow;
-use crate::ddc_bucket::node::entity::{NodeTag, NodeKey};
+use crate::ddc_bucket::node::entity::{NodeStatus, NodeKey};
 use crate::ddc_bucket::schedule::{Schedule, MS_PER_MONTH};
 use crate::ddc_bucket::Error::*;
 use crate::ddc_bucket::*;
@@ -71,7 +71,7 @@ fn new_cluster() -> TestCluster {
         rent_per_vnode,
         node_params0.to_string(),
         capacity,
-        NodeTag::ADDING,
+        NodeStatus::ADDING,
     );
 
     // Provide another Node.
@@ -83,7 +83,7 @@ fn new_cluster() -> TestCluster {
         rent_per_vnode,
         node_params1.to_string(),
         capacity,
-        NodeTag::ADDING,
+        NodeStatus::ADDING,
     );
 
     // Provide another Node.
@@ -95,7 +95,7 @@ fn new_cluster() -> TestCluster {
         rent_per_vnode,
         node_params2.to_string(),
         capacity,
-        NodeTag::ADDING,
+        NodeStatus::ADDING,
     );
 
     // Create a Cluster.
@@ -315,13 +315,13 @@ fn cluster_create_works() {
 
         assert_eq!(
             node0,
-            NodeStatus {
+            NodeInfo {
                 node_key: ctx.node_key0,
                 node: Node {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING,
+                    node_tag: NodeStatus::ADDING,
                     node_params: ctx.node_params0.to_string(),
                 }
             }
@@ -330,13 +330,13 @@ fn cluster_create_works() {
         let node1 = ctx.contract.node_get(ctx.node_key1)?;
         assert_eq!(
             node1,
-            NodeStatus {
+            NodeInfo {
                 node_key: ctx.node_key1,
                 node: Node {
                     provider_id: ctx.provider_id1,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING,
+                    node_tag: NodeStatus::ADDING,
                     node_params: ctx.node_params1.to_string(),
                 }
             }
@@ -345,13 +345,13 @@ fn cluster_create_works() {
         let node2 = ctx.contract.node_get(ctx.node_key2)?;
         assert_eq!(
             node2,
-            NodeStatus {
+            NodeInfo {
                 node_key: ctx.node_key2,
                 node: Node {
                     provider_id: ctx.provider_id2,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeTag::ADDING,
+                    node_tag: NodeStatus::ADDING,
                     node_params: ctx.node_params2.to_string(),
                 }
             }
@@ -363,7 +363,7 @@ fn cluster_create_works() {
         let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
         assert_eq!(
             cluster,
-            ClusterStatus {
+            ClusterInfo {
                 cluster_id: ctx.cluster_id,
                 cluster: Cluster {
                     manager_id: ctx.manager,
@@ -807,7 +807,7 @@ fn cluster_add_node() {
     let rent_per_month = 100;
     let node_params = "new_node";
     let capacity = 1000;
-    let node_tag = NodeTag::ACTIVE;
+    let node_tag = NodeStatus::ACTIVE;
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     let new_node_id = ctx.contract.node_create(
@@ -968,7 +968,7 @@ fn bucket_reserve_0_works() {
     assert_eq!(
         contract.cluster_list(0, 10, None),
         (
-            vec![ClusterStatus {
+            vec![ClusterInfo {
                 cluster_id: 0,
                 cluster: Cluster {
                     manager_id: AccountId::default(),
@@ -988,13 +988,13 @@ fn bucket_reserve_0_works() {
     assert_eq!(
         contract.node_list(0, 10, None),
         (
-            vec![NodeStatus {
+            vec![NodeInfo {
                 node_key: AccountId::default(),
                 node: Node {
                     provider_id: AccountId::default(),
                     rent_per_month: 0,
                     free_resource: 0,
-                    node_tag: NodeTag::ACTIVE,
+                    node_tag: NodeStatus::ACTIVE,
                     node_params: "".to_string(),
                 }
             }],
@@ -1315,7 +1315,7 @@ fn node_list_works() {
         rent_per_month,
         node_params1.to_string(),
         capacity,
-        NodeTag::ADDING,
+        NodeStatus::ADDING,
     );
 
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
@@ -1325,7 +1325,7 @@ fn node_list_works() {
         rent_per_month,
         node_params2.to_string(),
         capacity,
-        NodeTag::ADDING,
+        NodeStatus::ADDING,
     );
 
     let node_status = ddc_bucket.node_get(AccountId::from([0x0b; 32])).unwrap();
@@ -1334,24 +1334,24 @@ fn node_list_works() {
     assert_ne!(node_key1, node_key2);
     let count = 3;
 
-    let node1 = NodeStatus {
+    let node1 = NodeInfo {
         node_key: node_key1,
         node: Node {
             provider_id: owner_id1,
             rent_per_month,
             free_resource: capacity,
-            node_tag: NodeTag::ADDING,
+            node_tag: NodeStatus::ADDING,
             node_params: node_params1.to_string(),
         },
     };
 
-    let node2 = NodeStatus {
+    let node2 = NodeInfo {
         node_key: node_key2,
         node: Node {
             provider_id: owner_id2,
             rent_per_month,
             free_resource: capacity,
-            node_tag: NodeTag::ADDING,
+            node_tag: NodeStatus::ADDING,
             node_params: node_params2.to_string(),
         },
     };

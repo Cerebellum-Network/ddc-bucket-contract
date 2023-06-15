@@ -29,7 +29,7 @@ impl ink_storage::traits::PackedAllocate for CdnNode {
 
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub struct CdnNodeStatus {
+pub struct CdnNodeInfo {
     pub cdn_node_key: CdnNodeKey,
     pub cdn_node: CdnNode,
 }

@@ -19,7 +19,7 @@ pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub free_resource: Resource,
-    pub node_tag: NodeTag,
+    pub node_tag: NodeStatus,
     pub node_params: NodeParams
 }
 
@@ -33,7 +33,7 @@ impl ink_storage::traits::PackedAllocate for Node {
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub enum NodeTag {
+pub enum NodeStatus {
     UNKNOWN,
     ACTIVE,
     ADDING,
@@ -41,21 +41,21 @@ pub enum NodeTag {
     OFFLINE,
 }
 
-impl SpreadAllocate for NodeTag { 
+impl SpreadAllocate for NodeStatus { 
     fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        NodeTag::UNKNOWN 
+        NodeStatus::UNKNOWN 
     }
 }
 
-impl Default for NodeTag {
+impl Default for NodeStatus {
     fn default() -> Self {
-        NodeTag::UNKNOWN 
+        NodeStatus::UNKNOWN 
     }
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub struct NodeStatus {
+pub struct NodeInfo {
     pub node_key: NodeKey,
     pub node: Node,
 }
@@ -73,7 +73,7 @@ impl Node {
         }
     }
 
-    pub fn change_tag(&mut self, new_tag: NodeTag) {
+    pub fn change_tag(&mut self, new_tag: NodeStatus) {
         self.node_tag = new_tag;
     }
 

@@ -5,7 +5,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::{AccountId, DdcBucket, CdnNodeCreated, Result, Balance};
 use crate::ddc_bucket::perm::entity::{Permission};
 
-use super::entity::{CdnNodeKey, CdnNodeStatus, CdnNodeParams};
+use super::entity::{CdnNodeKey, CdnNodeInfo, CdnNodeParams};
 
 impl DdcBucket {
     pub fn message_cdn_node_trust_manager(&mut self, manager: AccountId, is_trusted: bool) -> Result<()> {
@@ -45,15 +45,15 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_cdn_node_get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNodeStatus> {
+    pub fn message_cdn_node_get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNodeInfo> {
         let cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-        Ok(CdnNodeStatus { 
+        Ok(CdnNodeInfo { 
             cdn_node_key, 
             cdn_node, 
         })
     }
 
-    pub fn message_cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeStatus>, u32) {
+    pub fn message_cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeInfo>, u32) {
         let mut cdn_nodes = Vec::with_capacity(limit as usize);
         for idx in offset..offset + limit {
             let cdn_node_key = match self.cdn_nodes.keys.get(idx as usize) {
@@ -71,7 +71,7 @@ impl DdcBucket {
             }
 
             // Include the complete status of matched items.
-            let status = CdnNodeStatus {
+            let status = CdnNodeInfo {
                 cdn_node_key,
                 cdn_node,
             };

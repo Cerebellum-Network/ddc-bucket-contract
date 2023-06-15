@@ -1265,7 +1265,7 @@
               "label": "new_tag",
               "type": {
                 "displayName": [
-                  "NodeTag"
+                  "NodeStatus"
                 ],
                 "type": 27
               }
@@ -2149,7 +2149,7 @@
               "label": "node_tag",
               "type": {
                 "displayName": [
-                  "NodeTag"
+                  "NodeStatus"
                 ],
                 "type": 27
               }
@@ -3661,7 +3661,7 @@
                 {
                   "name": "node_tag",
                   "type": 27,
-                  "typeName": "NodeTag"
+                  "typeName": "NodeStatus"
                 },
                 {
                   "name": "node_params",
@@ -3714,7 +3714,7 @@
             "ddc_bucket",
             "node",
             "entity",
-            "NodeTag"
+            "NodeStatus"
           ]
         }
       },
@@ -4411,7 +4411,7 @@
             "ddc_bucket",
             "cluster",
             "entity",
-            "ClusterStatus"
+            "ClusterInfo"
           ]
         }
       },
@@ -4746,7 +4746,7 @@
             "ddc_bucket",
             "cdn_node",
             "entity",
-            "CdnNodeStatus"
+            "CdnNodeInfo"
           ]
         }
       },
@@ -4879,7 +4879,7 @@
             "ddc_bucket",
             "node",
             "entity",
-            "NodeStatus"
+            "NodeInfo"
           ]
         }
       },

@@ -3,7 +3,7 @@ use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cluster::entity::{Cluster, ClusterStatus};
+use crate::ddc_bucket::cluster::entity::{Cluster, ClusterInfo};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 use crate::ddc_bucket::perm::entity::Permission;
@@ -205,10 +205,10 @@ impl DdcBucket {
         Self::impl_change_params(&mut self.cluster_params, cluster_id, params)
     }
 
-    pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
+    pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?.clone();
         let params = self.cluster_params.get(cluster_id)?.clone();
-        Ok(ClusterStatus {
+        Ok(ClusterInfo {
             cluster_id,
             cluster,
             params,
@@ -220,7 +220,7 @@ impl DdcBucket {
         offset: u32,
         limit: u32,
         filter_manager_id: Option<AccountId>,
-    ) -> (Vec<ClusterStatus>, u32) {
+    ) -> (Vec<ClusterInfo>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
             let cluster = match self.clusters.0.get(cluster_id as usize) {
@@ -234,7 +234,7 @@ impl DdcBucket {
                 }
             }
             // Include the complete status of matched items.
-            let status = ClusterStatus {
+            let status = ClusterInfo {
                 cluster_id,
                 cluster: cluster.clone(),
                 params: self.cluster_params.get(cluster_id).unwrap().clone(),

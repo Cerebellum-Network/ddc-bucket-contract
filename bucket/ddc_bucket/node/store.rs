@@ -7,7 +7,7 @@ use ink_storage::Mapping;
 // use crate::ddc_bucket::node::entity::Resource;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 
-use super::entity::{Node, NodeTag, NodeKey, NodeParams, Resource};
+use super::entity::{Node, NodeStatus, NodeKey, NodeParams, Resource};
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
@@ -25,7 +25,7 @@ impl NodeStore {
         rent_per_month: Balance,
         node_params: NodeParams,
         capacity: Resource,
-        node_tag: NodeTag,
+        node_tag: NodeStatus,
     ) -> Result<NodeKey> {
         
         let node = Node {
