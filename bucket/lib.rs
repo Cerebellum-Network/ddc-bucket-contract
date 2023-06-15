@@ -526,7 +526,7 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
-        /// * `NodeIsNotInCluster(cluster_id)` error if the removing Storage node is not in this cluster.
+        /// * `NodeIsNotInCluster` error if the removing Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_remove_node(
             &mut self,
@@ -595,7 +595,7 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
-        /// * `CdnNodeIsNotInCluster(cluster_id)` error if the removing CDN node is not in this cluster.
+        /// * `CdnNodeIsNotInCluster` error if the removing CDN node is not in this cluster.
         #[ink(message)]
         pub fn cluster_remove_cdn_node(
             &mut self,
@@ -673,6 +673,7 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
+        /// * `cluster_id` - ID of the targeting cluster.
         /// * `node_key` - Public Key associated with the Storage node.
         /// * `status` - Status for the targeting Storage node, can be one of the following: ACTIVE, ADDING, DELETING, OFFLINE.
         ///
@@ -687,10 +688,13 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `NodeIsNotInCluster` error if the Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_node_status(
             &mut self, 
+            cluster_id: ClusterId,
             node_key: NodeKey, 
             status: NodeStatus
         ) {
@@ -703,6 +707,7 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
+        /// * `cluster_id` - ID of the targeting cluster.
         /// * `cdn_node_key` - Public Key associated with the CDN node.
         /// * `status` - Status for the targeting CDN node, can be one of the following: ACTIVE, ADDING, DELETING, OFFLINE.
         ///
@@ -717,10 +722,13 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `CdnNodeIsNotInCluster` error if the Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_cdn_node_status(
             &mut self, 
+            cluster_id: ClusterId,
             cdn_node_key: NodeKey, 
             status: NodeStatus
         ) {
@@ -1189,9 +1197,7 @@ pub mod ddc_bucket {
         ///
         /// * `node_key` - Public Keys of the Storage node that should be treated as node identifier.
         /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
-        /// * `rent_per_month` - Amount to be paid for renting monthly.
         /// * `capacity` - Measure used to evaluate physical node hardware resources.
-        /// * `status` - Status for the creating Storage node, can be one of the following: ACTIVE, ADDING, DELETING, OFFLINE.
         ///
         /// # Output
         ///
@@ -1210,11 +1216,9 @@ pub mod ddc_bucket {
             &mut self,
             node_key: NodeKey,
             node_params: NodeParams,
-            rent_per_month: Balance,
             capacity: Resource,
-            status: NodeStatus,
         ) -> NodeKey {
-            self.message_node_create(node_key, rent_per_month, node_params, capacity, status)
+            self.message_node_create(node_key, Balance::default(), node_params, capacity, NodeStatus::ACTIVE)
                 .unwrap()
         }
 
