@@ -314,7 +314,6 @@ pub mod ddc_bucket {
 
     // ---- Cluster ----
 
-    /// A new cluster was created.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ClusterCreated {
@@ -323,6 +322,74 @@ pub mod ddc_bucket {
         #[ink(topic)]
         manager: AccountId,
         cluster_params: ClusterParams,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeAdded {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeRemoved {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCdnNodeAdded {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCdnNodeRemoved {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterParamsChanged {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        params: ClusterParams,
+    }
+
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterRemoved {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeStatusSet {
+        #[ink(topic)]
+        node_key: NodeKey,
+        status: NodeStatus
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCdnNodeStatusSet {
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+        status: NodeStatus
     }
 
     /// A vnode was re-assigned to new node.
@@ -359,7 +426,7 @@ pub mod ddc_bucket {
         /// Creates a cluster of Storage nodes and CDN nodes.
         ///
         /// This endpoint creates a cluster of Storage nodes and CDN nodes with specific parameters.
-        /// The caller will be the cluster owner (cluster manager). In order to add a Storage or CDN node, the manager must be authorized by the node owner using the `trust_manager` endpoint.
+        /// The caller will be the cluster owner (cluster manager). In order to add a Storage or CDN node, the manager must be authorized by the node owner using the `trust_manager` endpoint or be the node owner.
         ///
         /// # Parameters
         ///
@@ -372,14 +439,18 @@ pub mod ddc_bucket {
         ///
         /// Returns ID of the created cluster.
         ///
+        /// # Events
+        ///
+        /// * `ClusterCreated` event on successful cluster creation.
+        ///
         /// # Errors
         ///
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller has a lack of trusted manager permissions for nodes he is trying to add.
-        /// Returns `NodeDoesNotExist` error if the adding Storage node does not exist.
-        /// Returns `InvalidVirtualNodes` error if there is a mismatch between adding Storage nodes and its virtual nodes.
-        /// Returns `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
-        /// Returns `NodeIsAlreadyAddedToCluster(cluster_id)` error if an adding Storage node is already added to this or another cluster.
-        /// Returns `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if an adding CDN node is already added to this or another cluster.
+        /// * `ClusterManagerIsNotTrusted` error if the caller has a lack of trusted manager permissions for nodes he is trying to add.
+        /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
+        /// * `InvalidVirtualNodes` error if there is a mismatch between adding Storage nodes and its virtual nodes.
+        /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
+        /// * `NodeIsAlreadyAddedToCluster(cluster_id)` error if an adding Storage node is already added to this or another cluster.
+        /// * `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if an adding CDN node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_create(
             &mut self,
@@ -409,13 +480,17 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterNodeAdded` event on successful Storage node addition.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
-        /// Returns `NodeDoesNotExist` error if the adding Storage node does not exist.
-        /// Returns `NodeIsAlreadyAddedToCluster(cluster_id)` error if the adding Storage node is already added to this or another cluster.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
+        /// * `NodeIsAlreadyAddedToCluster(cluster_id)` error if the adding Storage node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
@@ -441,13 +516,17 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterNodeRemoved` event on successful Storage node removal.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
-        /// Returns `NodeDoesNotExist` error if the removing Storage node does not exist.
-        /// Returns `NodeIsNotInCluster(cluster_id)` error if the removing Storage node is not in this cluster.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
+        /// * `NodeIsNotInCluster(cluster_id)` error if the removing Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_remove_node(
             &mut self,
@@ -472,13 +551,17 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterCdnNodeAdded` event on successful CDN node addition.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
-        /// Returns `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
-        /// Returns `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if the adding CDN node is already added to this or another cluster.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
+        /// * `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if the adding CDN node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_add_cdn_node(
             &mut self,
@@ -502,13 +585,17 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterCdnNodeRemoved` event on successful CDN node removal.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
-        /// Returns `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
-        /// Returns `CdnNodeIsNotInCluster(cluster_id)` error if the removing CDN node is not in this cluster.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
+        /// * `CdnNodeIsNotInCluster(cluster_id)` error if the removing CDN node is not in this cluster.
         #[ink(message)]
         pub fn cluster_remove_cdn_node(
             &mut self,
@@ -517,7 +604,7 @@ pub mod ddc_bucket {
         ) {
 
         }
-
+        
         /// Changes parameters for the targeting cluster.
         ///
         /// This enpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. 
@@ -532,10 +619,14 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterParamsChanged` event on successful cluster params change..
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message, payable)]
         pub fn cluster_change_params(
             &mut self, 
@@ -559,11 +650,15 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterRemoved` event on successful cluster removal.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
-        /// Returns `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
         #[ink(message)]
         pub fn cluster_remove(
             &mut self, 
@@ -585,10 +680,14 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterNodeStatusSet` event on successful Storage status change.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         #[ink(message)]
         pub fn cluster_set_node_status(
             &mut self, 
@@ -611,10 +710,14 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `ClusterCdnNodeStatusSet` event on successful CDN status change.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
-        /// Returns `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         #[ink(message)]
         pub fn cluster_set_cdn_node_status(
             &mut self, 
@@ -637,7 +740,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message)]
         pub fn cluster_get(
             &self, 
@@ -863,6 +966,21 @@ pub mod ddc_bucket {
         undistributed_payment: Balance,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeRemoved {
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeParamsChanged {
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+        cdn_node_params: CdnNodeParams,
+    }
+
     impl DdcBucket {
         // /// As node provider, authorize a cluster manager to use his nodes.
         // #[ink(message, payable)]
@@ -890,10 +1008,14 @@ pub mod ddc_bucket {
         ///
         /// Returns Public Key of the created CDN node.
         ///
+        /// # Events
+        ///
+        /// * `CdnNodeCreated` event on successful CDN node creation.
+        ///
         /// # Errors
         ///
-        /// Returns `CdnNodeAlreadyExists` error if a CDN node with the same Public Key is already created.
-        /// Returns `InvalidParams(message)` error if there is some invalid configuration parameter.
+        /// * `CdnNodeAlreadyExists` error if a CDN node with the same Public Key is already created.
+        /// * `InvalidParams(message)` error if there is some invalid configuration parameter.
         #[ink(message, payable)]
         pub fn cdn_node_create(
             &mut self, 
@@ -916,11 +1038,15 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `CdnNodeRemoved` event on successful CDN node removal.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
-        /// Returns `CdnNodeDoesNotExist` error if the CDN node does not exist.
-        /// Returns `CdnNodeIsAddedToCluster(cluster_id)` error if the removing CDN node is added to some cluster.
+        /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
+        /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
+        /// * `CdnNodeIsAddedToCluster(cluster_id)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
         pub fn cdn_node_remove(
             &mut self, 
@@ -943,10 +1069,14 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `CdnNodeParamsChanged` event on successful CDN node params change.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
-        /// Returns `CdnNodeDoesNotExist` error if the CDN node does not exist.
+        /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
+        /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message, payable)]
         pub fn cdn_node_change_params(
             &mut self, 
@@ -971,7 +1101,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `CdnNodeDoesNotExist` error if the CDN node does not exist.
+        /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message)]
         pub fn cdn_node_get(
             &self, 
@@ -1022,6 +1152,21 @@ pub mod ddc_bucket {
         node_params: NodeParams,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct NodeRemoved {
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct NodeParamsChanged {
+        #[ink(topic)]
+        node_key: NodeKey,
+        node_params: NodeParams,
+    }
+
     impl DdcBucket {
         // /// As node provider, authorize a cluster manager to use his nodes.
         // #[ink(message, payable)]
@@ -1052,10 +1197,14 @@ pub mod ddc_bucket {
         ///
         /// Returns Public Key of the created Storage node.
         ///
+        /// # Events
+        ///
+        /// * `NodeCreated` event on successful Storage node creation.
+        ///
         /// # Errors
         ///
-        /// Returns `NodeAlreadyExists` error if a Storage node with the same Public Key is already created.
-        /// Returns `InvalidParams(message)` error if there is some invalid configuration parameter.
+        /// * `NodeAlreadyExists` error if a Storage node with the same Public Key is already created.
+        /// * `InvalidParams(message)` error if there is some invalid configuration parameter.
         #[ink(message, payable)]
         pub fn node_create(
             &mut self,
@@ -1082,11 +1231,15 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `NodeRemoved` event on successful Storage node removal.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
-        /// Returns `NodeDoesNotExist` error if the Storage node does not exist.
-        /// Returns `NodeIsAddedToCluster(cluster_id)` error if the removing Storage node is added to some cluster.
+        /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
+        /// * `NodeIsAddedToCluster(cluster_id)` error if the removing Storage node is added to some cluster.
         #[ink(message)]
         pub fn node_remove(
             &mut self, 
@@ -1109,10 +1262,14 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `NodeParamsChanged` event on successful Storage node params change.
+        ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
-        /// Returns `NodeDoesNotExist` error if the Storage node does not exist.
+        /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message, payable)]
         pub fn node_change_params(
             &mut self, 
@@ -1136,7 +1293,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `NodeDoesNotExist` error if the Storage node does not exist.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message)]
         pub fn node_get(
             &self, 
@@ -1267,7 +1424,7 @@ pub mod ddc_bucket {
     /// A permission was granted to the account.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct GrantPermission {
+    pub struct PermissionGranted {
         #[ink(topic)]
         account_id: AccountId,
         permission: Permission,
@@ -1276,21 +1433,37 @@ pub mod ddc_bucket {
     /// A permission was revoked from the account.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct RevokePermission {
+    pub struct PermissionRevoked {
         #[ink(topic)]
         account_id: AccountId,
         permission: Permission,
     }
 
     impl DdcBucket {
-        /// Check whether the given account has the given permission currently,
-        /// or the SuperAdmin permission.
+        /// Checks for permission existence.
+        ///
+        /// This enpoint checks whether the given account has the given permission.
+        /// Super-admin will always have all permissions.
+        ///
+        /// # Parameters
+        ///
+        /// * `account_id` - account to check permissions.
+        /// * `permission` - permission to check.
+        ///
+        /// # Output
+        ///
+        /// Returns true if the account has permissions, false otherwise.
+        ///
+        /// # Errors
+        ///
+        /// No errors.
         #[ink(message)]
         pub fn has_permission(
-            &self, grantee: AccountId,
+            &self, 
+            account_id: AccountId,
             permission: Permission
         ) -> bool {
-            self.perms.has_permission(grantee, permission)
+            self.perms.has_permission(account_id, permission)
         }
 
         /// Grants permissions for a cluster manager.
@@ -1306,6 +1479,10 @@ pub mod ddc_bucket {
         /// # Output
         ///
         /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionGranted` event on successful manager permissions granting
         ///
         /// # Errors
         ///
@@ -1332,6 +1509,10 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `PermissionRevoked` event on successful manager permissions revoking
+        ///
         /// # Errors
         ///
         /// No errors. The endpoint is idempotent.
@@ -1345,6 +1526,22 @@ pub mod ddc_bucket {
 
     }
     // ---- End Permissions ----
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct NodeOwnershipTransferred {
+        #[ink(topic)]
+        account_id: AccountId,
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeOwnershipTransferred {
+        #[ink(topic)]
+        account_id: AccountId,
+        cdn_node_key: CdnNodeKey,
+    }
 
     // ---- Admin ----
     impl DdcBucket {
@@ -1361,6 +1558,10 @@ pub mod ddc_bucket {
         /// # Output
         ///
         /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionGranted` event on successful permissions granting
         ///
         /// # Errors
         ///
@@ -1387,6 +1588,10 @@ pub mod ddc_bucket {
         /// # Output
         ///
         /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionRevoked` event on successful permissions revoking
         ///
         /// # Errors
         ///
@@ -1415,6 +1620,10 @@ pub mod ddc_bucket {
         ///
         /// Returns nothing.
         ///
+        /// # Events
+        ///
+        /// * `NodeOwnershipTransferred` event on successful Storage node ownership transfer
+        ///
         /// # Errors
         ///
         /// Returns `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
@@ -1442,6 +1651,10 @@ pub mod ddc_bucket {
         /// # Output
         ///
         /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `CdnNodeOwnershipTransferred` event on successful CDN node ownership transfer
         ///
         /// # Errors
         ///

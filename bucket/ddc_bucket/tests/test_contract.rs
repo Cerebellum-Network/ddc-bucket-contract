@@ -386,8 +386,8 @@ fn cluster_create_works() {
     // Providers trust Manager.
     for provider_id in provider_ids {
         assert!(
-            matches!(evs.pop().unwrap(), Event::GrantPermission(ev) if ev ==
-            GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) })
+            matches!(evs.pop().unwrap(), Event::PermissionGranted(ev) if ev ==
+            PermissionGranted { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) })
         );
     }
 
@@ -821,8 +821,8 @@ fn cluster_add_node() {
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     ctx.contract.node_trust_manager(ctx.manager);
     assert!(
-        matches!(get_events().pop().unwrap(), Event::GrantPermission(ev) if ev ==
-        GrantPermission { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(new_provider_id) })
+        matches!(get_events().pop().unwrap(), Event::PermissionGranted(ev) if ev ==
+        PermissionGranted { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(new_provider_id) })
     );
 
     let mut node_keys = Vec::<NodeKey>::new();

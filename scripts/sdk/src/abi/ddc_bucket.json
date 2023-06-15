@@ -514,7 +514,7 @@
           "docs": [
             " A permission was granted to the account."
           ],
-          "label": "GrantPermission"
+          "label": "PermissionGranted"
         },
         {
           "args": [
@@ -544,7 +544,7 @@
           "docs": [
             " A permission was revoked from the account."
           ],
-          "label": "RevokePermission"
+          "label": "PermissionRevoked"
         }
       ],
       "messages": [

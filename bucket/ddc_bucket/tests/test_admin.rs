@@ -52,8 +52,8 @@ fn admin_grant_works() {
 
     // Check the last event.
     let ev = get_events().pop().unwrap();
-    assert!(matches!(ev, Event::GrantPermission(ev) if ev ==
-        GrantPermission { account_id: not_admin_id(), permission }));
+    assert!(matches!(ev, Event::PermissionGranted(ev) if ev ==
+        PermissionGranted { account_id: not_admin_id(), permission }));
 
     assert!(contract.has_permission(new_admin_id, permission));
 
@@ -84,8 +84,8 @@ fn admin_revoke_works() {
 
     // Check the last event.
     let ev = get_events().pop().unwrap();
-    assert!(matches!(ev, Event::RevokePermission(ev) if ev ==
-        RevokePermission { account_id: not_admin_id(), permission }));
+    assert!(matches!(ev, Event::PermissionRevoked(ev) if ev ==
+        PermissionRevoked { account_id: not_admin_id(), permission }));
 
     assert!(!contract.has_permission(admin_id(), permission));
 
