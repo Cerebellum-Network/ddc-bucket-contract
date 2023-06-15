@@ -729,7 +729,7 @@ pub mod ddc_bucket {
         pub fn cluster_set_cdn_node_status(
             &mut self, 
             cluster_id: ClusterId,
-            cdn_node_key: NodeKey, 
+            cdn_node_key: CdnNodeKey, 
             status: NodeStatus
         ) {
         }
