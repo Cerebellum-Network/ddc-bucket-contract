@@ -362,7 +362,7 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct ClusterParamsChanged {
+    pub struct ClusterParamsSet {
         #[ink(topic)]
         cluster_id: ClusterId,
         params: ClusterParams,
@@ -605,7 +605,7 @@ pub mod ddc_bucket {
 
         }
         
-        /// Changes parameters for the targeting cluster.
+        /// Sets parameters for the targeting cluster.
         ///
         /// This enpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. 
         /// All cluster parameters must be specified as the endpoint works using SET approach.
@@ -621,14 +621,14 @@ pub mod ddc_bucket {
         ///
         /// # Events
         ///
-        /// * `ClusterParamsChanged` event on successful cluster params change..
+        /// * `ClusterParamsSet` event on successful cluster params setting.
         ///
         /// # Errors
         ///
         /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message, payable)]
-        pub fn cluster_change_params(
+        pub fn cluster_set_params(
             &mut self, 
             cluster_id: ClusterId, 
             cluster_params: ClusterParams
@@ -975,7 +975,7 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct CdnNodeParamsChanged {
+    pub struct CdnNodeParamsSet {
         #[ink(topic)]
         cdn_node_key: CdnNodeKey,
         cdn_node_params: CdnNodeParams,
@@ -1055,7 +1055,7 @@ pub mod ddc_bucket {
             self.message_remove_cdn_node(cdn_node_key).unwrap();
         }
 
-        /// Changes parameters for the targeting CDN node.
+        /// Sets parameters for the targeting CDN node.
         ///
         /// This enpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
         /// All CDN node parameters must be specified as the endpoint works using SET approach.
@@ -1071,14 +1071,14 @@ pub mod ddc_bucket {
         ///
         /// # Events
         ///
-        /// * `CdnNodeParamsChanged` event on successful CDN node params change.
+        /// * `CdnNodeParamsSet` event on successful CDN node params setting.
         ///
         /// # Errors
         ///
         /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message, payable)]
-        pub fn cdn_node_change_params(
+        pub fn cdn_node_set_params(
             &mut self, 
             cdn_node_key: CdnNodeKey, 
             cdn_node_params: CdnNodeParams
@@ -1161,7 +1161,7 @@ pub mod ddc_bucket {
 
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct NodeParamsChanged {
+    pub struct NodeParamsSet {
         #[ink(topic)]
         node_key: NodeKey,
         node_params: NodeParams,
@@ -1248,7 +1248,7 @@ pub mod ddc_bucket {
             self.message_remove_node(node_key).unwrap();
         }
 
-        /// Changes parameters for the targeting Storage node.
+        /// Sets parameters for the targeting Storage node.
         ///
         /// This enpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
         /// All Storage node parameters must be specified as the endpoint works using SET approach.
@@ -1264,14 +1264,14 @@ pub mod ddc_bucket {
         ///
         /// # Events
         ///
-        /// * `NodeParamsChanged` event on successful Storage node params change.
+        /// * `NodeParamsSet` event on successful Storage node params setting.
         ///
         /// # Errors
         ///
         /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message, payable)]
-        pub fn node_change_params(
+        pub fn node_set_params(
             &mut self, 
             node_key: NodeKey, 
             node_params: NodeParams
@@ -1488,7 +1488,7 @@ pub mod ddc_bucket {
         ///
         /// No errors. The endpoint is idempotent.
         #[ink(message, payable)]
-        pub fn trust_manager(
+        pub fn grant_manager_permission(
             &mut self, 
             cluster_manager: AccountId
         ) {
@@ -1517,7 +1517,7 @@ pub mod ddc_bucket {
         ///
         /// No errors. The endpoint is idempotent.
         #[ink(message)]
-        pub fn distrust_manager(
+        pub fn revoke_manager_permission(
             &mut self, 
             cluster_manager: AccountId
         ) {
@@ -1626,9 +1626,9 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
-        /// Returns `NodeDoesNotExist` error if the Storage node does not exist.
-        /// Returns `NodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
+        /// * `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
+        /// * `NodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
         pub fn admin_transfer_node_ownership(
             &mut self, 
@@ -1658,9 +1658,9 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
-        /// Returns `CdnNodeDoesNotExist` error if the Storage node does not exist.
-        /// Returns `CdnNodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
+        /// * `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
+        /// * `CdnNodeDoesNotExist` error if the Storage node does not exist.
+        /// * `CdnNodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
         pub fn admin_transfer_cdn_node_ownership(
             &mut self, 
