@@ -5,6 +5,8 @@ use scale::{Decode, Encode};
 
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::cluster::entity::ClusterId;
+
 use ink_storage::traits::KeyPtr;
 use ink_primitives::Key;
 
@@ -19,8 +21,9 @@ pub struct Node {
     pub provider_id: ProviderId,
     pub rent_per_month: Balance,
     pub free_resource: Resource,
-    pub node_tag: NodeStatus,
-    pub node_params: NodeParams
+    pub node_params: NodeParams,
+    pub status: NodeStatus,
+    pub cluster_id: Option<ClusterId>
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -34,7 +37,7 @@ impl ink_storage::traits::PackedAllocate for Node {
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub enum NodeStatus {
-    UNKNOWN,
+    CREATED,
     ACTIVE,
     ADDING,
     DELETING,
@@ -43,13 +46,13 @@ pub enum NodeStatus {
 
 impl SpreadAllocate for NodeStatus { 
     fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        NodeStatus::UNKNOWN 
+        NodeStatus::CREATED 
     }
 }
 
 impl Default for NodeStatus {
     fn default() -> Self {
-        NodeStatus::UNKNOWN 
+        NodeStatus::CREATED 
     }
 }
 
@@ -65,16 +68,16 @@ impl Node {
         self.provider_id
     }
 
-    pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
-        if self.provider_id == provider_id {
+    pub fn only_owner(&self, owner_id: AccountId) -> Result<()> {
+        if self.provider_id == owner_id {
             Ok(())
         } else {
-            Err(UnauthorizedProvider)
+            Err(UnauthorizedNodeOwner)
         }
     }
 
     pub fn change_tag(&mut self, new_tag: NodeStatus) {
-        self.node_tag = new_tag;
+        self.status = new_tag;
     }
 
     pub fn put_resource(&mut self, amount: Resource) {
@@ -87,6 +90,14 @@ impl Node {
             Ok(())
         } else {
             Err(InsufficientResources)
+        }
+    }
+
+    pub fn only_without_cluster(&self) -> Result<()> {
+        if let Some(cluster_id) = self.cluster_id {
+            Err(NodeIsAddedToCluster(cluster_id))
+        } else {
+            Ok(())
         }
     }
 }

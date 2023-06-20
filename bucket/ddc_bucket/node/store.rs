@@ -13,7 +13,7 @@ use super::entity::{Node, NodeStatus, NodeKey, NodeParams, Resource};
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct NodeStore {
     pub nodes: Mapping<NodeKey, Node>,
-    // This vector is temporal and must be replaced with an offchain indexer
+    // This pagination vector is temporal and must be replaced with an offchain indexer
     pub keys: Vec<NodeKey> 
 }
 
@@ -22,18 +22,18 @@ impl NodeStore {
         &mut self,
         node_key: AccountId,
         provider_id: AccountId,
-        rent_per_month: Balance,
         node_params: NodeParams,
         capacity: Resource,
-        node_tag: NodeStatus,
+        rent_per_month: Balance,
     ) -> Result<NodeKey> {
         
         let node = Node {
             provider_id,
-            rent_per_month,
+            node_params,
             free_resource: capacity,
-            node_tag,
-            node_params
+            rent_per_month,
+            status: NodeStatus::CREATED,
+            cluster_id: None
         };
 
         if self.nodes.contains(&node_key) {

@@ -321,7 +321,7 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeStatus::ADDING,
+                    status: NodeStatus::ADDING,
                     node_params: ctx.node_params0.to_string(),
                 }
             }
@@ -336,7 +336,7 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id1,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeStatus::ADDING,
+                    status: NodeStatus::ADDING,
                     node_params: ctx.node_params1.to_string(),
                 }
             }
@@ -351,7 +351,7 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id2,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    node_tag: NodeStatus::ADDING,
+                    status: NodeStatus::ADDING,
                     node_params: ctx.node_params2.to_string(),
                 }
             }
@@ -807,7 +807,7 @@ fn cluster_add_node() {
     let rent_per_month = 100;
     let node_params = "new_node";
     let capacity = 1000;
-    let node_tag = NodeStatus::ACTIVE;
+    let status = NodeStatus::ACTIVE;
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     let new_node_id = ctx.contract.node_create(
@@ -815,7 +815,7 @@ fn cluster_add_node() {
         rent_per_month,
         node_params.to_string(),
         capacity,
-        node_tag,
+        status,
     );
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
@@ -994,7 +994,7 @@ fn bucket_reserve_0_works() {
                     provider_id: AccountId::default(),
                     rent_per_month: 0,
                     free_resource: 0,
-                    node_tag: NodeStatus::ACTIVE,
+                    status: NodeStatus::ACTIVE,
                     node_params: "".to_string(),
                 }
             }],
@@ -1340,7 +1340,7 @@ fn node_list_works() {
             provider_id: owner_id1,
             rent_per_month,
             free_resource: capacity,
-            node_tag: NodeStatus::ADDING,
+            status: NodeStatus::ADDING,
             node_params: node_params1.to_string(),
         },
     };
@@ -1351,7 +1351,7 @@ fn node_list_works() {
             provider_id: owner_id2,
             rent_per_month,
             free_resource: capacity,
-            node_tag: NodeStatus::ADDING,
+            status: NodeStatus::ADDING,
             node_params: node_params2.to_string(),
         },
     };

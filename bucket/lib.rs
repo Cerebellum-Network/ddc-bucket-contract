@@ -96,15 +96,15 @@ pub mod ddc_bucket {
                 // Reserve IDs 0.
                 let _ = contract.accounts.create_if_not_exist(AccountId::default());
                 let _ = contract.cdn_nodes.create(AccountId::default(), AccountId::default(), "".to_string(), 0);
+
                 let _ = contract
                     .nodes
                     .create(
                         AccountId::default(),
                         AccountId::default(),
+                        NodeParams::from(""),
                         0,
-                        "".to_string(),
-                        0,
-                        NodeStatus::ACTIVE,
+                        Balance::default(),
                     )
                     .unwrap();
                 let _ = contract
@@ -1176,17 +1176,6 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        // /// As node provider, authorize a cluster manager to use his nodes.
-        // #[ink(message, payable)]
-        // pub fn node_trust_manager(&mut self, manager: AccountId) {
-        //     self.message_node_trust_manager(manager, true).unwrap();
-        // }
-
-        // /// As node provider, revoke the authorization of a cluster manager to use his nodes.
-        // #[ink(message)]
-        // pub fn node_distrust_manager(&mut self, manager: AccountId) {
-        //     self.message_node_trust_manager(manager, false).unwrap();
-        // }
 
         /// Creates a Storage node
         ///
@@ -1217,9 +1206,15 @@ pub mod ddc_bucket {
             node_key: NodeKey,
             node_params: NodeParams,
             capacity: Resource,
-        ) -> NodeKey {
-            self.message_node_create(node_key, Balance::default(), node_params, capacity, NodeStatus::ACTIVE)
-                .unwrap()
+        ) -> Result<NodeKey> {
+            // todo: confirm do we need the 'rent_per_month' param
+            let rent_per_month = Balance::default();
+            self.message_node_create(
+                node_key, 
+                node_params, 
+                capacity, 
+                rent_per_month
+            )
         }
 
         /// Removes a Storage node.
@@ -1248,8 +1243,8 @@ pub mod ddc_bucket {
         pub fn node_remove(
             &mut self, 
             node_key: NodeKey
-        ) {
-            self.message_remove_node(node_key).unwrap();
+        ) -> Result<()> {
+            self.message_remove_node(node_key)
         }
 
         /// Sets parameters for the targeting Storage node.
@@ -1279,8 +1274,8 @@ pub mod ddc_bucket {
             &mut self, 
             node_key: NodeKey, 
             node_params: NodeParams
-        ) {
-            self.message_node_change_params(node_key, node_params).unwrap();
+        ) -> Result<()> {
+            self.message_node_set_params(node_key, node_params)
         }
 
         /// Gets a Storage node.
@@ -1722,7 +1717,6 @@ pub mod ddc_bucket {
         FlowDoesNotExist,
         AccountDoesNotExist,
         ParamsDoesNotExist,
-        UnauthorizedProvider,
         UnauthorizedOwner,
         UnauthorizedClusterManager,
         ClusterManagerIsNotTrusted,
@@ -1731,6 +1725,9 @@ pub mod ddc_bucket {
         InsufficientResources,
         Unauthorized,
         UnknownNode,
+        NodeIsAddedToCluster(ClusterId),
+        UnauthorizedNodeOwner,
+        UnauthorizedCdnNodeOwner
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

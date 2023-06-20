@@ -2146,7 +2146,7 @@
               }
             },
             {
-              "label": "node_tag",
+              "label": "status",
               "type": {
                 "displayName": [
                   "NodeStatus"
@@ -3659,7 +3659,7 @@
                   "typeName": "Resource"
                 },
                 {
-                  "name": "node_tag",
+                  "name": "status",
                   "type": 27,
                   "typeName": "NodeStatus"
                 },

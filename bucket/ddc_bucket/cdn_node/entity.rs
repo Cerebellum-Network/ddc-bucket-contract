@@ -39,8 +39,12 @@ impl CdnNode {
         self.provider_id
     }
 
-    pub fn only_owner(&self, provider_id: AccountId) -> Result<()> {
-        if self.provider_id == provider_id { Ok(()) } else { Err(UnauthorizedProvider) }
+    pub fn only_owner(&self, owner_id: AccountId) -> Result<()> {
+        if self.provider_id == owner_id {
+            Ok(()) 
+        } else { 
+            Err(UnauthorizedCdnNodeOwner) 
+        }
     }
 
     pub fn put_payment(&mut self, amount: Balance) {
