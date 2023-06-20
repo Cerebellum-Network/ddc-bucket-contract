@@ -1668,7 +1668,7 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn admin_transfer_cdn_node_ownership(
             &mut self, 
-            node_key: CdnNodeKey, 
+            cdn_node_key: CdnNodeKey, 
             owner: AccountId
         ) {
 
