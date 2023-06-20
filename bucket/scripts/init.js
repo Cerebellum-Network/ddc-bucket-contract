@@ -2,11 +2,11 @@ import * as fs from 'fs';
 
 import { ContractPromise } from '@polkadot/api-contract';
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
-import { cryptoWaitReady } from "@polkadot/util-crypto";
+import { cryptoWaitReady, mnemonicGenerate } from "@polkadot/util-crypto";
 
 const WS_PROVIDER = "wss://archive.devnet.cere.network/ws";
 const ADDRESS = "6SfBsKbfPUTN35GCcqAHSMY4MemedK2A73VeJ34Z2FV6PB4r";
-
+const CERE = 10_000_000_000n;
 
 const txOptions = {
   storageDepositLimit: null,
@@ -43,7 +43,19 @@ async function signAndSendPromise(txn, signer) {
       .catch((err) => rej(err));
   });
 }
-  
+
+function createUser() {
+  const keyring = new Keyring({ type: "sr25519" });
+  const mnemonic = mnemonicGenerate(12);
+  const account = keyring.addFromUri(mnemonic);
+
+  return {
+    mnemonic: mnemonic,
+    address: account.address,
+    addressBase64: Buffer.from(account.publicKey).toString("base64"),
+  };
+}
+
 await cryptoWaitReady();
 const keyring = new Keyring({ type: "sr25519" });
 const alice = keyring.addFromUri("//Alice");
@@ -59,7 +71,7 @@ const wsProvider = new WsProvider(WS_PROVIDER);
 const api = await ApiPromise.create({ provider: wsProvider });
 const contract = new ContractPromise(api, metadata, ADDRESS);
 
-// console.log(await contract.query.getFeeBp(alice.address, txOptions));
+console.log(await contract.query.getFeeBp(alice.address, txOptions));
 
 console.log("1. adminGrantPermission");
 const res = await signAndSendPromise(await contract.tx.adminGrantPermission(txOptions, sadmin.address, "SuperAdmin"), sadmin);
@@ -81,6 +93,15 @@ const res4 = await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions,
 
 console.log("6. cdnClusterCreate");
 const res = await signAndSendPromise(await contract.tx.cdnClusterCreate(txOptions, [1n, 2n, 3n, 4n]), sadmin);
+
+console.log("6. nodeCreate");
+for (let i = 0; i < 4; i++) {
+  const params = JSON.stringify({ url: `https://node-${i}.v2.storage.devnet.cere.network` });
+  const user = createUser();
+  fs.appendFileSync('secrets.txt', `${user.address}: ${user.mnemonic} -- storage ${i}\n`);
+  console.log(`  node ${i}: address ${user.address}, param ${params}`); 
+  await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, params, 100000, "ACTIVE", user.address), sadmin);
+}
 
 console.log(res.events.map(event => event.event.toHuman()));
 process.exit(0);
