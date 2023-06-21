@@ -5,7 +5,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterInfo};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
-use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
+use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::perm::store::PermStore;
 use crate::ddc_bucket::ClusterNodeReplaced;
@@ -27,29 +27,48 @@ impl DdcBucket {
     ) -> Result<ClusterId> {
         let manager = Self::env().caller();
 
-        let mut nodes = Vec::<(NodeKey, Node)>::new();
+        let mut nodes: Vec<(ink_env::AccountId, Node)> = Vec::<(NodeKey, Node)>::new();
         for node_key in &nodes_keys {
             let node = self.nodes.get(*node_key)?;
-            // Verify that the node provider trusts the cluster manager.
+            node.only_without_cluster()?;
             Self::only_trusted_manager(&self.perms, manager, node.provider_id.clone())?;
             nodes.push((*node_key, node));
         }
 
-        let cluster_id = self.clusters.create(manager, &v_nodes, &nodes_keys)?;
+        let mut cdn_nodes = Vec::<(CdnNodeKey, CdnNode)>::new();
+        for cdn_node_key in &cdn_nodes_keys {
+            let cdn_node = self.cdn_nodes.get(*cdn_node_key)?;
+            cdn_node.only_without_cluster()?;
+            Self::only_trusted_manager(&self.perms, manager, cdn_node.provider_id.clone())?;
+            cdn_nodes.push((*cdn_node_key, cdn_node));
+        }
+
+        let cluster_id = self.clusters.create(
+            manager,
+            nodes_keys,
+            v_nodes.clone(),
+            cdn_nodes_keys,
+            cluster_params.clone()
+        )?;
+        
         let rent = self
             .topology_store
-            .create_topology(cluster_id, v_nodes, nodes.into_iter().map(|(key, node)| (key, node)).collect())?;
+            .create_topology(
+                cluster_id, 
+                v_nodes, 
+                nodes.into_iter().map(|(key, node)| (key, node)).collect()
+            )?;
 
-        self.clusters.get_mut(cluster_id).unwrap().change_rent(rent);
-
-        let params_id = self.cluster_params.create(cluster_params.clone())?;
-        assert_eq!(cluster_id, params_id);
+        let mut cluster = self.clusters.get(cluster_id)?;
+        cluster.set_rent(rent);
+        self.clusters.update(cluster_id, &cluster)?;
 
         Self::env().emit_event(ClusterCreated {
             cluster_id,
             manager,
             cluster_params,
         });
+
         Ok(cluster_id)
     }
 
@@ -84,10 +103,11 @@ impl DdcBucket {
             .topology_store
             .add_node(cluster_id, &old_v_nodes, &v_nodes, nodes.into_iter().map(|(key, node)| (key, node)).collect())?;
 
-        let cluster = self.clusters.get_mut(cluster_id)?;
+        let mut cluster = self.clusters.get(cluster_id)?;
         cluster.total_rent = total_rent as Balance;
         cluster.v_nodes = v_nodes;
-        cluster.node_keys = node_keys;
+        cluster.nodes_keys = node_keys;
+        self.clusters.update(cluster_id, &cluster)?;
 
         Ok(())
     }
@@ -97,9 +117,10 @@ impl DdcBucket {
         cluster_id: ClusterId,
         resource: Resource,
     ) -> Result<()> {
-        let cluster = self.clusters.get_mut(cluster_id)?;
-        Self::only_cluster_manager(cluster)?;
+        let mut cluster = self.clusters.get(cluster_id)?;
+        Self::only_cluster_manager(&cluster)?;
         cluster.put_resource(resource);
+        self.clusters.update(cluster_id, &cluster)?;
 
         for v_nodes_wrapper in &cluster.v_nodes {
             for &v_node in v_nodes_wrapper {
@@ -124,8 +145,8 @@ impl DdcBucket {
         v_nodes: Vec<u64>,
         new_node_key: NodeKey,
     ) -> Result<()> {
-        let cluster = self.clusters.get_mut(cluster_id)?;
-        let manager = Self::only_cluster_manager(cluster)?;
+        let mut cluster = self.clusters.get(cluster_id)?;
+        let manager = Self::only_cluster_manager(&cluster)?;
 
         // Give back resources to the old node for all its v_nodes
         for v_node in v_nodes.clone() {
@@ -153,6 +174,8 @@ impl DdcBucket {
 
         cluster.replace_v_node(v_nodes, new_node_key);
 
+        self.clusters.update(cluster_id, &cluster)?;
+
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,
             node_key: new_node_key,
@@ -161,7 +184,7 @@ impl DdcBucket {
     }
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
-        let cluster = self.clusters.get_mut(cluster_id)?;
+        let mut cluster = self.clusters.get(cluster_id)?;
 
         // Charge the network fee from the cluster.
         Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
@@ -178,7 +201,7 @@ impl DdcBucket {
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 
-        for node_key in &cluster.node_keys {
+        for node_key in &cluster.nodes_keys {
             let node = self.nodes.get(*node_key)?;
             Self::send_cash(node.provider_id, Cash(per_share))?;
 
@@ -187,31 +210,33 @@ impl DdcBucket {
                 provider_id: node.provider_id,
             });
         }
+
+        self.clusters.update(cluster_id, &cluster)?;
+
         // TODO: set a maximum node count, or support paging.
         // TODO: aggregate the payments per node_id or per provider_id.
 
         Ok(())
     }
 
-    pub fn message_cluster_change_params(
+    pub fn message_cluster_set_params(
         &mut self,
         cluster_id: ClusterId,
-        params: ClusterParams,
+        cluster_params: ClusterParams,
     ) -> Result<()> {
         let caller = Self::env().caller();
-        let cluster = self.clusters.get(cluster_id)?;
+        let mut cluster: Cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
-
-        Self::impl_change_params(&mut self.cluster_params, cluster_id, params)
+        cluster.cluster_params = cluster_params;
+        self.clusters.update(cluster_id, &cluster)?;
+        Ok(())
     }
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?.clone();
-        let params = self.cluster_params.get(cluster_id)?.clone();
         Ok(ClusterInfo {
             cluster_id,
             cluster,
-            params,
         })
     }
 
@@ -223,7 +248,7 @@ impl DdcBucket {
     ) -> (Vec<ClusterInfo>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
         for cluster_id in offset..offset + limit {
-            let cluster = match self.clusters.0.get(cluster_id as usize) {
+            let cluster = match self.clusters.clusters.get(cluster_id) {
                 None => break, // No more items, stop.
                 Some(cluster) => cluster,
             };
@@ -237,11 +262,10 @@ impl DdcBucket {
             let status = ClusterInfo {
                 cluster_id,
                 cluster: cluster.clone(),
-                params: self.cluster_params.get(cluster_id).unwrap().clone(),
             };
             clusters.push(status);
         }
-        (clusters, self.clusters.0.len().try_into().unwrap())
+        (clusters, self.clusters.next_cluster_id - 1)
     }
 
     fn only_cluster_manager(cluster: &Cluster) -> Result<AccountId> {

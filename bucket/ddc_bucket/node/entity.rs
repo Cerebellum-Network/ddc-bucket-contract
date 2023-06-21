@@ -64,6 +64,24 @@ pub struct NodeInfo {
 }
 
 impl Node {
+
+    pub fn new(
+        node_key: AccountId,
+        provider_id: AccountId,
+        node_params: NodeParams,
+        capacity: Resource,
+        rent_per_month: Balance,
+    ) -> Self {
+        Node {
+            provider_id,
+            node_params,
+            free_resource: capacity,
+            rent_per_month,
+            status: NodeStatus::CREATED,
+            cluster_id: None
+        }
+    }
+
     pub fn revenue_account_id(&self) -> AccountId {
         self.provider_id
     }

@@ -37,6 +37,22 @@ pub struct CdnNodeInfo {
 }
 
 impl CdnNode {
+
+    pub fn new(
+        cdn_node_key: CdnNodeKey,
+        provider_id: AccountId,
+        cdn_node_params: CdnNodeParams,
+        undistributed_payment: Balance
+    ) -> Self {
+        CdnNode {
+            provider_id,
+            cdn_node_params,
+            undistributed_payment,
+            status: NodeStatus::CREATED,
+            cluster_id: None
+        }
+    }
+
     pub fn cdn_account_id(&self) -> AccountId {
         self.provider_id
     }

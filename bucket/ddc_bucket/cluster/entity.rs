@@ -7,6 +7,8 @@ use scale::{Decode, Encode};
 use ink_primitives::Key;
 use crate::ddc_bucket::cash::Cash;
 use crate::ddc_bucket::node::entity::{Resource, NodeKey};
+use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
+
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result};
@@ -20,12 +22,20 @@ pub type VNodeId = (ClusterId, VNodeIndex);
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
     pub manager_id: AccountId,
+    
+    pub nodes_keys: Vec<NodeKey>,
+    pub v_nodes: Vec<Vec<u64>>,
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
-    pub node_keys: Vec<NodeKey>,
-    pub v_nodes: Vec<Vec<u64>>,
     pub total_rent: Balance,
+
+    pub cluster_params: ClusterParams,
+
+    pub cdn_nodes_keys: Vec<CdnNodeKey>,
+    pub cdn_resources_used: Resource,
+    pub cdn_revenues: Cash,
+    pub cdn_usd_per_gb: Balance,
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -41,19 +51,30 @@ impl ink_storage::traits::PackedAllocate for Cluster {
 pub struct ClusterInfo {
     pub cluster_id: ClusterId,
     pub cluster: Cluster,
-    pub params: Params,
 }
 
 impl Cluster {
-    pub fn new(manager_id: AccountId, v_nodes_arr: &Vec<Vec<u64>>, node_keys: &Vec<NodeKey>) -> Self {
+
+    pub fn new(
+        manager_id: AccountId,
+        nodes_keys: Vec<NodeKey>,
+        v_nodes: Vec<Vec<u64>>,
+        cdn_nodes_keys: Vec<CdnNodeKey>,
+        cluster_params: ClusterParams,
+    ) -> Self {
         Cluster {
             manager_id,
+            nodes_keys,
+            v_nodes,
             resource_per_vnode: 0,
             resource_used: 0,
             revenues: Cash(0),
-            v_nodes: v_nodes_arr.clone(),
-            node_keys: node_keys.clone(),
             total_rent: 0,
+            cluster_params,
+            cdn_nodes_keys,
+            cdn_usd_per_gb: 104_857_600, // setting initially to 1 cent per GB
+            cdn_resources_used: 0,
+            cdn_revenues: Cash(0),
         }
     }
 
@@ -77,7 +98,7 @@ impl Cluster {
     // v_nodes should be sorted
     pub fn replace_v_node(&mut self, v_nodes: Vec<u64>, node_id: NodeKey) {
         let old_v_nodes = &self.v_nodes;
-        let old_node_keys = &self.node_keys;
+        let old_node_keys = &self.nodes_keys;
 
         let mut new_v_nodes = Vec::<Vec<u64>>::new();
         let mut new_node_keys = Vec::<NodeKey>::new();
@@ -123,7 +144,7 @@ impl Cluster {
         new_node_keys.push(node_id);
 
         self.v_nodes = new_v_nodes;
-        self.node_keys = new_node_keys;
+        self.nodes_keys = new_node_keys;
     }
 
     pub fn only_manager(&self, caller: AccountId) -> Result<()> {
@@ -134,7 +155,7 @@ impl Cluster {
         }
     }
 
-    pub fn change_rent(&mut self, rent: Balance) {
+    pub fn set_rent(&mut self, rent: Balance) {
         self.total_rent = rent;
     }
 }

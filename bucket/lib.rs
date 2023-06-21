@@ -64,7 +64,6 @@ pub mod ddc_bucket {
         bucket_params: ParamsStore,
         clusters: ClusterStore,
         cdn_clusters: CdnClusterStore,
-        cluster_params: ParamsStore,
         cdn_nodes: CdnNodeStore,
         nodes: NodeStore,
         accounts: AccountStore,
@@ -111,11 +110,12 @@ pub mod ddc_bucket {
                     .clusters
                     .create(
                         AccountId::default(),
-                        &Vec::<Vec<u64>>::new(),
-                        &Vec::<NodeKey>::new(),
+                        Vec::<NodeKey>::new(),
+                        Vec::<Vec<u64>>::new(),
+                        Vec::<CdnNodeKey>::new(),
+                        ClusterParams::from(""),
                     )
                     .unwrap();
-                let _ = contract.cluster_params.create("".to_string()).unwrap();
                 let _ = contract.buckets.create(AccountId::default(), 0);
                 let _ = contract.bucket_params.create("".to_string()).unwrap();
             })
@@ -458,10 +458,13 @@ pub mod ddc_bucket {
             v_nodes: Vec<Vec<u64>>,
             cdn_nodes_keys: Vec<CdnNodeKey>,
             cluster_params: ClusterParams,
-        ) -> ClusterId {
-            // self.message_cluster_create(nodes_keys, v_nodes, cdn_nodes_keys, cluster_params)
-            //     .unwrap()
-            1u32
+        ) -> Result<ClusterId> {
+            self.message_cluster_create(
+                nodes_keys, 
+                v_nodes, 
+                cdn_nodes_keys, 
+                cluster_params
+            )
         }
 
         /// Adds a Storage node to the targeting cluster.
@@ -632,9 +635,8 @@ pub mod ddc_bucket {
             &mut self, 
             cluster_id: ClusterId, 
             cluster_params: ClusterParams
-        ) {
-            self.message_cluster_change_params(cluster_id, cluster_params)
-                .unwrap();
+        ) -> Result<()> {
+            self.message_cluster_set_params(cluster_id, cluster_params)
         }
 
         /// Removes a cluster.
@@ -1716,7 +1718,7 @@ pub mod ddc_bucket {
         NodeIsAddedToCluster(ClusterId),
         CdnNodeIsAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
-        UnauthorizedCdnNodeOwner
+        UnauthorizedCdnNodeOwner,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

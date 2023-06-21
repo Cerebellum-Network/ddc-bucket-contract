@@ -189,7 +189,7 @@ impl DdcBucket {
             };
             clusters.push(status);
         }
-        (clusters, self.clusters.0.len().try_into().unwrap())
+        (clusters, self.cdn_clusters.0.len().try_into().unwrap())
     }
 
     fn only_cdn_cluster_manager(cluster: &CdnCluster) -> Result<AccountId> {

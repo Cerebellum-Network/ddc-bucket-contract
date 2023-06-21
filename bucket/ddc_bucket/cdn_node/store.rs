@@ -17,31 +17,29 @@ pub struct CdnNodeStore {
 }
 
 impl CdnNodeStore {
-  pub fn create(
-    &mut self,
-    cdn_node_key: CdnNodeKey,
-    provider_id: AccountId,
-    cdn_node_params: CdnNodeParams,
-    undistributed_payment: Balance,
-  ) -> Result<CdnNodeKey> {
+    pub fn create(
+      &mut self,
+      cdn_node_key: CdnNodeKey,
+      provider_id: AccountId,
+      cdn_node_params: CdnNodeParams,
+      undistributed_payment: Balance,
+    ) -> Result<CdnNodeKey> {
 
-      let cdn_node = CdnNode {
-        provider_id,
-        cdn_node_params,
-        undistributed_payment,
-        status: NodeStatus::CREATED,
-        cluster_id: None
-      };
-
-      if self.cdn_nodes.contains(&cdn_node_key) {
-          Err(CdnNodeAlreadyExists)
-      } else {
-          self.cdn_nodes.insert(&cdn_node_key, &cdn_node);
-          self.keys.push(cdn_node_key);
-          Ok(cdn_node_key)
-      }
-
-  }
+        if self.cdn_nodes.contains(&cdn_node_key) {
+            Err(CdnNodeAlreadyExists)
+        } else {
+            let cdn_node = CdnNode::new(
+                cdn_node_key,
+                provider_id,
+                cdn_node_params,
+                undistributed_payment
+            );
+            self.cdn_nodes.insert(&cdn_node_key, &cdn_node);
+            self.keys.push(cdn_node_key);
+            Ok(cdn_node_key)
+        }
+        
+    }
 
   pub fn get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNode> {
       self.cdn_nodes.get(cdn_node_key).ok_or(CdnNodeDoesNotExist)

@@ -2,38 +2,60 @@
 
 use ink_prelude::vec::Vec;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::Mapping;
 
 use crate::ddc_bucket::node::entity::{NodeKey};
+use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 
-use super::entity::{Cluster, ClusterId};
+use super::entity::{Cluster, ClusterId, ClusterParams};
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
-pub struct ClusterStore(pub Vec<Cluster>);
+pub struct ClusterStore {
+    pub clusters: Mapping<ClusterId, Cluster>,
+    pub next_cluster_id: u32
+}
 
 impl ClusterStore {
     pub fn create(
         &mut self,
         manager_id: AccountId,
-        v_nodes: &Vec<Vec<u64>>,
-        node_keys: &Vec<NodeKey>,
+        nodes_keys: Vec<NodeKey>,
+        v_nodes: Vec<Vec<u64>>,
+        cdn_nodes_keys: Vec<CdnNodeKey>,
+        cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
-        let cluster = Cluster::new(manager_id, v_nodes, node_keys);
+        let cluster_id = self.next_cluster_id;
+        self.next_cluster_id = self.next_cluster_id + 1;
 
-        let cluster_id: ClusterId = self.0.len().try_into().unwrap();
-        self.0.push(cluster);
+        let cluster = Cluster::new(
+            manager_id, 
+            nodes_keys,
+            v_nodes, 
+            cdn_nodes_keys,
+            cluster_params
+        );
 
+        self.clusters.insert(&cluster_id, &cluster);
         Ok(cluster_id)
     }
 
-    pub fn get(&self, cluster_id: ClusterId) -> Result<&Cluster> {
-        self.0.get(cluster_id as usize).ok_or(ClusterDoesNotExist)
+    pub fn get(&self, cluster_id: ClusterId) -> Result<Cluster> {
+        self.clusters.get(cluster_id).ok_or(ClusterDoesNotExist)
     }
 
-    pub fn get_mut(&mut self, cluster_id: ClusterId) -> Result<&mut Cluster> {
-        self.0
-            .get_mut(cluster_id as usize)
-            .ok_or(ClusterDoesNotExist)
+    pub fn update(&mut self, cluster_id: ClusterId, cluster: &Cluster) -> Result<()> {
+        if !self.clusters.contains(&cluster_id) {
+            Err(ClusterDoesNotExist)
+        } else {
+            self.clusters.insert(cluster_id, cluster);
+            Ok(())
+        }
     }
+
+    pub fn remove(&mut self, cluster_id: ClusterId) {
+        self.clusters.remove(cluster_id);
+    }
+
 }

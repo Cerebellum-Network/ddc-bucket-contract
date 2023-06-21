@@ -30,10 +30,11 @@ impl DdcBucket {
 
     pub fn message_bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        let mut cluster = self.clusters.get(bucket.cluster_id)?;
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
 
         cluster.take_resource(resource)?;
+        self.clusters.update(bucket.cluster_id, &cluster)?;
         bucket.put_resource(resource);
 
         // Start the payment flow to the cluster.
@@ -52,12 +53,14 @@ impl DdcBucket {
         let now_ms = Self::env().block_timestamp();
         let cash = self.accounts.settle_flow(now_ms, &mut bucket.flow)?;
 
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        let mut cluster = self.clusters.get(bucket.cluster_id)?;
         cluster.revenues.increase(cash);
+        self.clusters.update(bucket.cluster_id, &cluster)?;
 
         Self::env().emit_event(BucketSettlePayment { bucket_id, cluster_id: bucket.cluster_id });
         Ok(())
     }
+
 
     pub fn message_bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) -> Result<()> {
         let caller = Self::env().caller();
@@ -114,19 +117,20 @@ impl DdcBucket {
 
     pub fn message_bucket_set_resource_cap(&mut self, bucket_id: BucketId, new_resource_cap: Resource) ->  Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        let cluster = self.clusters.get(bucket.cluster_id)?;
 
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
         bucket.set_cap(new_resource_cap);
         Ok(())
     }
 
     pub fn message_bucket_set_availability(&mut self, bucket_id: BucketId, public_availability: bool) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
-
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        let cluster = self.clusters.get(bucket.cluster_id)?;
+        
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
         bucket.set_availability(public_availability);
+
         Self::env().emit_event(BucketAvailabilityUpdated { bucket_id, public_availability });
         Ok(())
     }
@@ -138,18 +142,18 @@ impl DdcBucket {
 
     pub fn message_grant_writer_permission(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        let cluster = self.clusters.get(bucket.cluster_id)?;
 
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
         self.buckets_perms.grant_writer_permission(bucket_id, writer).unwrap();
         Ok(())
     }
 
     pub fn message_revoke_writer_permission(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> { 
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        let cluster = self.clusters.get(bucket.cluster_id)?;
 
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
         self.buckets_perms.revoke_writer_permission(bucket_id, writer).unwrap();
         Ok(())
     }
@@ -161,18 +165,18 @@ impl DdcBucket {
 
     pub fn message_grant_reader_permission(&mut self, bucket_id: BucketId, reader: AccountId) -> Result<()> {
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        let cluster = self.clusters.get(bucket.cluster_id)?;
 
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
         self.buckets_perms.grant_reader_permission(bucket_id, reader).unwrap();
         Ok(())
     }
 
     pub fn message_revoke_reader_permission(&mut self, bucket_id: BucketId, reader: AccountId) -> Result<()> { 
         let bucket = self.buckets.get_mut(bucket_id)?;
-        let cluster = self.clusters.get_mut(bucket.cluster_id)?;
+        let cluster = self.clusters.get(bucket.cluster_id)?;
 
-        Self::only_owner_or_cluster_manager(bucket, cluster)?;
+        Self::only_owner_or_cluster_manager(bucket, &cluster)?;
         self.buckets_perms.revoke_reader_permission(bucket_id, reader).unwrap();
         Ok(())
     }

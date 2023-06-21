@@ -26,23 +26,22 @@ impl NodeStore {
         capacity: Resource,
         rent_per_month: Balance,
     ) -> Result<NodeKey> {
-        
-        let node = Node {
-            provider_id,
-            node_params,
-            free_resource: capacity,
-            rent_per_month,
-            status: NodeStatus::CREATED,
-            cluster_id: None
-        };
 
         if self.nodes.contains(&node_key) {
             Err(NodeAlreadyExists)
         } else {
+            let node = Node::new(
+                node_key,
+                provider_id,
+                node_params,
+                capacity,
+                rent_per_month
+            );
             self.nodes.insert(node_key, &node);
             self.keys.push(node_key);
             Ok(node_key)
         }
+        
     }
 
     pub fn get(&self, node_key: NodeKey) -> Result<Node> {
