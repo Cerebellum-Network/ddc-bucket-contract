@@ -71,7 +71,7 @@ const wsProvider = new WsProvider(WS_PROVIDER);
 const api = await ApiPromise.create({ provider: wsProvider });
 const contract = new ContractPromise(api, metadata, ADDRESS);
 
-console.log(await contract.query.getFeeBp(alice.address, txOptions));
+// console.log(await contract.query.getFeeBp(alice.address, txOptions));
 
 console.log("1. adminGrantPermission");
 const res = await signAndSendPromise(await contract.tx.adminGrantPermission(txOptions, sadmin.address, "SuperAdmin"), sadmin);
@@ -94,7 +94,7 @@ const res4 = await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions,
 console.log("6. cdnClusterCreate");
 const res = await signAndSendPromise(await contract.tx.cdnClusterCreate(txOptions, [1n, 2n, 3n, 4n]), sadmin);
 
-console.log("6. nodeCreate");
+console.log("7. nodeCreate");
 for (let i = 0; i < 4; i++) {
   const params = JSON.stringify({ url: `https://node-${i}.v2.storage.devnet.cere.network` });
   const user = createUser();
@@ -102,6 +102,17 @@ for (let i = 0; i < 4; i++) {
   console.log(`  node ${i}: address ${user.address}, param ${params}`); 
   await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, params, 100000, "ACTIVE", user.address), sadmin);
 }
+
+console.log("8. clusterCreate");
+const cparams = JSON.stringify({ replicationFactor: 3 });
+const gen = 0x10000000000000000n / 4n;
+const vNodes = [ [0n], [gen], [gen*2n], [gen*3n] ];
+const sNodes = [1n, 2n, 3n, 4n];
+console.log(cparams, sNodes, vNodes);
+const res = await signAndSendPromise(await contract.tx.clusterCreate(txOptions, alice.address, vNodes, sNodes, cparams), sadmin);
+
+console.log("9. clusterReserveResource");
+const res = await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, "100000"), sadmin);
 
 console.log(res.events.map(event => event.event.toHuman()));
 process.exit(0);
