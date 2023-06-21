@@ -46,8 +46,14 @@ impl DdcBucket {
         let node = self.nodes.get(node_key)?;
         node.only_owner(caller)?;
         node.only_without_cluster()?;
-        self.nodes.remove(node_key)
+        self.nodes.remove(node_key);
 
+        Self::env().emit_event(NodeRemoved {
+            node_key,
+        });
+
+        Ok(())
+        
     }
 
     pub fn message_node_set_params(
@@ -96,7 +102,6 @@ impl DdcBucket {
             };
 
             let node = self.nodes.nodes.get(node_key).unwrap();
-
             // Apply the filter if given.
             if let Some(provider_id) = filter_provider_id {
                 if provider_id != node.provider_id {
@@ -123,10 +128,6 @@ impl DdcBucket {
         node.only_owner(caller)?;
         node.change_tag(new_tag);
         self.nodes.update(node_key, &node)?;
-
-        Self::env().emit_event(NodeRemoved {
-            node_key,
-        });
         
         Ok(())
     }

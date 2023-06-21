@@ -3,7 +3,7 @@
 use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
 use scale::{Decode, Encode};
 use ink_primitives::Key;
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Balance, ClusterId, NodeStatus, Error::*, Result};
 use crate::ddc_bucket::params::store::Params;
 
 pub type ProviderId = AccountId;
@@ -17,6 +17,8 @@ pub struct CdnNode {
     pub provider_id: ProviderId,
     pub undistributed_payment: Balance,
     pub cdn_node_params: CdnNodeParams,
+    pub status: NodeStatus,
+    pub cluster_id: Option<ClusterId>
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -59,4 +61,13 @@ impl CdnNode {
             Err(InsufficientBalance)
         }
     }
+
+    pub fn only_without_cluster(&self) -> Result<()> {
+        if let Some(cluster_id) = self.cluster_id {
+            Err(CdnNodeIsAddedToCluster(cluster_id))
+        } else {
+            Ok(())
+        }
+    }
+    
 }

@@ -990,17 +990,6 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        // /// As node provider, authorize a cluster manager to use his nodes.
-        // #[ink(message, payable)]
-        // pub fn cdn_node_trust_manager(&mut self, manager: AccountId) {
-        //     self.message_cdn_node_trust_manager(manager, true).unwrap();
-        // }
-
-        // /// As node provider, revoke the authorization of a cluster manager to use his nodes.
-        // #[ink(message)]
-        // pub fn cdn_node_distrust_manager(&mut self, manager: AccountId) {
-        //     self.message_cdn_node_trust_manager(manager, false).unwrap();
-        // }
 
         /// Creates a CDN node
         ///
@@ -1029,8 +1018,8 @@ pub mod ddc_bucket {
             &mut self, 
             cdn_node_key: CdnNodeKey, 
             cdn_node_params: CdnNodeParams
-        ) -> CdnNodeKey {
-            self.message_cdn_node_create(cdn_node_key, cdn_node_params).unwrap()
+        ) -> Result<CdnNodeKey> {
+            self.message_cdn_node_create(cdn_node_key, cdn_node_params)
         }
 
         /// Removes a CDN node.
@@ -1059,8 +1048,8 @@ pub mod ddc_bucket {
         pub fn cdn_node_remove(
             &mut self, 
             cdn_node_key: CdnNodeKey
-        ) {
-            self.message_remove_cdn_node(cdn_node_key).unwrap();
+        ) -> Result<()> {
+            self.message_remove_cdn_node(cdn_node_key)
         }
 
         /// Sets parameters for the targeting CDN node.
@@ -1090,9 +1079,8 @@ pub mod ddc_bucket {
             &mut self, 
             cdn_node_key: CdnNodeKey, 
             cdn_node_params: CdnNodeParams
-        ) {
-            self.message_cdn_node_change_params(cdn_node_key, cdn_node_params)
-                .unwrap();
+        ) -> Result<()> {
+            self.message_cdn_node_set_params(cdn_node_key, cdn_node_params)
         }
 
         /// Gets a CDN node.
@@ -1726,6 +1714,7 @@ pub mod ddc_bucket {
         Unauthorized,
         UnknownNode,
         NodeIsAddedToCluster(ClusterId),
+        CdnNodeIsAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner
     }

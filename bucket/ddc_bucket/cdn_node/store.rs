@@ -4,7 +4,7 @@ use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 use ink_storage::Mapping;
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Balance, NodeStatus, Error::*, Result};
 use super::entity::{CdnNode, CdnNodeKey, CdnNodeParams};
 
 
@@ -28,7 +28,9 @@ impl CdnNodeStore {
       let cdn_node = CdnNode {
         provider_id,
         cdn_node_params,
-        undistributed_payment 
+        undistributed_payment,
+        status: NodeStatus::CREATED,
+        cluster_id: None
       };
 
       if self.cdn_nodes.contains(&cdn_node_key) {
@@ -54,12 +56,11 @@ impl CdnNodeStore {
       }
   }
 
-  pub fn remove(&mut self, cdn_node_key: CdnNodeKey) -> Result<()> {
+  pub fn remove(&mut self, cdn_node_key: CdnNodeKey) {
       self.cdn_nodes.remove(cdn_node_key);
       if let Some(pos) = self.keys.iter().position(|x| *x == cdn_node_key) {
           self.keys.remove(pos);
       };
-      Ok(())
   }
 
 }

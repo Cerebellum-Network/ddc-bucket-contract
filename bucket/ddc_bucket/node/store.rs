@@ -58,11 +58,10 @@ impl NodeStore {
         }
     }
 
-    pub fn remove(&mut self, node_key: NodeKey) -> Result<()> {
+    pub fn remove(&mut self, node_key: NodeKey) {
         self.nodes.remove(node_key);
         if let Some(pos) = self.keys.iter().position(|x| *x == node_key) {
             self.keys.remove(pos);
         };
-        Ok(())
     }
 }
