@@ -8,6 +8,25 @@ const WS_PROVIDER = "wss://archive.devnet.cere.network/ws";
 const ADDRESS = "6SfBsKbfPUTN35GCcqAHSMY4MemedK2A73VeJ34Z2FV6PB4r";
 const CERE = 10_000_000_000n;
 
+const cdnNodeParams = [
+  {
+    url: `https://node-0.v2.cdn.devnet.cere.network`,
+    publicKey: "0x1c4a1b081af8dd09096ebb6e7ad61dd549ac2931cdb2b1216589094ad71ca90b",
+  },
+  {
+    url: `https://node-1.v2.cdn.devnet.cere.network`,
+    publicKey: "0x3ec2ec407053acdfe8137d7105e90294f2e0e5f5fe5420fd3172142671dbc25f",
+  },
+  {
+    url: `https://node-2.v2.cdn.devnet.cere.network`,
+    publicKey: "0x20e448c403d3f009ec309394d3aab828c3dbf0d2cc8047f01dded984ec992b41",
+  },
+  {
+    url: `https://node-3.v2.cdn.devnet.cere.network`,
+    publicKey: "0xd2f93cea79e37cfc9e5f78cd3e51b989afb1e257adcbbae00b8cd081539e9f13",
+  }
+];
+
 const txOptions = {
   storageDepositLimit: null,
   gasLimit: 100_000_000_000n,
@@ -71,7 +90,8 @@ const wsProvider = new WsProvider(WS_PROVIDER);
 const api = await ApiPromise.create({ provider: wsProvider });
 const contract = new ContractPromise(api, metadata, ADDRESS);
 
-// console.log(await contract.query.getFeeBp(alice.address, txOptions));
+// const result = await contract.query.cdnNodeList(alice.address, txOptions, 0, 100, null);
+// console.log(result.output);
 
 console.log("1. adminGrantPermission");
 const res = await signAndSendPromise(await contract.tx.adminGrantPermission(txOptions, sadmin.address, "SuperAdmin"), sadmin);
@@ -86,10 +106,9 @@ console.log("4. nodeTrustManager");
 const res = await signAndSendPromise(await contract.tx.nodeTrustManager(txOptions, sadmin.address), sadmin);
 
 console.log("5. cdnNodeCreate");
-const res1 = await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify({ url: `https://node-0.v2.cdn.devnet.cere.network` })), sadmin);
-const res2 = await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify({ url: `https://node-1.v2.cdn.devnet.cere.network` })), sadmin);
-const res3 = await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify({ url: `https://node-2.v2.cdn.devnet.cere.network` })), sadmin);
-const res4 = await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify({ url: `https://node-3.v2.cdn.devnet.cere.network` })), sadmin);
+for (let i = 0; i < cdnNodeParams.length; i++) {
+  await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify(cdnNodeChangeParamss[i]), sadmin);
+}
 
 console.log("6. cdnClusterCreate");
 const res = await signAndSendPromise(await contract.tx.cdnClusterCreate(txOptions, [1n, 2n, 3n, 4n]), sadmin);
@@ -114,7 +133,12 @@ const res = await signAndSendPromise(await contract.tx.clusterCreate(txOptions, 
 console.log("9. clusterReserveResource");
 const res = await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, "100000"), sadmin);
 
-console.log(res.events.map(event => event.event.toHuman()));
+// console.log("cdnNodeChangeParams");
+// for (let i = 0; i < cdnNodeParams.length; i++) {
+//   await signAndSendPromise(await contract.tx.cdnNodeChangeParams(txOptions, i+1, JSON.stringify(cdnNodeParams[i])), sadmin);
+// }
+
+//console.log(res.events.map(event => event.event.toHuman()));
 process.exit(0);
 
 
