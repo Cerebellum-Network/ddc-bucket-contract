@@ -10,28 +10,27 @@ use crate::ddc_bucket::node::entity::{Resource, NodeKey};
 use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 
 use crate::ddc_bucket::params::store::Params;
+use crate::ddc_bucket::topology::store::VNodeToken;
 use crate::ddc_bucket::Error::UnauthorizedClusterManager;
 use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result};
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;
-pub type VNodeIndex = u32;
-pub type VNodeId = (ClusterId, VNodeIndex);
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, PackedLayout, SpreadLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
     pub manager_id: AccountId,
-    
+    pub cluster_params: ClusterParams,
+
+    // storage nodes
     pub nodes_keys: Vec<NodeKey>,
-    pub v_nodes: Vec<Vec<u64>>,
     pub resource_per_vnode: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
     pub total_rent: Balance,
 
-    pub cluster_params: ClusterParams,
-
+    // cdn nodes
     pub cdn_nodes_keys: Vec<CdnNodeKey>,
     pub cdn_resources_used: Resource,
     pub cdn_revenues: Cash,
@@ -57,21 +56,17 @@ impl Cluster {
 
     pub fn new(
         manager_id: AccountId,
-        nodes_keys: Vec<NodeKey>,
-        v_nodes: Vec<Vec<u64>>,
-        cdn_nodes_keys: Vec<CdnNodeKey>,
         cluster_params: ClusterParams,
     ) -> Self {
         Cluster {
             manager_id,
-            nodes_keys,
-            v_nodes,
+            cluster_params,
+            nodes_keys: Vec::new(),
             resource_per_vnode: 0,
             resource_used: 0,
             revenues: Cash(0),
             total_rent: 0,
-            cluster_params,
-            cdn_nodes_keys,
+            cdn_nodes_keys: Vec::new(),
             cdn_usd_per_gb: 104_857_600, // setting initially to 1 cent per GB
             cdn_resources_used: 0,
             cdn_revenues: Cash(0),
@@ -93,58 +88,6 @@ impl Cluster {
         }
         self.resource_used = used;
         Ok(())
-    }
-
-    // v_nodes should be sorted
-    pub fn replace_v_node(&mut self, v_nodes: Vec<u64>, node_id: NodeKey) {
-        let old_v_nodes = &self.v_nodes;
-        let old_node_keys = &self.nodes_keys;
-
-        let mut new_v_nodes = Vec::<Vec<u64>>::new();
-        let mut new_node_keys = Vec::<NodeKey>::new();
-
-        let mut new_v_nodes_idx = 0;
-        let mut v_nodes_for_new_node = Vec::<u64>::new();
-
-        for wrapper_idx in 0..old_v_nodes.len() {
-            let mut v_nodes_wrapper = Vec::<u64>::new();
-            for idx in 0..old_v_nodes.get(wrapper_idx).unwrap().len() {
-                let new_v_node = match v_nodes.get(new_v_nodes_idx) {
-                    Some(v) => *v,
-                    None => 0,
-                };
-
-                if old_v_nodes
-                    .get(wrapper_idx)
-                    .unwrap()
-                    .get(idx)
-                    .unwrap()
-                    .clone()
-                    == new_v_node
-                {
-                    v_nodes_for_new_node.push(new_v_node);
-                    new_v_nodes_idx += 1;
-                } else {
-                    v_nodes_wrapper.push(
-                        old_v_nodes
-                            .get(wrapper_idx)
-                            .unwrap()
-                            .get(idx)
-                            .unwrap()
-                            .clone(),
-                    );
-                }
-            }
-
-            new_v_nodes.push(v_nodes_wrapper);
-            new_node_keys.push(*old_node_keys.get(wrapper_idx).unwrap());
-        }
-
-        new_v_nodes.push(v_nodes_for_new_node);
-        new_node_keys.push(node_id);
-
-        self.v_nodes = new_v_nodes;
-        self.nodes_keys = new_node_keys;
     }
 
     pub fn only_manager(&self, caller: AccountId) -> Result<()> {

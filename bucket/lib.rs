@@ -21,6 +21,7 @@ pub mod ddc_bucket {
     use node::{entity::*, store::*};
     use params::store::*;
     use perm::store::*;
+    use topology::store::*;
 
     use crate::ddc_bucket::account::entity::Account;
     use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
@@ -110,9 +111,6 @@ pub mod ddc_bucket {
                     .clusters
                     .create(
                         AccountId::default(),
-                        Vec::<NodeKey>::new(),
-                        Vec::<Vec<u64>>::new(),
-                        Vec::<CdnNodeKey>::new(),
                         ClusterParams::from(""),
                     )
                     .unwrap();
@@ -430,9 +428,6 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
-        /// * `nodes_keys` - Public Keys of Storage nodes that are being added to the cluster. This param can accept up to 10 nodes per call.
-        /// * `v_nodes` - List of tokens (positions) related to Storage nodes from the `nodes_keys` param. The index of associated physical Storage node must be aligned with its virtual nodes list index.
-        /// * `cdn_nodes_keys` - Public Keys of Storage CDN that are being added to the cluster. This param can accept up to 10 nodes per call.
         /// * `cluster_params` - [Cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.
         ///
         /// # Output
@@ -445,26 +440,13 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `ClusterManagerIsNotTrusted` error if the caller has a lack of trusted manager permissions for nodes he is trying to add.
-        /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
-        /// * `InvalidVirtualNodes` error if there is a mismatch between adding Storage nodes and its virtual nodes.
-        /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
-        /// * `NodeIsAlreadyAddedToCluster(cluster_id)` error if an adding Storage node is already added to this or another cluster.
-        /// * `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if an adding CDN node is already added to this or another cluster.
+        /// * `InvalidClusterParams` error if there is an invalid cluster parameter. 
         #[ink(message, payable)]
         pub fn cluster_create(
             &mut self,
-            nodes_keys: Vec<NodeKey>,
-            v_nodes: Vec<Vec<u64>>,
-            cdn_nodes_keys: Vec<CdnNodeKey>,
             cluster_params: ClusterParams,
         ) -> Result<ClusterId> {
-            self.message_cluster_create(
-                nodes_keys, 
-                v_nodes, 
-                cdn_nodes_keys, 
-                cluster_params
-            )
+            self.message_cluster_create(cluster_params)
         }
 
         /// Adds a Storage node to the targeting cluster.
@@ -499,10 +481,9 @@ pub mod ddc_bucket {
             &mut self,
             cluster_id: ClusterId,
             node_key: NodeKey,
-            v_nodes: Vec<u64>,
-        ) {
-            // self.message_cluster_add_node(cluster_id, node_key, v_nodes)
-            //     .unwrap()
+            v_nodes: Vec<VNodeToken>,
+        ) -> Result<()> {
+            self.message_cluster_add_node(cluster_id, node_key, v_nodes)
         }
 
         /// Removes a Storage node from the targeting cluster.
@@ -1045,7 +1026,7 @@ pub mod ddc_bucket {
         ///
         /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
-        /// * `CdnNodeIsAddedToCluster(cluster_id)` error if the removing CDN node is added to some cluster.
+        /// * `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
         pub fn cdn_node_remove(
             &mut self, 
@@ -1228,7 +1209,7 @@ pub mod ddc_bucket {
         ///
         /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
-        /// * `NodeIsAddedToCluster(cluster_id)` error if the removing Storage node is added to some cluster.
+        /// * `NodeIsAlreadyAddedToCluster(cluster_id)` error if the removing Storage node is added to some cluster.
         #[ink(message)]
         pub fn node_remove(
             &mut self, 
@@ -1714,11 +1695,16 @@ pub mod ddc_bucket {
         InsufficientBalance,
         InsufficientResources,
         Unauthorized,
-        UnknownNode,
-        NodeIsAddedToCluster(ClusterId),
-        CdnNodeIsAddedToCluster(ClusterId),
+        NodeIsAlreadyAddedToCluster(ClusterId),
+        CdnNodeIsAlreadyAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner,
+        TopologyAlreadyExists,
+        TopologyDoesNotExist,
+        VNodeIsNotAssigned(ClusterId, VNodeToken),
+        VNodeIsAlreadyAssignedTo(NodeKey),
+        VNodeDoesNotExists,
+        VNodesDoNotExistsFor(NodeKey)
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

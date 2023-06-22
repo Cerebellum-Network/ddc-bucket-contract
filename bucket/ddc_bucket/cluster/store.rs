@@ -21,9 +21,6 @@ impl ClusterStore {
     pub fn create(
         &mut self,
         manager_id: AccountId,
-        nodes_keys: Vec<NodeKey>,
-        v_nodes: Vec<Vec<u64>>,
-        cdn_nodes_keys: Vec<CdnNodeKey>,
         cluster_params: ClusterParams,
     ) -> Result<ClusterId> {
         let cluster_id = self.next_cluster_id;
@@ -31,9 +28,6 @@ impl ClusterStore {
 
         let cluster = Cluster::new(
             manager_id, 
-            nodes_keys,
-            v_nodes, 
-            cdn_nodes_keys,
             cluster_params
         );
 

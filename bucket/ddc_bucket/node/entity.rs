@@ -113,7 +113,7 @@ impl Node {
 
     pub fn only_without_cluster(&self) -> Result<()> {
         if let Some(cluster_id) = self.cluster_id {
-            Err(NodeIsAddedToCluster(cluster_id))
+            Err(NodeIsAlreadyAddedToCluster(cluster_id))
         } else {
             Ok(())
         }

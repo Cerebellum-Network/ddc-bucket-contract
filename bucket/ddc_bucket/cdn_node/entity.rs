@@ -80,7 +80,7 @@ impl CdnNode {
 
     pub fn only_without_cluster(&self) -> Result<()> {
         if let Some(cluster_id) = self.cluster_id {
-            Err(CdnNodeIsAddedToCluster(cluster_id))
+            Err(CdnNodeIsAlreadyAddedToCluster(cluster_id))
         } else {
             Ok(())
         }
