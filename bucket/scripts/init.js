@@ -42,6 +42,7 @@ const config = {
       }
     ],
   },
+
   testnet: {
     ws_provider: "wss://archive.devnet.cere.network/ws",
     contract_address: "6R2PF5gzKYbNkNLymTr8YNeQgWqNkE6azspwaMLZF2UHc1sg",
@@ -62,6 +63,30 @@ const config = {
       {
         url: `https://node-1.v2.us.cdn.testnet.cere.network`,
         publicKey: "0x7693cbc6a6f3fff67d4eb29bb07bc018e1eee43618d03e6c0a91b0b3e79f272d",
+      },
+    ],
+  },
+
+  mainnet: {
+    ws_provider: "wss://archive.testnet.cere.network/ws",
+    contract_address: "6So8eqxMyWAxJ4ZZ2wCcJym7Cy6BYkc4V8GZZD9wgdCqWMQB",
+    cluster_param: { replicationFactor: 3 },
+    vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
+    storage_nodes: [1n, 2n, 3n],
+    storage_node_params: [
+      { url: `https://node-0.v2.us.storage.mainnet.cere.network` },
+      { url: `https://node-1.v2.us.storage.mainnet.cere.network` },
+      { url: `https://node-2.v2.us.storage.mainnet.cere.network` },
+    ],
+    cdn_nodes: [1n, 2n],
+    cdn_node_params: [
+      {
+        url: `https://node-0.v2.us.cdn.mainnet.cere.network`,
+        publicKey: "0x86af4db1e433ad221b6fa3c1a9fc4de694ab59408ca57584e50d8fd420e7b45b",
+      },
+      {
+        url: `https://node-1.v2.us.cdn.mainnet.cere.network`,
+        publicKey: "0x9a9fb6c479ef7c8f3af54dc0720f08a73d532815d525aa8d69d965e56512440e",
       },
     ],
   },
@@ -163,14 +188,14 @@ for (let i = 0; i < cfg.storage_node_params.length; i++) {
   const user = createUser();
   fs.appendFileSync('secrets.txt', `${user.address}: ${user.mnemonic} -- ${INIT_ENV} storage ${i}\n`);
   console.log(`  node ${i}: address ${user.address}, param ${param}`);
-  await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, param, 1000n, "ACTIVE", user.address), sadmin);
+  await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, param, 100000n, "ACTIVE", user.address), sadmin);
 }
 
 console.log("8. clusterCreate");
 await signAndSendPromise(await contract.tx.clusterCreate(txOptions, alice.address, cfg.vnodes, cfg.storage_nodes, JSON.stringify(cfg.cluster_param)), sadmin);
 
 console.log("9. clusterReserveResource");
-await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, 1000n), sadmin);
+await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, 100000n), sadmin);
 
 // console.log("cdnNodeChangeParams");
 // for (let i = 0; i < cfg.cdn_node_params.length; i++) {
