@@ -170,7 +170,7 @@ console.log("8. clusterCreate");
 await signAndSendPromise(await contract.tx.clusterCreate(txOptions, alice.address, cfg.vnodes, cfg.storage_nodes, JSON.stringify(cfg.cluster_param)), sadmin);
 
 console.log("9. clusterReserveResource");
-await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, "100000"), sadmin);
+await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, 1000n), sadmin);
 
 // console.log("cdnNodeChangeParams");
 // for (let i = 0; i < cfg.cdn_node_params.length; i++) {
