@@ -150,7 +150,7 @@ console.log("4. nodeTrustManager");
 await signAndSendPromise(await contract.tx.nodeTrustManager(txOptions, sadmin.address), sadmin);
 
 console.log("5. cdnNodeCreate");
-for (let i = 0; i < cdnNodeParams.length; i++) {
+for (let i = 0; i < cfg.cdn_node_params.length; i++) {
   await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify(cfg.cdn_node_params[i])), sadmin);
 }
 
@@ -162,8 +162,8 @@ for (let i = 0; i < cfg.storage_node_params.length; i++) {
   const param = JSON.stringify(cfg.storage_node_params[i]);
   const user = createUser();
   fs.appendFileSync('secrets.txt', `${user.address}: ${user.mnemonic} -- ${INIT_ENV} storage ${i}\n`);
-  console.log(`  node ${i}: address ${user.address}, param ${params}`); 
-  await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, param, 100000, "ACTIVE", user.address), sadmin);
+  console.log(`  node ${i}: address ${user.address}, param ${param}`);
+  await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, param, 1000n, "ACTIVE", user.address), sadmin);
 }
 
 console.log("8. clusterCreate");
@@ -172,12 +172,10 @@ await signAndSendPromise(await contract.tx.clusterCreate(txOptions, alice.addres
 console.log("9. clusterReserveResource");
 await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, "100000"), sadmin);
 
-console.log("cdnNodeChangeParams");
-for (let i = 0; i < cfg.cdn_node_params.length; i++) {
-  await signAndSendPromise(await contract.tx.cdnNodeChangeParams(txOptions, i+1, JSON.stringify(cfg.cdn_node_params[i])), sadmin);
-}
+// console.log("cdnNodeChangeParams");
+// for (let i = 0; i < cfg.cdn_node_params.length; i++) {
+//   await signAndSendPromise(await contract.tx.cdnNodeChangeParams(txOptions, i+1, JSON.stringify(cfg.cdn_node_params[i])), sadmin);
+// }
 
 //console.log(res.events.map(event => event.event.toHuman()));
 process.exit(0);
-
-
