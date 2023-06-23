@@ -516,9 +516,8 @@ pub mod ddc_bucket {
             &mut self,
             cluster_id: ClusterId,
             node_key: NodeKey,
-        ) {
-            // self.message_cluster_remove_node(cluster_id, node_key)
-            //     .unwrap()
+        ) -> Result<()> {
+            self.message_cluster_remove_node(cluster_id, node_key)
         }
 
 
@@ -549,8 +548,8 @@ pub mod ddc_bucket {
         /// * `NodeDoesNotExist` error if the new Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
         /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
-        /// * `VNodeHasNoPNode` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
-        /// * `VNodeIsAlreadyAssignedToPNode(NodeKey)` - error if there is some virtual node that is already assigned to other physical node within the same cluster.
+        /// * `VNodeInNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
+        /// * `VNodeIsAlreadyAssignedToNode(NodeKey)` - error if there is some virtual node that is already assigned to other physical node within the same cluster.
         #[ink(message)]
         pub fn cluster_replace_node(
             &mut self,
@@ -1739,17 +1738,17 @@ pub mod ddc_bucket {
         InsufficientBalance,
         InsufficientResources,
         Unauthorized,
+        NodeIsNotAddedToCluster(ClusterId),
         NodeIsAlreadyAddedToCluster(ClusterId),
         CdnNodeIsAlreadyAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner,
-        NodeIsNotAddedToCluster(ClusterId),
         TopologyAlreadyExists,
         NoVNodesInCluster(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
-        VNodeHasNoPNode(ClusterId, VNodeToken),
-        VNodeIsAlreadyAssignedToPNode(NodeKey),
-        PNodeHasNoVNodes(NodeKey)
+        VNodeInNotAssignedToNode(ClusterId, VNodeToken),
+        VNodeIsAlreadyAssignedToNode(NodeKey),
+        NodeHasNoAssignedVNodes(NodeKey)
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

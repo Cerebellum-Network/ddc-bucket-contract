@@ -42,6 +42,7 @@ impl DdcBucket {
         Ok(cluster_id)
     }
 
+
     pub fn message_cluster_add_node(
         &mut self,
         cluster_id: ClusterId,
@@ -51,18 +52,15 @@ impl DdcBucket {
         let caller = Self::env().caller();
 
         let mut node: Node = self.nodes.get(node_key)?;
-        node.only_without_cluster();
+        node.only_without_cluster()?;
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
-        if node.cluster_id.is_some() {
-            return Err(NodeIsAlreadyAddedToCluster(node.cluster_id.unwrap()));
-        }
 
         node.cluster_id = Some(cluster_id);
         self.nodes.update(node_key, &node);
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
         cluster.nodes_keys.push(node_key);
-        for v_node in v_nodes.iter() {
+        for v_node in &v_nodes {
             cluster.total_rent += node.rent_per_month;
         }
         self.clusters.update(cluster_id, &cluster)?;
@@ -71,6 +69,37 @@ impl DdcBucket {
 
         Ok(())
     }
+
+
+    pub fn message_cluster_remove_node(
+        &mut self,
+        cluster_id: ClusterId,
+        node_key: NodeKey,
+    ) -> Result<()> {
+        let caller = Self::env().caller();
+
+        let mut node: Node = self.nodes.get(node_key)?;
+        node.only_with_cluster(cluster_id)?;
+        Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
+        
+        node.cluster_id = None;
+        self.nodes.update(node_key, &node);
+
+        let mut cluster: Cluster = self.clusters.get(cluster_id)?;
+        if let Some(pos) = cluster.nodes_keys.iter().position(|x| *x == node_key) {
+            cluster.nodes_keys.remove(pos);
+        }
+        let v_nodes = self.topology_store.get_vnodes_by_node(node_key)?;
+        for v_node in &v_nodes {
+            cluster.total_rent -= node.rent_per_month;
+        }
+        self.clusters.update(cluster_id, &cluster)?;
+
+        self.topology_store.remove_node(cluster_id, node_key)?;
+
+        Ok(())
+    }
+
 
     pub fn message_cluster_replace_node(
         &mut self,
@@ -82,8 +111,8 @@ impl DdcBucket {
         let manager = Self::only_cluster_manager(&cluster)?;
 
         // Give back resources to the old node for all its v_nodes
-        for v_node in v_nodes.clone() {
-            let old_node_key = self.topology_store.get_node_by_vnode(cluster_id, v_node)?;
+        for v_node in &v_nodes {
+            let old_node_key = self.topology_store.get_node_by_vnode(cluster_id, *v_node)?;
 
             // Give back resources to the old node
             let mut old_node = self.nodes.get(old_node_key)?;
@@ -91,11 +120,7 @@ impl DdcBucket {
             self.nodes.update(old_node_key, &old_node)?;
 
             let mut new_node = self.nodes.get(new_node_key)?;
-            let new_node_cluster_id = new_node.cluster_id
-                .ok_or_else(|| NodeIsNotAddedToCluster(cluster_id))?;
-            if new_node_cluster_id != cluster_id {
-                return Err(NodeIsAlreadyAddedToCluster(new_node_cluster_id));
-            }
+            new_node.only_with_cluster(cluster_id)?;
 
             // Verify that the provider of the new node trusts the cluster manager.
             Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
@@ -114,6 +139,7 @@ impl DdcBucket {
 
         Ok(())
     }
+
 
     pub fn message_cluster_reserve_resource(
         &mut self,
@@ -176,6 +202,7 @@ impl DdcBucket {
 
         Ok(())
     }
+
 
     pub fn message_cluster_set_params(
         &mut self,
