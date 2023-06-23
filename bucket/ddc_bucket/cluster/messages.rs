@@ -13,7 +13,7 @@ use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager};
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterReserveResource,
-    DdcBucket, Result,
+    DdcBucket, Result, Error::*
 };
 
 use super::entity::{ClusterId, ClusterParams};
@@ -53,6 +53,9 @@ impl DdcBucket {
         let mut node: Node = self.nodes.get(node_key)?;
         node.only_without_cluster();
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
+        if node.cluster_id.is_some() {
+            return Err(NodeIsAlreadyAddedToCluster(node.cluster_id.unwrap()));
+        }
 
         node.cluster_id = Some(cluster_id);
         self.nodes.update(node_key, &node);
@@ -65,6 +68,49 @@ impl DdcBucket {
         self.clusters.update(cluster_id, &cluster)?;
 
         self.topology_store.add_node(cluster_id, node_key, v_nodes)?;
+
+        Ok(())
+    }
+
+    pub fn message_cluster_replace_node(
+        &mut self,
+        cluster_id: ClusterId,
+        v_nodes: Vec<u64>,
+        new_node_key: NodeKey,
+    ) -> Result<()> {
+        let cluster = self.clusters.get(cluster_id)?;
+        let manager = Self::only_cluster_manager(&cluster)?;
+
+        // Give back resources to the old node for all its v_nodes
+        for v_node in v_nodes.clone() {
+            let old_node_key = self.topology_store.get_node_by_vnode(cluster_id, v_node)?;
+
+            // Give back resources to the old node
+            let mut old_node = self.nodes.get(old_node_key)?;
+            old_node.put_resource(cluster.resource_per_vnode);
+            self.nodes.update(old_node_key, &old_node)?;
+
+            let mut new_node = self.nodes.get(new_node_key)?;
+            let new_node_cluster_id = new_node.cluster_id
+                .ok_or_else(|| NodeIsNotAddedToCluster(cluster_id))?;
+            if new_node_cluster_id != cluster_id {
+                return Err(NodeIsAlreadyAddedToCluster(new_node_cluster_id));
+            }
+
+            // Verify that the provider of the new node trusts the cluster manager.
+            Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
+            // Reserve resources on the new node.
+            new_node.take_resource(cluster.resource_per_vnode)?;
+            self.nodes.update(new_node_key, &new_node)?;
+        }
+
+        self.topology_store
+            .replace_node(cluster_id, new_node_key, v_nodes)?;
+
+        Self::env().emit_event(ClusterNodeReplaced {
+            cluster_id,
+            node_key: new_node_key,
+        });
 
         Ok(())
     }
@@ -91,43 +137,6 @@ impl DdcBucket {
             cluster_id,
             resource,
         });
-        Ok(())
-    }
-
-    pub fn message_cluster_replace_node(
-        &mut self,
-        cluster_id: ClusterId,
-        v_nodes: Vec<u64>,
-        new_node_key: NodeKey,
-    ) -> Result<()> {
-        let cluster = self.clusters.get(cluster_id)?;
-        let manager = Self::only_cluster_manager(&cluster)?;
-
-        // Give back resources to the old node for all its v_nodes
-        for v_node in v_nodes.clone() {
-            let old_node_key = self.topology_store.get_node_by_vnode(cluster_id, v_node)?;
-
-            // Give back resources to the old node
-            let mut old_node = self.nodes.get(old_node_key)?;
-            old_node.put_resource(cluster.resource_per_vnode);
-            self.nodes.update(old_node_key, &old_node)?;
-
-            let mut new_node = self.nodes.get(new_node_key)?;
-            // Verify that the provider of the new node trusts the cluster manager.
-            Self::only_trusted_manager(&self.perms, manager, new_node.provider_id)?;
-            // Reserve resources on the new node.
-            new_node.take_resource(cluster.resource_per_vnode)?;
-            self.nodes.update(new_node_key, &new_node)?;
-        }
-
-        self.topology_store
-            .replace_node(cluster_id, new_node_key, v_nodes)?;
-
-        Self::env().emit_event(ClusterNodeReplaced {
-            cluster_id,
-            node_key: new_node_key,
-        });
-
         Ok(())
     }
 

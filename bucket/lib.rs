@@ -471,11 +471,11 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
-        /// * `NodeIsAlreadyAddedToCluster(cluster_id)` error if the adding Storage node is already added to this or another cluster.
+        /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
@@ -506,11 +506,11 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
-        /// * `NodeIsNotInCluster` error if the removing Storage node is not in this cluster.
+        /// * `NodeIsNotAddedToCluster(ClusterId)` error if the removing Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_remove_node(
             &mut self,
@@ -519,6 +519,50 @@ pub mod ddc_bucket {
         ) {
             // self.message_cluster_remove_node(cluster_id, node_key)
             //     .unwrap()
+        }
+
+
+        /// Reasignes existing virtual nodes in the targeting cluster.
+        ///
+        /// This endpoint reasignes existing virtual nodes to another physical Storage node within the same cluster.
+        /// All specifying virtual nodes must pre-exist in the cluster and the new physical Storage node must be added to the cluster preliminary.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `v_nodes` - List of tokens (positions) to reasign for the new physical Storage node.
+        /// * `new_node_key` - Public Key associated with the Storage node that is being reasigned to the specified virtual nodes.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeReplaced` event on successful virtual node reassignment.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
+        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `NodeDoesNotExist` error if the new Storage node does not exist.
+        /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
+        /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
+        /// * `VNodeHasNoPNode` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
+        /// * `VNodeIsAlreadyAssignedToPNode(NodeKey)` - error if there is some virtual node that is already assigned to other physical node within the same cluster.
+        #[ink(message)]
+        pub fn cluster_replace_node(
+            &mut self,
+            cluster_id: ClusterId,
+            v_nodes: Vec<u64>,
+            new_node_key: NodeKey,
+        ) -> Result<()> {
+            self.message_cluster_replace_node(
+                cluster_id, 
+                v_nodes, 
+                new_node_key
+            )
         }
 
         /// Adds a CDN node to the targeting cluster.
@@ -541,11 +585,11 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
-        /// * `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if the adding CDN node is already added to this or another cluster.
+        /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the adding CDN node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_add_cdn_node(
             &mut self,
@@ -575,7 +619,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
@@ -609,7 +653,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message, payable)]
         pub fn cluster_set_params(
@@ -639,7 +683,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
         #[ink(message)]
@@ -670,10 +714,10 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
-        /// * `NodeIsNotInCluster` error if the Storage node is not in this cluster.
+        /// * `NodeIsNotAddedToCluster(ClusterId)` error if the Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_node_status(
             &mut self, 
@@ -704,7 +748,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterOwner` error if the caller is not the cluster owner.
+        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `CdnNodeIsNotInCluster` error if the Storage node is not in this cluster.
@@ -1026,7 +1070,7 @@ pub mod ddc_bucket {
         ///
         /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
-        /// * `CdnNodeIsAlreadyAddedToCluster(cluster_id)` error if the removing CDN node is added to some cluster.
+        /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
         pub fn cdn_node_remove(
             &mut self, 
@@ -1209,7 +1253,7 @@ pub mod ddc_bucket {
         ///
         /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
-        /// * `NodeIsAlreadyAddedToCluster(cluster_id)` error if the removing Storage node is added to some cluster.
+        /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the removing Storage node is added to some cluster.
         #[ink(message)]
         pub fn node_remove(
             &mut self, 
@@ -1699,12 +1743,13 @@ pub mod ddc_bucket {
         CdnNodeIsAlreadyAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner,
+        NodeIsNotAddedToCluster(ClusterId),
         TopologyAlreadyExists,
-        TopologyDoesNotExist,
-        VNodeIsNotAssigned(ClusterId, VNodeToken),
-        VNodeIsAlreadyAssignedTo(NodeKey),
-        VNodeDoesNotExists,
-        VNodesDoNotExistsFor(NodeKey)
+        NoVNodesInCluster(ClusterId),
+        VNodeDoesNotExistsInCluster(ClusterId),
+        VNodeHasNoPNode(ClusterId, VNodeToken),
+        VNodeIsAlreadyAssignedToPNode(NodeKey),
+        PNodeHasNoVNodes(NodeKey)
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

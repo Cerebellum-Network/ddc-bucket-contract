@@ -24,15 +24,15 @@ pub struct TopologyStore {
 impl TopologyStore {
 
     pub fn get_vnodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
-        self.clusters_map.get(cluster_id).ok_or(TopologyDoesNotExist)
+        self.clusters_map.get(cluster_id).ok_or(NoVNodesInCluster(cluster_id))
     }
 
     pub fn get_vnodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {
-        self.nodes_map.get(node_key).ok_or(VNodesDoNotExistsFor(node_key))
+        self.nodes_map.get(node_key).ok_or(PNodeHasNoVNodes(node_key))
     }
 
     pub fn get_node_by_vnode(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
-        self.vnodes_map.get((cluster_id, v_node)).ok_or(VNodeIsNotAssigned(cluster_id, v_node))
+        self.vnodes_map.get((cluster_id, v_node)).ok_or(VNodeHasNoPNode(cluster_id, v_node))
     }
 
     pub fn create_topology(
@@ -61,7 +61,7 @@ impl TopologyStore {
 
             // vnode that is being added should not exist in the cluster topology
             if let Some(node_key) = self.vnodes_map.get((cluster_id, v_node)) {
-                return Err(VNodeIsAlreadyAssignedTo(node_key));
+                return Err(VNodeIsAlreadyAssignedToPNode(node_key));
             }
 
             // vnode that is being added should be assined to the physical node
@@ -92,7 +92,7 @@ impl TopologyStore {
 
             // vnode that is being reasigned should be in the cluster topology
             if None == all_vnodes.iter().position(|x| *x == *v_node) {
-                return Err(VNodeDoesNotExists);
+                return Err(VNodeDoesNotExistsInCluster(cluster_id));
             };
             
             // vnode that is being reasigned should be already assigned to a physical node
