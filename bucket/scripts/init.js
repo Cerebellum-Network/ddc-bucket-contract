@@ -13,16 +13,24 @@ const config = {
   devnet: {
     ws_provider: "wss://archive.devnet.cere.network/ws",
     contract_address: "6SfBsKbfPUTN35GCcqAHSMY4MemedK2A73VeJ34Z2FV6PB4r",
-    cluster_param: { replicationFactor: 3 },
-    vnodes: [ [0n], [GEN / 4n], [GEN * 2n / 4n], [GEN * 3n / 4n] ],
-    storage_nodes: [1n, 2n, 3n, 4n],
+    cluster: {
+      1n: {
+        param: { replicationFactor: 3 },
+        vnodes: [ [0n], [GEN / 4n], [GEN * 2n / 4n], [GEN * 3n / 4n] ],
+        storage_nodes: [1n, 2n, 3n, 4n],
+      },
+    },
     storage_node_params: [
       { url: `https://node-0.v2.storage.devnet.cere.network` },
       { url: `https://node-1.v2.storage.devnet.cere.network` },
       { url: `https://node-2.v2.storage.devnet.cere.network` },
       { url: `https://node-3.v2.storage.devnet.cere.network` },
     ],
-    cdn_nodes: [1n, 2n, 3n, 4n],
+    cdn_cluster: {
+      0n: {
+        cdn_nodes: [1n, 2n, 3n, 4n],
+      },
+    },
     cdn_node_params: [
       {
         url: `https://node-0.v2.cdn.devnet.cere.network`,
@@ -45,16 +53,36 @@ const config = {
 
   testnet: {
     ws_provider: "wss://archive.devnet.cere.network/ws",
-    contract_address: "6R2PF5gzKYbNkNLymTr8YNeQgWqNkE6azspwaMLZF2UHc1sg",
-    cluster_param: { replicationFactor: 3 },
-    vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
-    storage_nodes: [1n, 2n, 3n],
+    // contract_address: "6R2PF5gzKYbNkNLymTr8YNeQgWqNkE6azspwaMLZF2UHc1sg",
+    contract_address: "6UWDf6rEgSDFRr1h2pMdCbifowTDK64yRkDR6nc3C1cjL82e",
+    cluster: {
+      1n: {
+        storage_nodes: [1n, 2n, 3n],
+        vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
+        param: { replicationFactor: 3 },
+      },
+      2n: {
+        storage_nodes: [4n, 5n, 6n],
+        vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
+        param: { replicationFactor: 3 },
+      },
+    },
     storage_node_params: [
       { url: `https://node-0.v2.us.storage.testnet.cere.network` },
       { url: `https://node-1.v2.us.storage.testnet.cere.network` },
       { url: `https://node-2.v2.us.storage.testnet.cere.network` },
+      { url: `https://node-0.v2.eu.storage.testnet.cere.network` },
+      { url: `https://node-1.v2.eu.storage.testnet.cere.network` },
+      { url: `https://node-2.v2.eu.storage.testnet.cere.network` },
     ],
-    cdn_nodes: [1n, 2n],
+    cdn_cluster: {
+      0n: {
+        cdn_nodes: [1n, 2n],
+      },
+      1n: {
+        cdn_nodes: [3n, 4n],
+      },
+    },
     cdn_node_params: [
       {
         url: `https://node-0.v2.us.cdn.testnet.cere.network`,
@@ -70,15 +98,23 @@ const config = {
   mainnet: {
     ws_provider: "wss://archive.testnet.cere.network/ws",
     contract_address: "6So8eqxMyWAxJ4ZZ2wCcJym7Cy6BYkc4V8GZZD9wgdCqWMQB",
-    cluster_param: { replicationFactor: 3 },
-    vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
-    storage_nodes: [1n, 2n, 3n],
+    cluster: {
+      1n: {
+        param: { replicationFactor: 3 },
+        vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
+        storage_nodes: [1n, 2n, 3n],
+      },
+    },
     storage_node_params: [
       { url: `https://node-0.v2.us.storage.mainnet.cere.network` },
       { url: `https://node-1.v2.us.storage.mainnet.cere.network` },
       { url: `https://node-2.v2.us.storage.mainnet.cere.network` },
     ],
-    cdn_nodes: [1n, 2n],
+    cdn_cluster: {
+      0n: {
+        cdn_nodes: [1n, 2n],
+      },
+    },
     cdn_node_params: [
       {
         url: `https://node-0.v2.us.cdn.mainnet.cere.network`,
@@ -142,7 +178,7 @@ function createUser() {
 
 const cfg = config[INIT_ENV];
 if (cfg === undefined) {
-  console.error("Please provide INIT_ENV");
+  console.error("Please provide INIT_ENV as one of ", Object.keys(config));
   process.exit(-1);
 }
 console.log(cfg);
@@ -151,7 +187,6 @@ await cryptoWaitReady();
 const keyring = new Keyring({ type: "sr25519" });
 const alice = keyring.addFromUri("//Alice");
 const sadmin = keyring.addFromUri(SUPERADMIN_MNEMONIC);
-
 console.log(`Superadmin: ${sadmin.address}`);
 
 // Contract metadata
@@ -179,8 +214,11 @@ for (let i = 0; i < cfg.cdn_node_params.length; i++) {
   await signAndSendPromise(await contract.tx.cdnNodeCreate(txOptions, JSON.stringify(cfg.cdn_node_params[i])), sadmin);
 }
 
-console.log("6. cdnClusterCreate");
-await signAndSendPromise(await contract.tx.cdnClusterCreate(txOptions, cfg.cdn_nodes), sadmin);
+for (let id in cfg.cdn_cluster) {
+  const clu = cfg.cdn_cluster[id];
+  console.log("6. cdnClusterCreate, cluster: ", id, clu);
+  await signAndSendPromise(await contract.tx.cdnClusterCreate(txOptions, clu.cdn_nodes), sadmin);
+}
 
 console.log("7. nodeCreate");
 for (let i = 0; i < cfg.storage_node_params.length; i++) {
@@ -191,11 +229,15 @@ for (let i = 0; i < cfg.storage_node_params.length; i++) {
   await signAndSendPromise(await contract.tx.nodeCreate(txOptions, 1n * CERE, param, 100000n, "ACTIVE", user.address), sadmin);
 }
 
-console.log("8. clusterCreate");
-await signAndSendPromise(await contract.tx.clusterCreate(txOptions, alice.address, cfg.vnodes, cfg.storage_nodes, JSON.stringify(cfg.cluster_param)), sadmin);
+for (let id in cfg.cluster) {
+  const clu = cfg.cluster[id];
 
-console.log("9. clusterReserveResource");
-await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, 1, 100000n), sadmin);
+  console.log("8. clusterCreate, cluster: ", id, clu);
+  await signAndSendPromise(await contract.tx.clusterCreate(txOptions, alice.address, clu.vnodes, clu.storage_nodes, JSON.stringify(clu.param)), sadmin);
+
+  console.log("9. clusterReserveResource, cluster: ", id);
+  await signAndSendPromise(await contract.tx.clusterReserveResource(txOptions, id, 100000n), sadmin);
+}
 
 // console.log("cdnNodeChangeParams");
 // for (let i = 0; i < cfg.cdn_node_params.length; i++) {
