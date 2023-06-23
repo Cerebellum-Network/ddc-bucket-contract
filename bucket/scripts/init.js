@@ -82,6 +82,9 @@ const config = {
       1n: {
         cdn_nodes: [3n, 4n],
       },
+      2n: {
+        cdn_nodes: [5n, 6n],
+      },
     },
     cdn_node_params: [
       {
@@ -91,6 +94,22 @@ const config = {
       {
         url: `https://node-1.v2.us.cdn.testnet.cere.network`,
         publicKey: "0x7693cbc6a6f3fff67d4eb29bb07bc018e1eee43618d03e6c0a91b0b3e79f272d",
+      },
+      {
+        url: `https://node-0.v2.eu.cdn.testnet.cere.network`,
+        publicKey: "0xdce47cdd1da69c19261b72e3c58e93d78e49d1ac20a566b535cb9bcf9d197958",
+      },
+      {
+        url: `https://node-1.v2.eu.cdn.testnet.cere.network`,
+        publicKey: "0xb8541743735ffba6877b214925a9ec07c813369bb36b49ee5849b1fea0f9dd55",
+      },
+      {
+        url: `https://node-0.unmarshal.v2.us.cdn.testnet.cere.network`,
+        publicKey: "0x685168b78deb42eebf01e38d18c9302f032c50e544d56c1c4f86b13b0a2ad40a",
+      },
+      {
+        url: `https://node-1.unmarshal.v2.us.cdn.testnet.cere.network`,
+        publicKey: "0xeeb3683dcd43e9c7f8759b1dce2440d767ae1c51dec05b584d785e24997cb947",
       },
     ],
   },
