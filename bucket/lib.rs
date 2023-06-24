@@ -23,15 +23,11 @@ pub mod ddc_bucket {
     use perm::store::*;
     use topology::store::*;
 
-    use crate::ddc_bucket::account::entity::Account;
-    use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
-    use crate::ddc_bucket::committer::store::EraConfig;
-    use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
+    use crate::ddc_bucket::network_fee::{NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
 
     use self::buckets_perms::store::BucketsPermsStore;
-    use self::cdn_cluster::store::CdnClusterStore;
     use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
     use self::protocol::store::ProtocolStore;
     use self::topology::store::TopologyStore;
@@ -41,7 +37,6 @@ pub mod ddc_bucket {
     pub mod bucket;
     pub mod buckets_perms;
     pub mod cash;
-    pub mod cdn_cluster;
     pub mod cdn_node;
     pub mod cluster;
     pub mod committer;
@@ -64,7 +59,6 @@ pub mod ddc_bucket {
         buckets_perms: BucketsPermsStore,
         bucket_params: ParamsStore,
         clusters: ClusterStore,
-        cdn_clusters: CdnClusterStore,
         cdn_nodes: CdnNodeStore,
         nodes: NodeStore,
         accounts: AccountStore,

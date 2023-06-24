@@ -4,7 +4,7 @@ use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 use ink_storage::Mapping;
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, NodeStatus, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use super::entity::{CdnNode, CdnNodeKey, CdnNodeParams};
 
 
@@ -29,7 +29,6 @@ impl CdnNodeStore {
             Err(CdnNodeAlreadyExists)
         } else {
             let cdn_node = CdnNode::new(
-                cdn_node_key,
                 provider_id,
                 cdn_node_params,
                 undistributed_payment

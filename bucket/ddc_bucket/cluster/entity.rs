@@ -5,13 +5,12 @@ use ink_prelude::vec::Vec;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
 use scale::{Decode, Encode};
 use ink_primitives::Key;
-use crate::ddc_bucket::cash::Cash;
+use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::node::entity::{Resource, NodeKey};
 use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 
 use crate::ddc_bucket::params::store::Params;
-use crate::ddc_bucket::topology::store::VNodeToken;
-use crate::ddc_bucket::Error::UnauthorizedClusterManager;
+use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
 use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result};
 
 pub type ClusterId = u32;
@@ -74,7 +73,12 @@ impl Cluster {
     }
 
     pub fn get_rent(&self, resource: Resource) -> Balance {
-        return self.total_rent * resource as Balance;
+        let rent = self.total_rent * resource as Balance;
+        rent
+    }
+
+    pub fn set_rent(&mut self, rent: Balance) {
+        self.total_rent = rent;
     }
 
     pub fn put_resource(&mut self, amount: Resource) {
@@ -98,7 +102,28 @@ impl Cluster {
         }
     }
 
-    pub fn set_rent(&mut self, rent: Balance) {
-        self.total_rent = rent;
+    pub fn cdn_get_revenue_cere(&self) -> Cash {
+        self.cdn_revenues
     }
+
+    pub fn cdn_set_rate(&mut self, cdn_usd_per_gb: Balance) {
+        self.cdn_usd_per_gb = cdn_usd_per_gb;
+    }
+
+    pub fn cdn_get_rate(&self) -> Balance {
+        self.cdn_usd_per_gb
+    }
+
+    pub fn cdn_put_revenues(&mut self, amount: Cash) {
+        self.cdn_revenues.increase(amount);
+    }
+
+    pub fn cdn_take_revenues(&mut self, amount: Payable) -> Result<()> {
+        if amount.peek() > self.cdn_revenues.peek() {
+            return Err(InsufficientBalance);
+        }
+        self.cdn_revenues.pay_unchecked(amount);
+        Ok(())
+    }
+
 }

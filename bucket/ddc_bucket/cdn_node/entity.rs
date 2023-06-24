@@ -39,7 +39,6 @@ pub struct CdnNodeInfo {
 impl CdnNode {
 
     pub fn new(
-        cdn_node_key: CdnNodeKey,
         provider_id: AccountId,
         cdn_node_params: CdnNodeParams,
         undistributed_payment: Balance
@@ -87,7 +86,7 @@ impl CdnNode {
     }
 
     pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
-        if let Some(cluster_id) = self.cluster_id {
+        if let Some(_) = self.cluster_id {
             Ok(())
         } else {
             Err(CdnNodeIsNotAddedToCluster(cluster_id))

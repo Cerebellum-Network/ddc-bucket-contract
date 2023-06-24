@@ -4,6 +4,7 @@ use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterInfo};
+use crate::ddc_bucket::bucket::entity::{BucketId};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
 use crate::ddc_bucket::topology::store::{VNodeToken};
@@ -18,6 +19,8 @@ use crate::ddc_bucket::{
 };
 
 use super::entity::{ClusterId, ClusterParams};
+
+const KB_PER_GB: Balance = 1_000_000;
 
 impl DdcBucket {
 
@@ -58,7 +61,7 @@ impl DdcBucket {
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
 
         node.cluster_id = Some(cluster_id);
-        self.nodes.update(node_key, &node);
+        self.nodes.update(node_key, &node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
         cluster.nodes_keys.push(node_key);
@@ -90,7 +93,7 @@ impl DdcBucket {
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
         
         node.cluster_id = None;
-        self.nodes.update(node_key, &node);
+        self.nodes.update(node_key, &node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
         if let Some(pos) = cluster.nodes_keys.iter().position(|x| *x == node_key) {
@@ -165,7 +168,7 @@ impl DdcBucket {
         Self::only_trusted_manager(&self.perms, manager, cdn_node.provider_id)?;
 
         cdn_node.cluster_id = Some(cluster_id);
-        self.cdn_nodes.update(cdn_node_key, &cdn_node);
+        self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
         cluster.cdn_nodes_keys.push(cdn_node_key);
@@ -192,7 +195,7 @@ impl DdcBucket {
         Self::only_trusted_manager(&self.perms, caller, cdn_node.provider_id)?;
         
         cdn_node.cluster_id = None;
-        self.cdn_nodes.update(cdn_node_key, &cdn_node);
+        self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
         if let Some(pos) = cluster.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
@@ -233,6 +236,7 @@ impl DdcBucket {
         });
         Ok(())
     }
+
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
         let mut cluster = self.clusters.get(cluster_id)?;
@@ -285,6 +289,7 @@ impl DdcBucket {
         Ok(())
     }
 
+
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?.clone();
         Ok(ClusterInfo {
@@ -292,6 +297,7 @@ impl DdcBucket {
             cluster,
         })
     }
+
 
     pub fn message_cluster_list(
         &self,
@@ -321,6 +327,150 @@ impl DdcBucket {
         (clusters, self.clusters.next_cluster_id - 1)
     }
 
+
+    // Set the price usd per gb
+    pub fn message_cdn_set_rate(
+        &mut self, 
+        cluster_id: ClusterId, 
+        cdn_usd_per_gb: Balance
+    ) -> Result<()> {
+        let caller = Self::env().caller();
+
+        let mut cluster = self.clusters.get(cluster_id)?;
+        cluster.only_manager(caller)?;
+        cluster.cdn_set_rate(cdn_usd_per_gb);
+        self.clusters.update(cluster_id, &cluster)?;
+
+        Ok(())
+    }
+
+
+    // Get the price usd per gb
+    pub fn message_cdn_get_rate(&self, cluster_id: ClusterId) -> Result<Balance> {
+        let cluster = self.clusters.get(cluster_id)?;
+        let rate = cluster.cdn_get_rate();
+        Ok(rate)
+    }
+
+
+    // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
+    pub fn message_cdn_cluster_put_revenue(
+        &mut self, 
+        cluster_id: ClusterId, 
+        aggregates_accounts: Vec<(AccountId, u128)>, 
+        aggregates_nodes: Vec<(CdnNodeKey, u128)>, 
+        aggregates_buckets: Vec<(BucketId, Resource)>, 
+        era: u64
+    ) -> Result<()> {
+        let mut cluster = self.clusters.get(cluster_id)?;
+        // Self::only_cdn_cluster_manager(cluster)?;
+
+        let mut cluster_payment = 0;
+        let mut _undistributed_payment_accounts = 0;
+
+        let aggregate_payments_accounts;
+        {
+            let conv = &self.accounts.1;
+            aggregate_payments_accounts = aggregates_accounts.iter().map(|(client_id, resources_used)| {
+                let account_id = *client_id;
+                let cere_payment: Balance = conv.to_cere(*resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
+                (account_id, cere_payment)
+            }).collect::<Vec<(AccountId, Balance)>>();
+        }
+
+        for &(client_id, payment) in aggregate_payments_accounts.iter() {
+            if let Ok(mut account) = self.accounts.get(&client_id) {
+                account.withdraw_bonded(Payable(payment))?;
+                _undistributed_payment_accounts += payment;
+                self.accounts.save(&client_id, &account);
+            } else {
+                return Err(InsufficientBalance)
+            }
+        };
+
+        let conv = &self.accounts.1;
+        let committer = &mut self.committer_store;
+
+        for &(cdn_node_key, resources_used) in aggregates_nodes.iter() {
+            let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
+            let protocol_fee = self.protocol_store.get_fee_bp();
+            let protocol = &mut self.protocol_store;
+            
+            let payment = conv.to_cere (resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
+
+            // let protocol_payment = payment * protocol_fee as u128/ 10_000;
+            let node_payment = payment * (10_000 - protocol_fee) as u128 / 10_000;
+            let protocol_payment = payment - node_payment;
+            
+            cdn_node.put_payment(node_payment);
+
+            protocol.put_revenues(Cash(protocol_payment));
+            self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
+
+            committer.set_validated_commit(cdn_node_key, era).unwrap();
+            cluster_payment += node_payment;
+        }
+        // Add check that two payments should equal?
+
+        // Go through buckets and deduct used resources
+        for &(bucket_id, resources_used) in aggregates_buckets.iter() {
+            let bucket = self.buckets.get_mut(bucket_id)?;
+
+            if bucket.resource_consumption_cap <= resources_used {
+                bucket.resource_consumption_cap -= resources_used;
+            }
+        }
+
+        // Add revenues to cluster
+        cluster.cdn_put_revenues(Cash(cluster_payment));
+        self.clusters.update(cluster_id, &cluster)?;
+
+        Ok(())
+    }
+
+
+    pub fn message_cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
+        let mut cluster = self.clusters.get(cluster_id)?;
+
+        // Charge the network fee from the cluster.
+        Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
+
+        // Charge the cluster management fee.
+        Self::capture_fee(
+            self.network_fee.cluster_management_fee_bp(),
+            cluster.manager_id,
+            &mut cluster.revenues)?;
+
+        // First accumulated revenues to distribute.
+        let mut distributed_revenue = 0;
+    
+        for cdn_node_key in &cluster.cdn_nodes_keys {
+            let cdn_node = self.cdn_nodes.get(*cdn_node_key)?;
+            distributed_revenue += cdn_node.undistributed_payment;
+        }
+
+        // Charge the provider payments from the cluster.
+        cluster.revenues.pay(Payable(distributed_revenue))?;
+
+        // Distribute revenues to nodes
+        for cdn_node_key in &cluster.cdn_nodes_keys {
+            let mut cdn_node = self.cdn_nodes.get(*cdn_node_key)?;
+
+            Self::send_cash(cdn_node.provider_id, Cash(cdn_node.undistributed_payment))?;
+            cdn_node.take_payment(cdn_node.undistributed_payment)?;
+            self.cdn_nodes.update(*cdn_node_key, &cdn_node)?;
+
+            Self::env().emit_event(ClusterDistributeRevenues {
+                cluster_id, 
+                provider_id: cdn_node.provider_id 
+            });
+        }
+        self.clusters.update(cluster_id, &cluster)?;
+
+        Ok(())
+    }
+    
+
     fn only_cluster_manager(cluster: &Cluster) -> Result<AccountId> {
         let caller = Self::env().caller();
         if caller == cluster.manager_id {
@@ -329,6 +479,7 @@ impl DdcBucket {
             Err(UnauthorizedClusterManager)
         }
     }
+
 
     fn only_trusted_manager(
         perm_store: &PermStore,
@@ -343,4 +494,6 @@ impl DdcBucket {
             Err(ClusterManagerIsNotTrusted)
         }
     }
+
+
 }

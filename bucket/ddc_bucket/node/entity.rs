@@ -66,7 +66,6 @@ pub struct NodeInfo {
 impl Node {
 
     pub fn new(
-        node_key: AccountId,
         provider_id: AccountId,
         node_params: NodeParams,
         capacity: Resource,
@@ -120,7 +119,7 @@ impl Node {
     }
 
     pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
-        if let Some(cluster_id) = self.cluster_id {
+        if let Some(_) = self.cluster_id {
             Ok(())
         } else {
             Err(NodeIsNotAddedToCluster(cluster_id))
