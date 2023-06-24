@@ -595,7 +595,7 @@ pub mod ddc_bucket {
             cluster_id: ClusterId,
             cdn_node_key: CdnNodeKey,
         ) -> Result<()> {
-            self.message_cdn_cluster_add_cdn_node(cluster_id, cdn_node_key)
+            self.message_cluster_add_cdn_node(cluster_id, cdn_node_key)
         }
 
         /// Removes a CDN node from the targeting cluster.
@@ -622,14 +622,14 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
-        /// * `CdnNodeIsNotInCluster` error if the removing CDN node is not in this cluster.
+        /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the removing CDN node is not in this cluster.
         #[ink(message)]
         pub fn cluster_remove_cdn_node(
             &mut self,
             cluster_id: ClusterId,
             cdn_node_key: CdnNodeKey,
-        ) {
-
+        ) -> Result<()> {
+            self.message_cluster_remove_cdn_node(cluster_id, cdn_node_key)
         }
         
         /// Sets parameters for the targeting cluster.
@@ -750,7 +750,7 @@ pub mod ddc_bucket {
         /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
-        /// * `CdnNodeIsNotInCluster` error if the Storage node is not in this cluster.
+        /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the CDN node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_cdn_node_status(
             &mut self, 

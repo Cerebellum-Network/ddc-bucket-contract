@@ -13,13 +13,14 @@ use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager};
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
-    ClusterCdnNodeAdded, ClusterDistributeRevenues, ClusterReserveResource,
+    ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource,
     DdcBucket, Result, Error::*
 };
 
 use super::entity::{ClusterId, ClusterParams};
 
 impl DdcBucket {
+
 
     pub fn message_cluster_create(
         &mut self,
@@ -152,14 +153,14 @@ impl DdcBucket {
     }
 
 
-    pub fn message_cdn_cluster_add_cdn_node(
+    pub fn message_cluster_add_cdn_node(
         &mut self,
         cluster_id: ClusterId,
         cdn_node_key: CdnNodeKey,
     ) -> Result<()> {
         let manager = Self::env().caller();
 
-        let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
+        let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_without_cluster()?;
         Self::only_trusted_manager(&self.perms, manager, cdn_node.provider_id)?;
 
@@ -177,6 +178,36 @@ impl DdcBucket {
 
         Ok(())
     }
+
+
+    pub fn message_cluster_remove_cdn_node(
+        &mut self,
+        cluster_id: ClusterId,
+        cdn_node_key: CdnNodeKey,
+    ) -> Result<()> {
+        let caller = Self::env().caller();
+
+        let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
+        cdn_node.only_with_cluster(cluster_id)?;
+        Self::only_trusted_manager(&self.perms, caller, cdn_node.provider_id)?;
+        
+        cdn_node.cluster_id = None;
+        self.cdn_nodes.update(cdn_node_key, &cdn_node);
+
+        let mut cluster: Cluster = self.clusters.get(cluster_id)?;
+        if let Some(pos) = cluster.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
+            cluster.cdn_nodes_keys.remove(pos);
+        }
+        self.clusters.update(cluster_id, &cluster)?;
+
+        Self::env().emit_event(ClusterCdnNodeRemoved { 
+            cluster_id, 
+            cdn_node_key 
+        });
+
+        Ok(())
+    }
+
 
     pub fn message_cluster_reserve_resource(
         &mut self,
