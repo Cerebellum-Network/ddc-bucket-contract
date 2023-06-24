@@ -85,5 +85,13 @@ impl CdnNode {
             Ok(())
         }
     }
+
+    pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
+        if let Some(cluster_id) = self.cluster_id {
+            Ok(())
+        } else {
+            Err(CdnNodeIsNotAddedToCluster(cluster_id))
+        }
+    }
     
 }

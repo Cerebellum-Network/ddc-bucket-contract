@@ -12,7 +12,8 @@ use crate::ddc_bucket::perm::store::PermStore;
 use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager};
 use crate::ddc_bucket::{
-    AccountId, Balance, ClusterCreated, ClusterDistributeRevenues, ClusterReserveResource,
+    AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
+    ClusterCdnNodeAdded, ClusterDistributeRevenues, ClusterReserveResource,
     DdcBucket, Result, Error::*
 };
 
@@ -67,6 +68,11 @@ impl DdcBucket {
 
         self.topology_store.add_node(cluster_id, node_key, v_nodes)?;
 
+        Self::env().emit_event(ClusterNodeAdded { 
+            cluster_id, 
+            node_key 
+        });
+
         Ok(())
     }
 
@@ -96,6 +102,11 @@ impl DdcBucket {
         self.clusters.update(cluster_id, &cluster)?;
 
         self.topology_store.remove_node(cluster_id, node_key)?;
+
+        Self::env().emit_event(ClusterNodeRemoved { 
+            cluster_id, 
+            node_key 
+        });
 
         Ok(())
     }
@@ -140,6 +151,32 @@ impl DdcBucket {
         Ok(())
     }
 
+
+    pub fn message_cdn_cluster_add_cdn_node(
+        &mut self,
+        cluster_id: ClusterId,
+        cdn_node_key: CdnNodeKey,
+    ) -> Result<()> {
+        let manager = Self::env().caller();
+
+        let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
+        cdn_node.only_without_cluster()?;
+        Self::only_trusted_manager(&self.perms, manager, cdn_node.provider_id)?;
+
+        cdn_node.cluster_id = Some(cluster_id);
+        self.cdn_nodes.update(cdn_node_key, &cdn_node);
+
+        let mut cluster: Cluster = self.clusters.get(cluster_id)?;
+        cluster.cdn_nodes_keys.push(cdn_node_key);
+        self.clusters.update(cluster_id, &cluster)?;
+
+        Self::env().emit_event(ClusterCdnNodeAdded { 
+            cluster_id, 
+            cdn_node_key 
+        });
+
+        Ok(())
+    }
 
     pub fn message_cluster_reserve_resource(
         &mut self,

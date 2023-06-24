@@ -594,8 +594,8 @@ pub mod ddc_bucket {
             &mut self,
             cluster_id: ClusterId,
             cdn_node_key: CdnNodeKey,
-        ) {
-
+        ) -> Result<()> {
+            self.message_cdn_cluster_add_cdn_node(cluster_id, cdn_node_key)
         }
 
         /// Removes a CDN node from the targeting cluster.
@@ -1740,6 +1740,7 @@ pub mod ddc_bucket {
         Unauthorized,
         NodeIsNotAddedToCluster(ClusterId),
         NodeIsAlreadyAddedToCluster(ClusterId),
+        CdnNodeIsNotAddedToCluster(ClusterId),
         CdnNodeIsAlreadyAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner,
