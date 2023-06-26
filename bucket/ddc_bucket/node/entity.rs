@@ -22,8 +22,8 @@ pub struct Node {
     pub rent_per_month: Balance,
     pub free_resource: Resource,
     pub node_params: NodeParams,
-    pub status: NodeStatus,
-    pub cluster_id: Option<ClusterId>
+    pub cluster_id: Option<ClusterId>,
+    pub status_in_cluster: Option<NodeStatusInCluster>,
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -36,23 +36,22 @@ impl ink_storage::traits::PackedAllocate for Node {
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
-pub enum NodeStatus {
-    CREATED,
+pub enum NodeStatusInCluster {
     ACTIVE,
     ADDING,
     DELETING,
     OFFLINE,
 }
 
-impl SpreadAllocate for NodeStatus { 
+impl SpreadAllocate for NodeStatusInCluster { 
     fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        NodeStatus::CREATED 
+        NodeStatusInCluster::ACTIVE 
     }
 }
 
-impl Default for NodeStatus {
+impl Default for NodeStatusInCluster {
     fn default() -> Self {
-        NodeStatus::CREATED 
+        NodeStatusInCluster::ACTIVE 
     }
 }
 
@@ -76,8 +75,8 @@ impl Node {
             node_params,
             free_resource: capacity,
             rent_per_month,
-            status: NodeStatus::CREATED,
-            cluster_id: None
+            cluster_id: None,
+            status_in_cluster: None,
         }
     }
 
@@ -93,8 +92,18 @@ impl Node {
         }
     }
 
-    pub fn change_tag(&mut self, new_tag: NodeStatus) {
-        self.status = new_tag;
+    pub fn set_cluster(&mut self, cluster_id: ClusterId, status: NodeStatusInCluster) {
+        self.cluster_id = Some(cluster_id);
+        self.status_in_cluster = Some(status);
+    }
+
+    pub fn unset_cluster(&mut self) {
+        self.cluster_id = None;
+        self.status_in_cluster = None;
+    }
+
+    pub fn change_status_in_cluster(&mut self, status: NodeStatusInCluster) {
+        self.status_in_cluster = Some(status);
     }
 
     pub fn put_resource(&mut self, amount: Resource) {

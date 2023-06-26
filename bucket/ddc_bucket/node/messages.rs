@@ -1,8 +1,9 @@
 //! The public interface to manage Nodes.
 
-use crate::ddc_bucket::node::entity::{NodeInfo, Resource, NodeKey, NodeParams, NodeStatus};
+use crate::ddc_bucket::node::entity::{NodeInfo, Resource, NodeKey, NodeParams, NodeStatusInCluster};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, NodeRemoved, NodeParamsSet, Result};
+use crate::ddc_bucket::cluster::entity::ClusterId;
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
@@ -121,16 +122,7 @@ impl DdcBucket {
         (nodes, self.nodes.keys.len().try_into().unwrap())
         
     }
-
-    pub fn message_node_change_tag(&mut self, node_key: NodeKey, new_tag: NodeStatus) -> Result<()> {
-        let caller = Self::env().caller();
-        let mut node = self.nodes.get(node_key)?;
-        node.only_owner(caller)?;
-        node.change_tag(new_tag);
-        self.nodes.update(node_key, &node)?;
-        
-        Ok(())
-    }
+    
 
     pub fn message_node_trust_manager(
         &mut self,

@@ -4,7 +4,7 @@ use crate::ddc_bucket::account::entity::Account;
 // use crate::ddc_bucket::cdn_node::entity::CdnNodeKey;
 use crate::ddc_bucket::cluster::entity::ClusterInfo;
 use crate::ddc_bucket::flow::Flow;
-use crate::ddc_bucket::node::entity::{NodeStatus, NodeKey};
+use crate::ddc_bucket::node::entity::{NodeStatusInCluster, NodeKey};
 use crate::ddc_bucket::schedule::{Schedule, MS_PER_MONTH};
 use crate::ddc_bucket::Error::*;
 use crate::ddc_bucket::*;
@@ -71,7 +71,7 @@ fn new_cluster() -> TestCluster {
         rent_per_vnode,
         node_params0.to_string(),
         capacity,
-        NodeStatus::ADDING,
+        NodeStatusInCluster::ADDING,
     );
 
     // Provide another Node.
@@ -83,7 +83,7 @@ fn new_cluster() -> TestCluster {
         rent_per_vnode,
         node_params1.to_string(),
         capacity,
-        NodeStatus::ADDING,
+        NodeStatusInCluster::ADDING,
     );
 
     // Provide another Node.
@@ -95,7 +95,7 @@ fn new_cluster() -> TestCluster {
         rent_per_vnode,
         node_params2.to_string(),
         capacity,
-        NodeStatus::ADDING,
+        NodeStatusInCluster::ADDING,
     );
 
     // Create a Cluster.
@@ -321,7 +321,7 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id0,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    status: NodeStatus::ADDING,
+                    status: NodeStatusInCluster::ADDING,
                     node_params: ctx.node_params0.to_string(),
                 }
             }
@@ -336,7 +336,7 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id1,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    status: NodeStatus::ADDING,
+                    status: NodeStatusInCluster::ADDING,
                     node_params: ctx.node_params1.to_string(),
                 }
             }
@@ -351,7 +351,7 @@ fn cluster_create_works() {
                     provider_id: ctx.provider_id2,
                     rent_per_month: ctx.rent_per_vnode,
                     free_resource: ctx.capacity - ctx.reserved * 3,
-                    status: NodeStatus::ADDING,
+                    status: NodeStatusInCluster::ADDING,
                     node_params: ctx.node_params2.to_string(),
                 }
             }
@@ -807,7 +807,7 @@ fn cluster_add_node() {
     let rent_per_month = 100;
     let node_params = "new_node";
     let capacity = 1000;
-    let status = NodeStatus::ACTIVE;
+    let status = NodeStatusInCluster::ACTIVE;
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     let new_node_id = ctx.contract.node_create(
@@ -994,7 +994,7 @@ fn bucket_reserve_0_works() {
                     provider_id: AccountId::default(),
                     rent_per_month: 0,
                     free_resource: 0,
-                    status: NodeStatus::ACTIVE,
+                    status: NodeStatusInCluster::ACTIVE,
                     node_params: "".to_string(),
                 }
             }],
@@ -1315,7 +1315,7 @@ fn node_list_works() {
         rent_per_month,
         node_params1.to_string(),
         capacity,
-        NodeStatus::ADDING,
+        NodeStatusInCluster::ADDING,
     );
 
     let node_params2 = "{\"url\":\"https://ddc-2.cere.network/bucket/{BUCKET_ID}\"}";
@@ -1325,7 +1325,7 @@ fn node_list_works() {
         rent_per_month,
         node_params2.to_string(),
         capacity,
-        NodeStatus::ADDING,
+        NodeStatusInCluster::ADDING,
     );
 
     let node_status = ddc_bucket.node_get(AccountId::from([0x0b; 32])).unwrap();
@@ -1340,7 +1340,7 @@ fn node_list_works() {
             provider_id: owner_id1,
             rent_per_month,
             free_resource: capacity,
-            status: NodeStatus::ADDING,
+            status: NodeStatusInCluster::ADDING,
             node_params: node_params1.to_string(),
         },
     };
@@ -1351,7 +1351,7 @@ fn node_list_works() {
             provider_id: owner_id2,
             rent_per_month,
             free_resource: capacity,
-            status: NodeStatus::ADDING,
+            status: NodeStatusInCluster::ADDING,
             node_params: node_params2.to_string(),
         },
     };

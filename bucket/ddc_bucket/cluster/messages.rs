@@ -15,7 +15,7 @@ use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterMa
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
     ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource,
-    DdcBucket, Result, Error::*
+    ClusterRemoved, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, DdcBucket, NodeStatusInCluster, Result, Error::*
 };
 
 use super::entity::{ClusterId, ClusterParams};
@@ -60,7 +60,7 @@ impl DdcBucket {
         node.only_without_cluster()?;
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
 
-        node.cluster_id = Some(cluster_id);
+        node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
         self.nodes.update(node_key, &node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
@@ -92,7 +92,7 @@ impl DdcBucket {
         node.only_with_cluster(cluster_id)?;
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
         
-        node.cluster_id = None;
+        node.unset_cluster();
         self.nodes.update(node_key, &node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
@@ -167,7 +167,7 @@ impl DdcBucket {
         cdn_node.only_without_cluster()?;
         Self::only_trusted_manager(&self.perms, manager, cdn_node.provider_id)?;
 
-        cdn_node.cluster_id = Some(cluster_id);
+        cdn_node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         let mut cluster: Cluster = self.clusters.get(cluster_id)?;
@@ -175,6 +175,35 @@ impl DdcBucket {
         self.clusters.update(cluster_id, &cluster)?;
 
         Self::env().emit_event(ClusterCdnNodeAdded { 
+            cluster_id, 
+            cdn_node_key 
+        });
+
+        Ok(())
+    }
+
+
+    pub fn message_cluster_remove_cdn_node(
+        &mut self,
+        cluster_id: ClusterId,
+        cdn_node_key: CdnNodeKey,
+    ) -> Result<()> {
+        let caller = Self::env().caller();
+
+        let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
+        cdn_node.only_with_cluster(cluster_id)?;
+        Self::only_trusted_manager(&self.perms, caller, cdn_node.provider_id)?;
+        
+        cdn_node.unset_cluster();
+        self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
+
+        let mut cluster: Cluster = self.clusters.get(cluster_id)?;
+        if let Some(pos) = cluster.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
+            cluster.cdn_nodes_keys.remove(pos);
+        }
+        self.clusters.update(cluster_id, &cluster)?;
+
+        Self::env().emit_event(ClusterCdnNodeRemoved { 
             cluster_id, 
             cdn_node_key 
         });
@@ -194,35 +223,56 @@ impl DdcBucket {
         self.clusters.remove(cluster_id);
         self.topology_store.remove_topology(cluster_id)?;
 
+        Self::env().emit_event(ClusterRemoved { 
+            cluster_id, 
+        });
+
         Ok(())
     }
 
 
-    pub fn message_cluster_remove_cdn_node(
-        &mut self,
+    pub fn message_cluster_set_node_status(
+        &mut self, 
         cluster_id: ClusterId,
-        cdn_node_key: CdnNodeKey,
+        node_key: NodeKey, 
+        status_in_cluster: NodeStatusInCluster
     ) -> Result<()> {
-        let caller = Self::env().caller();
+        let cluster: Cluster = self.clusters.get(cluster_id)?;
+        Self::only_cluster_manager(&cluster)?;
 
-        let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
-        cdn_node.only_with_cluster(cluster_id)?;
-        Self::only_trusted_manager(&self.perms, caller, cdn_node.provider_id)?;
+        let mut node = self.nodes.get(node_key)?;
+        node.change_status_in_cluster(status_in_cluster.clone());
+        self.nodes.update(node_key, &node)?;
+
+        Self::env().emit_event(ClusterNodeStatusSet { 
+            node_key,
+            cluster_id,
+            status: status_in_cluster
+        });
         
-        cdn_node.cluster_id = None;
+        Ok(())
+    }
+
+
+    pub fn message_cluster_set_cdn_node_status(
+        &mut self, 
+        cluster_id: ClusterId,
+        cdn_node_key: CdnNodeKey, 
+        status_in_cluster: NodeStatusInCluster
+    ) -> Result<()> {
+        let cluster: Cluster = self.clusters.get(cluster_id)?;
+        Self::only_cluster_manager(&cluster)?;
+
+        let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
+        cdn_node.change_status_in_cluster(status_in_cluster.clone());
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
-        let mut cluster: Cluster = self.clusters.get(cluster_id)?;
-        if let Some(pos) = cluster.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
-            cluster.cdn_nodes_keys.remove(pos);
-        }
-        self.clusters.update(cluster_id, &cluster)?;
-
-        Self::env().emit_event(ClusterCdnNodeRemoved { 
-            cluster_id, 
-            cdn_node_key 
+        Self::env().emit_event(ClusterCdnNodeStatusSet { 
+            cdn_node_key,
+            cluster_id,
+            status: status_in_cluster
         });
-
+        
         Ok(())
     }
 

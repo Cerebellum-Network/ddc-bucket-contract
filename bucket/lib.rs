@@ -373,7 +373,9 @@ pub mod ddc_bucket {
     pub struct ClusterNodeStatusSet {
         #[ink(topic)]
         node_key: NodeKey,
-        status: NodeStatus
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        status: NodeStatusInCluster
     }
 
     #[ink(event)]
@@ -381,7 +383,9 @@ pub mod ddc_bucket {
     pub struct ClusterCdnNodeStatusSet {
         #[ink(topic)]
         cdn_node_key: CdnNodeKey,
-        status: NodeStatus
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        status: NodeStatusInCluster
     }
 
     /// A vnode was re-assigned to new node.
@@ -716,9 +720,13 @@ pub mod ddc_bucket {
             &mut self, 
             cluster_id: ClusterId,
             node_key: NodeKey, 
-            status: NodeStatus
-        ) {
-            self.message_node_change_tag(node_key, status).unwrap();
+            status_in_cluster: NodeStatusInCluster
+        ) -> Result<()> {
+            self.message_cluster_set_node_status(
+                cluster_id, 
+                node_key, 
+                status_in_cluster
+            )
         }
 
         /// Changes CDN node status.
@@ -750,8 +758,13 @@ pub mod ddc_bucket {
             &mut self, 
             cluster_id: ClusterId,
             cdn_node_key: CdnNodeKey, 
-            status: NodeStatus
-        ) {
+            status_in_cluster: NodeStatusInCluster
+        ) -> Result<()> {
+            self.message_cluster_set_cdn_node_status(
+                cluster_id, 
+                cdn_node_key, 
+                status_in_cluster
+            )
         }
 
         /// Gets a cluster.

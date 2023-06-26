@@ -3,7 +3,7 @@
 use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
 use scale::{Decode, Encode};
 use ink_primitives::Key;
-use crate::ddc_bucket::{AccountId, Balance, ClusterId, NodeStatus, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Balance, ClusterId, NodeStatusInCluster, Error::*, Result};
 use crate::ddc_bucket::params::store::Params;
 
 pub type ProviderId = AccountId;
@@ -17,8 +17,8 @@ pub struct CdnNode {
     pub provider_id: ProviderId,
     pub undistributed_payment: Balance,
     pub cdn_node_params: CdnNodeParams,
-    pub status: NodeStatus,
-    pub cluster_id: Option<ClusterId>
+    pub cluster_id: Option<ClusterId>,
+    pub status_in_cluster: Option<NodeStatusInCluster>,
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -47,8 +47,8 @@ impl CdnNode {
             provider_id,
             cdn_node_params,
             undistributed_payment,
-            status: NodeStatus::CREATED,
-            cluster_id: None
+            cluster_id: None,
+            status_in_cluster: None,
         }
     }
 
@@ -62,6 +62,20 @@ impl CdnNode {
         } else { 
             Err(UnauthorizedCdnNodeOwner) 
         }
+    }
+
+    pub fn set_cluster(&mut self, cluster_id: ClusterId, status: NodeStatusInCluster) {
+        self.cluster_id = Some(cluster_id);
+        self.status_in_cluster = Some(status);
+    }
+
+    pub fn unset_cluster(&mut self) {
+        self.cluster_id = None;
+        self.status_in_cluster = None;
+    }
+
+    pub fn change_status_in_cluster(&mut self, status: NodeStatusInCluster) {
+        self.status_in_cluster = Some(status);
     }
 
     pub fn put_payment(&mut self, amount: Balance) {

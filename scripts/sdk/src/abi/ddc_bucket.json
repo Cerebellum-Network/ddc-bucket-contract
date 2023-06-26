@@ -1265,7 +1265,7 @@
               "label": "new_tag",
               "type": {
                 "displayName": [
-                  "NodeStatus"
+                  "NodeStatusInCluster"
                 ],
                 "type": 27
               }
@@ -2149,7 +2149,7 @@
               "label": "status",
               "type": {
                 "displayName": [
-                  "NodeStatus"
+                  "NodeStatusInCluster"
                 ],
                 "type": 27
               }
@@ -3661,7 +3661,7 @@
                 {
                   "name": "status",
                   "type": 27,
-                  "typeName": "NodeStatus"
+                  "typeName": "NodeStatusInCluster"
                 },
                 {
                   "name": "node_params",
@@ -3714,7 +3714,7 @@
             "ddc_bucket",
             "node",
             "entity",
-            "NodeStatus"
+            "NodeStatusInCluster"
           ]
         }
       },
