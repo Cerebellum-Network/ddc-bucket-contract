@@ -11,7 +11,7 @@ impl DdcBucket {
         is_granted: bool,
     ) -> Result<()> {
         self.only_with_permission(Permission::SuperAdmin)?;
-        self.impl_grant_permission(grantee, permission, is_granted)
+        self.impl_grant_permission(grantee, permission)
     }
 
     pub fn message_admin_withdraw(&mut self, amount: Balance) -> Result<()> {

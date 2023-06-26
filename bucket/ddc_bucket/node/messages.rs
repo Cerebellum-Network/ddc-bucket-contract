@@ -122,16 +122,5 @@ impl DdcBucket {
         (nodes, self.nodes.keys.len().try_into().unwrap())
         
     }
-    
-
-    pub fn message_node_trust_manager(
-        &mut self,
-        manager: AccountId,
-        is_trusted: bool,
-    ) -> Result<()> {
-        let trust_giver = Self::env().caller();
-        let permission = Permission::ManagerTrustedBy(trust_giver);
-        self.impl_grant_permission(manager, permission, is_trusted)
-    }
 
 }

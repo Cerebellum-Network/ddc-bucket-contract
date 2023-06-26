@@ -1494,7 +1494,7 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
-        /// * `cluster_manager` - cluster manager account.
+        /// * `manager` - cluster manager account.
         ///
         /// # Output
         ///
@@ -1510,9 +1510,9 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn grant_manager_permission(
             &mut self, 
-            cluster_manager: AccountId
-        ) {
-            self.message_node_trust_manager(cluster_manager, true).unwrap();
+            manager: AccountId
+        ) -> Result<()> {
+            self.message_grant_manager_permission(manager)
         }
         
         /// Revokes permissions from cluster manager.
@@ -1523,7 +1523,7 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
-        /// * `cluster_manager` - cluster manager account.
+        /// * `manager` - cluster manager account.
         ///
         /// # Output
         ///
@@ -1539,9 +1539,9 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn revoke_manager_permission(
             &mut self, 
-            cluster_manager: AccountId
-        ) {
-            self.message_node_trust_manager(cluster_manager, false).unwrap();
+            manager: AccountId
+        ) -> Result<()> {
+            self.message_revoke_manager_permission(manager)
         }
 
     }
