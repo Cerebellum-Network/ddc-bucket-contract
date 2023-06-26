@@ -1552,6 +1552,7 @@ pub mod ddc_bucket {
     pub struct NodeOwnershipTransferred {
         #[ink(topic)]
         account_id: AccountId,
+        #[ink(topic)]
         node_key: NodeKey,
     }
 
@@ -1560,6 +1561,7 @@ pub mod ddc_bucket {
     pub struct CdnNodeOwnershipTransferred {
         #[ink(topic)]
         account_id: AccountId,
+        #[ink(topic)]
         cdn_node_key: CdnNodeKey,
     }
 
@@ -1632,7 +1634,7 @@ pub mod ddc_bucket {
         /// # Parameters
         ///
         /// * `node_key` - Public Key associated with the Storage node.
-        /// * `owner` - Storage node owner
+        /// * `new_owner` - New Storage node owner
         ///
         /// # Output
         ///
@@ -1651,9 +1653,9 @@ pub mod ddc_bucket {
         pub fn admin_transfer_node_ownership(
             &mut self, 
             node_key: NodeKey, 
-            owner: AccountId
-        ) {
-
+            new_owner: AccountId
+        ) -> Result<()> {
+            self.message_admin_transfer_node_ownership(node_key, new_owner)
         }
 
         /// Transfers CDN node ownership.
@@ -1664,7 +1666,7 @@ pub mod ddc_bucket {
         /// # Parameters
         ///
         /// * `cdn_node_key` - Public Key associated with the CDN node.
-        /// * `owner` - CDN node owner
+        /// * `new_owner` - CDN node owner
         ///
         /// # Output
         ///
@@ -1683,9 +1685,9 @@ pub mod ddc_bucket {
         pub fn admin_transfer_cdn_node_ownership(
             &mut self, 
             cdn_node_key: CdnNodeKey, 
-            owner: AccountId
-        ) {
-
+            new_owner: AccountId
+        ) -> Result<()> {
+            self.message_admin_transfer_cdn_node_ownership(cdn_node_key, new_owner)
         }
 
         // /// As SuperAdmin, withdraw the funds held in custody in this contract.
@@ -1749,13 +1751,16 @@ pub mod ddc_bucket {
         CdnNodeIsAlreadyAddedToCluster(ClusterId),
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner,
+        UnauthorizedSuperAdmin,
         TopologyAlreadyExists,
         ClusterIsNotEmpty,
         ClusterIsNotInitialized(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
         VNodeInNotAssignedToNode(ClusterId, VNodeToken),
         VNodeIsAlreadyAssignedToNode(NodeKey),
-        NodeHasNoAssignedVNodes(NodeKey)
+        NodeHasNoAssignedVNodes(NodeKey),
+        NodeOwnerIsNotSuperAdmin,
+        CdnNodeOwnerIsNotSuperAdmin
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

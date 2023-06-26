@@ -88,7 +88,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let caller = Self::env().caller();
 
-        let mut node: Node = self.nodes.get(node_key)?;
+        let mut node = self.nodes.get(node_key)?;
         node.only_with_cluster(cluster_id)?;
         Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
         
@@ -291,7 +291,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ManagerTrustedBy(grantor);
-        self.impl_grant_permission(manager, permission)?;
+        self.grant_permission(manager, permission)?;
 
         Self::env().emit_event(PermissionGranted { 
             account_id: manager,
@@ -308,7 +308,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ManagerTrustedBy(grantor);
-        self.impl_revoke_permission(manager, permission)?;
+        self.revoke_permission(manager, permission)?;
 
         Self::env().emit_event(PermissionRevoked { 
             account_id: manager,
