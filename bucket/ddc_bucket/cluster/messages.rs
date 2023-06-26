@@ -93,7 +93,7 @@ impl DdcBucket {
         if let Some(pos) = cluster.nodes_keys.iter().position(|x| *x == node_key) {
             cluster.nodes_keys.remove(pos);
         }
-        let v_nodes = self.topology_store.get_v_nodes_by_node(node_key)?;
+        let v_nodes = self.topology_store.get_v_nodes_by_node(node_key);
         for v_node in &v_nodes {
             cluster.total_rent -= node.rent_per_month;
         }
@@ -340,8 +340,8 @@ impl DdcBucket {
         cluster.put_resource(resource);
         self.clusters.update(cluster_id, &cluster)?;
 
-        let cluster_vnodes = self.topology_store.get_v_nodes_by_cluster(cluster_id)?;
-        for v_node in cluster_vnodes {
+        let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
+        for v_node in cluster_v_nodes {
             let node_key = self.topology_store.get_node_by_v_node(cluster_id, v_node)?;
             let mut node = self.nodes.get(node_key)?;
             node.take_resource(resource)?;
@@ -358,10 +358,7 @@ impl DdcBucket {
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?;
-
-        let cluster_v_nodes = self.topology_store
-            .get_v_nodes_by_cluster(cluster_id)
-            .unwrap_or(Vec::new());
+        let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
 
         Ok(ClusterInfo {
             cluster_id,
@@ -390,9 +387,7 @@ impl DdcBucket {
                 }
             }
 
-            let cluster_v_nodes = self.topology_store
-                .get_v_nodes_by_cluster(cluster_id)
-                .unwrap_or(Vec::new());
+            let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
 
             // Include the complete status of matched items.
             let cluster_info = ClusterInfo {
@@ -421,8 +416,8 @@ impl DdcBucket {
         )?;
 
         // Charge the provider payments from the cluster.
-        let cluster_vnodes = self.topology_store.get_v_nodes_by_cluster(cluster_id)?;
-        let num_shares = cluster_vnodes.len() as Balance;
+        let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
+        let num_shares = cluster_v_nodes.len() as Balance;
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 

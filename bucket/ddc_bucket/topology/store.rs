@@ -23,12 +23,12 @@ pub struct TopologyStore {
 
 impl TopologyStore {
 
-    pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
-        self.cluster_v_nodes_map.get(cluster_id).ok_or(TopologyIsNotCreated(cluster_id))
+    pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Vec<VNodeToken> {
+        self.cluster_v_nodes_map.get(cluster_id).unwrap_or(Vec::new())
     }
 
-    pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {
-        self.v_nodes_map.get(node_key).ok_or(NodeHasNoAssignedVNodes(node_key))
+    pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Vec<VNodeToken> {
+        self.v_nodes_map.get(node_key).unwrap_or(Vec::new())
     }
 
     pub fn get_node_by_v_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
@@ -59,7 +59,7 @@ impl TopologyStore {
         v_nodes: Vec<VNodeToken>,
     ) -> Result<()> {
 
-        let mut cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id)?;
+        let mut cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id);
 
         for v_node in &v_nodes {
 
@@ -90,8 +90,8 @@ impl TopologyStore {
         node_key: NodeKey
     ) -> Result<()> {
 
-        let mut cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id)?;
-        let v_nodes = self.get_v_nodes_by_node(node_key)?;
+        let mut cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id);
+        let v_nodes = self.get_v_nodes_by_node(node_key);
 
         for v_node in &v_nodes {
 
@@ -126,7 +126,7 @@ impl TopologyStore {
         v_nodes_to_reasign: Vec<VNodeToken>,
     ) -> Result<()> {
 
-        let cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id)?;
+        let cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id);
 
         for v_node in &v_nodes_to_reasign {
 
@@ -139,7 +139,7 @@ impl TopologyStore {
             let old_node_key = self.get_node_by_v_node(cluster_id, *v_node)?;
 
             // vnode that is being reasigned should be among other vnodes assigned to the old physical node
-            let mut old_node_v_nodes = self.get_v_nodes_by_node(old_node_key)?;
+            let mut old_node_v_nodes = self.get_v_nodes_by_node(old_node_key);
 
             // vnode that is being reasigned should be unasigned from the old physical node
             if let Some(pos) = old_node_v_nodes.iter().position(|x| *x == *v_node) {
@@ -163,7 +163,7 @@ impl TopologyStore {
         cluster_id: ClusterId,
     ) -> Result<()> {
 
-        let cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id)?;
+        let cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id);
 
         for v_node in &cluster_v_nodes {
             let node_key = self.get_node_by_v_node(cluster_id, *v_node)?;
