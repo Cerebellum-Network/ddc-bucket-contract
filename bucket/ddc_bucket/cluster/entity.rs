@@ -91,6 +91,26 @@ impl Cluster {
         }
     }
 
+    pub fn add_node(&mut self, node_key: NodeKey) {
+        self.nodes_keys.push(node_key);
+    }
+
+    pub fn remove_node(&mut self, node_key: NodeKey) {
+        if let Some(pos) = self.nodes_keys.iter().position(|x| *x == node_key) {
+            self.nodes_keys.remove(pos);
+        }
+    }
+
+    pub fn add_cdn_node(&mut self, cdn_node_key: CdnNodeKey) {
+        self.cdn_nodes_keys.push(cdn_node_key);
+    }
+
+    pub fn remove_cdn_node(&mut self, cdn_node_key: CdnNodeKey) {
+        if let Some(pos) = self.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
+            self.cdn_nodes_keys.remove(pos);
+        }    
+    }
+
     pub fn set_params(&mut self, cluster_params: ClusterParams) -> Result<()> {
         if cluster_params.len() > CLUSTER_PARAMS_MAX_LEN {
             return Err(ParamsTooBig);

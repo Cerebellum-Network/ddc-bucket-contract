@@ -60,7 +60,7 @@ impl DdcBucket {
         self.nodes.update(node_key, &node)?;
 
         let mut cluster = self.clusters.get(cluster_id)?;
-        cluster.nodes_keys.push(node_key);
+        cluster.add_node(node_key);
         for v_node in &v_nodes {
             cluster.total_rent += node.rent_per_month;
         }
@@ -90,9 +90,7 @@ impl DdcBucket {
         self.nodes.update(node_key, &node)?;
 
         let mut cluster = self.clusters.get(cluster_id)?;
-        if let Some(pos) = cluster.nodes_keys.iter().position(|x| *x == node_key) {
-            cluster.nodes_keys.remove(pos);
-        }
+        cluster.remove_node(node_key);
         let v_nodes = self.topology_store.get_v_nodes_by_node(node_key);
         for v_node in &v_nodes {
             cluster.total_rent -= node.rent_per_month;
@@ -165,7 +163,7 @@ impl DdcBucket {
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         let mut cluster = self.clusters.get(cluster_id)?;
-        cluster.cdn_nodes_keys.push(cdn_node_key);
+        cluster.add_cdn_node(cdn_node_key);
         self.clusters.update(cluster_id, &cluster)?;
 
         Self::env().emit_event(ClusterCdnNodeAdded { 
@@ -190,9 +188,7 @@ impl DdcBucket {
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         let mut cluster = self.clusters.get(cluster_id)?;
-        if let Some(pos) = cluster.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
-            cluster.cdn_nodes_keys.remove(pos);
-        }
+        cluster.remove_cdn_node(cdn_node_key);
         self.clusters.update(cluster_id, &cluster)?;
 
         Self::env().emit_event(ClusterCdnNodeRemoved { 
