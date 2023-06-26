@@ -51,15 +51,18 @@ pub struct ClusterInfo {
     pub cluster: Cluster,
 }
 
+pub const CLUSTER_PARAMS_MAX_LEN: usize = 100_000;
+
 impl Cluster {
 
     pub fn new(
         manager_id: AccountId,
         cluster_params: ClusterParams,
-    ) -> Self {
-        Cluster {
+    ) -> Result<Self> {
+
+        let mut cluster = Cluster {
             manager_id,
-            cluster_params,
+            cluster_params: ClusterParams::default(),
             nodes_keys: Vec::new(),
             resource_per_vnode: 0,
             resource_used: 0,
@@ -69,7 +72,10 @@ impl Cluster {
             cdn_usd_per_gb: 104_857_600, // setting initially to 1 cent per GB
             cdn_resources_used: 0,
             cdn_revenues: Cash(0),
-        }
+        };
+        
+        cluster.set_params(cluster_params)?;
+        Ok(cluster)
     }
 
     pub fn only_manager(&self, caller: AccountId) -> Result<()> {
@@ -84,6 +90,14 @@ impl Cluster {
         } else {
             Err(ClusterIsNotEmpty)
         }
+    }
+
+    pub fn set_params(&mut self, cluster_params: ClusterParams) -> Result<()> {
+        if cluster_params.len() > CLUSTER_PARAMS_MAX_LEN {
+            return Err(ParamsTooBig);
+        }
+        self.cluster_params = cluster_params;
+        Ok(())
     }
 
     pub fn get_rent(&self, resource: Resource) -> Balance {

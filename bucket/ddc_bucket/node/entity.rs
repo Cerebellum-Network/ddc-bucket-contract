@@ -62,6 +62,8 @@ pub struct NodeInfo {
     pub node: Node,
 }
 
+pub const NODE_PARAMS_MAX_LEN: usize = 100_000;
+
 impl Node {
 
     pub fn new(
@@ -69,15 +71,18 @@ impl Node {
         node_params: NodeParams,
         capacity: Resource,
         rent_per_month: Balance,
-    ) -> Self {
-        Node {
+    ) -> Result<Self> {
+        let mut node = Node {
             provider_id,
-            node_params,
+            node_params: NodeParams::default(),
             free_resource: capacity,
             rent_per_month,
             cluster_id: None,
             status_in_cluster: None,
-        }
+        };
+
+        node.set_params(node_params)?;
+        Ok(node)
     }
 
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
@@ -96,6 +101,14 @@ impl Node {
             .is_some()
             .then(|| ())
             .ok_or(NodeIsNotAddedToCluster(cluster_id))
+    }
+
+    pub fn set_params(&mut self, node_params: NodeParams) -> Result<()> {
+        if node_params.len() > NODE_PARAMS_MAX_LEN {
+            return Err(ParamsTooBig);
+        }
+        self.node_params = node_params;
+        Ok(())
     }
 
     pub fn set_cluster(&mut self, cluster_id: ClusterId, status: NodeStatusInCluster) {

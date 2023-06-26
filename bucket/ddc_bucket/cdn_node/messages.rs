@@ -3,7 +3,6 @@
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 use crate::ddc_bucket::{AccountId, DdcBucket, CdnNodeCreated, CdnNodeRemoved, CdnNodeParamsSet, Result, Balance};
-use crate::ddc_bucket::perm::entity::{Permission};
 
 use super::entity::{CdnNodeKey, CdnNodeInfo, CdnNodeParams};
 
@@ -51,7 +50,6 @@ impl DdcBucket {
             cdn_node_key,
         });
 
-
         Ok(())
 
     }
@@ -65,7 +63,7 @@ impl DdcBucket {
         let caller = Self::env().caller();
         let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_owner(caller)?;
-        cdn_node.cdn_node_params = cdn_node_params.clone();
+        cdn_node.set_params(cdn_node_params.clone())?;
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         Self::env().emit_event(CdnNodeParamsSet {

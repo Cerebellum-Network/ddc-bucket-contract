@@ -32,7 +32,7 @@ impl CdnNodeStore {
                 provider_id,
                 cdn_node_params,
                 undistributed_payment
-            );
+            )?;
             self.cdn_nodes.insert(&cdn_node_key, &cdn_node);
             self.keys.push(cdn_node_key);
             Ok(cdn_node_key)

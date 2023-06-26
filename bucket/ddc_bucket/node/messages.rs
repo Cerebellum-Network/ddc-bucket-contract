@@ -64,7 +64,7 @@ impl DdcBucket {
         let caller = Self::env().caller();
         let mut node = self.nodes.get(node_key)?;
         node.only_owner(caller)?;
-        node.node_params = node_params.clone();
+        node.set_params(node_params.clone())?;
         self.nodes.update(node_key, &node)?;
 
         Self::env().emit_event(NodeParamsSet {

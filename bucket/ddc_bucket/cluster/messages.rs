@@ -317,7 +317,7 @@ impl DdcBucket {
         let caller = Self::env().caller();
         let mut cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
-        cluster.cluster_params = cluster_params.clone();
+        cluster.set_params(cluster_params.clone())?;
         self.clusters.update(cluster_id, &cluster)?;
 
         Self::env().emit_event(ClusterParamsSet { 

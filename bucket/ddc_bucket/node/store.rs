@@ -35,7 +35,7 @@ impl NodeStore {
                 node_params,
                 capacity,
                 rent_per_month
-            );
+            )?;
             self.nodes.insert(node_key, &node);
             self.keys.push(node_key);
             Ok(node_key)

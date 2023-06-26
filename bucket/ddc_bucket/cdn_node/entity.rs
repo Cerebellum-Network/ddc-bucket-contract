@@ -36,20 +36,25 @@ pub struct CdnNodeInfo {
     pub cdn_node: CdnNode,
 }
 
+pub const CDN_NODE_PARAMS_MAX_LEN: usize = 100_000;
+
 impl CdnNode {
 
     pub fn new(
         provider_id: AccountId,
         cdn_node_params: CdnNodeParams,
         undistributed_payment: Balance
-    ) -> Self {
-        CdnNode {
+    ) -> Result<Self> {
+        let mut cdn_node = CdnNode {
             provider_id,
-            cdn_node_params,
+            cdn_node_params: CdnNodeParams::default(),
             undistributed_payment,
             cluster_id: None,
             status_in_cluster: None,
-        }
+        };
+        
+        cdn_node.set_params(cdn_node_params)?;
+        Ok(cdn_node)
     }
 
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
@@ -68,6 +73,14 @@ impl CdnNode {
             .is_some()
             .then(|| ())
             .ok_or(CdnNodeIsNotAddedToCluster(cluster_id))
+    }
+
+    pub fn set_params(&mut self, cdn_node_params: CdnNodeParams) -> Result<()> {
+        if cdn_node_params.len() > CDN_NODE_PARAMS_MAX_LEN {
+            return Err(ParamsTooBig);
+        }
+        self.cdn_node_params = cdn_node_params;
+        Ok(())
     }
 
     pub fn set_cluster(&mut self, cluster_id: ClusterId, status: NodeStatusInCluster) {

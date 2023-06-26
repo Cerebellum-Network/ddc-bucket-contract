@@ -25,7 +25,7 @@ impl ClusterStore {
         let cluster = Cluster::new(
             manager_id, 
             cluster_params
-        );
+        )?;
 
         self.clusters.insert(&cluster_id, &cluster);
         Ok(cluster_id)
