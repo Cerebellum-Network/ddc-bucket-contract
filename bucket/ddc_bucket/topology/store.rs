@@ -24,7 +24,7 @@ pub struct TopologyStore {
 impl TopologyStore {
 
     pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
-        self.cluster_v_nodes_map.get(cluster_id).ok_or(ClusterTopologyIsNotCreated(cluster_id))
+        self.cluster_v_nodes_map.get(cluster_id).ok_or(TopologyIsNotCreated(cluster_id))
     }
 
     pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {

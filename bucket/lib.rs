@@ -1754,7 +1754,7 @@ pub mod ddc_bucket {
         UnauthorizedSuperAdmin,
         TopologyAlreadyExists,
         ClusterIsNotEmpty,
-        ClusterTopologyIsNotCreated(ClusterId),
+        TopologyIsNotCreated(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
         VNodeInNotAssignedToNode(ClusterId, VNodeToken),
         VNodeIsAlreadyAssignedToNode(NodeKey),

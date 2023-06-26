@@ -72,6 +72,20 @@ impl Cluster {
         }
     }
 
+    pub fn only_manager(&self, caller: AccountId) -> Result<()> {
+        (self.manager_id == caller)
+            .then(|| ())
+            .ok_or(UnauthorizedClusterManager)
+    }
+
+    pub fn only_without_nodes(&self) -> Result<()> {
+        if self.nodes_keys.is_empty() && self.cdn_nodes_keys.is_empty() {
+            Ok(())
+        } else {
+            Err(ClusterIsNotEmpty)
+        }
+    }
+
     pub fn get_rent(&self, resource: Resource) -> Balance {
         let rent = self.total_rent * resource as Balance;
         rent
@@ -92,14 +106,6 @@ impl Cluster {
         }
         self.resource_used = used;
         Ok(())
-    }
-
-    pub fn only_manager(&self, caller: AccountId) -> Result<()> {
-        if self.manager_id == caller {
-            Ok(())
-        } else {
-            Err(UnauthorizedClusterManager)
-        }
     }
 
     pub fn cdn_get_revenue_cere(&self) -> Cash {
@@ -124,14 +130,6 @@ impl Cluster {
         }
         self.cdn_revenues.pay_unchecked(amount);
         Ok(())
-    }
-
-    pub fn only_without_nodes(&self) -> Result<()> {
-        if self.nodes_keys.len() > 0 || self.cdn_nodes_keys.len() > 0 {
-            Err(ClusterIsNotEmpty)
-        } else {
-            Ok(())
-        }
     }
 
 }

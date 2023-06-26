@@ -22,7 +22,7 @@ impl DdcBucket {
         
         Self::env().emit_event(PermissionGranted { 
             account_id: grantee,
-            permission: permission
+            permission
         });
 
         Ok(())
@@ -41,7 +41,7 @@ impl DdcBucket {
         
         Self::env().emit_event(PermissionRevoked { 
             account_id: grantee,
-            permission: permission
+            permission
         });
 
         Ok(())
@@ -53,20 +53,19 @@ impl DdcBucket {
         node_key: NodeKey, 
         new_owner: AccountId
     ) -> Result<()> {
-        self.only_with_permission(Permission::SuperAdmin)
+        let admin = self.only_with_permission(Permission::SuperAdmin)
             .map_err(|_| UnauthorizedSuperAdmin)?;
 
         let mut node = self.nodes.get(node_key)?;
-        let caller = Self::env().caller();
         // allow node ownership transfer only if the current owner is the admin
-        node.only_owner(caller).map_err(|_| NodeOwnerIsNotSuperAdmin)?;
+        node.only_owner(admin).map_err(|_| NodeOwnerIsNotSuperAdmin)?;
 
         node.provider_id = new_owner;
         self.nodes.update(node_key, &node)?;
 
         Self::env().emit_event(NodeOwnershipTransferred { 
             account_id: new_owner,
-            node_key: node_key
+            node_key
         });
 
         Ok(())
@@ -78,20 +77,19 @@ impl DdcBucket {
         cdn_node_key: NodeKey, 
         new_owner: AccountId
     ) -> Result<()> {
-        self.only_with_permission(Permission::SuperAdmin)
+        let admin = self.only_with_permission(Permission::SuperAdmin)
             .map_err(|_| UnauthorizedSuperAdmin)?;
 
         let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-        let caller = Self::env().caller();
         // allow node ownership transfer only if the current owner is the admin
-        cdn_node.only_owner(caller).map_err(|_| CdnNodeOwnerIsNotSuperAdmin)?;
+        cdn_node.only_owner(admin).map_err(|_| CdnNodeOwnerIsNotSuperAdmin)?;
 
         cdn_node.provider_id = new_owner;
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         Self::env().emit_event(CdnNodeOwnershipTransferred { 
             account_id: new_owner,
-            cdn_node_key: cdn_node_key
+            cdn_node_key
         });
 
         Ok(())

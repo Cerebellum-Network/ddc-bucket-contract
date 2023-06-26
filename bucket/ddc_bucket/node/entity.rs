@@ -80,16 +80,22 @@ impl Node {
         }
     }
 
-    pub fn revenue_account_id(&self) -> AccountId {
-        self.provider_id
+    pub fn only_owner(&self, caller: AccountId) -> Result<()> {
+        (self.provider_id == caller)
+            .then(|| ())
+            .ok_or(UnauthorizedNodeOwner)
     }
 
-    pub fn only_owner(&self, owner_id: AccountId) -> Result<()> {
-        if self.provider_id == owner_id {
-            Ok(())
-        } else {
-            Err(UnauthorizedNodeOwner)
-        }
+    pub fn only_without_cluster(&self) -> Result<()> {
+        self.cluster_id
+            .map_or(Ok(()), |cluster_id| Err(NodeIsAlreadyAddedToCluster(cluster_id)))
+    }
+
+    pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
+        self.cluster_id
+            .is_some()
+            .then(|| ())
+            .ok_or(NodeIsNotAddedToCluster(cluster_id))
     }
 
     pub fn set_cluster(&mut self, cluster_id: ClusterId, status: NodeStatusInCluster) {
@@ -106,6 +112,10 @@ impl Node {
         self.status_in_cluster = Some(status);
     }
 
+    pub fn revenue_account_id(&self) -> AccountId {
+        self.provider_id
+    }
+
     pub fn put_resource(&mut self, amount: Resource) {
         self.free_resource += amount;
     }
@@ -119,19 +129,4 @@ impl Node {
         }
     }
 
-    pub fn only_without_cluster(&self) -> Result<()> {
-        if let Some(cluster_id) = self.cluster_id {
-            Err(NodeIsAlreadyAddedToCluster(cluster_id))
-        } else {
-            Ok(())
-        }
-    }
-
-    pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
-        if let Some(_) = self.cluster_id {
-            Ok(())
-        } else {
-            Err(NodeIsNotAddedToCluster(cluster_id))
-        }
-    }
 }
