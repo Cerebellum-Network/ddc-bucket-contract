@@ -291,7 +291,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ManagerTrustedBy(grantor);
-        self.impl_grant_permission(manager, permission);
+        self.impl_grant_permission(manager, permission)?;
 
         Self::env().emit_event(PermissionGranted { 
             account_id: manager,
@@ -308,7 +308,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ManagerTrustedBy(grantor);
-        self.impl_revoke_permission(manager, permission);
+        self.impl_revoke_permission(manager, permission)?;
 
         Self::env().emit_event(PermissionRevoked { 
             account_id: manager,
@@ -366,44 +366,6 @@ impl DdcBucket {
     }
 
 
-    pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
-        let mut cluster = self.clusters.get(cluster_id)?;
-
-        // Charge the network fee from the cluster.
-        Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
-
-        // Charge the cluster management fee.
-        Self::capture_fee(
-            self.network_fee.cluster_management_fee_bp(),
-            cluster.manager_id,
-            &mut cluster.revenues,
-        )?;
-
-        // Charge the provider payments from the cluster.
-        let cluster_vnodes = self.topology_store.get_vnodes_by_cluster(cluster_id)?;
-        let num_shares = cluster_vnodes.len() as Balance;
-        let per_share = cluster.revenues.peek() / num_shares;
-        cluster.revenues.pay(Payable(per_share * num_shares))?;
-
-        for node_key in &cluster.nodes_keys {
-            let node = self.nodes.get(*node_key)?;
-            Self::send_cash(node.provider_id, Cash(per_share))?;
-
-            Self::env().emit_event(ClusterDistributeRevenues {
-                cluster_id,
-                provider_id: node.provider_id,
-            });
-        }
-
-        self.clusters.update(cluster_id, &cluster)?;
-
-        // TODO: set a maximum node count, or support paging.
-        // TODO: aggregate the payments per node_id or per provider_id.
-
-        Ok(())
-    }
-
-
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?.clone();
         Ok(ClusterInfo {
@@ -439,6 +401,44 @@ impl DdcBucket {
             clusters.push(status);
         }
         (clusters, self.clusters.next_cluster_id - 1)
+    }
+
+
+    pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
+        let mut cluster = self.clusters.get(cluster_id)?;
+
+        // Charge the network fee from the cluster.
+        Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
+
+        // Charge the cluster management fee.
+        Self::capture_fee(
+            self.network_fee.cluster_management_fee_bp(),
+            cluster.manager_id,
+            &mut cluster.revenues,
+        )?;
+
+        // Charge the provider payments from the cluster.
+        let cluster_vnodes = self.topology_store.get_vnodes_by_cluster(cluster_id)?;
+        let num_shares = cluster_vnodes.len() as Balance;
+        let per_share = cluster.revenues.peek() / num_shares;
+        cluster.revenues.pay(Payable(per_share * num_shares))?;
+
+        for node_key in &cluster.nodes_keys {
+            let node = self.nodes.get(*node_key)?;
+            Self::send_cash(node.provider_id, Cash(per_share))?;
+
+            Self::env().emit_event(ClusterDistributeRevenues {
+                cluster_id,
+                provider_id: node.provider_id,
+            });
+        }
+
+        self.clusters.update(cluster_id, &cluster)?;
+
+        // TODO: set a maximum node count, or support paging.
+        // TODO: aggregate the payments per node_id or per provider_id.
+
+        Ok(())
     }
 
 

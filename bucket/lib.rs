@@ -1591,9 +1591,8 @@ pub mod ddc_bucket {
             &mut self, 
             grantee: AccountId, 
             permission: Permission
-        ) {
-            self.message_admin_grant_permission(grantee, permission, true)
-                .unwrap();
+        ) -> Result<()> {
+            self.message_admin_grant_permission(grantee, permission)
         }
 
         /// Revokes any permission.
@@ -1621,9 +1620,8 @@ pub mod ddc_bucket {
             &mut self, 
             grantee: AccountId, 
             permission: Permission
-        ) {
-            self.message_admin_grant_permission(grantee, permission, false)
-                .unwrap();
+        ) -> Result<()> {
+            self.message_admin_revoke_permission(grantee, permission)
         }
 
         /// Transfers Storage node ownership.
