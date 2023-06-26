@@ -1208,6 +1208,7 @@ pub mod ddc_bucket {
         /// * `node_key` - Public Keys of the Storage node that should be treated as node identifier.
         /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
         /// * `capacity` - Measure used to evaluate physical node hardware resources.
+        /// * `rent_per_month` - Renting per month.
         ///
         /// # Output
         ///
@@ -1227,9 +1228,8 @@ pub mod ddc_bucket {
             node_key: NodeKey,
             node_params: NodeParams,
             capacity: Resource,
+            rent_per_month: Balance
         ) -> Result<NodeKey> {
-            // todo: confirm do we need the 'rent_per_month' param
-            let rent_per_month = Balance::default();
             self.message_node_create(
                 node_key, 
                 node_params, 

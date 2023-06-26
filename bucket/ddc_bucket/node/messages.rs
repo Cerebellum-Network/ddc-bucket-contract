@@ -17,14 +17,13 @@ impl DdcBucket {
     ) -> Result<NodeKey> {
 
         let caller = Self::env().caller();
-        self.nodes
-            .create(
-                node_key, 
-                caller, 
-                node_params.clone(), 
-                capacity,
-                rent_per_month
-            )?;
+        self.nodes.create(
+            node_key, 
+            caller, 
+            node_params.clone(), 
+            capacity,
+            rent_per_month
+        )?;
 
         Self::env().emit_event(NodeCreated {
             node_key,

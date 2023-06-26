@@ -16,13 +16,12 @@ impl DdcBucket {
 
         let caller = Self::env().caller();
         let undistributed_payment: Balance = 0;
-        self.cdn_nodes
-            .create(
-                cdn_node_key, 
-                caller, 
-                cdn_node_params.clone(), 
-                undistributed_payment
-            )?;
+        self.cdn_nodes.create(
+            cdn_node_key, 
+            caller, 
+            cdn_node_params.clone(), 
+            undistributed_payment
+        )?;
 
         Self::env().emit_event(CdnNodeCreated {
             cdn_node_key,
