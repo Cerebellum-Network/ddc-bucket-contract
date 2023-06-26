@@ -683,8 +683,8 @@ pub mod ddc_bucket {
         pub fn cluster_remove(
             &mut self, 
             cluster_id: ClusterId, 
-        ) {
-
+        ) -> Result<()> {
+            self.message_cluster_remove(cluster_id)
         }
 
         /// Changes Storage node status.
@@ -1739,7 +1739,8 @@ pub mod ddc_bucket {
         UnauthorizedNodeOwner,
         UnauthorizedCdnNodeOwner,
         TopologyAlreadyExists,
-        NoVNodesInCluster(ClusterId),
+        ClusterIsNotEmpty,
+        ClusterIsNotInitialized(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
         VNodeInNotAssignedToNode(ClusterId, VNodeToken),
         VNodeIsAlreadyAssignedToNode(NodeKey),

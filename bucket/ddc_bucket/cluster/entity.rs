@@ -11,7 +11,7 @@ use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
-use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result};
+use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result, Error::*};
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;
@@ -124,6 +124,14 @@ impl Cluster {
         }
         self.cdn_revenues.pay_unchecked(amount);
         Ok(())
+    }
+
+    pub fn only_without_nodes(&self) -> Result<()> {
+        if self.nodes_keys.len() > 0 || self.cdn_nodes_keys.len() > 0 {
+            Err(ClusterIsNotEmpty)
+        } else {
+            Ok(())
+        }
     }
 
 }

@@ -183,6 +183,21 @@ impl DdcBucket {
     }
 
 
+    pub fn message_cluster_remove(
+        &mut self,
+        cluster_id: ClusterId, 
+    ) -> Result<()> {
+        let cluster: Cluster = self.clusters.get(cluster_id)?;
+        cluster.only_without_nodes()?;
+        Self::only_cluster_manager(&cluster)?;
+        
+        self.clusters.remove(cluster_id);
+        self.topology_store.remove_topology(cluster_id)?;
+
+        Ok(())
+    }
+
+
     pub fn message_cluster_remove_cdn_node(
         &mut self,
         cluster_id: ClusterId,

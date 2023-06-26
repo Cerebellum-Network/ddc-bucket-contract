@@ -24,7 +24,7 @@ pub struct TopologyStore {
 impl TopologyStore {
 
     pub fn get_vnodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
-        self.clusters_map.get(cluster_id).ok_or(NoVNodesInCluster(cluster_id))
+        self.clusters_map.get(cluster_id).ok_or(ClusterIsNotInitialized(cluster_id))
     }
 
     pub fn get_vnodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {
@@ -149,6 +149,25 @@ impl TopologyStore {
 
         // vnodes that are being reasigned should be among other vnodes assigned to the new physical node
         self.nodes_map.insert(new_node_key, &v_nodes_to_reasign);
+
+        Ok(())
+    }
+
+
+    pub fn remove_topology(
+        &mut self,
+        cluster_id: ClusterId,
+    ) -> Result<()> {
+
+        let all_vnodes: Vec<u64> = self.get_vnodes_by_cluster(cluster_id)?;
+
+        for v_node in &all_vnodes {
+            let node_key = self.get_node_by_vnode(cluster_id, *v_node)?;
+            self.vnodes_map.remove((cluster_id, v_node));
+            self.nodes_map.remove(node_key);   
+        }
+
+        self.clusters_map.remove(cluster_id);
 
         Ok(())
     }
