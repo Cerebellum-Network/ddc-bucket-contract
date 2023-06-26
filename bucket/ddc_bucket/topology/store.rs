@@ -13,37 +13,41 @@ pub type ClusterVNode = (ClusterId, VNodeToken);
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
 pub struct TopologyStore {
-    // virtual nodes within a cluster
-    clusters_map: Mapping<ClusterId, Vec<VNodeToken>>,
     // virtual nodes assigned to a physical node
-    nodes_map: Mapping<NodeKey, Vec<VNodeToken>>,
+    v_nodes_map: Mapping<NodeKey, Vec<VNodeToken>>,
     // physical node assigned to a virtual node
-    vnodes_map: Mapping<ClusterVNode, NodeKey>,
+    nodes_map: Mapping<ClusterVNode, NodeKey>,
+    // virtual nodes within a cluster assigned to all its physical nodes
+    cluster_v_nodes_map: Mapping<ClusterId, Vec<VNodeToken>>,
 }
 
 impl TopologyStore {
 
-    pub fn get_vnodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
-        self.clusters_map.get(cluster_id).ok_or(ClusterIsNotInitialized(cluster_id))
+    pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
+        self.cluster_v_nodes_map.get(cluster_id).ok_or(ClusterIsNotCreated(cluster_id))
     }
 
-    pub fn get_vnodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {
-        self.nodes_map.get(node_key).ok_or(NodeHasNoAssignedVNodes(node_key))
+    pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {
+        self.v_nodes_map.get(node_key).ok_or(NodeHasNoAssignedVNodes(node_key))
     }
 
-    pub fn get_node_by_vnode(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
-        self.vnodes_map.get((cluster_id, v_node)).ok_or(VNodeInNotAssignedToNode(cluster_id, v_node))
+    pub fn get_node_by_v_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
+        self.nodes_map.get((cluster_id, v_node)).ok_or(VNodeInNotAssignedToNode(cluster_id, v_node))
+    }
+
+    pub fn v_node_has_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> bool {
+        self.nodes_map.contains((cluster_id, v_node))
     }
 
     pub fn create_topology(
         &mut self,
         cluster_id: ClusterId,
     ) -> Result<()> {
-        if self.clusters_map.contains(&cluster_id) {
+        if self.cluster_v_nodes_map.contains(&cluster_id) {
             Err(TopologyAlreadyExists)
         } else {
-            let all_vnodes: Vec<VNodeToken> = Vec::new();
-            self.clusters_map.insert(cluster_id, &all_vnodes);
+            let cluster_v_nodes: Vec<VNodeToken> = Vec::new();
+            self.cluster_v_nodes_map.insert(cluster_id, &cluster_v_nodes);
             Ok(())
         }
     }
@@ -55,26 +59,26 @@ impl TopologyStore {
         v_nodes: Vec<VNodeToken>,
     ) -> Result<()> {
 
-        let mut all_vnodes: Vec<u64> = self.get_vnodes_by_cluster(cluster_id)?;
+        let mut cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id)?;
 
         for v_node in &v_nodes {
 
             // vnode that is being added should not exist in the cluster topology
-            if let Some(node_key) = self.vnodes_map.get((cluster_id, v_node)) {
+            if self.v_node_has_node(cluster_id, *v_node) {
                 return Err(VNodeIsAlreadyAssignedToNode(node_key));
             }
 
             // vnode that is being added should be assigned to the physical node
-            self.vnodes_map.insert((cluster_id, v_node), &node_key);
+            self.nodes_map.insert((cluster_id, v_node), &node_key);
 
             // vnode that is being added should be added to the cluster topology
-            all_vnodes.push(*v_node);
+            cluster_v_nodes.push(*v_node);
         }
 
-        self.clusters_map.insert(cluster_id, &all_vnodes);
+        self.cluster_v_nodes_map.insert(cluster_id, &cluster_v_nodes);
         
         // vnodes that are being added should be assigned to the physical node
-        self.nodes_map.insert(node_key, &v_nodes);
+        self.v_nodes_map.insert(node_key, &v_nodes);
 
         Ok(())
     }
@@ -86,29 +90,29 @@ impl TopologyStore {
         node_key: NodeKey
     ) -> Result<()> {
 
-        let mut all_vnodes: Vec<u64> = self.get_vnodes_by_cluster(cluster_id)?;
-        let v_nodes = self.get_vnodes_by_node(node_key)?;
+        let mut cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id)?;
+        let v_nodes = self.get_v_nodes_by_node(node_key)?;
 
         for v_node in &v_nodes {
 
             // vnode that is being removed should exist in the cluster topology
-            if None == self.vnodes_map.get((cluster_id, *v_node)) {
+            if !self.v_node_has_node(cluster_id, *v_node) {
                 return Err(VNodeInNotAssignedToNode(cluster_id, *v_node));
             }
             
             // vnode that is being removed should be unusigned from the physical node
-            self.vnodes_map.remove((cluster_id, v_node));
+            self.nodes_map.remove((cluster_id, v_node));
 
             // vnode that is being removed should be removed from the cluster topology
-            if let Some(pos) = all_vnodes.iter().position(|x| *x == *v_node) {
-                all_vnodes.remove(pos);
+            if let Some(pos) = cluster_v_nodes.iter().position(|x| *x == *v_node) {
+                cluster_v_nodes.remove(pos);
             };
         }
 
-        self.clusters_map.insert(cluster_id, &all_vnodes);
+        self.cluster_v_nodes_map.insert(cluster_id, &cluster_v_nodes);
 
         // vnodes that are being removed should be unusigned from the physical node
-        self.nodes_map.remove(node_key);
+        self.v_nodes_map.remove(node_key);
 
         Ok(())
 
@@ -122,33 +126,33 @@ impl TopologyStore {
         v_nodes_to_reasign: Vec<VNodeToken>,
     ) -> Result<()> {
 
-        let all_vnodes = self.get_vnodes_by_cluster(cluster_id)?;
+        let cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id)?;
 
         for v_node in &v_nodes_to_reasign {
 
             // vnode that is being reasigned should be in the cluster topology
-            if None == all_vnodes.iter().position(|x| *x == *v_node) {
+            if None == cluster_v_nodes.iter().position(|x| *x == *v_node) {
                 return Err(VNodeDoesNotExistsInCluster(cluster_id));
             };
             
             // vnode that is being reasigned should be already assigned to a physical node
-            let old_node_key = self.get_node_by_vnode(cluster_id, *v_node)?;
+            let old_node_key = self.get_node_by_v_node(cluster_id, *v_node)?;
 
             // vnode that is being reasigned should be among other vnodes assigned to the old physical node
-            let mut old_node_vnodes = self.get_vnodes_by_node(old_node_key)?;
+            let mut old_node_v_nodes = self.get_v_nodes_by_node(old_node_key)?;
 
             // vnode that is being reasigned should be unasigned from the old physical node
-            if let Some(pos) = old_node_vnodes.iter().position(|x| *x == *v_node) {
-                old_node_vnodes.remove(pos);
+            if let Some(pos) = old_node_v_nodes.iter().position(|x| *x == *v_node) {
+                old_node_v_nodes.remove(pos);
             };
-            self.nodes_map.insert(old_node_key, &old_node_vnodes);
+            self.v_nodes_map.insert(old_node_key, &old_node_v_nodes);
             
             // vnode that is being reasigned should be assined to the new physical node
-            self.vnodes_map.insert(&(cluster_id, *v_node), &new_node_key);
+            self.nodes_map.insert(&(cluster_id, *v_node), &new_node_key);
         }
 
         // vnodes that are being reasigned should be among other vnodes assigned to the new physical node
-        self.nodes_map.insert(new_node_key, &v_nodes_to_reasign);
+        self.v_nodes_map.insert(new_node_key, &v_nodes_to_reasign);
 
         Ok(())
     }
@@ -159,15 +163,15 @@ impl TopologyStore {
         cluster_id: ClusterId,
     ) -> Result<()> {
 
-        let all_vnodes: Vec<u64> = self.get_vnodes_by_cluster(cluster_id)?;
+        let cluster_v_nodes: Vec<u64> = self.get_v_nodes_by_cluster(cluster_id)?;
 
-        for v_node in &all_vnodes {
-            let node_key = self.get_node_by_vnode(cluster_id, *v_node)?;
-            self.vnodes_map.remove((cluster_id, v_node));
-            self.nodes_map.remove(node_key);   
+        for v_node in &cluster_v_nodes {
+            let node_key = self.get_node_by_v_node(cluster_id, *v_node)?;
+            self.nodes_map.remove((cluster_id, v_node));
+            self.v_nodes_map.remove(node_key);   
         }
 
-        self.clusters_map.remove(cluster_id);
+        self.cluster_v_nodes_map.remove(cluster_id);
 
         Ok(())
     }

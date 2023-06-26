@@ -99,7 +99,7 @@ impl DdcBucket {
         if let Some(pos) = cluster.nodes_keys.iter().position(|x| *x == node_key) {
             cluster.nodes_keys.remove(pos);
         }
-        let v_nodes = self.topology_store.get_vnodes_by_node(node_key)?;
+        let v_nodes = self.topology_store.get_v_nodes_by_node(node_key)?;
         for v_node in &v_nodes {
             cluster.total_rent -= node.rent_per_month;
         }
@@ -129,7 +129,7 @@ impl DdcBucket {
 
         // Give back resources to the old node for all its v_nodes
         for v_node in &v_nodes {
-            let old_node_key = self.topology_store.get_node_by_vnode(cluster_id, *v_node)?;
+            let old_node_key = self.topology_store.get_node_by_v_node(cluster_id, *v_node)?;
 
             // Give back resources to the old node
             let mut old_node = self.nodes.get(old_node_key)?;
@@ -295,7 +295,7 @@ impl DdcBucket {
 
         Self::env().emit_event(PermissionGranted { 
             account_id: manager,
-            permission: permission
+            permission
         });
         
         Ok(())
@@ -312,7 +312,7 @@ impl DdcBucket {
 
         Self::env().emit_event(PermissionRevoked { 
             account_id: manager,
-            permission: permission
+            permission
         });
 
         Ok(())
@@ -332,7 +332,7 @@ impl DdcBucket {
 
         Self::env().emit_event(ClusterParamsSet { 
             cluster_id,
-            params: cluster_params
+            cluster_params
         });
 
         Ok(())
@@ -350,9 +350,9 @@ impl DdcBucket {
         cluster.put_resource(resource);
         self.clusters.update(cluster_id, &cluster)?;
 
-        let cluster_vnodes = self.topology_store.get_vnodes_by_cluster(cluster_id)?;
+        let cluster_vnodes = self.topology_store.get_v_nodes_by_cluster(cluster_id)?;
         for v_node in cluster_vnodes {
-            let node_key = self.topology_store.get_node_by_vnode(cluster_id, v_node)?;
+            let node_key = self.topology_store.get_node_by_v_node(cluster_id, v_node)?;
             let mut node = self.nodes.get(node_key)?;
             node.take_resource(resource)?;
             self.nodes.update(node_key, &node)?;
@@ -418,7 +418,7 @@ impl DdcBucket {
         )?;
 
         // Charge the provider payments from the cluster.
-        let cluster_vnodes = self.topology_store.get_vnodes_by_cluster(cluster_id)?;
+        let cluster_vnodes = self.topology_store.get_v_nodes_by_cluster(cluster_id)?;
         let num_shares = cluster_vnodes.len() as Balance;
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;

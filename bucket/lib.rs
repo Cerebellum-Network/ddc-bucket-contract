@@ -357,7 +357,7 @@ pub mod ddc_bucket {
     pub struct ClusterParamsSet {
         #[ink(topic)]
         cluster_id: ClusterId,
-        params: ClusterParams,
+        cluster_params: ClusterParams,
     }
 
 
@@ -1754,7 +1754,7 @@ pub mod ddc_bucket {
         UnauthorizedSuperAdmin,
         TopologyAlreadyExists,
         ClusterIsNotEmpty,
-        ClusterIsNotInitialized(ClusterId),
+        ClusterIsNotCreated(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
         VNodeInNotAssignedToNode(ClusterId, VNodeToken),
         VNodeIsAlreadyAssignedToNode(NodeKey),
