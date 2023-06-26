@@ -3,15 +3,13 @@ use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cluster::entity::{Cluster, ClusterInfo};
+use crate::ddc_bucket::cluster::entity::{ClusterInfo};
 use crate::ddc_bucket::bucket::entity::{BucketId};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
 use crate::ddc_bucket::topology::store::{VNodeToken};
 use crate::ddc_bucket::perm::entity::Permission;
-use crate::ddc_bucket::perm::store::PermStore;
 use crate::ddc_bucket::ClusterNodeReplaced;
-use crate::ddc_bucket::Error::{ClusterManagerIsNotTrusted, UnauthorizedClusterManager};
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
     ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource,
@@ -54,11 +52,9 @@ impl DdcBucket {
         node_key: NodeKey,
         v_nodes: Vec<VNodeToken>,
     ) -> Result<()> {
-        let caller = Self::env().caller();
-
         let mut node: Node = self.nodes.get(node_key)?;
         node.only_without_cluster()?;
-        Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
+        self.only_trusted_manager(node.provider_id)?;
 
         node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
         self.nodes.update(node_key, &node)?;
@@ -86,11 +82,9 @@ impl DdcBucket {
         cluster_id: ClusterId,
         node_key: NodeKey,
     ) -> Result<()> {
-        let caller = Self::env().caller();
-
         let mut node = self.nodes.get(node_key)?;
         node.only_with_cluster(cluster_id)?;
-        Self::only_trusted_manager(&self.perms, caller, node.provider_id)?;
+        self.only_trusted_manager(node.provider_id)?;
         
         node.unset_cluster();
         self.nodes.update(node_key, &node)?;
@@ -140,7 +134,7 @@ impl DdcBucket {
             new_node.only_with_cluster(cluster_id)?;
 
             // Verify that the provider of the new node trusts the cluster manager.
-            Self::only_trusted_manager(&self.perms, caller, new_node.provider_id)?;
+            self.only_trusted_manager(new_node.provider_id)?;
             // Reserve resources on the new node.
             new_node.take_resource(cluster.resource_per_vnode)?;
             self.nodes.update(new_node_key, &new_node)?;
@@ -163,11 +157,9 @@ impl DdcBucket {
         cluster_id: ClusterId,
         cdn_node_key: CdnNodeKey,
     ) -> Result<()> {
-        let manager = Self::env().caller();
-
         let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_without_cluster()?;
-        Self::only_trusted_manager(&self.perms, manager, cdn_node.provider_id)?;
+        self.only_trusted_manager(cdn_node.provider_id)?;
 
         cdn_node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
@@ -190,11 +182,9 @@ impl DdcBucket {
         cluster_id: ClusterId,
         cdn_node_key: CdnNodeKey,
     ) -> Result<()> {
-        let caller = Self::env().caller();
-
         let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_with_cluster(cluster_id)?;
-        Self::only_trusted_manager(&self.perms, caller, cdn_node.provider_id)?;
+        self.only_trusted_manager(cdn_node.provider_id)?;
         
         cdn_node.unset_cluster();
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
@@ -582,21 +572,6 @@ impl DdcBucket {
         self.clusters.update(cluster_id, &cluster)?;
 
         Ok(())
-    }
-
-
-    fn only_trusted_manager(
-        perm_store: &PermStore,
-        manager: AccountId,
-        trusted_by: AccountId,
-    ) -> Result<()> {
-        let perm = Permission::ManagerTrustedBy(trusted_by);
-        let trusts = perm_store.has_permission(manager, perm);
-        if trusts {
-            Ok(())
-        } else {
-            Err(ClusterManagerIsNotTrusted)
-        }
     }
 
 

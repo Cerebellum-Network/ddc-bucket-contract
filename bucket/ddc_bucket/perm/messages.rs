@@ -2,8 +2,7 @@
 
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 
-use crate::ddc_bucket::{AccountId, DdcBucket, PermissionGranted, Result, PermissionRevoked};
-use crate::ddc_bucket::Error::Unauthorized;
+use crate::ddc_bucket::{AccountId, DdcBucket, PermissionGranted, PermissionRevoked, Result, Error::* };
 use crate::ddc_bucket::perm::entity::Permission;
 
 impl DdcBucket {
@@ -28,11 +27,17 @@ impl DdcBucket {
 
     pub fn only_with_permission(&self, permission: Permission) -> Result<AccountId> {
         let caller = Self::env().caller();
-        if self.perms.has_permission(caller, permission) {
-            Ok(caller)
-        } else {
-            Err(Unauthorized)
-        }
+        self.perms.has_permission(caller, permission)
+            .then(|| caller)
+            .ok_or(Unauthorized)
+    }
+
+    pub fn only_trusted_manager(&self, provider_id: AccountId) -> Result<AccountId>  {
+        let caller = Self::env().caller();
+        let perm = Permission::ManagerTrustedBy(provider_id);
+        self.perms.has_permission(caller, perm)
+            .then(|| caller)
+            .ok_or(ClusterManagerIsNotTrusted)
     }
     
 }
