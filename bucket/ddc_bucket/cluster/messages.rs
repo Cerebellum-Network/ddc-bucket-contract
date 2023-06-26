@@ -357,10 +357,16 @@ impl DdcBucket {
 
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
-        let cluster = self.clusters.get(cluster_id)?.clone();
+        let cluster = self.clusters.get(cluster_id)?;
+
+        let cluster_v_nodes = self.topology_store
+            .get_v_nodes_by_cluster(cluster_id)
+            .unwrap_or(Vec::new());
+
         Ok(ClusterInfo {
             cluster_id,
             cluster,
+            cluster_v_nodes
         })
     }
 
@@ -383,12 +389,19 @@ impl DdcBucket {
                     continue; // Skip non-matches.
                 }
             }
+
+            let cluster_v_nodes = self.topology_store
+                .get_v_nodes_by_cluster(cluster_id)
+                .unwrap_or(Vec::new());
+
             // Include the complete status of matched items.
-            let status = ClusterInfo {
+            let cluster_info = ClusterInfo {
                 cluster_id,
-                cluster: cluster.clone(),
+                cluster,
+                cluster_v_nodes
             };
-            clusters.push(status);
+
+            clusters.push(cluster_info);
         }
         (clusters, self.clusters.next_cluster_id - 1)
     }

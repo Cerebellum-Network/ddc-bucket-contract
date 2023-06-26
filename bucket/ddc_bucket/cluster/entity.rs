@@ -1,6 +1,4 @@
 //! The data structure of Clusters.
-// use ink_storage::Mapping;
-// use ink_prelude::vec::Vec;
 use ink_prelude::vec::Vec;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
 use scale::{Decode, Encode};
@@ -11,7 +9,7 @@ use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 
 use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
-use crate::ddc_bucket::{AccountId, Balance, Error::InsufficientResources, Result, Error::*};
+use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Result, Error::*};
 
 pub type ClusterId = u32;
 pub type ClusterParams = Params;
@@ -49,6 +47,7 @@ impl ink_storage::traits::PackedAllocate for Cluster {
 pub struct ClusterInfo {
     pub cluster_id: ClusterId,
     pub cluster: Cluster,
+    pub cluster_v_nodes: Vec<VNodeToken>,
 }
 
 pub const CLUSTER_PARAMS_MAX_LEN: usize = 100_000;

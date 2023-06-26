@@ -78,9 +78,14 @@ impl DdcBucket {
     pub fn message_node_get(&self, node_key: NodeKey) -> Result<NodeInfo> {
 
         let node = self.nodes.get(node_key)?;
+        let v_nodes = self.topology_store
+            .get_v_nodes_by_node(node_key)
+            .unwrap_or(Vec::new());
+
         Ok(NodeInfo {
             node_key,
             node,
+            v_nodes
         })
 
     }
@@ -107,13 +112,18 @@ impl DdcBucket {
                 }
             }
             
+            let v_nodes = self.topology_store
+                .get_v_nodes_by_node(node_key)
+                .unwrap_or(Vec::new());
+
             // Include the complete status of matched items.
-            let status = NodeInfo {
+            let node_info = NodeInfo {
                 node_key,
                 node,
+                v_nodes
             };
 
-            nodes.push(status);
+            nodes.push(node_info);
         }
 
         (nodes, self.nodes.keys.len().try_into().unwrap())

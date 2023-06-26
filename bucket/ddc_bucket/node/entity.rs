@@ -1,10 +1,11 @@
 //! The data structure of Nodes.
 
 use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
+use ink_prelude::vec::Vec;
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::params::store::Params;
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
 
 use ink_storage::traits::KeyPtr;
@@ -60,6 +61,7 @@ impl Default for NodeStatusInCluster {
 pub struct NodeInfo {
     pub node_key: NodeKey,
     pub node: Node,
+    pub v_nodes: Vec<VNodeToken>
 }
 
 pub const NODE_PARAMS_MAX_LEN: usize = 100_000;

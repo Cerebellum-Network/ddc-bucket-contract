@@ -1716,6 +1716,25 @@ pub mod ddc_bucket {
     }
     // ---- End Accounts ----
 
+    impl DdcBucket {
+
+        #[ink(message)]
+        pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Result<Vec<VNodeToken>> {
+            self.message_get_v_nodes_by_cluster(cluster_id)
+        }
+    
+        #[ink(message)]
+        pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Result<Vec<VNodeToken>> {
+            self.message_get_v_nodes_by_node(node_key)
+        }
+    
+        #[ink(message)]
+        pub fn get_node_by_v_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
+            self.message_get_node_by_v_node(cluster_id, v_node)
+        }
+        
+    }
+
     // ---- Utils ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
