@@ -4279,7 +4279,7 @@
                 },
                 {
                   "index": 15,
-                  "name": "UnauthorizedOwner"
+                  "name": "OnlyOwner"
                 },
                 {
                   "index": 16,

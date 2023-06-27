@@ -60,7 +60,7 @@ pub struct BucketStatus {
 
 impl Bucket {
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
-        if self.owner_id == caller { Ok(()) } else { Err(UnauthorizedOwner) }
+        if self.owner_id == caller { Ok(()) } else { Err(OnlyOwner) }
     }
 
     pub fn put_resource(&mut self, amount: Resource) {
