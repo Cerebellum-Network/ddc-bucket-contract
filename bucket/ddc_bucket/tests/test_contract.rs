@@ -61,7 +61,7 @@ fn new_cluster() -> TestCluster {
     for provider_id in [provider_id0, provider_id1, provider_id2] {
         set_caller_value(provider_id, CONTRACT_FEE_LIMIT);
         contract.node_trust_manager(manager);
-        let expected_perm = Permission::ManagerTrustedBy(provider_id);
+        let expected_perm = Permission::ClusterManagerTrustedBy(provider_id);
         assert!(contract.has_permission(manager, expected_perm));
     }
 
@@ -177,7 +177,7 @@ fn new_cluster_cdn() -> TestCluster {
         set_caller_value(provider_id, CONTRACT_FEE_LIMIT);
 
         contract.node_trust_manager(manager);
-        let expected_perm = Permission::ManagerTrustedBy(provider_id);
+        let expected_perm = Permission::ClusterManagerTrustedBy(provider_id);
         assert!(contract.has_permission(manager, expected_perm));
     }
 
@@ -387,7 +387,7 @@ fn cluster_create_works() {
     for provider_id in provider_ids {
         assert!(
             matches!(evs.pop().unwrap(), Event::PermissionGranted(ev) if ev ==
-            PermissionGranted { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(*provider_id) })
+            PermissionGranted { account_id: ctx.manager, permission: Permission::ClusterManagerTrustedBy(*provider_id) })
         );
     }
 
@@ -431,7 +431,7 @@ fn cluster_replace_node_only_manager() {
                 vec![1, 2, 3], 
                 ctx.node_key2
             ),
-        Err(OnlyTrustedManagerOrClusterOwner)
+        Err(OnlyClusterManager)
     );
 }
 
@@ -453,7 +453,7 @@ fn cluster_replace_node_only_trusted_manager() {
                 vec![1, 2, 3],
                 ctx.node_key2
             ),
-        Err(OnlyTrustedManager)
+        Err(OnlyTrustedClusterManager)
     );
 }
 
@@ -551,7 +551,7 @@ fn cluster_management_validation_works() {
                 vec![1, 2, 3],
                 AccountId::from([0x0a; 32])
             ),
-        Err(OnlyTrustedManagerOrClusterOwner),
+        Err(OnlyClusterManager),
         "only the manager can modify the cluster"
     );
 
@@ -822,7 +822,7 @@ fn cluster_add_node() {
     ctx.contract.node_trust_manager(ctx.manager);
     assert!(
         matches!(get_events().pop().unwrap(), Event::PermissionGranted(ev) if ev ==
-        PermissionGranted { account_id: ctx.manager, permission: Permission::ManagerTrustedBy(new_provider_id) })
+        PermissionGranted { account_id: ctx.manager, permission: Permission::ClusterManagerTrustedBy(new_provider_id) })
     );
 
     let mut node_keys = Vec::<NodeKey>::new();

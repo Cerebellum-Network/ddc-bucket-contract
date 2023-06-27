@@ -52,17 +52,20 @@ impl DdcBucket {
         node_key: NodeKey,
         v_nodes: Vec<VNodeToken>,
     ) -> Result<()> {
+        let caller = Self::env().caller();
 
         let mut node: Node = self.nodes.get(node_key)?;
         node.only_without_cluster()?;
-        self.only_trusted_manager(node.provider_id)?;
+        self.only_trusted_cluster_manager(node.provider_id)?;
+
+        let mut cluster = self.clusters.get(cluster_id)?;
+        cluster.only_manager(caller)?;
 
         node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
         self.nodes.update(node_key, &node)?;
 
-        let mut cluster = self.clusters.get(cluster_id)?;
         cluster.add_node(node_key);
-        for v_node in &v_nodes {
+        for _v_node in &v_nodes {
             cluster.total_rent += node.rent_per_month;
         }
         self.clusters.update(cluster_id, &cluster)?;
@@ -90,10 +93,9 @@ impl DdcBucket {
 
         node.only_with_cluster(cluster_id)?;
 
-        if !self.only_trusted_manager(node.provider_id).is_ok() 
-            && !cluster.only_owner(caller).is_ok()
+        if !cluster.only_manager(caller).is_ok()
             && !node.only_owner(caller).is_ok() {
-                return Err(OnlyTrustedManagerOrClusterOwnerOrNodeOwner);
+                return Err(OnlyClusterManagerOrNodeOwner);
         }
         
         node.unset_cluster();
@@ -101,7 +103,7 @@ impl DdcBucket {
 
         cluster.remove_node(node_key);
         let v_nodes = self.topology_store.get_v_nodes_by_node(node_key);
-        for v_node in &v_nodes {
+        for _v_node in &v_nodes {
             cluster.total_rent -= node.rent_per_month;
         }
         self.clusters.update(cluster_id, &cluster)?;
@@ -138,12 +140,7 @@ impl DdcBucket {
 
             let mut new_node = self.nodes.get(new_node_key)?;
             new_node.only_with_cluster(cluster_id)?;
-            
-            // Verify that the provider of the new node trusts the cluster manager
-            if !self.only_trusted_manager(new_node.provider_id).is_ok() 
-                && !cluster.only_owner(caller).is_ok() {
-                    return Err(OnlyTrustedManagerOrClusterOwner);
-            }
+            cluster.only_manager(caller)?;
 
             // Reserve resources on the new node.
             new_node.take_resource(cluster.resource_per_vnode)?;
@@ -167,14 +164,18 @@ impl DdcBucket {
         cluster_id: ClusterId,
         cdn_node_key: CdnNodeKey,
     ) -> Result<()> {
+        let caller = Self::env().caller();
+
         let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_without_cluster()?;
-        self.only_trusted_manager(cdn_node.provider_id)?;
+        self.only_trusted_cluster_manager(cdn_node.provider_id)?;
+
+        let mut cluster = self.clusters.get(cluster_id)?;
+        cluster.only_manager(caller)?;
 
         cdn_node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
-        let mut cluster = self.clusters.get(cluster_id)?;
         cluster.add_cdn_node(cdn_node_key);
         self.clusters.update(cluster_id, &cluster)?;
 
@@ -199,10 +200,9 @@ impl DdcBucket {
 
         cdn_node.only_with_cluster(cluster_id)?;
 
-        if !self.only_trusted_manager(cdn_node.provider_id).is_ok() 
-            && !cluster.only_owner(caller).is_ok()
+        if !cluster.only_manager(caller).is_ok()
             && !cdn_node.only_owner(caller).is_ok() {
-                return Err(OnlyTrustedManagerOrClusterOwnerOrCdnNodeOwner);
+                return Err(OnlyClusterManagerOrCdnNodeOwner);
         }
         
         cdn_node.unset_cluster();
@@ -227,7 +227,7 @@ impl DdcBucket {
         let caller = Self::env().caller();
 
         let cluster = self.clusters.get(cluster_id)?;
-        cluster.only_owner(caller)?;
+        cluster.only_manager(caller)?;
         cluster.only_without_nodes()?;
         
         self.clusters.remove(cluster_id);
@@ -251,11 +251,7 @@ impl DdcBucket {
 
         let mut node = self.nodes.get(node_key)?;
         let cluster = self.clusters.get(cluster_id)?;
-
-        if !self.only_trusted_manager(node.provider_id).is_ok() 
-            && !cluster.only_owner(caller).is_ok() {
-                return Err(OnlyTrustedManagerOrClusterOwner)
-        }
+        cluster.only_manager(caller)?;
 
         node.change_status_in_cluster(status_in_cluster.clone());
         self.nodes.update(node_key, &node)?;
@@ -280,11 +276,7 @@ impl DdcBucket {
 
         let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
         let cluster = self.clusters.get(cluster_id)?;
-
-        if !self.only_trusted_manager(cdn_node.provider_id).is_ok() 
-            && !cluster.only_owner(caller).is_ok() {
-                return Err(OnlyTrustedManagerOrClusterOwner)
-        }
+        cluster.only_manager(caller)?;
 
         cdn_node.change_status_in_cluster(status_in_cluster.clone());
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
@@ -299,12 +291,12 @@ impl DdcBucket {
     }
 
 
-    pub fn message_grant_manager_permission(
+    pub fn message_grant_trusted_manager_permission(
         &mut self,
         manager: AccountId
     ) -> Result<()> {
         let grantor = Self::env().caller();
-        let permission = Permission::ManagerTrustedBy(grantor);
+        let permission = Permission::ClusterManagerTrustedBy(grantor);
         self.grant_permission(manager, permission)?;
 
         Self::env().emit_event(PermissionGranted { 
@@ -316,12 +308,12 @@ impl DdcBucket {
     }
 
 
-    pub fn message_revoke_manager_permission(
+    pub fn message_revoke_trusted_manager_permission(
         &mut self,
         manager: AccountId
     ) -> Result<()> {
         let grantor = Self::env().caller();
-        let permission = Permission::ManagerTrustedBy(grantor);
+        let permission = Permission::ClusterManagerTrustedBy(grantor);
         self.revoke_permission(manager, permission)?;
 
         Self::env().emit_event(PermissionRevoked { 
@@ -340,7 +332,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let caller = Self::env().caller();
         let mut cluster = self.clusters.get(cluster_id)?;
-        cluster.only_owner(caller)?;
+        cluster.only_manager(caller)?;
         cluster.set_params(cluster_params.clone())?;
         self.clusters.update(cluster_id, &cluster)?;
 
@@ -360,7 +352,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let caller = Self::env().caller();
         let mut cluster = self.clusters.get(cluster_id)?;
-        cluster.only_owner(caller)?;
+        cluster.only_manager(caller)?;
         cluster.put_resource(resource);
         self.clusters.update(cluster_id, &cluster)?;
 
@@ -473,7 +465,7 @@ impl DdcBucket {
         let caller = Self::env().caller();
 
         let mut cluster = self.clusters.get(cluster_id)?;
-        cluster.only_owner(caller)?;
+        cluster.only_manager(caller)?;
         cluster.cdn_set_rate(cdn_usd_per_gb);
         self.clusters.update(cluster_id, &cluster)?;
 

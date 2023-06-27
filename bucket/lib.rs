@@ -422,7 +422,7 @@ pub mod ddc_bucket {
         /// Creates a cluster of Storage nodes and CDN nodes.
         ///
         /// This endpoint creates a cluster of Storage nodes and CDN nodes with specific parameters.
-        /// The caller will be the cluster owner (cluster manager). In order to add a Storage or CDN node, the manager must be authorized by the node owner using the `trust_manager` endpoint or be the node owner.
+        /// The caller will be the cluster manager (cluster owner). In order to add a Storage or CDN node, the manager must be authorized by the node owner using the `trust_manager` endpoint or be the node owner.
         ///
         /// # Parameters
         ///
@@ -470,7 +470,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyTrustedManager` error if the caller is not a trusted manager.
+        /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
         /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
         /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         #[ink(message, payable)]
@@ -504,7 +504,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyTrustedManagerOrClusterOwnerOrNodeOwner` error if the caller is not a trusted manager, cluster owner or node owner.
+        /// * `OnlyClusterManagerOrNodeOwner` error if the caller is not the cluster manager or node owner.
         /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the removing Storage node is not in this cluster.
         #[ink(message)]
@@ -539,7 +539,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyTrustedManagerOrClusterOwner` error if the caller is not a trusted manager or cluster owner.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `NodeDoesNotExist` error if the new Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
         /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
@@ -580,7 +580,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyTrustedManager` error if the caller is not a trusted manager.
+        /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
         /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
         /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the adding CDN node is already added to this or another cluster.
         #[ink(message, payable)]
@@ -613,7 +613,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyTrustedManagerOrClusterOwnerOrCdnNodeOwner` error if the caller is not a trusted manager, cluster owner or node owner.
+        /// * `OnlyClusterManagerOrCdnNodeOwner` error if the caller is not the cluster manager or node owner.
         /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
         /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the removing CDN node is not in this cluster.
         #[ink(message)]
@@ -645,7 +645,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyClusterOwner` error if the caller is not the cluster owner.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message, payable)]
         pub fn cluster_set_params(
@@ -675,7 +675,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyClusterOwner` error if the caller is not the cluster owner.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
         #[ink(message)]
@@ -706,7 +706,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyTrustedManagerOrClusterOwner` error if the caller is not a trusted manager or cluster owner.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the Storage node is not in this cluster.
         #[ink(message)]
@@ -743,7 +743,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyTrustedManagerOrClusterOwner` error if the caller is not a trusted manager or cluster owner.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the CDN node is not in this cluster.
         #[ink(message)]
@@ -1501,11 +1501,11 @@ pub mod ddc_bucket {
         ///
         /// No errors. The endpoint is idempotent.
         #[ink(message, payable)]
-        pub fn grant_manager_permission(
+        pub fn grant_trusted_manager_permission(
             &mut self, 
             manager: AccountId
         ) -> Result<()> {
-            self.message_grant_manager_permission(manager)
+            self.message_grant_trusted_manager_permission(manager)
         }
         
         /// Revokes permissions from cluster manager.
@@ -1530,11 +1530,11 @@ pub mod ddc_bucket {
         ///
         /// No errors. The endpoint is idempotent.
         #[ink(message)]
-        pub fn revoke_manager_permission(
+        pub fn revoke_trusted_manager_permission(
             &mut self, 
             manager: AccountId
         ) -> Result<()> {
-            self.message_revoke_manager_permission(manager)
+            self.message_revoke_trusted_manager_permission(manager)
         }
 
     }
@@ -1748,12 +1748,11 @@ pub mod ddc_bucket {
         OnlyOwner,
         OnlyNodeOwner,
         OnlyCdnNodeOwner,
-        OnlyTrustedManager,
-        OnlyClusterOwner,
+        OnlyClusterManager,
+        OnlyTrustedClusterManager,
         OnlySuperAdmin,
-        OnlyTrustedManagerOrClusterOwner,
-        OnlyTrustedManagerOrClusterOwnerOrNodeOwner,
-        OnlyTrustedManagerOrClusterOwnerOrCdnNodeOwner,
+        OnlyClusterManagerOrNodeOwner,
+        OnlyClusterManagerOrCdnNodeOwner,
         Unauthorized,
         ClusterDoesNotExist,
         ClusterIsNotEmpty,

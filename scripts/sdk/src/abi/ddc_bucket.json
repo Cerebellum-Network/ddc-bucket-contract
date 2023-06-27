@@ -4287,7 +4287,7 @@
                 },
                 {
                   "index": 17,
-                  "name": "OnlyTrustedManager"
+                  "name": "OnlyTrustedClusterManager"
                 },
                 {
                   "index": 18,
@@ -4960,7 +4960,7 @@
                     }
                   ],
                   "index": 0,
-                  "name": "ManagerTrustedBy"
+                  "name": "ClusterManagerTrustedBy"
                 },
                 {
                   "index": 1,

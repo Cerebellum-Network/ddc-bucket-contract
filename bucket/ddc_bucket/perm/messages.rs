@@ -32,12 +32,12 @@ impl DdcBucket {
             .ok_or(Unauthorized)
     }
 
-    pub fn only_trusted_manager(&self, provider_id: AccountId) -> Result<AccountId>  {
+    pub fn only_trusted_cluster_manager(&self, provider_id: AccountId) -> Result<AccountId>  {
         let caller = Self::env().caller();
-        let perm = Permission::ManagerTrustedBy(provider_id);
+        let perm = Permission::ClusterManagerTrustedBy(provider_id);
         self.perms.has_permission(caller, perm)
             .then(|| caller)
-            .ok_or(OnlyTrustedManager)
+            .ok_or(OnlyTrustedClusterManager)
     }
     
 }

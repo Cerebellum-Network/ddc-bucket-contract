@@ -8,7 +8,7 @@ use crate::ddc_bucket::node::entity::{Resource, NodeKey};
 use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 
 use crate::ddc_bucket::params::store::Params;
-use crate::ddc_bucket::Error::{OnlyClusterOwner, InsufficientBalance};
+use crate::ddc_bucket::Error::{OnlyClusterManager, InsufficientBalance};
 use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Result, Error::*};
 
 pub type ClusterId = u32;
@@ -77,10 +77,10 @@ impl Cluster {
         Ok(cluster)
     }
 
-    pub fn only_owner(&self, caller: AccountId) -> Result<()> {
+    pub fn only_manager(&self, caller: AccountId) -> Result<()> {
         (self.manager_id == caller)
             .then(|| ())
-            .ok_or(OnlyClusterOwner)
+            .ok_or(OnlyClusterManager)
     }
 
     pub fn only_without_nodes(&self) -> Result<()> {
