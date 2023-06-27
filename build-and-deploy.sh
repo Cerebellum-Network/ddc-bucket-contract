@@ -2,7 +2,7 @@
 
 set -eu
 
-# cargo +nightly-2023-02-07 test
+cargo +nightly-2023-02-07 test
 
 cargo +nightly-2023-02-07 contract build --release --manifest-path bucket/Cargo.toml
 # cargo +nightly-2023-02-07 contract build --release --manifest-path ddc_nft_registry/Cargo.toml

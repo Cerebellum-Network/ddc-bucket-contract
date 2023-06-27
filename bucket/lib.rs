@@ -23,11 +23,12 @@ pub mod ddc_bucket {
     use topology::store::*;
 
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
-    use crate::ddc_bucket::network_fee::{NetworkFeeStore};
+    use crate::ddc_bucket::network_fee::{NetworkFeeStore, FeeConfig};
     use crate::ddc_bucket::perm::entity::Permission;
 
     use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
+    use self::account::entity::Account;
     use self::protocol::store::ProtocolStore;
     use self::topology::store::TopologyStore;
 
@@ -129,148 +130,148 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        // /// Create a new bucket and return its `bucket_id`.
-        // ///
-        // /// The caller will be its first owner and payer of resources.
-        // ///
-        // /// `bucket_params` is configuration used by clients and nodes. See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
-        // ///
-        // /// The bucket can be connected to a single cluster (currently). Allocate cluster resources with the function `bucket_alloc_into_cluster`
-        // #[ink(message, payable)]
-        // pub fn bucket_create(
-        //     &mut self,
-        //     bucket_params: BucketParams,
-        //     cluster_id: ClusterId,
-        //     owner_id: Option<AccountId>,
-        // ) -> BucketId {
-        //     self.message_bucket_create(bucket_params, cluster_id, owner_id)
-        //         .unwrap()
-        // }
+        /// Create a new bucket and return its `bucket_id`.
+        ///
+        /// The caller will be its first owner and payer of resources.
+        ///
+        /// `bucket_params` is configuration used by clients and nodes. See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        ///
+        /// The bucket can be connected to a single cluster (currently). Allocate cluster resources with the function `bucket_alloc_into_cluster`
+        #[ink(message, payable)]
+        pub fn bucket_create(
+            &mut self,
+            bucket_params: BucketParams,
+            cluster_id: ClusterId,
+            owner_id: Option<AccountId>,
+        ) -> BucketId {
+            self.message_bucket_create(bucket_params, cluster_id, owner_id)
+                .unwrap()
+        }
 
-        // /// Change owner of the bucket
-        // ///
-        // /// Provide the account of new owner
-        // #[ink(message, payable)]
-        // pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
-        //     self.message_bucket_change_owner(bucket_id, owner_id)
-        //         .unwrap()
-        // }
+        /// Change owner of the bucket
+        ///
+        /// Provide the account of new owner
+        #[ink(message, payable)]
+        pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
+            self.message_bucket_change_owner(bucket_id, owner_id)
+                .unwrap()
+        }
 
-        // /// Allocate some resources of a cluster to a bucket.
-        // ///
-        // /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
-        // #[ink(message)]
-        // pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
-        //     self.message_bucket_alloc_into_cluster(bucket_id, resource)
-        //         .unwrap()
-        // }
+        /// Allocate some resources of a cluster to a bucket.
+        ///
+        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        #[ink(message)]
+        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
+            self.message_bucket_alloc_into_cluster(bucket_id, resource)
+                .unwrap()
+        }
 
-        // /// Settle the due costs of a bucket from its payer account to the cluster account.
-        // #[ink(message)]
-        // pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) {
-        //     self.message_bucket_settle_payment(bucket_id).unwrap()
-        // }
+        /// Settle the due costs of a bucket from its payer account to the cluster account.
+        #[ink(message)]
+        pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) {
+            self.message_bucket_settle_payment(bucket_id).unwrap()
+        }
 
-        // /// Change the `bucket_params`, which is configuration used by clients and nodes.
-        // ///
-        // /// See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
-        // #[ink(message, payable)]
-        // pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
-        //     self.message_bucket_change_params(bucket_id, params)
-        //         .unwrap();
-        // }
+        /// Change the `bucket_params`, which is configuration used by clients and nodes.
+        ///
+        /// See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        #[ink(message, payable)]
+        pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
+            self.message_bucket_change_params(bucket_id, params)
+                .unwrap();
+        }
 
-        // /// Get the current status of a bucket.
-        // #[ink(message)]
-        // pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-        //     self.message_bucket_get(bucket_id)
-        // }
+        /// Get the current status of a bucket.
+        #[ink(message)]
+        pub fn bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
+            self.message_bucket_get(bucket_id)
+        }
 
-        // /// Iterate through all buckets.
-        // ///
-        // /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        // /// The optimal `limit` depends on the size of params.
-        // ///
-        // /// The results can be filtered by owner. Note that paging must still be completed fully.
-        // #[ink(message)]
-        // pub fn bucket_list(
-        //     &self,
-        //     offset: u32,
-        //     limit: u32,
-        //     filter_owner_id: Option<AccountId>,
-        // ) -> (Vec<BucketStatus>, u32) {
-        //     self.message_bucket_list(offset, limit, filter_owner_id)
-        // }
+        /// Iterate through all buckets.
+        ///
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The optimal `limit` depends on the size of params.
+        ///
+        /// The results can be filtered by owner. Note that paging must still be completed fully.
+        #[ink(message)]
+        pub fn bucket_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_owner_id: Option<AccountId>,
+        ) -> (Vec<BucketStatus>, u32) {
+            self.message_bucket_list(offset, limit, filter_owner_id)
+        }
 
-        // /// Iterate through all buckets and return only those owned by owner
-        // ///
-        // /// This method returns bucket struct, not the status
-        // #[ink(message)]
-        // pub fn bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
-        //     self.message_bucket_list_for_account(owner_id)
-        // }
+        /// Iterate through all buckets and return only those owned by owner
+        ///
+        /// This method returns bucket struct, not the status
+        #[ink(message)]
+        pub fn bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
+            self.message_bucket_list_for_account(owner_id)
+        }
 
-        // /// Set availiablity of the bucket
-        // #[ink(message)]
-        // pub fn bucket_set_availability(
-        //     &mut self,
-        //     bucket_id: BucketId,
-        //     public_availability: bool,
-        // ) -> () {
-        //     self.message_bucket_set_availability(bucket_id, public_availability)
-        //         .unwrap()
-        // }
+        /// Set availiablity of the bucket
+        #[ink(message)]
+        pub fn bucket_set_availability(
+            &mut self,
+            bucket_id: BucketId,
+            public_availability: bool,
+        ) -> () {
+            self.message_bucket_set_availability(bucket_id, public_availability)
+                .unwrap()
+        }
 
-        // /// Set max resource cap to be charged by CDN for public bucket
-        // #[ink(message)]
-        // pub fn bucket_set_resource_cap(
-        //     &mut self,
-        //     bucket_id: BucketId,
-        //     new_resource_cap: Resource,
-        // ) -> () {
-        //     self.message_bucket_set_resource_cap(bucket_id, new_resource_cap)
-        //         .unwrap()
-        // }
+        /// Set max resource cap to be charged by CDN for public bucket
+        #[ink(message)]
+        pub fn bucket_set_resource_cap(
+            &mut self,
+            bucket_id: BucketId,
+            new_resource_cap: Resource,
+        ) -> () {
+            self.message_bucket_set_resource_cap(bucket_id, new_resource_cap)
+                .unwrap()
+        }
 
-        // /// Set permission for the reader of the bucket
-        // #[ink(message)]
-        // pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
-        //     self.message_get_bucket_writers(bucket_id).unwrap()
-        // }
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+            self.message_get_bucket_writers(bucket_id).unwrap()
+        }
 
-        // /// Set permission for the writer of the bucket
-        // #[ink(message)]
-        // pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-        //     self.message_grant_writer_permission(bucket_id, writer)
-        //         .unwrap()
-        // }
+        /// Set permission for the writer of the bucket
+        #[ink(message)]
+        pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_grant_writer_permission(bucket_id, writer)
+                .unwrap()
+        }
 
-        // /// Revoke permission for the writer of the bucket
-        // #[ink(message)]
-        // pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-        //     self.message_revoke_writer_permission(bucket_id, writer)
-        //         .unwrap()
-        // }
+        /// Revoke permission for the writer of the bucket
+        #[ink(message)]
+        pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_revoke_writer_permission(bucket_id, writer)
+                .unwrap()
+        }
 
-        // /// Set permission for the reader of the bucket
-        // #[ink(message)]
-        // pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
-        //     self.message_get_bucket_readers(bucket_id).unwrap()
-        // }
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+            self.message_get_bucket_readers(bucket_id).unwrap()
+        }
 
-        // /// Set permission for the reader of the bucket
-        // #[ink(message)]
-        // pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
-        //     self.message_grant_reader_permission(bucket_id, reader)
-        //         .unwrap()
-        // }
+        /// Set permission for the reader of the bucket
+        #[ink(message)]
+        pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
+            self.message_grant_reader_permission(bucket_id, reader)
+                .unwrap()
+        }
 
-        // /// Revoke permission for the reader of the bucket
-        // #[ink(message)]
-        // pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
-        //     self.message_revoke_reader_permission(bucket_id, writer)
-        //         .unwrap()
-        // }
+        /// Revoke permission for the reader of the bucket
+        #[ink(message)]
+        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+            self.message_revoke_reader_permission(bucket_id, writer)
+                .unwrap()
+        }
     }
     // ---- End Bucket ----
 
@@ -778,37 +779,66 @@ pub mod ddc_bucket {
             self.message_cluster_list(offset, limit, filter_manager_id)
         }
 
+        /// As manager, reserve more resources for the cluster from the free capacity of nodes.
+        ///
+        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
+        #[ink(message)]
+        pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
+            self.message_cluster_reserve_resource(cluster_id, amount)
+                .unwrap()
+        }
 
+        /// Trigger the distribution of revenues from the cluster to the providers.
+        #[ink(message)]
+        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
+            self.message_cluster_distribute_revenues(cluster_id)
+                .unwrap()
+        }
 
-        // /// As manager, reserve more resources for the cluster from the free capacity of nodes.
-        // ///
-        // /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
-        // #[ink(message)]
-        // pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
-        //     self.message_cluster_reserve_resource(cluster_id, amount)
-        //         .unwrap()
-        // }
+        /// Set rate for streaming (price per gb)
+        #[ink(message, payable)]
+        pub fn cdn_set_rate(&mut self, cluster_id: ClusterId, usd_per_gb: Balance) -> () {
+            self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
+        }
 
-        // /// As manager, re-assign a vnode to another physical node.
-        // ///
-        // /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
-        // #[ink(message)]
-        // pub fn cluster_replace_node(
-        //     &mut self,
-        //     cluster_id: ClusterId,
-        //     v_nodes: Vec<u64>,
-        //     new_node_key: NodeKey,
-        // ) -> () {
-        //     self.message_cluster_replace_node(cluster_id, v_nodes, new_node_key)
-        //         .unwrap()
-        // }
+        /// Get rate for streaming (price per gb)
+        #[ink(message, payable)]
+        pub fn cdn_get_rate(&self, cluster_id: ClusterId) -> Balance {
+            self.message_cdn_get_rate(cluster_id).unwrap()
+        }
 
-        // /// Trigger the distribution of revenues from the cluster to the providers.
-        // #[ink(message)]
-        // pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-        //     self.message_cluster_distribute_revenues(cluster_id)
-        //         .unwrap()
-        // }
+        /// As validator, charge payments from users and allocate undistributed payments to CDN nodes.
+        ///
+        /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
+        #[ink(message)]
+        pub fn cdn_cluster_put_revenue(
+            &mut self,
+            cluster_id: ClusterId,
+            aggregates_accounts: Vec<(AccountId, u128)>,
+            aggregates_nodes: Vec<(CdnNodeKey, u128)>,
+            aggregates_buckets: Vec<(BucketId, Resource)>,
+            era: u64,
+        ) -> () {
+            self.message_cdn_cluster_put_revenue(
+                cluster_id,
+                aggregates_accounts,
+                aggregates_nodes,
+                aggregates_buckets,
+                era,
+            )
+            .unwrap()
+        }
+
+        /// Trigger the distribution of revenues from the cluster to the CDN node providers.
+        ///
+        /// Anyone can call this method.
+        ///
+        /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
+        #[ink(message)]
+        pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
+            self.message_cdn_cluster_distribute_revenues(cluster_id)
+                .unwrap()
+        }
 
     }
     // ---- End Cluster ----
@@ -835,124 +865,46 @@ pub mod ddc_bucket {
         provider_id: AccountId,
     }
 
-    impl DdcBucket {
-        // /// Create a new cluster and return its `cluster_id`.
-        // ///
-        // /// The caller will be its first manager.
-        // ///
-        // /// The CDN node ids are provided, which will form a cluster.
-        // #[ink(message, payable)]
-        // pub fn cdn_cluster_create(&mut self, cdn_node_keys: Vec<CdnNodeKey>) -> ClusterId {
-        //     self.message_cdn_cluster_create(cdn_node_keys).unwrap()
-        // }
-
-        // /// Set rate for streaming (price per gb)
-        // #[ink(message, payable)]
-        // pub fn cdn_set_rate(&mut self, cluster_id: ClusterId, usd_per_gb: Balance) -> () {
-        //     self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
-        // }
-
-        // /// Get rate for streaming (price per gb)
-        // #[ink(message, payable)]
-        // pub fn cdn_get_rate(&self, cluster_id: ClusterId) -> Balance {
-        //     self.message_cdn_get_rate(cluster_id).unwrap()
-        // }
-
-        // /// As validator, charge payments from users and allocate undistributed payments to CDN nodes.
-        // ///
-        // /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
-        // #[ink(message)]
-        // pub fn cdn_cluster_put_revenue(
-        //     &mut self,
-        //     cluster_id: ClusterId,
-        //     aggregates_accounts: Vec<(AccountId, u128)>,
-        //     aggregates_nodes: Vec<(CdnNodeKey, u128)>,
-        //     aggregates_buckets: Vec<(BucketId, Resource)>,
-        //     era: u64,
-        // ) -> () {
-        //     self.message_cdn_cluster_put_revenue(
-        //         cluster_id,
-        //         aggregates_accounts,
-        //         aggregates_nodes,
-        //         aggregates_buckets,
-        //         era,
-        //     )
-        //     .unwrap()
-        // }
-
-        // /// Trigger the distribution of revenues from the cluster to the CDN node providers.
-        // ///
-        // /// Anyone can call this method.
-        // ///
-        // /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
-        // #[ink(message)]
-        // pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-        //     self.message_cdn_cluster_distribute_revenues(cluster_id)
-        //         .unwrap()
-        // }
-
-        // /// Get the current status of a cluster.
-        // #[ink(message)]
-        // pub fn cdn_cluster_get(&self, cluster_id: ClusterId) -> Result<CdnClusterStatus> {
-        //     self.message_cdn_cluster_get(cluster_id)
-        // }
-
-        // /// Iterate through all clusters.
-        // ///
-        // /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        // /// The optimal `limit` depends on the size of params.
-        // ///
-        // /// The results can be filtered by manager. Note that paging must still be completed fully.
-        // #[ink(message)]
-        // pub fn cdn_cluster_list(
-        //     &self,
-        //     offset: u32,
-        //     limit: u32,
-        //     filter_manager_id: Option<AccountId>,
-        // ) -> (Vec<CdnClusterStatus>, u32) {
-        //     self.message_cdn_cluster_list(offset, limit, filter_manager_id)
-        // }
-    }
     // ---- End CDN Cluster ----
 
     // ---- Committer ----
 
     impl DdcBucket {
-        // /// CDN node operator sets the commit for current era.
-        // #[ink(message)]
-        // pub fn set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) {
-        //     self.message_set_commit(cdn_owner, cdn_node_key, commit);
-        // }
+        /// CDN node operator sets the commit for current era.
+        #[ink(message)]
+        pub fn set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) {
+            self.message_set_commit(cdn_owner, cdn_node_key, commit);
+        }
 
-        // /// Return the last commit submitted by CDN node operator
-        // #[ink(message)]
-        // pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(CdnNodeKey, Commit)> {
-        //     self.message_get_commit(cdn_owner)
-        // }
+        /// Return the last commit submitted by CDN node operator
+        #[ink(message)]
+        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(CdnNodeKey, Commit)> {
+            self.message_get_commit(cdn_owner)
+        }
 
-        // /// Return last era validated per CDN node
-        // #[ink(message)]
-        // pub fn get_validated_commit(&self, cdn_node_key: CdnNodeKey) -> EraAndTimestamp {
-        //     self.message_get_validated_commit(cdn_node_key)
-        // }
+        /// Return last era validated per CDN node
+        #[ink(message)]
+        pub fn get_validated_commit(&self, cdn_node_key: CdnNodeKey) -> EraAndTimestamp {
+            self.message_get_validated_commit(cdn_node_key)
+        }
 
-        // /// Set the new configs for era
-        // #[ink(message)]
-        // pub fn set_era(&mut self, era_config: EraConfig) -> () {
-        //     self.message_set_era(era_config).unwrap();
-        // }
+        /// Set the new configs for era
+        #[ink(message)]
+        pub fn set_era(&mut self, era_config: EraConfig) -> () {
+            self.message_set_era(era_config).unwrap();
+        }
 
-        // /// Return current status of an era
-        // #[ink(message)]
-        // pub fn get_era(&self) -> EraStatus {
-        //     self.message_get_era()
-        // }
+        /// Return current status of an era
+        #[ink(message)]
+        pub fn get_era(&self) -> EraStatus {
+            self.message_get_era()
+        }
 
-        // /// Return current era settings
-        // #[ink(message)]
-        // pub fn get_era_settings(&self) -> EraConfig {
-        //     self.message_get_era_settings()
-        // }
+        /// Return current era settings
+        #[ink(message)]
+        pub fn get_era_settings(&self) -> EraConfig {
+            self.message_get_era_settings()
+        }
     }
     // ---- End Committer ----
 
@@ -1316,29 +1268,29 @@ pub mod ddc_bucket {
     // ---- Protocol ----
 
     impl DdcBucket {
-        // /// Get the Fee Percentage Basis Points that will be charged by the protocol
-        // #[ink(message)]
-        // pub fn get_fee_bp(&self) -> u32 {
-        //     self.message_get_fee_bp()
-        // }
+        /// Get the Fee Percentage Basis Points that will be charged by the protocol
+        #[ink(message)]
+        pub fn get_fee_bp(&self) -> u32 {
+            self.message_get_fee_bp()
+        }
 
-        // /// Return the last commit submitted by CDN node operator
-        // #[ink(message)]
-        // pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
-        //     self.message_set_fee_bp(fee_bp).unwrap();
-        // }
+        /// Return the last commit submitted by CDN node operator
+        #[ink(message)]
+        pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
+            self.message_set_fee_bp(fee_bp).unwrap();
+        }
 
-        // /// Return fees accumulated by the protocol
-        // #[ink(message)]
-        // pub fn get_protocol_revenues(&self) -> Cash {
-        //     self.message_get_fee_revenues()
-        // }
+        /// Return fees accumulated by the protocol
+        #[ink(message)]
+        pub fn get_protocol_revenues(&self) -> Cash {
+            self.message_get_fee_revenues()
+        }
 
-        // /// Pay the revenues accumulated by the protocol
-        // #[ink(message)]
-        // pub fn protocol_withdraw_revenues(&mut self, amount: u128) -> () {
-        //     self.message_withdraw_revenues(amount).unwrap();
-        // }
+        /// Pay the revenues accumulated by the protocol
+        #[ink(message)]
+        pub fn protocol_withdraw_revenues(&mut self, amount: u128) -> () {
+            self.message_withdraw_revenues(amount).unwrap();
+        }
     }
     // ---- End Protocol ----
 
@@ -1354,52 +1306,52 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        // /// As user, deposit tokens on the account of the caller from the transaction value. This deposit
-        // /// can be used to pay for the services to buckets of the account.
-        // #[ink(message, payable)]
-        // pub fn account_deposit(&mut self) -> () {
-        //     self.message_account_deposit().unwrap()
-        // }
+        /// As user, deposit tokens on the account of the caller from the transaction value. This deposit
+        /// can be used to pay for the services to buckets of the account.
+        #[ink(message, payable)]
+        pub fn account_deposit(&mut self) -> () {
+            self.message_account_deposit().unwrap()
+        }
 
-        // /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to pay for CDN node service.
-        // #[ink(message, payable)]
-        // pub fn account_bond(&mut self, bond_amount: Balance) -> () {
-        //     self.message_account_bond(bond_amount).unwrap()
-        // }
+        /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to pay for CDN node service.
+        #[ink(message, payable)]
+        pub fn account_bond(&mut self, bond_amount: Balance) -> () {
+            self.message_account_bond(bond_amount).unwrap()
+        }
 
-        // /// As user, unbond a specified amount of tokens. The tokens will be locked for some time, as defined by contract owner.
-        // #[ink(message, payable)]
-        // pub fn account_unbond(&mut self, amount_to_unbond: Cash) -> () {
-        //     self.message_account_unbond(amount_to_unbond).unwrap()
-        // }
+        /// As user, unbond a specified amount of tokens. The tokens will be locked for some time, as defined by contract owner.
+        #[ink(message, payable)]
+        pub fn account_unbond(&mut self, amount_to_unbond: Cash) -> () {
+            self.message_account_unbond(amount_to_unbond).unwrap()
+        }
 
-        // /// As user, move the unbonded tokens back to withdrawable balance state.
-        // ///
-        // /// This can be triggered after unbonded_timestamp
-        // #[ink(message, payable)]
-        // pub fn account_withdraw_unbonded(&mut self) -> () {
-        //     self.message_account_withdraw_unbonded().unwrap()
-        // }
+        /// As user, move the unbonded tokens back to withdrawable balance state.
+        ///
+        /// This can be triggered after unbonded_timestamp
+        #[ink(message, payable)]
+        pub fn account_withdraw_unbonded(&mut self) -> () {
+            self.message_account_withdraw_unbonded().unwrap()
+        }
 
-        // /// Get the current status of an account.
-        // #[ink(message)]
-        // pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
-        //     Ok(self.accounts.get(&account_id)?.clone())
-        // }
+        /// Get the current status of an account.
+        #[ink(message)]
+        pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
+            Ok(self.accounts.get(&account_id)?.clone())
+        }
 
-        // /// Get the current conversion rate between the native currency and an external currency (USD).
-        // #[ink(message)]
-        // pub fn account_get_usd_per_cere(&self) -> Balance {
-        //     self.message_account_get_usd_per_cere()
-        // }
+        /// Get the current conversion rate between the native currency and an external currency (USD).
+        #[ink(message)]
+        pub fn account_get_usd_per_cere(&self) -> Balance {
+            self.message_account_get_usd_per_cere()
+        }
 
-        // /// As price oracle, set the current conversion rate between the native currency and an external currency (USD).
-        // ///
-        // /// This requires the permission SetExchangeRate or SuperAdmin.
-        // #[ink(message)]
-        // pub fn account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
-        //     self.message_account_set_usd_per_cere(usd_per_cere);
-        // }
+        /// As price oracle, set the current conversion rate between the native currency and an external currency (USD).
+        ///
+        /// This requires the permission SetExchangeRate or SuperAdmin.
+        #[ink(message)]
+        pub fn account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
+            self.message_account_set_usd_per_cere(usd_per_cere);
+        }
     }
     // ---- End Billing ----
 
@@ -1653,29 +1605,29 @@ pub mod ddc_bucket {
             self.message_admin_transfer_cdn_node_ownership(cdn_node_key, new_owner)
         }
 
-        // /// As SuperAdmin, withdraw the funds held in custody in this contract.
-        // ///
-        // /// This is a temporary measure to allow migrating the funds to a new version of the contract.
-        // #[ink(message)]
-        // pub fn admin_withdraw(&mut self, amount: Balance) {
-        //     self.message_admin_withdraw(amount).unwrap();
-        // }
+        /// As SuperAdmin, withdraw the funds held in custody in this contract.
+        ///
+        /// This is a temporary measure to allow migrating the funds to a new version of the contract.
+        #[ink(message)]
+        pub fn admin_withdraw(&mut self, amount: Balance) {
+            self.message_admin_withdraw(amount).unwrap();
+        }
 
-        // /// As SuperAdmin, set the network and cluster fee configuration.
-        // #[ink(message)]
-        // pub fn admin_set_fee_config(&mut self, config: FeeConfig) {
-        //     self.message_admin_set_fee_config(config).unwrap();
-        // }
+        /// As SuperAdmin, set the network and cluster fee configuration.
+        #[ink(message)]
+        pub fn admin_set_fee_config(&mut self, config: FeeConfig) {
+            self.message_admin_set_fee_config(config).unwrap();
+        }
     }
     // ---- End Admin ----
 
     // ---- Accounts ----
     impl DdcBucket {
-        // /// Get all Account IDs stored in the SC
-        // #[ink(message, payable)]
-        // pub fn get_accounts(&self) -> Vec<AccountId> {
-        //     self.message_get_accounts()
-        // }
+        /// Get all Account IDs stored in the SC
+        #[ink(message, payable)]
+        pub fn get_accounts(&self) -> Vec<AccountId> {
+            self.message_get_accounts()
+        }
     }
     // ---- End Accounts ----
 
