@@ -490,93 +490,82 @@ fn cluster_create_works() {
 
 }
 
-// #[ink::test]
-// fn cluster_replace_node_only_manager() {
-//     let mut ctx = new_cluster();
-//     let not_manager = get_accounts().alice;
-//     set_caller_value(not_manager, 0);
 
-//     // Reassign a vnode from node1 to node2.
-//     assert_eq!(
-//         ctx.contract
-//             .message_cluster_replace_node(
-//                 ctx.cluster_id, 
-//                 vec![1, 2, 3], 
-//                 ctx.node_key2
-//             ),
-//         Err(OnlyClusterManager)
-//     );
-// }
+#[ink::test]
+fn cluster_replace_node_only_manager() {
+    let mut ctx = new_cluster();
+    let not_manager = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_caller_value(not_manager, 0);
 
-// #[ink::test]
-// fn cluster_replace_node_only_trusted_manager() {
-//     let mut ctx = new_cluster();
+    // Reassign a vnode from node1 to node2.
+    assert_eq!(
+        ctx.contract.cluster_replace_node(
+            ctx.cluster_id, 
+            vec![1, 2, 3], 
+            ctx.node_key2
+        ),
+        Err(OnlyClusterManager)
+    );
+}
 
-//     // The provider stops trusting the manager_id.
-//     set_caller(ctx.provider_id2);
-//     ctx.contract.node_distrust_manager(ctx.manager_id);
+#[ink::test]
+fn cluster_replace_node_works() {
+    let mut ctx = new_cluster();
+    set_caller_value(ctx.manager_id, 0);
 
-//     set_caller_value(ctx.manager_id, 0);
+    // Reassign a vnode from node1 to node2.
+    ctx.contract.cluster_replace_node(
+        ctx.cluster_id, 
+        vec![1, 3], 
+        ctx.node_key2
+    ).unwrap();
 
-//     // The manager_id cannot use nodes of the provider.
-//     assert_eq!(
-//         ctx.contract
-//             .message_cluster_replace_node(
-//                 ctx.cluster_id, 
-//                 vec![1, 2, 3],
-//                 ctx.node_key2
-//             ),
-//         Err(OnlyTrustedClusterManager)
-//     );
-// }
+    // Check the last event.
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::ClusterNodeReplaced(ev) if ev ==
+        ClusterNodeReplaced { 
+            cluster_id: ctx.cluster_id, 
+            node_key: ctx.node_key2
+        }
+    ));
 
-// #[ink::test]
-// fn cluster_replace_node_works() {
-//     let mut ctx = new_cluster();
-//     set_caller_value(ctx.manager_id, 0);
+    let mut cluster_v_nodes = Vec::<VNodeToken>::new();
+    cluster_v_nodes.extend(vec![2]);
+    cluster_v_nodes.extend(ctx.v_nodes_by_nodes[1].clone());
+    cluster_v_nodes.extend(ctx.v_nodes_by_nodes[2].clone());
+    cluster_v_nodes.extend(vec![1, 3]);
+    cluster_v_nodes.sort();
 
-//     // Reassign a vnode from node1 to node2.
-//     ctx.contract
-//         .cluster_replace_node(ctx.cluster_id, vec![1, 3], ctx.node_key2);
+    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    cluster_info.cluster_v_nodes.sort();
+    assert_eq!(&cluster_info.cluster_v_nodes, &cluster_v_nodes, "a v_node must be replaced");
 
-//     // Check the last event.
-//     let ev = get_events().pop().unwrap();
-//     assert!(matches!(ev, Event::ClusterNodeReplaced(ev) if ev ==
-//         ClusterNodeReplaced { cluster_id: ctx.cluster_id, node_key: ctx.node_key2  }));
+    let mut v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0.clone());
+    v_nodes0.sort();
+    let mut v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1.clone());
+    v_nodes1.sort();
+    let mut v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2.clone());
+    v_nodes2.sort();
 
-//     let vnodes_for_replaced = vec![2];
-//     let vnodes_for_second_node = vec![4, 5, 6];
-//     let vnodes_for_third_node = vec![7, 8, 9];
-//     let vnodes_for_third_dup = vec![1, 3];
+    assert_eq!(&v_nodes0, &vec![2], "v_nodes must be replaced for the 1st node");
+    assert_eq!(&v_nodes1, &vec![4, 5, 6], "v_nodes must not be replaced for the 2nd node");
+    assert_eq!(&v_nodes2, &vec![1, 3, 7, 8, 9], "v_nodes must be assigned to the 3rd node");
 
-//     let vnodes = vec![
-//         vnodes_for_replaced,
-//         vnodes_for_second_node,
-//         vnodes_for_third_node,
-//         vnodes_for_third_dup,
-//     ];
+    // Check the changed state of the nodes.
+    let expected_resources = [
+        (ctx.node_key0, 100 - 10),
+        (ctx.node_key1, 100 - 10 - 10 - 10),
+        (ctx.node_key2, 100 - 10 - 10 - 10 - 10 - 10),
+    ];
 
-//     // Check the changed state of the cluster.
-//     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
-//     println!("cluster.v_nodes: {:?}", cluster.v_nodes.clone());
-//     println!("cluster.node_keys: {:?}", cluster.node_keys.clone());
-//     assert_eq!(&cluster.v_nodes, &vnodes, "a vnode must be replaced");
-
-//     // Check the changed state of the nodes.
-//     let expected_resources = [
-//         (ctx.node_key0, 100 - 10),
-//         (ctx.node_key1, 100 - 10 - 10 - 10),
-//         (ctx.node_key2, 100 - 10 - 10 - 10 - 10 - 10),
-//     ];
-
-//     for (node_key, available) in expected_resources {
-//         let node_status = ctx.contract.node_get(node_key).unwrap();
-//         assert_eq!(
-//             node_status.node.free_resource, available,
-//             "resources must have shifted between nodes"
-//         );
-//     }
-// }
+    for (node_key, available) in expected_resources {
+        let node_status = ctx.contract.node_get(node_key).unwrap();
+        assert_eq!(
+            node_status.node.free_resource, available,
+            "resources must have shifted between nodes"
+        );
+    }
+}
 
 // #[ink::test]
 // fn cluster_reserve_works() {

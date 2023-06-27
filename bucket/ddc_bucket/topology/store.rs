@@ -152,7 +152,9 @@ impl TopologyStore {
         }
 
         // vnodes that are being reasigned should be among other vnodes assigned to the new physical node
-        self.v_nodes_map.insert(new_node_key, &v_nodes_to_reasign);
+        let mut new_node_v_nodes = self.get_v_nodes_by_node(new_node_key);
+        new_node_v_nodes.extend(v_nodes_to_reasign);
+        self.v_nodes_map.insert(new_node_key, &new_node_v_nodes);
 
         Ok(())
     }
