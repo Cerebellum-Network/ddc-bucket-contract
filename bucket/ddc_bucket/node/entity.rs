@@ -46,13 +46,13 @@ pub enum NodeStatusInCluster {
 
 impl SpreadAllocate for NodeStatusInCluster { 
     fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        NodeStatusInCluster::ACTIVE 
+        NodeStatusInCluster::ADDING 
     }
 }
 
 impl Default for NodeStatusInCluster {
     fn default() -> Self {
-        NodeStatusInCluster::ACTIVE 
+        NodeStatusInCluster::ADDING 
     }
 }
 

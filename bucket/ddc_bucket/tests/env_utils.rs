@@ -81,6 +81,20 @@ pub fn print_events(events: &[Event]) {
             Event::CdnClusterCreated(ev) => println!("EVENT {:?}", ev),
             Event::CdnClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
             Event::CdnNodeCreated(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeAdded(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeAdded(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterParamsSet(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeStatusSet(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeStatusSet(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeParamsSet(ev) => println!("EVENT {:?}", ev),
+            Event::NodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::NodeParamsSet(ev) => println!("EVENT {:?}", ev),
+            Event::NodeOwnershipTransferred(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeOwnershipTransferred(ev) => println!("EVENT {:?}", ev),
         }
     }
 }

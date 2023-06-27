@@ -61,7 +61,7 @@ impl DdcBucket {
         let mut cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
 
-        node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
+        node.set_cluster(cluster_id, NodeStatusInCluster::ADDING);
         self.nodes.update(node_key, &node)?;
 
         cluster.add_node(node_key);
@@ -173,7 +173,7 @@ impl DdcBucket {
         let mut cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
 
-        cdn_node.set_cluster(cluster_id, NodeStatusInCluster::ACTIVE);
+        cdn_node.set_cluster(cluster_id, NodeStatusInCluster::ADDING);
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         cluster.add_cdn_node(cdn_node_key);
