@@ -369,7 +369,7 @@ fn cluster_create_works() {
                     manager_id: ctx.manager,
                     node_keys: ctx.node_keys,
                     v_nodes: ctx.vnodes_wrapper,
-                    resource_per_vnode: ctx.reserved,
+                    resource_per_v_node: ctx.reserved,
                     resource_used: 0,
                     revenues: Cash(0),
                     total_rent: ctx.rent_per_vnode * ctx.vnodes.len() as Balance,
@@ -520,7 +520,7 @@ fn cluster_reserve_works() {
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
-    assert_eq!(cluster.resource_per_vnode, 10 + 5);
+    assert_eq!(cluster.resource_per_v_node, 10 + 5);
 
     // Check the changed state of the nodes.
     let expected_resources = [
@@ -973,7 +973,7 @@ fn bucket_reserve_0_works() {
                 cluster: Cluster {
                     manager_id: AccountId::default(),
                     v_nodes: vec![],
-                    resource_per_vnode: 0,
+                    resource_per_v_node: 0,
                     resource_used: 0,
                     revenues: Cash(0),
                     total_rent: 0,

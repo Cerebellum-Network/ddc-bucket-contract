@@ -3396,7 +3396,7 @@
                   "typeName": "AccountId"
                 },
                 {
-                  "name": "resource_per_vnode",
+                  "name": "resource_per_v_node",
                   "type": 5,
                   "typeName": "Resource"
                 },

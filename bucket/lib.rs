@@ -8,7 +8,6 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
-    use ink_prelude::string::ToString;
     use ink_prelude::vec::Vec;
     use scale::{Decode, Encode};
 
@@ -76,40 +75,11 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
-                let operator = Self::env().caller();
-
-                contract.committer_store.init(operator);
-                contract.protocol_store.init(operator, DEFAULT_BASIS_POINTS);
-
+                let admin = Self::env().caller();
                 // Make the creator of this contract a super-admin.
-                let admin_id = Self::env().caller();
-                contract
-                    .perms
-                    .grant_permission(admin_id, &Permission::SuperAdmin);
-
-                // Reserve IDs 0.
-                let _ = contract.accounts.create_if_not_exist(AccountId::default());
-                let _ = contract.cdn_nodes.create(AccountId::default(), AccountId::default(), "".to_string(), 0);
-
-                let _ = contract
-                    .nodes
-                    .create(
-                        AccountId::default(),
-                        AccountId::default(),
-                        NodeParams::from(""),
-                        0,
-                        Balance::default(),
-                    )
-                    .unwrap();
-                let _ = contract
-                    .clusters
-                    .create(
-                        AccountId::default(),
-                        ClusterParams::from(""),
-                    )
-                    .unwrap();
-                let _ = contract.buckets.create(AccountId::default(), 0);
-                let _ = contract.bucket_params.create("".to_string()).unwrap();
+                contract.perms.grant_permission(admin, &Permission::SuperAdmin);
+                contract.committer_store.init(admin);
+                contract.protocol_store.init(admin, DEFAULT_BASIS_POINTS);
             })
         }
     }

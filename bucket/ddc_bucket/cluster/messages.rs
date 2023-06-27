@@ -135,7 +135,7 @@ impl DdcBucket {
 
             // Give back resources to the old node
             let mut old_node = self.nodes.get(old_node_key)?;
-            old_node.put_resource(cluster.resource_per_vnode);
+            old_node.put_resource(cluster.resource_per_v_node);
             self.nodes.update(old_node_key, &old_node)?;
 
             let mut new_node = self.nodes.get(new_node_key)?;
@@ -143,7 +143,7 @@ impl DdcBucket {
             cluster.only_manager(caller)?;
 
             // Reserve resources on the new node.
-            new_node.take_resource(cluster.resource_per_vnode)?;
+            new_node.take_resource(cluster.resource_per_v_node)?;
             self.nodes.update(new_node_key, &new_node)?;
         }
 

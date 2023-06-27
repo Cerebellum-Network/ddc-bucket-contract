@@ -22,7 +22,7 @@ pub struct Cluster {
 
     // storage nodes
     pub nodes_keys: Vec<NodeKey>,
-    pub resource_per_vnode: Resource,
+    pub resource_per_v_node: Resource,
     pub resource_used: Resource,
     pub revenues: Cash,
     pub total_rent: Balance,
@@ -63,7 +63,7 @@ impl Cluster {
             manager_id,
             cluster_params: ClusterParams::default(),
             nodes_keys: Vec::new(),
-            resource_per_vnode: 0,
+            resource_per_v_node: 0,
             resource_used: 0,
             revenues: Cash(0),
             total_rent: 0,
@@ -129,12 +129,12 @@ impl Cluster {
     }
 
     pub fn put_resource(&mut self, amount: Resource) {
-        self.resource_per_vnode += amount;
+        self.resource_per_v_node += amount;
     }
 
     pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
         let used = self.resource_used + amount;
-        if used > self.resource_per_vnode {
+        if used > self.resource_per_v_node {
             return Err(InsufficientResources);
         }
         self.resource_used = used;
