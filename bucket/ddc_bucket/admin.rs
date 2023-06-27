@@ -16,7 +16,7 @@ impl DdcBucket {
         permission: Permission,
     ) -> Result<()> {
         self.only_with_permission(Permission::SuperAdmin)
-            .map_err(|_| UnauthorizedSuperAdmin)?;
+            .map_err(|_| OnlySuperAdmin)?;
 
         self.grant_permission(grantee, permission)?;
         
@@ -35,7 +35,7 @@ impl DdcBucket {
         permission: Permission,
     ) -> Result<()> {
         self.only_with_permission(Permission::SuperAdmin)
-            .map_err(|_| UnauthorizedSuperAdmin)?;
+            .map_err(|_| OnlySuperAdmin)?;
 
         self.revoke_permission(grantee, permission)?;
         
@@ -54,7 +54,7 @@ impl DdcBucket {
         new_owner: AccountId
     ) -> Result<()> {
         let admin = self.only_with_permission(Permission::SuperAdmin)
-            .map_err(|_| UnauthorizedSuperAdmin)?;
+            .map_err(|_| OnlySuperAdmin)?;
 
         let mut node = self.nodes.get(node_key)?;
         // allow node ownership transfer only if the current owner is the admin
@@ -78,7 +78,7 @@ impl DdcBucket {
         new_owner: AccountId
     ) -> Result<()> {
         let admin = self.only_with_permission(Permission::SuperAdmin)
-            .map_err(|_| UnauthorizedSuperAdmin)?;
+            .map_err(|_| OnlySuperAdmin)?;
 
         let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
         // allow node ownership transfer only if the current owner is the admin
@@ -98,7 +98,7 @@ impl DdcBucket {
 
     pub fn message_admin_withdraw(&mut self, amount: Balance) -> Result<()> {
         let admin = self.only_with_permission(Permission::SuperAdmin)
-            .map_err(|_| UnauthorizedSuperAdmin)?;
+            .map_err(|_| OnlySuperAdmin)?;
 
         Self::send_cash(admin, Cash(amount))
     }

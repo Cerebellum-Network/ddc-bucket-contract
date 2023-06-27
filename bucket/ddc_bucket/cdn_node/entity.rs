@@ -60,7 +60,7 @@ impl CdnNode {
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         (self.provider_id == caller)
             .then(|| ())
-            .ok_or(UnauthorizedNodeOwner)
+            .ok_or(OnlyCdnNodeOwner)
     }
 
     pub fn only_without_cluster(&self) -> Result<()> {
@@ -77,7 +77,7 @@ impl CdnNode {
 
     pub fn set_params(&mut self, cdn_node_params: CdnNodeParams) -> Result<()> {
         if cdn_node_params.len() > CDN_NODE_PARAMS_MAX_LEN {
-            return Err(ParamsTooBig);
+            return Err(ParamsSizeExceedsLimit);
         }
         self.cdn_node_params = cdn_node_params;
         Ok(())

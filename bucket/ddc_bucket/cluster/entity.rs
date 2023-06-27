@@ -8,7 +8,7 @@ use crate::ddc_bucket::node::entity::{Resource, NodeKey};
 use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
 
 use crate::ddc_bucket::params::store::Params;
-use crate::ddc_bucket::Error::{UnauthorizedClusterManager, InsufficientBalance};
+use crate::ddc_bucket::Error::{OnlyClusterOwner, InsufficientBalance};
 use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Result, Error::*};
 
 pub type ClusterId = u32;
@@ -77,10 +77,10 @@ impl Cluster {
         Ok(cluster)
     }
 
-    pub fn only_manager(&self, caller: AccountId) -> Result<()> {
+    pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         (self.manager_id == caller)
             .then(|| ())
-            .ok_or(UnauthorizedClusterManager)
+            .ok_or(OnlyClusterOwner)
     }
 
     pub fn only_without_nodes(&self) -> Result<()> {
@@ -113,7 +113,7 @@ impl Cluster {
 
     pub fn set_params(&mut self, cluster_params: ClusterParams) -> Result<()> {
         if cluster_params.len() > CLUSTER_PARAMS_MAX_LEN {
-            return Err(ParamsTooBig);
+            return Err(ParamsSizeExceedsLimit);
         }
         self.cluster_params = cluster_params;
         Ok(())

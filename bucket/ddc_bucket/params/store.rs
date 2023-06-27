@@ -4,8 +4,7 @@ use ink_prelude::string::String;
 use ink_prelude::vec::Vec;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
 
-use crate::ddc_bucket::{Error::ParamsDoesNotExist, Result};
-use crate::ddc_bucket::Error::ParamsTooBig;
+use crate::ddc_bucket::{Error::*, Result};
 
 pub type ParamsId = u32;
 pub type Params = String;
@@ -19,7 +18,7 @@ pub struct ParamsStore(pub Vec<Params>);
 impl ParamsStore {
     pub fn create(&mut self, params: Params) -> Result<ParamsId> {
         if params.len() > PARAMS_MAX_LEN {
-            return Err(ParamsTooBig);
+            return Err(ParamsSizeExceedsLimit);
         }
         let params_id: ParamsId = self.0.len().try_into().unwrap();
         self.0.push(params);
@@ -30,7 +29,7 @@ impl ParamsStore {
         let current = self.0.get_mut(params_id as usize).ok_or(ParamsDoesNotExist)?;
 
         if params.len() > PARAMS_MAX_LEN {
-            return Err(ParamsTooBig);
+            return Err(ParamsSizeExceedsLimit);
         }
         let record_size = if params.len() > current.len() {
             params.len() - current.len()

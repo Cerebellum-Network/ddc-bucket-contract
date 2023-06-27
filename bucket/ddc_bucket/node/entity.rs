@@ -90,7 +90,7 @@ impl Node {
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
         (self.provider_id == caller)
             .then(|| ())
-            .ok_or(UnauthorizedNodeOwner)
+            .ok_or(OnlyNodeOwner)
     }
 
     pub fn only_without_cluster(&self) -> Result<()> {
@@ -107,7 +107,7 @@ impl Node {
 
     pub fn set_params(&mut self, node_params: NodeParams) -> Result<()> {
         if node_params.len() > NODE_PARAMS_MAX_LEN {
-            return Err(ParamsTooBig);
+            return Err(ParamsSizeExceedsLimit);
         }
         self.node_params = node_params;
         Ok(())

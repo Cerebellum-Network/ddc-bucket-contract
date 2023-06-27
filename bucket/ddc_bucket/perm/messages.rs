@@ -37,7 +37,7 @@ impl DdcBucket {
         let perm = Permission::ManagerTrustedBy(provider_id);
         self.perms.has_permission(caller, perm)
             .then(|| caller)
-            .ok_or(ClusterManagerIsNotTrusted)
+            .ok_or(OnlyTrustedManager)
     }
     
 }

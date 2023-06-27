@@ -470,8 +470,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `OnlyTrustedManager` error if the caller is not a trusted manager.
         /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
         /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         #[ink(message, payable)]
@@ -505,8 +504,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `OnlyTrustedManagerOrClusterOwnerOrNodeOwner` error if the caller is not a trusted manager, cluster owner or node owner.
         /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the removing Storage node is not in this cluster.
         #[ink(message)]
@@ -541,8 +539,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `OnlyTrustedManagerOrClusterOwner` error if the caller is not a trusted manager or cluster owner.
         /// * `NodeDoesNotExist` error if the new Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
         /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
@@ -582,9 +579,8 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `OnlyTrustedManager` error if the caller is not a trusted manager.
         /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
         /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the adding CDN node is already added to this or another cluster.
         #[ink(message, payable)]
@@ -616,9 +612,8 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
+        /// * `OnlyTrustedManagerOrClusterOwnerOrCdnNodeOwner` error if the caller is not a trusted manager, cluster owner or node owner.
         /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
         /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the removing CDN node is not in this cluster.
         #[ink(message)]
@@ -650,7 +645,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
+        /// * `OnlyClusterOwner` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message, payable)]
         pub fn cluster_set_params(
@@ -680,7 +675,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
+        /// * `OnlyClusterOwner` error if the caller is not the cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
         #[ink(message)]
@@ -711,9 +706,8 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
+        /// * `OnlyTrustedManagerOrClusterOwner` error if the caller is not a trusted manager or cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_node_status(
@@ -749,9 +743,8 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedClusterManager` error if the caller is not the cluster owner.
+        /// * `OnlyTrustedManagerOrClusterOwner` error if the caller is not a trusted manager or cluster owner.
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `ClusterManagerIsNotTrusted` error if the caller is not a trusted node manager.
         /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the CDN node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_cdn_node_status(
@@ -1074,7 +1067,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
+        /// * `OnlyCdnNodeOwner` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
@@ -1105,7 +1098,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedCdnNodeOwner` error if the caller is not the CDN node owner.
+        /// * `OnlyCdnNodeOwner` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message, payable)]
         pub fn cdn_node_set_params(
@@ -1257,7 +1250,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
+        /// * `OnlyNodeOwner` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the removing Storage node is added to some cluster.
         #[ink(message)]
@@ -1288,7 +1281,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedNodeOwner` error if the caller is not the Storage node owner.
+        /// * `OnlyNodeOwner` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message, payable)]
         pub fn node_set_params(
@@ -1587,7 +1580,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
+        /// Returns `OnlySuperAdmin` error if the caller is not the Super-admin.
         #[ink(message)]
         pub fn admin_grant_permission(
             &mut self, 
@@ -1616,7 +1609,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// Returns `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
+        /// Returns `OnlySuperAdmin` error if the caller is not the Super-admin.
         #[ink(message)]
         pub fn admin_revoke_permission(
             &mut self, 
@@ -1646,7 +1639,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
+        /// * `OnlySuperAdmin` error if the caller is not the Super-admin.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         /// * `NodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
@@ -1678,7 +1671,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `UnauthorizedSuperAdmin` error if the caller is not the Super-admin.
+        /// * `OnlySuperAdmin` error if the caller is not the Super-admin.
         /// * `CdnNodeDoesNotExist` error if the Storage node does not exist.
         /// * `CdnNodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
@@ -1747,7 +1740,7 @@ pub mod ddc_bucket {
     pub enum Error {
         BucketDoesNotExist,
         ClusterDoesNotExist,
-        ParamsTooBig,
+        ParamsSizeExceedsLimit,
         VNodeDoesNotExist,
         BondingPeriodNotFinished,
         BucketClusterAlreadyConnected,
@@ -1760,8 +1753,6 @@ pub mod ddc_bucket {
         AccountDoesNotExist,
         ParamsDoesNotExist,
         UnauthorizedOwner,
-        UnauthorizedClusterManager,
-        ClusterManagerIsNotTrusted,
         TransferFailed,
         InsufficientBalance,
         InsufficientResources,
@@ -1770,9 +1761,14 @@ pub mod ddc_bucket {
         NodeIsAlreadyAddedToCluster(ClusterId),
         CdnNodeIsNotAddedToCluster(ClusterId),
         CdnNodeIsAlreadyAddedToCluster(ClusterId),
-        UnauthorizedNodeOwner,
-        UnauthorizedCdnNodeOwner,
-        UnauthorizedSuperAdmin,
+        OnlyNodeOwner,
+        OnlyCdnNodeOwner,
+        OnlyTrustedManager,
+        OnlyClusterOwner,
+        OnlySuperAdmin,
+        OnlyTrustedManagerOrClusterOwner,
+        OnlyTrustedManagerOrClusterOwnerOrNodeOwner,
+        OnlyTrustedManagerOrClusterOwnerOrCdnNodeOwner,
         TopologyAlreadyExists,
         ClusterIsNotEmpty,
         TopologyIsNotCreated(ClusterId),
@@ -1781,7 +1777,7 @@ pub mod ddc_bucket {
         VNodeIsAlreadyAssignedToNode(NodeKey),
         NodeHasNoAssignedVNodes(NodeKey),
         NodeOwnerIsNotSuperAdmin,
-        CdnNodeOwnerIsNotSuperAdmin
+        CdnNodeOwnerIsNotSuperAdmin,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

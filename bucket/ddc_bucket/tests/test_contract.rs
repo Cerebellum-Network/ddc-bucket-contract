@@ -431,7 +431,7 @@ fn cluster_replace_node_only_manager() {
                 vec![1, 2, 3], 
                 ctx.node_key2
             ),
-        Err(UnauthorizedClusterManager)
+        Err(OnlyTrustedManagerOrClusterOwner)
     );
 }
 
@@ -453,7 +453,7 @@ fn cluster_replace_node_only_trusted_manager() {
                 vec![1, 2, 3],
                 ctx.node_key2
             ),
-        Err(ClusterManagerIsNotTrusted)
+        Err(OnlyTrustedManager)
     );
 }
 
@@ -551,7 +551,7 @@ fn cluster_management_validation_works() {
                 vec![1, 2, 3],
                 AccountId::from([0x0a; 32])
             ),
-        Err(UnauthorizedClusterManager),
+        Err(OnlyTrustedManagerOrClusterOwner),
         "only the manager can modify the cluster"
     );
 
