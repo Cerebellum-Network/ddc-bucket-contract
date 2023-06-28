@@ -475,7 +475,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyClusterManagerOrNodeOwner` error if the caller is not the cluster manager or node owner.
+        /// * `OnlyClusterManagerOrNodeProvider` error if the caller is not the cluster manager or node owner.
         /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the removing Storage node is not in this cluster.
         #[ink(message)]
@@ -584,7 +584,7 @@ pub mod ddc_bucket {
         /// # Errors
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
-        /// * `OnlyClusterManagerOrCdnNodeOwner` error if the caller is not the cluster manager or node owner.
+        /// * `OnlyClusterManagerOrCdnNodeProvider` error if the caller is not the cluster manager or node owner.
         /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
         /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the removing CDN node is not in this cluster.
         #[ink(message)]
@@ -1673,8 +1673,8 @@ pub mod ddc_bucket {
         OnlyClusterManager,
         OnlyTrustedClusterManager,
         OnlySuperAdmin,
-        OnlyClusterManagerOrNodeOwner,
-        OnlyClusterManagerOrCdnNodeOwner,
+        OnlyClusterManagerOrNodeProvider,
+        OnlyClusterManagerOrCdnNodeProvider,
         Unauthorized,
         ClusterDoesNotExist,
         ClusterIsNotEmpty,

@@ -246,9 +246,7 @@ fn cluster_add_node_err_if_node_is_in_cluster() {
     set_balance(another_manager_id, 1000 * TOKEN);
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
-    let another_cluster_id = ctx.contract.cluster_create(
-        ClusterParams::from("{}")
-    )?;
+    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
 
     assert_eq!(
         ctx.contract.cluster_add_node(
@@ -317,7 +315,7 @@ fn cluster_add_node_err_if_not_cluster_manager() {
     let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
-    let new_node_key = ctx.contract.node_create(
+    ctx.contract.node_create(
         new_node_key,
         NodeParams::from("new_node"),
         1000,
@@ -464,7 +462,7 @@ fn cluster_remove_node_err_if_not_manager_and_not_provider() {
             ctx.cluster_id,
             ctx.node_key1, 
         ),
-        Err(OnlyClusterManagerOrNodeOwner)
+        Err(OnlyClusterManagerOrNodeProvider)
     );
 }
 
@@ -537,6 +535,263 @@ fn cluster_remove_node_success_if_cluster_manager() {
     cluster_info.cluster_v_nodes.sort();
     assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+    
+}
+
+
+#[ink::test]
+fn cluster_add_cdn_node_err_if_cdn_node_is_in_cluster() {
+    let mut ctx = setup_cluster();
+
+    let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
+    set_balance(another_manager_id, 1000 * TOKEN);
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+
+    assert_eq!(
+        ctx.contract.cluster_add_cdn_node(
+            another_cluster_id,
+            ctx.cdn_node_key1, 
+        ),
+        Err(CdnNodeIsAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn cluster_add_cdn_node_err_if_not_trusted_manager() {
+    let mut ctx = setup_cluster();
+
+    let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
+    set_balance(another_manager_id, 1000 * TOKEN);
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let new_cdn_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    let new_node_key = ctx.contract.cdn_node_create(
+        new_cdn_node_key,
+        CdnNodeParams::from("new_cdn_node"),
+    )?;
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    assert_eq!(
+        ctx.contract.cluster_add_cdn_node(
+            another_cluster_id,
+            new_cdn_node_key, 
+        ),
+        Err(OnlyTrustedClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_add_cdn_node_err_if_not_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
+    set_balance(another_manager_id, 1000 * TOKEN);
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let new_cdn_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.cdn_node_create(
+        new_cdn_node_key,
+        CdnNodeParams::from("new_cdn_node"),
+    )?;
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.grant_trusted_manager_permission(not_manager_id)?;
+
+    set_caller_value(not_manager_id, CONTRACT_FEE_LIMIT);
+    assert_eq!(
+        ctx.contract.cluster_add_cdn_node(
+            another_cluster_id,
+            new_cdn_node_key, 
+        ),
+        Err(OnlyClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_add_cdn_node_success() {
+    let mut ctx = setup_cluster();
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let new_cdn_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    let new_cdn_node_params = CdnNodeParams::from("new_cdn_node");
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.cdn_node_create(
+        new_cdn_node_key,
+        new_cdn_node_params.clone(),
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::CdnNodeCreated(ev) if ev ==
+            CdnNodeCreated {
+                cdn_node_key: new_cdn_node_key,
+                provider_id: new_provider_id,
+                cdn_node_params: new_cdn_node_params,
+                undistributed_payment: 0
+            })
+    );
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.grant_trusted_manager_permission(ctx.manager_id)?;
+
+    assert!(
+        matches!(
+            get_events().pop().unwrap(), Event::PermissionGranted(ev) if ev == 
+            PermissionGranted { 
+                account_id: ctx.manager_id, 
+                permission: Permission::ClusterManagerTrustedBy(new_provider_id) 
+            }
+        )
+    );
+
+    set_caller_value(ctx.manager_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.cluster_add_cdn_node(
+        ctx.cluster_id, 
+        new_cdn_node_key, 
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterCdnNodeAdded(ev) if ev ==
+        ClusterCdnNodeAdded {
+            cluster_id: ctx.cluster_id,
+            cdn_node_key: new_cdn_node_key
+        })
+    );
+
+    let cdn_nodes_keys = vec![
+        ctx.cdn_node_key0,
+        ctx.cdn_node_key1,
+        ctx.cdn_node_key2,
+        new_cdn_node_key,
+    ];
+
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert!(matches!(cluster_info.cluster.cdn_nodes_keys, cdn_nodes_keys));
+}
+
+
+#[ink::test]
+fn cluster_remove_cdn_node_err_if_cdn_node_is_not_in_cluster() {
+    let mut ctx = setup_cluster();
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let another_cdn_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.cdn_node_create(
+        another_cdn_node_key,
+        CdnNodeParams::from("new_cdn_node")
+    )?;
+
+    set_caller(ctx.manager_id);
+    assert_eq!(
+        ctx.contract.cluster_remove_cdn_node(
+            ctx.cluster_id,
+            another_cdn_node_key, 
+        ),
+        Err(CdnNodeIsNotAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn cluster_remove_cdn_node_err_if_not_manager_and_not_provider() {
+    let mut ctx = setup_cluster();
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller(not_manager_id);
+    assert_eq!(
+        ctx.contract.cluster_remove_cdn_node(
+            ctx.cluster_id,
+            ctx.cdn_node_key1, 
+        ),
+        Err(OnlyClusterManagerOrCdnNodeProvider)
+    );
+}
+
+
+#[ink::test]
+fn cluster_remove_cdn_node_success_if_cdn_node_provider() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.manager_id);
+    ctx.contract.cluster_remove_cdn_node(
+        ctx.cluster_id,
+        ctx.cdn_node_key1
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterCdnNodeRemoved(ev) if ev ==
+        ClusterCdnNodeRemoved {
+            cluster_id: ctx.cluster_id,
+            cdn_node_key: ctx.cdn_node_key1
+        })
+    );
+
+    let cdn_nodes_keys = vec![
+        ctx.cdn_node_key0,
+        ctx.cdn_node_key2,
+    ];
+
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert!(matches!(cluster_info.cluster.cdn_nodes_keys, cdn_nodes_keys));
+    
+}
+
+
+#[ink::test]
+fn cluster_remove_cdn_node_success_if_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.provider_id2);
+    ctx.contract.cluster_remove_cdn_node(
+        ctx.cluster_id,
+        ctx.cdn_node_key2
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterCdnNodeRemoved(ev) if ev ==
+        ClusterCdnNodeRemoved {
+            cluster_id: ctx.cluster_id,
+            cdn_node_key: ctx.cdn_node_key2
+        })
+    );
+
+    let cdn_nodes_keys = vec![
+        ctx.cdn_node_key0,
+        ctx.cdn_node_key1,
+    ];
+
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    assert!(matches!(cluster_info.cluster.cdn_nodes_keys, cdn_nodes_keys));
     
 }
 
