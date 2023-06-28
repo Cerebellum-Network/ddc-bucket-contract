@@ -41,7 +41,7 @@ impl DdcBucket {
 
         let caller = Self::env().caller();
         let cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-        cdn_node.only_owner(caller)?;
+        cdn_node.only_provider(caller)?;
         cdn_node.only_without_cluster()?;
         self.cdn_nodes.remove(cdn_node_key);
         
@@ -61,7 +61,7 @@ impl DdcBucket {
 
         let caller = Self::env().caller();
         let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-        cdn_node.only_owner(caller)?;
+        cdn_node.only_provider(caller)?;
         cdn_node.set_params(cdn_node_params.clone())?;
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 

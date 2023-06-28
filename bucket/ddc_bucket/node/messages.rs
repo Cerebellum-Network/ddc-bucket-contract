@@ -42,7 +42,7 @@ impl DdcBucket {
 
         let caller = Self::env().caller();
         let node = self.nodes.get(node_key)?;
-        node.only_owner(caller)?;
+        node.only_provider(caller)?;
         node.only_without_cluster()?;
         self.nodes.remove(node_key);
 
@@ -62,7 +62,7 @@ impl DdcBucket {
 
         let caller = Self::env().caller();
         let mut node = self.nodes.get(node_key)?;
-        node.only_owner(caller)?;
+        node.only_provider(caller)?;
         node.set_params(node_params.clone())?;
         self.nodes.update(node_key, &node)?;
 

@@ -87,7 +87,7 @@ impl Node {
         Ok(node)
     }
 
-    pub fn only_owner(&self, caller: AccountId) -> Result<()> {
+    pub fn only_provider(&self, caller: AccountId) -> Result<()> {
         (self.provider_id == caller)
             .then(|| ())
             .ok_or(OnlyNodeOwner)

@@ -94,7 +94,7 @@ impl DdcBucket {
         node.only_with_cluster(cluster_id)?;
 
         if !cluster.only_manager(caller).is_ok()
-            && !node.only_owner(caller).is_ok() {
+            && !node.only_provider(caller).is_ok() {
                 return Err(OnlyClusterManagerOrNodeOwner);
         }
         
@@ -201,7 +201,7 @@ impl DdcBucket {
         cdn_node.only_with_cluster(cluster_id)?;
 
         if !cluster.only_manager(caller).is_ok()
-            && !cdn_node.only_owner(caller).is_ok() {
+            && !cdn_node.only_provider(caller).is_ok() {
                 return Err(OnlyClusterManagerOrCdnNodeOwner);
         }
         
