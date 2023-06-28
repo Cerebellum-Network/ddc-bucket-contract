@@ -701,7 +701,7 @@ fn cdn_cluster_payment_works() {
     let account0_before_putting = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("Before putting revenue: {:?}", account0_before_putting);
 
-    ctx.contract.cdn_cluster_put_revenue(
+    ctx.contract.cluster_put_cdn_revenue(
         ctx.cluster_id,
         vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)],
         vec![(ctx.cdn_node_key0, 1000), (ctx.cdn_node_key1, 541643)],
@@ -734,7 +734,8 @@ fn cdn_cluster_payment_works() {
     println!("Protocol revenues: {:?}", protocol_revenues);
 
     set_caller(ctx.provider_id0);
-    ctx.contract.cdn_cluster_distribute_revenues(ctx.cluster_id);
+
+    ctx.contract.cluster_distribute_cdn_revenue(ctx.cluster_id);
 
     let cdn_node0 = ctx.contract.cdn_nodes.get(ctx.cdn_node_key0).unwrap();
     let cdn_node1 = ctx.contract.cdn_nodes.get(ctx.cdn_node_key1).unwrap();

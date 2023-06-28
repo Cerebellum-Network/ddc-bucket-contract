@@ -481,7 +481,7 @@ impl DdcBucket {
 
 
     // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
-    pub fn message_cdn_cluster_put_revenue(
+    pub fn message_cluster_put_cdn_revenue(
         &mut self, 
         cluster_id: ClusterId, 
         aggregates_accounts: Vec<(AccountId, u128)>, 
@@ -490,7 +490,6 @@ impl DdcBucket {
         era: u64
     ) -> Result<()> {
         let mut cluster = self.clusters.get(cluster_id)?;
-        // Self::only_cdn_cluster_manager(cluster)?;
 
         let mut cluster_payment = 0;
         let mut _undistributed_payment_accounts = 0;
@@ -556,7 +555,7 @@ impl DdcBucket {
     }
 
 
-    pub fn message_cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
+    pub fn message_cluster_distribute_cdn_revenue(&mut self, cluster_id: ClusterId) -> Result<()> {
         let mut cluster = self.clusters.get(cluster_id)?;
 
         // Charge the network fee from the cluster.

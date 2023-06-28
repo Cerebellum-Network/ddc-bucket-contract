@@ -811,7 +811,7 @@ pub mod ddc_bucket {
         ///
         /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
         #[ink(message)]
-        pub fn cdn_cluster_put_revenue(
+        pub fn cluster_put_cdn_revenue(
             &mut self,
             cluster_id: ClusterId,
             aggregates_accounts: Vec<(AccountId, u128)>,
@@ -819,7 +819,7 @@ pub mod ddc_bucket {
             aggregates_buckets: Vec<(BucketId, Resource)>,
             era: u64,
         ) -> () {
-            self.message_cdn_cluster_put_revenue(
+            self.message_cluster_put_cdn_revenue(
                 cluster_id,
                 aggregates_accounts,
                 aggregates_nodes,
@@ -835,8 +835,8 @@ pub mod ddc_bucket {
         ///
         /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
         #[ink(message)]
-        pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-            self.message_cdn_cluster_distribute_revenues(cluster_id)
+        pub fn cluster_distribute_cdn_revenue(&mut self, cluster_id: ClusterId) {
+            self.message_cluster_distribute_cdn_revenue(cluster_id)
                 .unwrap()
         }
 
