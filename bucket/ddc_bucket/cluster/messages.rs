@@ -12,7 +12,7 @@ use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::{
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
-    ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource,
+    ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, CdnClusterDistributeRevenues, ClusterReserveResource,
     ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, DdcBucket, NodeStatusInCluster, Result, Error::*
 };
 
@@ -432,8 +432,7 @@ impl DdcBucket {
         )?;
 
         // Charge the provider payments from the cluster.
-        let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
-        let num_shares = cluster_v_nodes.len() as Balance;
+        let num_shares = cluster.nodes_keys.len() as Balance;
         let per_share = cluster.revenues.peek() / num_shares;
         cluster.revenues.pay(Payable(per_share * num_shares))?;
 
@@ -561,13 +560,13 @@ impl DdcBucket {
         let mut cluster = self.clusters.get(cluster_id)?;
 
         // Charge the network fee from the cluster.
-        Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
+        Self::capture_network_fee(&self.network_fee, &mut cluster.cdn_revenues)?;
 
         // Charge the cluster management fee.
         Self::capture_fee(
             self.network_fee.cluster_management_fee_bp(),
             cluster.manager_id,
-            &mut cluster.revenues)?;
+            &mut cluster.cdn_revenues)?;
 
         // First accumulated revenues to distribute.
         let mut distributed_revenue = 0;
@@ -578,7 +577,7 @@ impl DdcBucket {
         }
 
         // Charge the provider payments from the cluster.
-        cluster.revenues.pay(Payable(distributed_revenue))?;
+        cluster.cdn_revenues.pay(Payable(distributed_revenue))?;
 
         // Distribute revenues to nodes
         for cdn_node_key in &cluster.cdn_nodes_keys {
@@ -588,7 +587,7 @@ impl DdcBucket {
             cdn_node.take_payment(cdn_node.undistributed_payment)?;
             self.cdn_nodes.update(*cdn_node_key, &cdn_node)?;
 
-            Self::env().emit_event(ClusterDistributeRevenues {
+            Self::env().emit_event(CdnClusterDistributeRevenues {
                 cluster_id, 
                 provider_id: cdn_node.provider_id 
             });

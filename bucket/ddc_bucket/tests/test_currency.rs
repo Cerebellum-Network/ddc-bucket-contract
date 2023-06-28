@@ -9,7 +9,7 @@ fn setup() -> DdcBucket {
     set_callee(contract_id());
     let mut contract = DdcBucket::new();
     set_balance(contract_id(), CONTRACT_FEE_LIMIT);
-    contract.admin_grant_permission(admin_id(), Permission::SetExchangeRate);
+    contract.admin_grant_permission(admin_id(), Permission::SetExchangeRate).unwrap();
     contract
 }
 

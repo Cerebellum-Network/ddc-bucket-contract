@@ -183,8 +183,6 @@ impl DdcBucket {
 
     fn only_owner_or_cluster_manager(bucket: &Bucket, cluster: &Cluster) -> Result<()> {
         let caller = Self::env().caller();
-        cluster.only_manager(caller)
-            .or_else(|_|
-                bucket.only_owner(caller))
+        cluster.only_manager(caller).or_else(|_| bucket.only_owner(caller))
     }
 }

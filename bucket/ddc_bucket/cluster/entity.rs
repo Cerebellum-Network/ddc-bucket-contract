@@ -29,7 +29,6 @@ pub struct Cluster {
 
     // cdn nodes
     pub cdn_nodes_keys: Vec<CdnNodeKey>,
-    pub cdn_resources_used: Resource,
     pub cdn_revenues: Cash,
     pub cdn_usd_per_gb: Balance,
 }
@@ -69,7 +68,6 @@ impl Cluster {
             total_rent: 0,
             cdn_nodes_keys: Vec::new(),
             cdn_usd_per_gb: 104_857_600, // setting initially to 1 cent per GB
-            cdn_resources_used: 0,
             cdn_revenues: Cash(0),
         };
         

@@ -82,7 +82,7 @@ pub fn print_events(events: &[Event]) {
             Event::CdnClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
             Event::CdnNodeCreated(ev) => println!("EVENT {:?}", ev),
             Event::ClusterNodeAdded(ev) => println!("EVENT {:?}", ev),
-            Event::ClusterCdnNodeAdded(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeAdded(ev) => println!("{:?}", ev),
             Event::ClusterNodeRemoved(ev) => println!("EVENT {:?}", ev),
             Event::ClusterCdnNodeRemoved(ev) => println!("EVENT {:?}", ev),
             Event::ClusterParamsSet(ev) => println!("EVENT {:?}", ev),
