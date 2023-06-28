@@ -12,7 +12,7 @@ fn do_bucket_pays_cluster(
     test_bucket: &TestBucket,
     usd_per_cere: Balance,
 ) -> Result<()> {
-    let expected_rent = ctx.rent_per_v_node * ctx.cluster_v_nodes.len() as Balance;
+    let expected_rent = ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance;
 
     // Check the state before payment.
     let before = ctx
@@ -115,7 +115,7 @@ fn bucket_create_success() {
     let test_bucket = &setup_bucket(ctx);
 
     // Check the structure of the bucket including the payment flow.
-    let total_rent = ctx.rent_per_v_node * ctx.cluster_v_nodes.len() as Balance;
+    let total_rent = ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance;
     let expect_bucket = Bucket {
         owner_id: test_bucket.owner_id,
         cluster_id: ctx.cluster_id,

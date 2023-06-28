@@ -28,7 +28,7 @@ fn cluster_create_success() {
                 node_key: ctx.node_key0,
                 node: Node {
                     provider_id: ctx.provider_id0,
-                    rent_per_month: ctx.rent_per_v_node,
+                    rent_per_month: ctx.rent_per_month,
                     free_resource: ctx.capacity - ctx.reserved_resource * 3,
                     node_params: ctx.node_params0.clone(),
                     cluster_id: Some(ctx.cluster_id),
@@ -47,7 +47,7 @@ fn cluster_create_success() {
                 node_key: ctx.node_key1,
                 node: Node {
                     provider_id: ctx.provider_id1,
-                    rent_per_month: ctx.rent_per_v_node,
+                    rent_per_month: ctx.rent_per_month,
                     free_resource: ctx.capacity - ctx.reserved_resource * 3,
                     node_params: ctx.node_params1.clone(),
                     cluster_id: Some(ctx.cluster_id),
@@ -66,7 +66,7 @@ fn cluster_create_success() {
                 node_key: ctx.node_key2,
                 node: Node {
                     provider_id: ctx.provider_id2,
-                    rent_per_month: ctx.rent_per_v_node,
+                    rent_per_month: ctx.rent_per_month,
                     free_resource: ctx.capacity - ctx.reserved_resource * 3,
                     node_params: ctx.node_params2.clone(),
                     cluster_id: Some(ctx.cluster_id),
@@ -92,7 +92,7 @@ fn cluster_create_success() {
                     resource_used: 0,
                     cluster_params: ctx.cluster_params.clone(),
                     revenues: Cash(0),
-                    total_rent: ctx.rent_per_v_node * ctx.cluster_v_nodes.len() as Balance,
+                    total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
                     cdn_nodes_keys: ctx.cdn_nodes_keys,
                     cdn_usd_per_gb: 104_857_600,
                     cdn_revenues: Cash(0),
@@ -112,7 +112,7 @@ fn cluster_create_success() {
             NodeCreated {
                 node_key: node_keys[i],
                 provider_id: providers_ids[i],
-                rent_per_month: ctx.rent_per_v_node,
+                rent_per_month: ctx.rent_per_month,
                 node_params: node_params[i].clone()
             })
         );
@@ -303,7 +303,7 @@ fn cluster_add_node_success() {
     let new_node_capacity = 1000;
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
-    let new_node_key = ctx.contract.node_create(
+    ctx.contract.node_create(
         new_node_key,
         new_node_params.clone(),
         new_node_capacity,

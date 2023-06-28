@@ -42,7 +42,7 @@ pub struct TestCluster {
     pub cluster_v_nodes: Vec<VNodeToken>,
     pub nodes_keys: Vec<NodeKey>,
     pub cdn_nodes_keys: Vec<CdnNodeKey>,
-    pub rent_per_v_node: Balance,
+    pub rent_per_month: Balance,
     pub capacity: u32,
     pub reserved_resource: u32,
 }
@@ -61,7 +61,7 @@ pub fn setup_cluster() -> TestCluster {
     set_balance(provider_id2, 1000 * TOKEN);
     set_balance(manager_id, 1000 * TOKEN);
 
-    let rent_per_v_node: Balance = 10 * TOKEN;
+    let rent_per_month: Balance = 10 * TOKEN;
     let reserved_resource = 10;
     let capacity = 100;
 
@@ -75,7 +75,7 @@ pub fn setup_cluster() -> TestCluster {
         node_key0,
         node_params0.clone(),
         capacity0,
-        rent_per_v_node
+        rent_per_month
     ).unwrap();
 
 
@@ -88,7 +88,7 @@ pub fn setup_cluster() -> TestCluster {
         node_key1,
         node_params1.clone(),
         capacity1,
-        rent_per_v_node
+        rent_per_month
     ).unwrap();
 
 
@@ -101,7 +101,7 @@ pub fn setup_cluster() -> TestCluster {
         node_key2,
         node_params2.clone(),
         capacity2,
-        rent_per_v_node,
+        rent_per_month,
     ).unwrap();
 
 
@@ -255,7 +255,7 @@ pub fn setup_cluster() -> TestCluster {
         cluster_id,
         cluster_params,
         cluster_v_nodes,
-        rent_per_v_node,
+        rent_per_month,
         nodes_keys,
         cdn_nodes_keys,
         capacity,
