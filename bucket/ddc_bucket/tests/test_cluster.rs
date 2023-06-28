@@ -367,7 +367,7 @@ fn cluster_add_node_ok() {
                 node_key: new_node_key,
                 provider_id: new_provider_id,
                 rent_per_month: new_node_rent_per_month,
-                node_params: new_node_params
+                node_params: new_node_params.clone(),
             })
     );
 
@@ -411,13 +411,28 @@ fn cluster_add_node_ok() {
         ctx.v_nodes0,
         ctx.v_nodes1,
         ctx.v_nodes2,
-        new_v_nodes
+        new_v_nodes.clone()
     ];
 
     let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     cluster_info.cluster_v_nodes.sort();
     assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+
+    let node_info = ctx.contract.node_get(new_node_key)?;
+    let expected_node_info = NodeInfo {
+        node_key: new_node_key,
+        node: Node {
+            provider_id: new_provider_id,
+            rent_per_month: new_node_rent_per_month,
+            free_resource: new_node_capacity,
+            node_params: new_node_params,
+            cluster_id: Some(ctx.cluster_id),
+            status_in_cluster: Some(NodeStatusInCluster::ADDING)
+        },
+        v_nodes: new_v_nodes
+    };
+    assert!(matches!(node_info, expected_node_info));
 }
 
 
@@ -499,6 +514,21 @@ fn cluster_remove_node_ok_if_node_provider() {
     cluster_info.cluster_v_nodes.sort();
     assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+
+    let node_info = ctx.contract.node_get(ctx.node_key1)?;
+    let expected_node_info = NodeInfo {
+        node_key: ctx.node_key1,
+        node: Node {
+            provider_id: ctx.provider_id1,
+            rent_per_month: ctx.rent_per_month,
+            free_resource: ctx.capacity - ctx.reserved_resource * 3,
+            node_params: ctx.node_params1,
+            cluster_id: None,
+            status_in_cluster: None
+        },
+        v_nodes: Vec::new()
+    };
+    assert!(matches!(node_info, expected_node_info));
     
 }
 
@@ -535,6 +565,21 @@ fn cluster_remove_node_ok_if_cluster_manager() {
     cluster_info.cluster_v_nodes.sort();
     assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+
+    let node_info = ctx.contract.node_get(ctx.node_key2)?;
+    let expected_node_info = NodeInfo {
+        node_key: ctx.node_key2,
+        node: Node {
+            provider_id: ctx.provider_id2,
+            rent_per_month: ctx.rent_per_month,
+            free_resource: ctx.capacity - ctx.reserved_resource * 3,
+            node_params: ctx.node_params2,
+            cluster_id: None,
+            status_in_cluster: None
+        },
+        v_nodes: Vec::new()
+    };
+    assert!(matches!(node_info, expected_node_info));
     
 }
 
@@ -650,7 +695,7 @@ fn cluster_add_cdn_node_ok() {
             CdnNodeCreated {
                 cdn_node_key: new_cdn_node_key,
                 provider_id: new_provider_id,
-                cdn_node_params: new_cdn_node_params,
+                cdn_node_params: new_cdn_node_params.clone(),
                 undistributed_payment: 0
             })
     );
@@ -691,6 +736,19 @@ fn cluster_add_cdn_node_ok() {
 
     let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert!(matches!(cluster_info.cluster.cdn_nodes_keys, cdn_nodes_keys));
+
+    let cdn_node_info = ctx.contract.cdn_node_get(new_cdn_node_key)?;
+    let expected_cdn_node_info = CdnNodeInfo {
+        cdn_node_key: new_cdn_node_key,
+        cdn_node: CdnNode {
+            provider_id: new_provider_id,
+            undistributed_payment: 0,
+            cdn_node_params: new_cdn_node_params,
+            cluster_id: Some(ctx.cluster_id),
+            status_in_cluster: Some(NodeStatusInCluster::ADDING)
+        },
+    };
+    assert!(matches!(cdn_node_info, expected_cdn_node_info));
 }
 
 
@@ -763,6 +821,19 @@ fn cluster_remove_cdn_node_ok_if_cdn_node_provider() {
 
     let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert!(matches!(cluster_info.cluster.cdn_nodes_keys, cdn_nodes_keys));
+
+    let cdn_node_info = ctx.contract.cdn_node_get(ctx.cdn_node_key1)?;
+    let expected_cdn_node_info = CdnNodeInfo {
+        cdn_node_key: ctx.cdn_node_key1,
+        cdn_node: CdnNode {
+            provider_id: ctx.provider_id1,
+            undistributed_payment: 0,
+            cdn_node_params: ctx.cdn_node_params1,
+            cluster_id: None,
+            status_in_cluster: None
+        },
+    };
+    assert!(matches!(cdn_node_info, expected_cdn_node_info));
     
 }
 
@@ -792,7 +863,19 @@ fn cluster_remove_cdn_node_ok_if_cluster_manager() {
 
     let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert!(matches!(cluster_info.cluster.cdn_nodes_keys, cdn_nodes_keys));
-    
+
+    let cdn_node_info = ctx.contract.cdn_node_get(ctx.cdn_node_key2)?;
+    let expected_cdn_node_info = CdnNodeInfo {
+        cdn_node_key: ctx.cdn_node_key2,
+        cdn_node: CdnNode {
+            provider_id: ctx.provider_id2,
+            undistributed_payment: 0,
+            cdn_node_params: ctx.cdn_node_params2,
+            cluster_id: None,
+            status_in_cluster: None
+        },
+    };
+    assert!(matches!(cdn_node_info, expected_cdn_node_info));
 }
 
 
