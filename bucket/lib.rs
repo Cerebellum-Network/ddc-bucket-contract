@@ -443,7 +443,7 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
         /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
-        /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
@@ -513,7 +513,7 @@ pub mod ddc_bucket {
         /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `NodeDoesNotExist` error if the new Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
-        /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
         /// * `VNodeInNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
         /// * `VNodeIsAlreadyAssignedToNode(NodeKey)` - error if there is some virtual node that is already assigned to other physical node within the same cluster.
         #[ink(message)]
@@ -553,7 +553,7 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
         /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
-        /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the adding CDN node is already added to this or another cluster.
+        /// * `CdnNodeIsAddedToCluster(ClusterId)` error if the adding CDN node is already added to this or another cluster.
         #[ink(message, payable)]
         pub fn cluster_add_cdn_node(
             &mut self,
@@ -991,7 +991,7 @@ pub mod ddc_bucket {
         ///
         /// * `OnlyCdnNodeOwner` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
-        /// * `CdnNodeIsAlreadyAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
+        /// * `CdnNodeIsAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
         pub fn cdn_node_remove(
             &mut self, 
@@ -1172,9 +1172,9 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyNodeOwner` error if the caller is not the Storage node owner.
+        /// * `OnlyNodeProvider` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
-        /// * `NodeIsAlreadyAddedToCluster(ClusterId)` error if the removing Storage node is added to some cluster.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the removing Storage node is added to some cluster.
         #[ink(message)]
         pub fn node_remove(
             &mut self, 
@@ -1203,7 +1203,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyNodeOwner` error if the caller is not the Storage node owner.
+        /// * `OnlyNodeProvider` error if the caller is not the Storage node owner.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message, payable)]
         pub fn node_set_params(
@@ -1668,7 +1668,7 @@ pub mod ddc_bucket {
         ParamsDoesNotExist,
         ParamsSizeExceedsLimit,
         OnlyOwner,
-        OnlyNodeOwner,
+        OnlyNodeProvider,
         OnlyCdnNodeOwner,
         OnlyClusterManager,
         OnlyTrustedClusterManager,
@@ -1681,9 +1681,9 @@ pub mod ddc_bucket {
         TopologyIsNotCreated(ClusterId),
         TopologyAlreadyExists,
         NodeIsNotAddedToCluster(ClusterId),
-        NodeIsAlreadyAddedToCluster(ClusterId),
+        NodeIsAddedToCluster(ClusterId),
         CdnNodeIsNotAddedToCluster(ClusterId),
-        CdnNodeIsAlreadyAddedToCluster(ClusterId),
+        CdnNodeIsAddedToCluster(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
         VNodeInNotAssignedToNode(ClusterId, VNodeToken),
         VNodeIsAlreadyAssignedToNode(NodeKey),

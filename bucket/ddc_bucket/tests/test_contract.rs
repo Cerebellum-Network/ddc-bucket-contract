@@ -305,6 +305,7 @@ fn new_bucket(ctx: &mut TestCluster) -> TestBucket {
     }
 }
 
+
 #[ink::test]
 fn cluster_create_works() {
     let ctx = new_cluster();
@@ -485,11 +486,274 @@ fn cluster_create_works() {
 
 
 #[ink::test]
+fn cluster_node_add_err_if_node_in_cluster() {
+    let mut ctx = new_cluster();
+
+    let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
+    set_balance(another_manager_id, 1000 * TOKEN);
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}")
+    )?;
+
+    assert_eq!(
+        ctx.contract.cluster_add_node(
+            another_cluster_id,
+            ctx.node_key1, 
+            ctx.v_nodes1, 
+        ),
+        Err(NodeIsAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn cluster_node_add_err_if_not_trusted_manager() {
+    let mut ctx = new_cluster();
+
+    let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
+    set_balance(another_manager_id, 1000 * TOKEN);
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}")
+    )?;
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    let new_node_key = ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000,
+        100
+    )?;
+
+    let new_v_nodes: Vec<u64> = vec![10, 11, 12];
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    assert_eq!(
+        ctx.contract.cluster_add_node(
+            another_cluster_id,
+            new_node_key, 
+            new_v_nodes, 
+        ),
+        Err(OnlyTrustedClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_node_add_err_if_not_cluster_manager() {
+    let mut ctx = new_cluster();
+
+    let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
+    set_balance(another_manager_id, 1000 * TOKEN);
+
+    set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}")
+    )?;
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    let new_node_key = ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000,
+        100
+    )?;
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.grant_trusted_manager_permission(not_manager_id)?;
+
+    let new_v_nodes: Vec<u64> = vec![10, 11, 12];
+    set_caller_value(not_manager_id, CONTRACT_FEE_LIMIT);
+    assert_eq!(
+        ctx.contract.cluster_add_node(
+            another_cluster_id,
+            new_node_key, 
+            new_v_nodes, 
+        ),
+        Err(OnlyClusterManager)
+    );
+}
+
+
+
+#[ink::test]
+fn cluster_node_add_success() {
+    let mut ctx = new_cluster();
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    let new_node_rent_per_month = 100;
+    let new_node_params = NodeParams::from("new_node");
+    let new_node_capacity = 1000;
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    let new_node_key = ctx.contract.node_create(
+        new_node_key,
+        new_node_params.clone(),
+        new_node_capacity,
+        new_node_rent_per_month
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::NodeCreated(ev) if ev ==
+            NodeCreated {
+                node_key: new_node_key,
+                provider_id: new_provider_id,
+                rent_per_month: new_node_rent_per_month,
+                node_params: new_node_params
+            })
+    );
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.grant_trusted_manager_permission(ctx.manager_id)?;
+
+    assert!(
+        matches!(
+            get_events().pop().unwrap(), Event::PermissionGranted(ev) if ev == 
+            PermissionGranted { 
+                account_id: ctx.manager_id, 
+                permission: Permission::ClusterManagerTrustedBy(new_provider_id) 
+            }
+        )
+    );
+
+    let new_v_nodes: Vec<u64> = vec![10, 11, 12];
+    set_caller_value(ctx.manager_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.cluster_add_node(
+        ctx.cluster_id, 
+        new_node_key, 
+        new_v_nodes.clone()
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterNodeAdded(ev) if ev ==
+        ClusterNodeAdded {
+            cluster_id: ctx.cluster_id,
+            node_key: new_node_key
+        })
+    );
+
+    let nodes_keys = vec![
+        ctx.node_key0,
+        ctx.node_key1,
+        ctx.node_key2,
+        new_node_key,
+    ];
+
+    let cluster_v_nodes = vec![
+        ctx.v_nodes0,
+        ctx.v_nodes1,
+        ctx.v_nodes2,
+        new_v_nodes
+    ];
+
+    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    cluster_info.cluster_v_nodes.sort();
+    assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
+    assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+}
+
+
+#[ink::test]
+fn node_remove_err_if_not_provider() {
+    let mut ctx = new_cluster();
+
+    let not_provider = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_provider, 1000 * TOKEN);
+
+    set_caller(not_provider);
+    assert_eq!(
+        ctx.contract.node_remove(
+            ctx.node_key1,
+        ),
+        Err(OnlyNodeProvider)
+    );
+}
+
+
+#[ink::test]
+fn node_remove_err_if_node_in_cluster() {
+    let mut ctx = new_cluster();
+
+    set_caller(ctx.provider_id1);
+    assert_eq!(
+        ctx.contract.node_remove(
+            ctx.node_key1,
+        ),
+        Err(NodeIsAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn cluster_node_remove_works() {
+    let mut ctx = new_cluster();
+
+    set_caller(ctx.manager_id);
+    ctx.contract.cluster_remove_node(
+        ctx.cluster_id,
+        ctx.node_key1
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterNodeRemoved(ev) if ev ==
+        ClusterNodeRemoved {
+            cluster_id: ctx.cluster_id,
+            node_key: ctx.node_key1
+        })
+    );
+
+    set_caller(ctx.provider_id1);
+    ctx.contract.node_remove(ctx.node_key1)?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::NodeRemoved(ev) if ev ==
+        NodeRemoved {
+            node_key: ctx.node_key1
+        })
+    );
+
+    let nodes_keys = vec![
+        ctx.node_key0,
+        ctx.node_key2,
+    ];
+
+    let cluster_v_nodes = vec![
+        ctx.v_nodes0,
+        ctx.v_nodes2,
+    ];
+
+    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    cluster_info.cluster_v_nodes.sort();
+    assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
+    assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+    
+}
+
+
+#[ink::test]
 fn cluster_replace_node_only_manager() {
     let mut ctx = new_cluster();
 
-    let not_manager = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
-    set_caller_value(not_manager, 0);
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_caller_value(not_manager_id, 0);
 
     // Reassign a vnode from node1 to node2.
     assert_eq!(
@@ -603,10 +867,10 @@ fn cluster_reserve_works() {
 fn cluster_management_validation_works() {
     let mut ctx = new_cluster();
     
-    let not_manager = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
-    set_balance(not_manager, 1000 * TOKEN);
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
 
-    set_caller(not_manager);
+    set_caller(not_manager_id);
     assert_eq!(
         ctx.contract.cluster_replace_node(
             ctx.cluster_id, 
@@ -851,66 +1115,6 @@ fn do_bucket_pays_cluster(
     );
 
     Ok(())
-}
-
-#[ink::test]
-fn cluster_add_node_works() {
-    let mut ctx = new_cluster();
-
-    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
-    set_balance(new_provider_id, 1000 * TOKEN);
-
-    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
-    let rent_per_month = 100;
-    let node_params = NodeParams::from("new_node");
-    let capacity = 1000;
-
-    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
-    let new_node_key = ctx.contract.node_create(
-        new_node_key,
-        node_params.clone(),
-        capacity,
-        rent_per_month
-    )?;
-
-    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
-    ctx.contract.grant_trusted_manager_permission(ctx.manager_id)?;
-    assert!(
-        matches!(
-            get_events().pop().unwrap(), Event::PermissionGranted(ev) if ev == 
-            PermissionGranted { 
-                account_id: ctx.manager_id, 
-                permission: Permission::ClusterManagerTrustedBy(new_provider_id) 
-            }
-        )
-    );
-
-    let new_v_nodes = vec![10, 11, 12];
-    set_caller_value(ctx.manager_id, CONTRACT_FEE_LIMIT);
-    ctx.contract.cluster_add_node(
-        ctx.cluster_id, 
-        new_node_key, 
-        new_v_nodes.clone()
-    )?;
-
-    let nodes_keys = vec![
-        ctx.node_key0,
-        ctx.node_key1,
-        ctx.node_key2,
-        new_node_key,
-    ];
-
-    let cluster_v_nodes = vec![
-        ctx.v_nodes0,
-        ctx.v_nodes1,
-        ctx.v_nodes2,
-        new_v_nodes
-    ];
-
-    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
-    cluster_info.cluster_v_nodes.sort();
-    assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
-    assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
 }
 
 
@@ -1171,7 +1375,7 @@ fn node_set_params_only_owner() {
             ctx.node_key0, 
             new_node_params
         ),
-        Err(OnlyNodeOwner)
+        Err(OnlyNodeProvider)
     );
 }
 
@@ -1193,11 +1397,11 @@ fn cluster_change_params_works() {
 fn cluster_change_params_only_owner() {
     let ctx = &mut new_cluster();
 
-    let not_manager = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
-    set_balance(not_manager, 1000 * TOKEN);
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
     // Change params.
     let new_cluster_params = NodeParams::from("new cluster params");
-    set_caller_value(not_manager, CONTRACT_FEE_LIMIT);
+    set_caller_value(not_manager_id, CONTRACT_FEE_LIMIT);
 
     assert_eq!(
         ctx.contract.cluster_set_params(

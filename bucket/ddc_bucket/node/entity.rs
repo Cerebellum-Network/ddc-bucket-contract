@@ -90,12 +90,12 @@ impl Node {
     pub fn only_provider(&self, caller: AccountId) -> Result<()> {
         (self.provider_id == caller)
             .then(|| ())
-            .ok_or(OnlyNodeOwner)
+            .ok_or(OnlyNodeProvider)
     }
 
     pub fn only_without_cluster(&self) -> Result<()> {
         self.cluster_id
-            .map_or(Ok(()), |cluster_id| Err(NodeIsAlreadyAddedToCluster(cluster_id)))
+            .map_or(Ok(()), |cluster_id| Err(NodeIsAddedToCluster(cluster_id)))
     }
 
     pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {

@@ -65,7 +65,7 @@ impl CdnNode {
 
     pub fn only_without_cluster(&self) -> Result<()> {
         self.cluster_id
-            .map_or(Ok(()), |cluster_id| Err(CdnNodeIsAlreadyAddedToCluster(cluster_id)))
+            .map_or(Ok(()), |cluster_id| Err(CdnNodeIsAddedToCluster(cluster_id)))
     }
 
     pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
