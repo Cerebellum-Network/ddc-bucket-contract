@@ -91,12 +91,12 @@ impl DdcBucket {
         let mut node = self.nodes.get(node_key)?;
         let mut cluster = self.clusters.get(cluster_id)?;
 
-        node.only_with_cluster(cluster_id)?;
-
         if !cluster.only_manager(caller).is_ok()
             && !node.only_provider(caller).is_ok() {
                 return Err(OnlyClusterManagerOrNodeOwner);
         }
+
+        node.only_with_cluster(cluster_id)?;
         
         node.unset_cluster();
         self.nodes.update(node_key, &node)?;

@@ -2,6 +2,7 @@ use ink_lang as ink;
 
 use crate::ddc_bucket::Error::*;
 use crate::ddc_bucket::*;
+use cdn_node::{entity::*};
 use super::env_utils::*;
 use super::setup_utils::*;
 
@@ -17,7 +18,7 @@ fn cluster_create_success() {
 
     assert_eq!(ctx.cluster_id, 0, "cluster_id must start at 0");
 
-    // Check cluster nodes
+    // Check cluster Storage nodes
     {
         let node0 = ctx.contract.node_get(ctx.node_key0)?;
         let v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0);
@@ -73,6 +74,57 @@ fn cluster_create_success() {
                     status_in_cluster: Some(NodeStatusInCluster::ADDING),
                 },
                 v_nodes: v_nodes2
+            }
+        );
+    }
+
+    // Check cluster CDN nodes
+    {
+        let cdn_node0 = ctx.contract.cdn_node_get(ctx.cdn_node_key0)?;
+
+        assert_eq!(
+            cdn_node0,
+            CdnNodeInfo {
+                cdn_node_key: ctx.cdn_node_key0,
+                cdn_node: CdnNode {
+                    provider_id: ctx.provider_id0,
+                    undistributed_payment: 0,
+                    cdn_node_params: ctx.cdn_node_params0.clone(),
+                    cluster_id: Some(ctx.cluster_id),
+                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
+                },
+            }
+        );
+
+        let cdn_node1 = ctx.contract.cdn_node_get(ctx.cdn_node_key1)?;
+
+        assert_eq!(
+            cdn_node1,
+            CdnNodeInfo {
+                cdn_node_key: ctx.cdn_node_key1,
+                cdn_node: CdnNode {
+                    provider_id: ctx.provider_id1,
+                    undistributed_payment: 0,
+                    cdn_node_params: ctx.cdn_node_params1.clone(),
+                    cluster_id: Some(ctx.cluster_id),
+                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
+                },
+            }
+        );
+
+        let cdn_node2 = ctx.contract.cdn_node_get(ctx.node_key2)?;
+
+        assert_eq!(
+            cdn_node2,
+            CdnNodeInfo {
+                cdn_node_key: ctx.cdn_node_key2,
+                cdn_node: CdnNode {
+                    provider_id: ctx.provider_id2,
+                    undistributed_payment: 0,
+                    cdn_node_params: ctx.cdn_node_params1.clone(),
+                    cluster_id: Some(ctx.cluster_id),
+                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
+                },
             }
         );
     }
@@ -186,7 +238,7 @@ fn cluster_create_success() {
 
 
 #[ink::test]
-fn cluster_add_node_err_if_node_in_cluster() {
+fn cluster_add_node_err_if_node_is_in_cluster() {
     let mut ctx = setup_cluster();
 
     let another_manager_id = AccountId::from([0x54, 0x66, 0x76, 0x6c, 0xf6, 0x17, 0x70, 0xcf, 0x5d, 0x70, 0x6c, 0x55, 0x4d, 0xd4, 0xb7, 0xf8, 0x83, 0xe6, 0x70, 0x06, 0xea, 0x4c, 0x05, 0x89, 0x16, 0x32, 0x79, 0x79, 0xbb, 0x85, 0x58, 0x7a]);
@@ -371,7 +423,53 @@ fn cluster_add_node_success() {
 
 
 #[ink::test]
-fn cluster_remove_node_success() {
+fn cluster_remove_node_err_if_node_is_not_in_cluster() {
+    let mut ctx = setup_cluster();
+
+    let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
+    set_balance(new_provider_id, 1000 * TOKEN);
+
+    let another_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+
+    set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
+    ctx.contract.node_create(
+        another_node_key,
+        NodeParams::from("new_node"),
+        1000,
+        100
+    )?;
+
+    set_caller(ctx.manager_id);
+    assert_eq!(
+        ctx.contract.cluster_remove_node(
+            ctx.cluster_id,
+            another_node_key, 
+        ),
+        Err(NodeIsNotAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn cluster_remove_node_err_if_not_manager_and_not_provider() {
+    let mut ctx = setup_cluster();
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller(not_manager_id);
+    assert_eq!(
+        ctx.contract.cluster_remove_node(
+            ctx.cluster_id,
+            ctx.node_key1, 
+        ),
+        Err(OnlyClusterManagerOrNodeOwner)
+    );
+}
+
+
+#[ink::test]
+fn cluster_remove_node_success_if_node_provider() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.manager_id);
@@ -388,16 +486,6 @@ fn cluster_remove_node_success() {
         })
     );
 
-    set_caller(ctx.provider_id1);
-    ctx.contract.node_remove(ctx.node_key1)?;
-
-    assert!(
-        matches!(get_events().pop().unwrap(), Event::NodeRemoved(ev) if ev ==
-        NodeRemoved {
-            node_key: ctx.node_key1
-        })
-    );
-
     let nodes_keys = vec![
         ctx.node_key0,
         ctx.node_key2,
@@ -406,6 +494,42 @@ fn cluster_remove_node_success() {
     let cluster_v_nodes = vec![
         ctx.v_nodes0,
         ctx.v_nodes2,
+    ];
+
+    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    cluster_info.cluster_v_nodes.sort();
+    assert!(matches!(cluster_info.cluster.nodes_keys, nodes_keys));
+    assert!(matches!(cluster_info.cluster_v_nodes, cluster_v_nodes));
+    
+}
+
+
+#[ink::test]
+fn cluster_remove_node_success_if_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.provider_id2);
+    ctx.contract.cluster_remove_node(
+        ctx.cluster_id,
+        ctx.node_key2
+    )?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterNodeRemoved(ev) if ev ==
+        ClusterNodeRemoved {
+            cluster_id: ctx.cluster_id,
+            node_key: ctx.node_key2
+        })
+    );
+
+    let nodes_keys = vec![
+        ctx.node_key0,
+        ctx.node_key1,
+    ];
+
+    let cluster_v_nodes = vec![
+        ctx.v_nodes0,
+        ctx.v_nodes1,
     ];
 
     let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
