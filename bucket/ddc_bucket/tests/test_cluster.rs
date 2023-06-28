@@ -83,6 +83,7 @@ fn cluster_create_success() {
         let cdn_node0 = ctx.contract.cdn_node_get(ctx.cdn_node_key0)?;
 
         assert_eq!(
+
             cdn_node0,
             CdnNodeInfo {
                 cdn_node_key: ctx.cdn_node_key0,
@@ -112,7 +113,7 @@ fn cluster_create_success() {
             }
         );
 
-        let cdn_node2 = ctx.contract.cdn_node_get(ctx.node_key2)?;
+        let cdn_node2 = ctx.contract.cdn_node_get(ctx.cdn_node_key2)?;
 
         assert_eq!(
             cdn_node2,
@@ -121,7 +122,7 @@ fn cluster_create_success() {
                 cdn_node: CdnNode {
                     provider_id: ctx.provider_id2,
                     undistributed_payment: 0,
-                    cdn_node_params: ctx.cdn_node_params1.clone(),
+                    cdn_node_params: ctx.cdn_node_params2.clone(),
                     cluster_id: Some(ctx.cluster_id),
                     status_in_cluster: Some(NodeStatusInCluster::ADDING),
                 },
