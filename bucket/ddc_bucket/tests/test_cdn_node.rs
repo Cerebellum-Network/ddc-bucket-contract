@@ -70,9 +70,7 @@ fn cdn_node_remove_err_if_not_provider() {
 
     set_caller(not_provider_id);
     assert_eq!(
-        ctx.contract.cdn_node_remove(
-            ctx.cdn_node_key1,
-        ),
+        ctx.contract.cdn_node_remove(ctx.cdn_node_key1),
         Err(OnlyCdnNodeProvider)
     );
 }
@@ -84,9 +82,7 @@ fn cdn_node_remove_err_if_node_in_cluster() {
 
     set_caller(ctx.provider_id1);
     assert_eq!(
-        ctx.contract.cdn_node_remove(
-            ctx.cdn_node_key1,
-        ),
+        ctx.contract.cdn_node_remove(ctx.cdn_node_key1),
         Err(CdnNodeIsAddedToCluster(ctx.cluster_id))
     );
 }
@@ -109,9 +105,7 @@ fn cdn_node_remove_success() {
     );
 
     assert_eq!(
-        ctx.contract.cdn_node_get(
-            ctx.cdn_node_key1,
-        ),
+        ctx.contract.cdn_node_get(ctx.cdn_node_key1),
         Err(CdnNodeDoesNotExist)
     );
 }
@@ -160,6 +154,17 @@ fn node_set_params_success() {
     assert_eq!(cdn_node_info.cdn_node.cdn_node_params, new_cdn_node_params);
 }
 
+#[ink::test]
+fn cdn_node_get_err_if_node_does_not_exist() {
+    let ctx = setup_cluster();
+
+    let bad_cdn_node_key = AccountId::from([0xf6, 0x8f, 0x06, 0xa8, 0x26, 0xba, 0xaf, 0x7f, 0xbd, 0x9b, 0xff, 0x3d, 0x1e, 0xec, 0xae, 0xef, 0xc7, 0x7a, 0x01, 0x6d, 0x0b, 0xaf, 0x4c, 0x90, 0x55, 0x6e, 0x7b, 0x15, 0x73, 0x46, 0x9c, 0x76]);
+
+    assert_eq!(
+        ctx.contract.cdn_node_get(bad_cdn_node_key),
+        Err(CdnNodeDoesNotExist)
+    );
+}
 
 #[ink::test]
 fn node_get_success() {
