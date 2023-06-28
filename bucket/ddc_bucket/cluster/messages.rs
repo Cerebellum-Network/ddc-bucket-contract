@@ -197,12 +197,12 @@ impl DdcBucket {
         let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
         let mut cluster = self.clusters.get(cluster_id)?;
 
-        cdn_node.only_with_cluster(cluster_id)?;
-
         if !cluster.only_manager(caller).is_ok()
             && !cdn_node.only_provider(caller).is_ok() {
                 return Err(OnlyClusterManagerOrCdnNodeProvider);
         }
+
+        cdn_node.only_with_cluster(cluster_id)?;
         
         cdn_node.unset_cluster();
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;

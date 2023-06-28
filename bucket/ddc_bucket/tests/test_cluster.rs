@@ -857,12 +857,11 @@ fn cluster_replace_node_err_if_node_does_not_exist() {
     let bad_node_key = AccountId::from([0xf6, 0x8f, 0x06, 0xa8, 0x26, 0xba, 0xaf, 0x7f, 0xbd, 0x9b, 0xff, 0x3d, 0x1e, 0xec, 0xae, 0xef, 0xc7, 0x7a, 0x01, 0x6d, 0x0b, 0xaf, 0x4c, 0x90, 0x55, 0x6e, 0x7b, 0x15, 0x73, 0x46, 0x9c, 0x76]);
     set_caller(ctx.manager_id);
     assert_eq!(
-        ctx.contract
-            .cluster_replace_node(
-                ctx.cluster_id, 
-                vec![1, 2, 3],
-                bad_node_key
-            ),
+        ctx.contract.cluster_replace_node(
+            ctx.cluster_id, 
+            vec![1, 2, 3],
+            bad_node_key
+        ),
         Err(NodeDoesNotExist)
     );
 }
@@ -1069,6 +1068,86 @@ fn cluster_distribute_revenue_ok() {
         to_distribute,
         "all revenues must go to providers"
     );
+}
+
+
+#[ink::test]
+fn cluster_remove_err_if_not_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller(not_manager_id);
+    assert_eq!(
+        ctx.contract.cluster_remove(ctx.cluster_id),
+        Err(OnlyClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_remove_err_if_cluster_is_not_empty() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.manager_id);
+    assert_eq!(
+        ctx.contract.cluster_remove(ctx.cluster_id),
+        Err(ClusterIsNotEmpty)
+    );
+}
+
+
+#[ink::test]
+fn cluster_remove_ok() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.manager_id);
+
+    ctx.contract.cluster_remove_node(
+        ctx.cluster_id,
+        ctx.node_key0, 
+    )?;
+
+    ctx.contract.cluster_remove_node(
+        ctx.cluster_id,
+        ctx.node_key1, 
+    )?;
+
+    ctx.contract.cluster_remove_node(
+        ctx.cluster_id,
+        ctx.node_key2, 
+    )?;
+
+    ctx.contract.cluster_remove_cdn_node(
+        ctx.cluster_id,
+        ctx.cdn_node_key0, 
+    )?;
+
+    ctx.contract.cluster_remove_cdn_node(
+        ctx.cluster_id,
+        ctx.cdn_node_key1, 
+    )?;
+
+    ctx.contract.cluster_remove_cdn_node(
+        ctx.cluster_id,
+        ctx.cdn_node_key2, 
+    )?;
+
+    ctx.contract.cluster_remove(ctx.cluster_id)?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::ClusterRemoved(ev) if ev ==
+        ClusterRemoved {
+            cluster_id: ctx.cluster_id,
+        })
+    );
+
+    assert_eq!(
+        ctx.contract.cluster_get(ctx.cluster_id),
+        Err(ClusterDoesNotExist)
+    );
+
 }
 
 
