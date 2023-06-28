@@ -12,6 +12,7 @@ use crate::ddc_bucket::*;
 
 pub type Event = <DdcBucket as ::ink_lang::reflect::ContractEventBase>::Type;
 
+pub const KB_PER_GB: Balance = 1_000_000;
 
 /// Recommended contract fee for all operations with reasonable data amounts.
 pub const CONTRACT_FEE_LIMIT: Balance = 10 * TOKEN;
