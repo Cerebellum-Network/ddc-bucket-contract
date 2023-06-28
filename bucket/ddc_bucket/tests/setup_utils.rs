@@ -69,12 +69,11 @@ pub fn setup_cluster() -> TestCluster {
     // Create the 1st storage node
     let node_key0 = AccountId::from([0x0a; 32]);
     let node_params0 = NodeParams::from("{\"url\":\"https://ddc.cere.network/storage/0\"}");
-    let capacity0 = capacity;
     set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
     contract.node_create(
         node_key0,
         node_params0.clone(),
-        capacity0,
+        capacity,
         rent_per_month
     ).unwrap();
 
@@ -82,12 +81,11 @@ pub fn setup_cluster() -> TestCluster {
     // Create the 2nd storage node
     let node_key1 = AccountId::from([0x0b; 32]);
     let node_params1 = NodeParams::from("{\"url\":\"https://ddc-1.cere.network/storage/1\"}");
-    let capacity1 = capacity;
     set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
     contract.node_create(
         node_key1,
         node_params1.clone(),
-        capacity1,
+        capacity,
         rent_per_month
     ).unwrap();
 
@@ -95,12 +93,11 @@ pub fn setup_cluster() -> TestCluster {
     // Create the 3rd storage node
     let node_key2 = AccountId::from([0x0c; 32]);
     let node_params2 = NodeParams::from("{\"url\":\"https://ddc-2.cere.network/storage/2\"}");
-    let capacity2 = capacity;
     set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
     let node_key2 = contract.node_create(
         node_key2,
         node_params2.clone(),
-        capacity2,
+        capacity,
         rent_per_month,
     ).unwrap();
 

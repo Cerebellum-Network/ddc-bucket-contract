@@ -1180,7 +1180,7 @@ pub mod ddc_bucket {
             &mut self, 
             node_key: NodeKey
         ) -> Result<()> {
-            self.message_remove_node(node_key)
+            self.message_node_remove(node_key)
         }
 
         /// Sets parameters for the targeting Storage node.

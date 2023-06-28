@@ -35,7 +35,7 @@ impl DdcBucket {
         Ok(node_key)
     }
 
-    pub fn message_remove_node(
+    pub fn message_node_remove(
         &mut self, 
         node_key: NodeKey
     ) -> Result<()> {

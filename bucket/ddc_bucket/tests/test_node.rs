@@ -68,10 +68,10 @@ fn node_create_success() {
 fn node_remove_err_if_not_provider() {
     let mut ctx = setup_cluster();
 
-    let not_provider = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
-    set_balance(not_provider, 1000 * TOKEN);
+    let not_provider_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_provider_id, 1000 * TOKEN);
 
-    set_caller(not_provider);
+    set_caller(not_provider_id);
     assert_eq!(
         ctx.contract.node_remove(
             ctx.node_key1,
@@ -91,6 +91,31 @@ fn node_remove_err_if_node_in_cluster() {
             ctx.node_key1,
         ),
         Err(NodeIsAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn node_remove_success() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.provider_id1);
+    ctx.contract.cluster_remove_node(ctx.cluster_id, ctx.node_key1)?;
+    ctx.contract.node_remove(ctx.node_key1)?;
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::NodeRemoved(ev) if ev ==
+            NodeRemoved {
+                node_key: ctx.node_key1,
+            }
+        )
+    );
+
+    assert_eq!(
+        ctx.contract.node_get(
+            ctx.node_key1,
+        ),
+        Err(NodeDoesNotExist)
     );
 }
 
@@ -124,9 +149,43 @@ fn node_set_params_success() {
     set_caller_value(ctx.provider_id0, CONTRACT_FEE_LIMIT);
     ctx.contract.node_set_params(ctx.node_key0, new_node_params.clone())?;
 
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::NodeParamsSet(ev) if ev ==
+            NodeParamsSet {
+                node_key: ctx.node_key0,
+                node_params: new_node_params.clone()
+            }
+        )
+    );
+
     // Check the changed params.
     let status = ctx.contract.node_get(ctx.node_key0)?;
     assert_eq!(status.node.node_params, new_node_params);
+}
+
+
+#[ink::test]
+fn node_get_success() {
+    let ctx = setup_cluster();
+
+    let v_nodes1_len : u32 = ctx.v_nodes1.len().try_into().unwrap();
+    assert_eq!(
+        ctx.contract.node_get(ctx.node_key1),
+        Ok({
+            NodeInfo { 
+                node_key: ctx.node_key1, 
+                node: Node {
+                    provider_id: ctx.provider_id1,
+                    rent_per_month: ctx.rent_per_month,
+                    free_resource: ctx.capacity - ctx.reserved_resource * v_nodes1_len,
+                    node_params: ctx.node_params1,
+                    cluster_id: Some(ctx.cluster_id),
+                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
+                }, 
+                v_nodes: ctx.v_nodes1
+            }
+        })
+    );
 }
 
 
@@ -137,12 +196,13 @@ fn node_list_success() {
     let node_info = ctx.contract.node_get(ctx.node_key1)?;
     assert_eq!(ctx.provider_id1, node_info.node.provider_id.clone());
 
+    let v_nodes1_len : u32 = ctx.v_nodes1.len().try_into().unwrap();
     let node1 = NodeInfo {
         node_key: ctx.node_key1,
         node: Node {
             provider_id: ctx.provider_id1,
             rent_per_month: ctx.rent_per_month,
-            free_resource: ctx.capacity - ctx.reserved_resource * 3,
+            free_resource: ctx.capacity - ctx.reserved_resource * v_nodes1_len,
             cluster_id: Some(ctx.cluster_id),
             status_in_cluster: Some(NodeStatusInCluster::ADDING),
             node_params: ctx.node_params1,
@@ -150,12 +210,13 @@ fn node_list_success() {
         v_nodes: ctx.v_nodes1.clone()
     };
 
+    let v_nodes2_len : u32 = ctx.v_nodes2.len().try_into().unwrap();
     let node2 = NodeInfo {
         node_key: ctx.node_key2,
         node: Node {
             provider_id:ctx.provider_id2,
             rent_per_month: ctx.rent_per_month,
-            free_resource: ctx.capacity - ctx.reserved_resource * 3,
+            free_resource: ctx.capacity - ctx.reserved_resource * v_nodes2_len,
             cluster_id: Some(ctx.cluster_id),
             status_in_cluster: Some(NodeStatusInCluster::ADDING),
             node_params: ctx.node_params2,
@@ -177,12 +238,12 @@ fn node_list_success() {
 
     assert_eq!(
         ctx.contract.node_list(1, 1, None),
-        (vec![node1.clone() /*, node2.clone()*/], count)
+        (vec![node1.clone()], count)
     );
 
     assert_eq!(
         ctx.contract.node_list(2, 1, None),
-        (vec![/*node1.clone(),*/ node2.clone()], count)
+        (vec![node2.clone()], count)
     );
 
     assert_eq!(ctx.contract.node_list(21, 20, None), (vec![], count));
@@ -190,18 +251,18 @@ fn node_list_success() {
     // Filter by owner.
     assert_eq!(
         ctx.contract.node_list(1, 100, Some(ctx.provider_id1)),
-        (vec![node1.clone() /*, node2.clone()*/], count)
+        (vec![node1.clone()], count)
     );
 
     assert_eq!(
         ctx.contract.node_list(1, 100, Some(ctx.provider_id2)),
-        (vec![/*node1.clone(),*/ node2.clone()], count)
+        (vec![node2.clone()], count)
     );
 
-    let not_provider= AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    let not_provider_id= AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
 
     assert_eq!(
-        ctx.contract.node_list(1, 100, Some(not_provider)),
+        ctx.contract.node_list(1, 100, Some(not_provider_id)),
         (vec![], count)
     );
 }
