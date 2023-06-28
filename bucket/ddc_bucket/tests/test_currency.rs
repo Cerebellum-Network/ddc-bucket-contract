@@ -6,7 +6,7 @@ use super::setup_utils::*;
 
 
 #[ink::test]
-fn currency_conversion_init_success() {
+fn currency_conversion_init_ok() {
     let contract = setup_contract();
     let usd_amount = contract.account_get_usd_per_cere();
     println!("{}", usd_amount);
@@ -19,7 +19,7 @@ fn currency_conversion_init_success() {
 
 
 #[ink::test]
-fn currency_conversion_set_rate_success() {
+fn currency_conversion_set_rate_ok() {
     let mut contract = setup_contract();
     let usd_per_cere = TOKEN / 10;
     println!("{}", usd_per_cere);
@@ -37,7 +37,7 @@ fn currency_conversion_set_rate_success() {
 
 #[ink::test]
 #[should_panic]
-fn currency_conversion_set_rate_only_admin() {
+fn currency_conversion_set_rate_err_if_not_admin() {
     let mut contract = setup_contract();
     let not_admin = get_accounts().bob;
 
@@ -47,7 +47,7 @@ fn currency_conversion_set_rate_only_admin() {
 
 
 #[ink::test]
-fn converter_success() {
+fn converter_ok() {
     // todo: this test scenario must be revised as it does pure printing without any assertion
     println!("Creating new cdn cluster");
 

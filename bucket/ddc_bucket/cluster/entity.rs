@@ -50,6 +50,8 @@ pub struct ClusterInfo {
 }
 
 pub const CLUSTER_PARAMS_MAX_LEN: usize = 100_000;
+pub const CDN_USD_PER_GB : Balance = 104_857_600;
+pub const KB_PER_GB: Balance = 1_000_000;
 
 impl Cluster {
 
@@ -67,7 +69,7 @@ impl Cluster {
             revenues: Cash(0),
             total_rent: 0,
             cdn_nodes_keys: Vec::new(),
-            cdn_usd_per_gb: 104_857_600, // setting initially to 1 cent per GB
+            cdn_usd_per_gb: CDN_USD_PER_GB, // setting initially to 1 cent per GB
             cdn_revenues: Cash(0),
         };
         

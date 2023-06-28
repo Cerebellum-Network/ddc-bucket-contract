@@ -82,7 +82,7 @@ fn do_bucket_pays_cluster(
 
 
 #[ink::test]
-fn bucket_pays_cluster_success() {
+fn bucket_pays_cluster_ok() {
     let ctx = &mut setup_cluster();
     let test_bucket = &setup_bucket(ctx);
     do_bucket_pays_cluster(ctx, test_bucket, 1).unwrap();
@@ -90,7 +90,7 @@ fn bucket_pays_cluster_success() {
 
 
 #[ink::test]
-fn bucket_pays_cluster_at_new_rate_success() {
+fn bucket_pays_cluster_at_new_rate_ok() {
     let ctx = &mut setup_cluster();
 
     let test_bucket = &setup_bucket(ctx);
@@ -110,7 +110,7 @@ fn bucket_pays_cluster_at_new_rate_success() {
 
 
 #[ink::test]
-fn bucket_create_success() {
+fn bucket_create_ok() {
     let ctx = &mut setup_cluster();
     let test_bucket = &setup_bucket(ctx);
 
@@ -167,7 +167,7 @@ fn bucket_create_success() {
 
 
 #[ink::test]
-fn bucket_change_params_success() {
+fn bucket_change_params_ok() {
     let ctx = &mut setup_cluster();
     let test_bucket = &setup_bucket(ctx);
 
@@ -196,7 +196,7 @@ fn bucket_change_params_only_owner() {
 
 
 #[ink::test]
-fn bucket_list_success() {
+fn bucket_list_ok() {
     let mut ddc_bucket = setup_contract();
 
     let owner_id1 = AccountId::from([0xd8, 0x69, 0x19, 0x54, 0xea, 0xdc, 0x9a, 0xc0, 0x3d, 0x37, 0x56, 0x9f, 0x2a, 0xe8, 0xdf, 0x59, 0x34, 0x3f, 0x32, 0x65, 0xba, 0xd4, 0x16, 0xac, 0x07, 0xdf, 0x06, 0xeb, 0x4d, 0xbc, 0x6a, 0x66]);

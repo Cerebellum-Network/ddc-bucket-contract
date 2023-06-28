@@ -22,7 +22,7 @@ fn cdn_node_create_err_if_node_exists() {
 
 
 #[ink::test]
-fn cdn_node_create_success() {
+fn cdn_node_create_ok() {
     let mut ctx = setup_cluster();
 
     let new_provider_id = AccountId::from([0x76, 0x30, 0xc6, 0x96, 0x6f, 0xd3, 0x26, 0xba, 0x1a, 0xa0, 0x6f, 0xd8, 0x7f, 0x7b, 0xf2, 0xef, 0x14, 0x11, 0xf0, 0x0d, 0x00, 0xa9, 0xe7, 0x11, 0xdf, 0xd1, 0x65, 0x14, 0x5d, 0x01, 0xdb, 0x59]);
@@ -89,7 +89,7 @@ fn cdn_node_remove_err_if_node_in_cluster() {
 
 
 #[ink::test]
-fn cdn_node_remove_success() {
+fn cdn_node_remove_ok() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.provider_id1);
@@ -132,7 +132,7 @@ fn cdn_node_set_params_err_if_not_provider() {
 
 
 #[ink::test]
-fn node_set_params_success() {
+fn node_set_params_ok() {
     let mut ctx = setup_cluster();
 
     // Change params.
@@ -167,7 +167,7 @@ fn cdn_node_get_err_if_node_does_not_exist() {
 }
 
 #[ink::test]
-fn node_get_success() {
+fn node_get_ok() {
     let ctx = setup_cluster();
 
     let v_nodes1_len : u32 = ctx.v_nodes1.len().try_into().unwrap();
@@ -190,7 +190,7 @@ fn node_get_success() {
 
 
 #[ink::test]
-fn node_list_success() {
+fn node_list_ok() {
     let ctx = setup_cluster();
 
     let cdn_node_info = ctx.contract.cdn_node_get(ctx.cdn_node_key1)?;

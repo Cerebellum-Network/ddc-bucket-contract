@@ -8,7 +8,7 @@ use super::setup_utils::*;
 
 
 #[ink::test]
-fn cluster_create_success() {
+fn cluster_create_ok() {
     let ctx = setup_cluster();
     let providers_ids = &[ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
     let node_keys = &[ctx.node_key0, ctx.node_key1, ctx.node_key2];
@@ -147,7 +147,7 @@ fn cluster_create_success() {
                     revenues: Cash(0),
                     total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
                     cdn_nodes_keys: ctx.cdn_nodes_keys,
-                    cdn_usd_per_gb: 104_857_600,
+                    cdn_usd_per_gb: CDN_USD_PER_GB,
                     cdn_revenues: Cash(0),
                 },
                 cluster_v_nodes
@@ -342,7 +342,7 @@ fn cluster_add_node_err_if_not_cluster_manager() {
 
 
 #[ink::test]
-fn cluster_add_node_success() {
+fn cluster_add_node_ok() {
     let mut ctx = setup_cluster();
 
     let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
@@ -468,7 +468,7 @@ fn cluster_remove_node_err_if_not_manager_and_not_provider() {
 
 
 #[ink::test]
-fn cluster_remove_node_success_if_node_provider() {
+fn cluster_remove_node_ok_if_node_provider() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.manager_id);
@@ -504,7 +504,7 @@ fn cluster_remove_node_success_if_node_provider() {
 
 
 #[ink::test]
-fn cluster_remove_node_success_if_cluster_manager() {
+fn cluster_remove_node_ok_if_cluster_manager() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.provider_id2);
@@ -630,7 +630,7 @@ fn cluster_add_cdn_node_err_if_not_cluster_manager() {
 
 
 #[ink::test]
-fn cluster_add_cdn_node_success() {
+fn cluster_add_cdn_node_ok() {
     let mut ctx = setup_cluster();
 
     let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
@@ -739,7 +739,7 @@ fn cluster_remove_cdn_node_err_if_not_manager_and_not_provider() {
 
 
 #[ink::test]
-fn cluster_remove_cdn_node_success_if_cdn_node_provider() {
+fn cluster_remove_cdn_node_ok_if_cdn_node_provider() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.manager_id);
@@ -768,7 +768,7 @@ fn cluster_remove_cdn_node_success_if_cdn_node_provider() {
 
 
 #[ink::test]
-fn cluster_remove_cdn_node_success_if_cluster_manager() {
+fn cluster_remove_cdn_node_ok_if_cluster_manager() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.provider_id2);
@@ -817,7 +817,7 @@ fn cluster_set_params_err_if_not_cluster_manager() {
 
 
 #[ink::test]
-fn cluster_set_params_success() {
+fn cluster_set_params_ok() {
     let mut ctx = setup_cluster();
 
     // Change params.
@@ -869,7 +869,7 @@ fn cluster_replace_node_err_if_node_does_not_exist() {
 
 
 #[ink::test]
-fn cluster_replace_node_success() {
+fn cluster_replace_node_ok() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.manager_id);
@@ -929,7 +929,7 @@ fn cluster_replace_node_success() {
 
 
 #[ink::test]
-fn cluster_reserve_resource_success() {
+fn cluster_reserve_resource_ok() {
     let mut ctx = setup_cluster();
     set_caller(ctx.manager_id);
 
@@ -966,7 +966,7 @@ fn cluster_reserve_resource_success() {
 
 
 #[ink::test]
-fn cluster_distribute_revenue_success() {
+fn cluster_distribute_revenue_ok() {
     let ctx = &mut setup_cluster();
     let test_bucket = &setup_bucket(ctx);
     // Go to the future when some revenues are due.
@@ -1073,7 +1073,7 @@ fn cluster_distribute_revenue_success() {
 
 
 #[ink::test]
-fn cluster_distribute_cdn_revenue_success() {
+fn cluster_distribute_cdn_revenue_ok() {
     // todo: this test scenario must be revised as it does pure printing without any assertion
     println!("Creating new cdn cluster");
 
@@ -1152,8 +1152,8 @@ fn cluster_distribute_cdn_revenue_success() {
     println!("{:?}", cdn_node0);
     println!("{:?}", cdn_node1);
 
-    let cdn_cluster_list = ctx.contract.cluster_list(0, 10, None);
-    println!("{:?}", cdn_cluster_list);
+    let cluster_list_1 = ctx.contract.cluster_list(0, 10, None);
+    println!("{:?}", cluster_list_1);
 
     let account0_after_distributing = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("{:?}", account0_after_distributing);

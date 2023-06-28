@@ -3,7 +3,7 @@ use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cluster::entity::{ClusterInfo};
+use crate::ddc_bucket::cluster::entity::{ClusterInfo, KB_PER_GB};
 use crate::ddc_bucket::bucket::entity::{BucketId};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
@@ -18,7 +18,6 @@ use crate::ddc_bucket::{
 
 use super::entity::{ClusterId, ClusterParams};
 
-const KB_PER_GB: Balance = 1_000_000;
 
 impl DdcBucket {
 

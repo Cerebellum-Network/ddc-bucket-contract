@@ -11,7 +11,7 @@ fn not_admin_id() -> AccountId {
 }
 
 #[ink::test]
-fn admin_init_works() {
+fn admin_init_ok() {
     let contract = setup_contract();
 
     // The deployer is SuperAdmin.
@@ -25,7 +25,7 @@ fn admin_init_works() {
 
 
 #[ink::test]
-fn admin_withdraw_works() {
+fn admin_withdraw_ok() {
     let mut contract = setup_contract();
     assert_eq!(balance_of(contract_id()), 10);
     
@@ -38,7 +38,7 @@ fn admin_withdraw_works() {
 
 #[ink::test]
 #[should_panic]
-fn admin_withdraw_only_admin() {
+fn admin_withdraw_err_if_not_admin() {
     let mut contract = setup_contract();
 
     set_caller(not_admin_id());
@@ -48,7 +48,7 @@ fn admin_withdraw_only_admin() {
 
 
 #[ink::test]
-fn admin_grant_works() {
+fn admin_grant_ok() {
     let mut contract = setup_contract();
     let permission = Permission::SuperAdmin;
 
@@ -72,7 +72,7 @@ fn admin_grant_works() {
 
 
 #[ink::test]
-fn admin_grant_only_admin() {
+fn admin_grant_err_if_not_admin() {
     let mut contract = setup_contract();
 
     set_caller_value(not_admin_id(), CONTRACT_FEE_LIMIT);
@@ -89,7 +89,7 @@ fn admin_grant_only_admin() {
 
 #[ink::test]
 #[should_panic]
-fn admin_revoke_works() {
+fn admin_revoke_ok() {
     let mut contract = setup_contract();
     let permission = Permission::SuperAdmin;
 
@@ -112,7 +112,7 @@ fn admin_revoke_works() {
 
 
 #[ink::test]
-fn admin_revoke_only_admin() {
+fn admin_revoke_err_if_not_admin() {
     let mut contract = setup_contract();
 
     set_caller_value(not_admin_id(), CONTRACT_FEE_LIMIT);
