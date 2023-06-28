@@ -60,7 +60,7 @@ impl CdnNode {
     pub fn only_provider(&self, caller: AccountId) -> Result<()> {
         (self.provider_id == caller)
             .then(|| ())
-            .ok_or(OnlyCdnNodeOwner)
+            .ok_or(OnlyCdnNodeProvider)
     }
 
     pub fn only_without_cluster(&self) -> Result<()> {

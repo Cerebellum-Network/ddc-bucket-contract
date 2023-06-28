@@ -159,8 +159,8 @@ fn node_set_params_success() {
     );
 
     // Check the changed params.
-    let status = ctx.contract.node_get(ctx.node_key0)?;
-    assert_eq!(status.node.node_params, new_node_params);
+    let node_info = ctx.contract.node_get(ctx.node_key0)?;
+    assert_eq!(node_info.node.node_params, new_node_params);
 }
 
 

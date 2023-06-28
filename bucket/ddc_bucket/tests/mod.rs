@@ -7,3 +7,4 @@ mod test_node;
 mod test_cluster;
 mod test_bucket;
 mod test_account;
+mod test_cdn_node;

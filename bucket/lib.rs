@@ -989,7 +989,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyCdnNodeOwner` error if the caller is not the CDN node owner.
+        /// * `OnlyCdnNodeProvider` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         /// * `CdnNodeIsAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
@@ -1020,7 +1020,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `OnlyCdnNodeOwner` error if the caller is not the CDN node owner.
+        /// * `OnlyCdnNodeProvider` error if the caller is not the CDN node owner.
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message, payable)]
         pub fn cdn_node_set_params(
@@ -1669,7 +1669,7 @@ pub mod ddc_bucket {
         ParamsSizeExceedsLimit,
         OnlyOwner,
         OnlyNodeProvider,
-        OnlyCdnNodeOwner,
+        OnlyCdnNodeProvider,
         OnlyClusterManager,
         OnlyTrustedClusterManager,
         OnlySuperAdmin,
