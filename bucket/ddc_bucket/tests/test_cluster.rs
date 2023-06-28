@@ -284,7 +284,7 @@ fn cluster_add_node_err_if_not_trusted_manager() {
         100
     )?;
 
-    let new_v_nodes: Vec<u64> = vec![10, 11, 12];
+    let new_v_nodes: Vec<VNodeToken> = vec![10, 11, 12];
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
     assert_eq!(
         ctx.contract.cluster_add_node(
@@ -328,7 +328,7 @@ fn cluster_add_node_err_if_not_cluster_manager() {
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     ctx.contract.grant_trusted_manager_permission(not_manager_id)?;
 
-    let new_v_nodes: Vec<u64> = vec![10, 11, 12];
+    let new_v_nodes: Vec<VNodeToken> = vec![10, 11, 12];
     set_caller_value(not_manager_id, CONTRACT_FEE_LIMIT);
     assert_eq!(
         ctx.contract.cluster_add_node(
@@ -384,7 +384,7 @@ fn cluster_add_node_ok() {
         )
     );
 
-    let new_v_nodes: Vec<u64> = vec![10, 11, 12];
+    let new_v_nodes: Vec<VNodeToken> = vec![10, 11, 12];
     set_caller_value(ctx.manager_id, CONTRACT_FEE_LIMIT);
     ctx.contract.cluster_add_node(
         ctx.cluster_id, 
@@ -1148,6 +1148,82 @@ fn cluster_remove_ok() {
         Err(ClusterDoesNotExist)
     );
 
+}
+
+
+#[ink::test]
+fn cluster_set_node_status_err_if_not_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller(not_manager_id);
+    assert_eq!(
+        ctx.contract.cluster_set_node_status(
+            ctx.cluster_id,
+            ctx.node_key0,
+            NodeStatusInCluster::ACTIVE
+        ),
+        Err(OnlyClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_set_node_status_ok() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.manager_id);
+    ctx.contract.cluster_set_node_status(
+        ctx.cluster_id,
+        ctx.node_key0,
+        NodeStatusInCluster::ACTIVE
+    )?;
+
+    let node_info = ctx.contract.node_get(ctx.node_key0)?;
+    assert_eq!(
+        node_info.node.status_in_cluster,
+        Some(NodeStatusInCluster::ACTIVE)
+    );
+}
+
+
+#[ink::test]
+fn cluster_set_cdn_node_status_err_if_not_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_balance(not_manager_id, 1000 * TOKEN);
+
+    set_caller(not_manager_id);
+    assert_eq!(
+        ctx.contract.cluster_set_cdn_node_status(
+            ctx.cluster_id,
+            ctx.cdn_node_key0,
+            NodeStatusInCluster::ACTIVE
+        ),
+        Err(OnlyClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_set_cdn_node_status_ok() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.manager_id);
+    ctx.contract.cluster_set_cdn_node_status(
+        ctx.cluster_id,
+        ctx.cdn_node_key0,
+        NodeStatusInCluster::ACTIVE
+    )?;
+
+    let cdn_node_info = ctx.contract.cdn_node_get(ctx.cdn_node_key0)?;
+    assert_eq!(
+        cdn_node_info.cdn_node.status_in_cluster,
+        Some(NodeStatusInCluster::ACTIVE)
+    );
 }
 
 
