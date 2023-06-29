@@ -1309,6 +1309,100 @@ fn cluster_set_cdn_node_status_ok() {
     );
 }
 
+#[ink::test]
+fn cluster_list_ok() {
+    let mut ctx = setup_cluster();
+
+    let mut cluster_v_nodes1 = Vec::<VNodeToken>::new();
+    cluster_v_nodes1.extend(ctx.v_nodes0.clone());
+    cluster_v_nodes1.extend(ctx.v_nodes1.clone());
+    cluster_v_nodes1.extend(ctx.v_nodes2.clone());
+
+    let cluster1 = ClusterInfo {
+        cluster_id: ctx.cluster_id,
+        cluster: Cluster {
+            manager_id: ctx.manager_id,
+            nodes_keys: ctx.nodes_keys,
+            resource_per_v_node: ctx.reserved_resource,
+            resource_used: 0,
+            cluster_params: ctx.cluster_params.clone(),
+            revenues: Cash(0),
+            total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
+            cdn_nodes_keys: ctx.cdn_nodes_keys,
+            cdn_usd_per_gb: CDN_USD_PER_GB,
+            cdn_revenues: Cash(0),
+        },
+        cluster_v_nodes: cluster_v_nodes1
+    };
+
+    let cluster_params2 = ClusterParams::from("{}");
+    let manager_id2 = AccountId::from([0x82, 0x61, 0x19, 0xd5, 0xcf, 0x47, 0xdc, 0xb9, 0xc6, 0xff, 0x1a, 0x3e, 0x46, 0x03, 0x6d, 0xad, 0x1f, 0xea, 0x66, 0x18, 0x96, 0x2e, 0x4a, 0x5e, 0x89, 0xe0, 0x96, 0x74, 0xcf, 0x80, 0xf1, 0x30]);
+    set_balance(manager_id2, 1000 * TOKEN);
+
+    set_caller(manager_id2);
+    let cluster_id2 = ctx.contract.cluster_create(cluster_params2.clone())?;
+
+    let cluster2 = ClusterInfo {
+        cluster_id: cluster_id2,
+        cluster: Cluster {
+            manager_id: manager_id2,
+            nodes_keys: Vec::new(),
+            resource_per_v_node: 0,
+            resource_used: 0,
+            cluster_params: cluster_params2,
+            revenues: Cash(0),
+            total_rent: 0,
+            cdn_nodes_keys: Vec::new(),
+            cdn_usd_per_gb: CDN_USD_PER_GB,
+            cdn_revenues: Cash(0),
+        },
+        cluster_v_nodes: Vec::new()
+    };
+
+    let count = 2;
+
+
+    assert_eq!(
+        ctx.contract.cluster_list(0, 100, None),
+        (vec![cluster1.clone(), cluster2.clone()], count)
+    );
+
+    assert_eq!(
+        ctx.contract.cluster_list(0, 2, None),
+        (vec![cluster1.clone(), cluster2.clone()], count)
+    );
+
+    assert_eq!(
+        ctx.contract.cluster_list(0, 1, None),
+        (vec![cluster1.clone()], count)
+    );
+
+    assert_eq!(
+        ctx.contract.cluster_list(1, 1, None),
+        (vec![cluster2.clone()], count)
+    );
+
+
+    assert_eq!(ctx.contract.cluster_list(21, 20, None), (vec![], count));
+
+    // Filter by manager.
+    assert_eq!(
+        ctx.contract.cluster_list(0, 100, Some(ctx.manager_id)),
+        (vec![cluster1.clone()], count)
+    );
+
+    assert_eq!(
+        ctx.contract.cluster_list(0, 100, Some(manager_id2)),
+        (vec![cluster2.clone()], count)
+    );
+
+    let not_manager_id= AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    assert_eq!(
+        ctx.contract.cluster_list(0, 100, Some(not_manager_id)),
+        (vec![], count)
+    );
+}
+
 
 #[ink::test]
 fn cluster_distribute_cdn_revenue_ok() {

@@ -413,7 +413,7 @@ impl DdcBucket {
 
             clusters.push(cluster_info);
         }
-        (clusters, self.clusters.next_cluster_id - 1)
+        (clusters, self.clusters.next_cluster_id)
     }
 
 
