@@ -495,7 +495,7 @@ impl DdcBucket {
 
         let aggregate_payments_accounts;
         {
-            let conv = &self.accounts.1;
+            let conv = &self.accounts.curr_converter;
             aggregate_payments_accounts = aggregates_accounts.iter().map(|(client_id, resources_used)| {
                 let account_id = *client_id;
                 let cere_payment: Balance = conv.to_cere(*resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
@@ -513,7 +513,7 @@ impl DdcBucket {
             }
         };
 
-        let conv = &self.accounts.1;
+        let conv = &self.accounts.curr_converter;
         let committer = &mut self.committer_store;
 
         for &(cdn_node_key, resources_used) in aggregates_nodes.iter() {

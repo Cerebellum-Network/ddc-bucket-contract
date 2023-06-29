@@ -72,6 +72,6 @@ fn converter_ok() {
     let usd_per_kb = rate / KB_PER_GB;
     println!("The current rate per kb {}", usd_per_kb);
 
-    let cere_per_kb = ctx.contract.accounts.1.to_cere(usd_per_kb);
+    let cere_per_kb = ctx.contract.accounts.curr_converter.to_cere(usd_per_kb);
     println!("The current cere rate per kb {}", cere_per_kb);
 }
