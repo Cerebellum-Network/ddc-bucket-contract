@@ -1,6 +1,6 @@
 //! This module captures fees on behalf of the entire Cere network.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::{AccountId, Balance, DdcBucket, Result};
@@ -12,7 +12,7 @@ pub type BasisPoints = Balance;
 const BP: BasisPoints = 10_000; // 100%
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct NetworkFeeStore(
     pub FeeConfig,
 );
@@ -25,7 +25,7 @@ impl NetworkFeeStore {
 
 /// The configuration of fees.
 #[derive(SpreadAllocate, SpreadLayout, Default, Decode, Encode)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug, scale_info::TypeInfo))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo))]
 pub struct FeeConfig {
     /// The fee rate from cluster revenues to the overall network. In basis points (1% of 1%).
     pub network_fee_bp: BasisPoints,

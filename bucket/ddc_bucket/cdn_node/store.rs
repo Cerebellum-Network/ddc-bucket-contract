@@ -1,6 +1,6 @@
 //! The store where to create and access Nodes.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_storage::Mapping;
 use ink_prelude::vec::Vec;
 
@@ -9,7 +9,7 @@ use super::entity::{CdnNode, CdnNodeKey, CdnNodeParams};
 
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct CdnNodeStore {
   pub cdn_nodes: Mapping<CdnNodeKey, CdnNode>,
   // This vector is temporal and must be replaced with an offchain indexer

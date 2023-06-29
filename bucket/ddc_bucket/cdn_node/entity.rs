@@ -4,11 +4,12 @@ use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllo
 use scale::{Decode, Encode};
 use ink_primitives::Key;
 use crate::ddc_bucket::{AccountId, Balance, ClusterId, NodeStatusInCluster, Error::*, Result};
-use crate::ddc_bucket::params::store::Params;
+use ink_prelude::string::String;
+
 
 pub type ProviderId = AccountId;
 pub type CdnNodeKey = AccountId;
-pub type CdnNodeParams = Params;
+pub type CdnNodeParams = String;
 pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]

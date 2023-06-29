@@ -9,12 +9,12 @@ use crate::ddc_bucket::{
 };
 use crate::ddc_bucket::currency::CurrencyConverter;
 use crate::ddc_bucket::flow::Flow;
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_prelude::vec::Vec;
 use super::entity::Account;
 
 #[derive(Default, SpreadLayout, SpreadAllocate)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct AccountStore(
     pub Mapping<AccountId, Account>,
     pub CurrencyConverter,

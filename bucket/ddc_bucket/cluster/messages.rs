@@ -539,10 +539,11 @@ impl DdcBucket {
 
         // Go through buckets and deduct used resources
         for &(bucket_id, resources_used) in aggregates_buckets.iter() {
-            let bucket = self.buckets.get_mut(bucket_id)?;
+            let mut bucket = self.buckets.get(bucket_id)?;
 
             if bucket.resource_consumption_cap <= resources_used {
                 bucket.resource_consumption_cap -= resources_used;
+                self.buckets.update(bucket_id, &bucket)?;
             }
         }
 

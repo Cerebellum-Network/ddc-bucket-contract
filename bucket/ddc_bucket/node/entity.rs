@@ -2,9 +2,9 @@
 
 use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
 use ink_prelude::vec::Vec;
+use ink_prelude::string::String;
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
 
@@ -13,7 +13,7 @@ use ink_primitives::Key;
 
 pub type ProviderId = AccountId;
 pub type NodeKey = AccountId;
-pub type NodeParams = Params;
+pub type NodeParams = String;
 pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]

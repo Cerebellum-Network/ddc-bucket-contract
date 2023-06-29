@@ -1,7 +1,7 @@
 //! The store where to create and access Nodes.
 use ink_prelude::vec::Vec;
 use ink_storage::Mapping;
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::node::entity::{NodeKey};
@@ -11,7 +11,7 @@ pub type VNodeToken = u64;
 pub type ClusterVNode = (ClusterId, VNodeToken);
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct TopologyStore {
     // virtual nodes assigned to a physical node
     v_nodes_map: Mapping<NodeKey, Vec<VNodeToken>>,

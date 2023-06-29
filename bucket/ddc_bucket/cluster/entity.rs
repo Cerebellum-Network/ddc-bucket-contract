@@ -1,18 +1,18 @@
 //! The data structure of Clusters.
 use ink_prelude::vec::Vec;
+use ink_prelude::string::String;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
 use scale::{Decode, Encode};
 use ink_primitives::Key;
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::node::entity::{Resource, NodeKey};
 use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
-
-use crate::ddc_bucket::params::store::Params;
 use crate::ddc_bucket::Error::{OnlyClusterManager, InsufficientBalance};
 use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Result, Error::*};
 
+
 pub type ClusterId = u32;
-pub type ClusterParams = Params;
+pub type ClusterParams = String;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, PackedLayout, SpreadLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]

@@ -1,16 +1,16 @@
 //! The store where to create and access Clusters by ID.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_storage::Mapping;
 use crate::ddc_bucket::{AccountId, Error::*, Result};
 use super::entity::{Cluster, ClusterId, ClusterParams};
 
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct ClusterStore {
+    pub next_cluster_id: u32,
     pub clusters: Mapping<ClusterId, Cluster>,
-    pub next_cluster_id: u32
 }
 
 impl ClusterStore {

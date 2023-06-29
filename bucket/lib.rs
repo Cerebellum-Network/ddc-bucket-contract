@@ -18,7 +18,6 @@ pub mod ddc_bucket {
     use committer::store::*;
     use ink_storage::traits::SpreadAllocate;
     use node::{entity::*, store::*};
-    use params::store::*;
     use perm::store::*;
     use topology::store::*;
 
@@ -26,7 +25,6 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::network_fee::{NetworkFeeStore, FeeConfig};
     use crate::ddc_bucket::perm::entity::Permission;
 
-    use self::buckets_perms::store::BucketsPermsStore;
     use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
     use self::account::entity::Account;
     use self::protocol::store::ProtocolStore;
@@ -35,7 +33,6 @@ pub mod ddc_bucket {
     pub mod account;
     pub mod admin;
     pub mod bucket;
-    pub mod buckets_perms;
     pub mod cash;
     pub mod cdn_node;
     pub mod cluster;
@@ -44,7 +41,6 @@ pub mod ddc_bucket {
     pub mod flow;
     pub mod network_fee;
     pub mod node;
-    pub mod params;
     pub mod perm;
     pub mod protocol;
     pub mod schedule;
@@ -56,8 +52,6 @@ pub mod ddc_bucket {
     #[derive(SpreadAllocate, Default)]
     pub struct DdcBucket {
         buckets: BucketStore,
-        buckets_perms: BucketsPermsStore,
-        bucket_params: ParamsStore,
         clusters: ClusterStore,
         cdn_nodes: CdnNodeStore,
         nodes: NodeStore,
@@ -127,6 +121,14 @@ pub mod ddc_bucket {
         bucket_id: BucketId,
         #[ink(topic)]
         public_availability: bool,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketParamsSet {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        bucket_params: BucketParams,
     }
 
     impl DdcBucket {

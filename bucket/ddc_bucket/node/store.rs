@@ -1,6 +1,6 @@
 //! The store where to create and access Nodes.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_prelude::vec::Vec;
 use ink_storage::Mapping;
 
@@ -10,7 +10,7 @@ use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use super::entity::{Node, NodeKey, NodeParams, Resource};
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct NodeStore {
     pub nodes: Mapping<NodeKey, Node>,
     // This pagination vector is temporal and must be replaced with an offchain indexer

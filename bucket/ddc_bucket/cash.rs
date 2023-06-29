@@ -2,7 +2,7 @@
 //!
 //! These data structures facilitate the correctness of money-related calculations using the Rust type system.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, StorageLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
 use ink_storage::traits::KeyPtr;
 use scale::{Decode, Encode};
 
@@ -13,7 +13,7 @@ use crate::ddc_bucket::Error::InsufficientBalance;
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
 #[derive(Clone, Copy, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct Cash(pub Balance);
 
 impl SpreadAllocate for Cash {

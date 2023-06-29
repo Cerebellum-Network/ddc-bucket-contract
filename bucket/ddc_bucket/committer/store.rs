@@ -1,6 +1,6 @@
 use crate::ddc_bucket::{AccountId, Hash, CdnNodeKey};
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout, PackedLayout};
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
 use ink_prelude::vec::Vec;
 use ink_storage::Mapping;
 
@@ -40,7 +40,7 @@ pub struct Commit {
 } 
 
 #[derive(Default, Copy, Clone, SpreadAllocate, SpreadLayout, scale::Encode, scale::Decode, Debug)]
-#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, StorageLayout))]
+#[cfg_attr(feature = "std", derive(::scale_info::TypeInfo, ink_storage::traits::StorageLayout))]
 pub struct EraConfig {
     start: u64,
     interval: u64,
@@ -49,7 +49,7 @@ pub struct EraConfig {
 }  
 
 #[derive(Default, SpreadAllocate, SpreadLayout, Debug)]
-#[cfg_attr(feature = "std", derive(StorageLayout))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout))]
 pub struct CommitterStore {
     operator_id: AccountId,
     commits: Mapping<AccountId, Vec<(CdnNodeKey, Commit)>>,

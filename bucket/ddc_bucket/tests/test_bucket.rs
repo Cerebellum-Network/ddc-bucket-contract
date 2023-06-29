@@ -116,6 +116,7 @@ fn bucket_create_ok() {
 
     // Check the structure of the bucket including the payment flow.
     let total_rent = ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance;
+    let bucket_params = BucketParams::from("");
     let expect_bucket = Bucket {
         owner_id: test_bucket.owner_id,
         cluster_id: ctx.cluster_id,
@@ -126,6 +127,7 @@ fn bucket_create_ok() {
         resource_reserved: test_bucket.resource,
         public_availability: false,
         resource_consumption_cap: 0,
+        bucket_params: bucket_params
     };
 
     // Check the status of the bucket.

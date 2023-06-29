@@ -86,6 +86,7 @@ pub fn print_events(events: &[Event]) {
             Event::NodeParamsSet(ev) => println!("EVENT {:?}", ev),
             Event::NodeOwnershipTransferred(ev) => println!("EVENT {:?}", ev),
             Event::CdnNodeOwnershipTransferred(ev) => println!("EVENT {:?}", ev),
+            Event::BucketParamsSet(ev) => println!("EVENT {:?}", ev),
         }
     }
 }
