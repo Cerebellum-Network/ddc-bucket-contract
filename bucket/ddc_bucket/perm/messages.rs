@@ -8,12 +8,12 @@ use crate::ddc_bucket::perm::entity::Permission;
 impl DdcBucket {
 
     pub fn grant_permission(&mut self, account_id: AccountId, permission: Permission) -> Result<()> {
-        self.perms.grant_permission(account_id, &permission);
+        self.perms.grant_permission(account_id, permission);
         Ok(())
     }
 
     pub fn revoke_permission(&mut self, account_id: AccountId, permission: Permission) -> Result<()> {
-        self.perms.revoke_permission(account_id, &permission);
+        self.perms.revoke_permission(account_id, permission);
         Ok(())
     }
 

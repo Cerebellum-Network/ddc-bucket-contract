@@ -51,12 +51,12 @@ pub mod ddc_bucket {
     #[ink(storage)]
     #[derive(SpreadAllocate, Default)]
     pub struct DdcBucket {
+        perms: PermStore,
         buckets: BucketStore,
         clusters: ClusterStore,
         cdn_nodes: CdnNodeStore,
         nodes: NodeStore,
         accounts: AccountStore,
-        perms: PermStore,
         network_fee: NetworkFeeStore,
         committer_store: CommitterStore,
         protocol_store: ProtocolStore,
@@ -72,7 +72,7 @@ pub mod ddc_bucket {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 let admin = Self::env().caller();
                 // Make the creator of this contract a super-admin.
-                contract.perms.grant_permission(admin, &Permission::SuperAdmin);
+                contract.perms.grant_permission(admin, Permission::SuperAdmin);
                 contract.committer_store.init(admin);
                 contract.protocol_store.init(admin, DEFAULT_BASIS_POINTS);
             })

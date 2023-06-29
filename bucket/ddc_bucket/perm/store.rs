@@ -22,12 +22,12 @@ pub struct PermStore {
 
 
 impl PermStore {
-    pub fn grant_permission(&mut self, account_id: AccountId, permission: &Permission) {
+    pub fn grant_permission(&mut self, account_id: AccountId, permission: Permission) {
         let key = (account_id, permission).encode();
         self.perms.insert(key, &true);
     }
 
-    pub fn revoke_permission(&mut self, account_id: AccountId, permission: &Permission) {
+    pub fn revoke_permission(&mut self, account_id: AccountId, permission: Permission) {
         let key = (account_id, permission).encode();
         self.perms.remove(&key);
     }
