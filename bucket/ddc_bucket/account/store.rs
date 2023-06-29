@@ -1,13 +1,12 @@
 //! The store to create and access Accounts.
 
 use ink_storage::Mapping;
-
 use crate::ddc_bucket::{
     AccountId, Balance, cash::Cash, Error::*,
     Result,
     schedule::Schedule,
+    currency::CurrencyConverter
 };
-use crate::ddc_bucket::currency::CurrencyConverter;
 use crate::ddc_bucket::flow::Flow;
 use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_prelude::vec::Vec;
@@ -19,7 +18,6 @@ pub struct AccountStore {
     pub accounts: Mapping<AccountId, Account>,
     // todo: remove this vector as it can store an arbitrary number of elements and easily exceed 16KB limit
     pub accounts_keys: Vec<AccountId>,
-    pub curr_converter: CurrencyConverter,
 }
 
 impl AccountStore {
@@ -61,9 +59,9 @@ impl AccountStore {
         Ok(())
     }
 
-    pub fn settle_flow(&mut self, now_ms: u64, flow: &mut Flow) -> Result<Cash> {
+    pub fn settle_flow(&mut self, now_ms: u64, flow: &mut Flow, curr_converter: &CurrencyConverter) -> Result<Cash> {
         let flowed_usd = flow.schedule.take_value_at_time(now_ms);
-        let flowed_cere = self.curr_converter.to_cere(flowed_usd);
+        let flowed_cere = curr_converter.to_cere(flowed_usd);
         let (payable, cash) = Cash::borrow_payable_cash(flowed_cere);
 
         let mut account = self.get(&flow.from)?;
@@ -73,10 +71,10 @@ impl AccountStore {
         Ok(cash)
     }
 
-    pub fn flow_covered_until(&self, flow: &Flow) -> Result<u64> {
+    pub fn flow_covered_until(&self, flow: &Flow, curr_converter: &CurrencyConverter) -> Result<u64> {
         let account = self.get(&flow.from)?;
         let deposit_cere = account.deposit.peek();
-        let deposit_usd = self.curr_converter.to_usd(deposit_cere);
+        let deposit_usd = curr_converter.to_usd(deposit_cere);
         Ok(account.schedule_covered_until(deposit_usd))
     }
 }

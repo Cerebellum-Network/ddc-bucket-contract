@@ -8,22 +8,23 @@ use super::store::{Commit, EraConfig, EraStatus, EraAndTimestamp};
 pub type Result<T> = core::result::Result<T, Error>;
 
 impl DdcBucket {
+
     pub fn message_set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) {
-        self.committer_store.set_commit(cdn_owner, cdn_node_key, commit);
+        self.committer.set_commit(cdn_owner, cdn_node_key, commit);
     }
 
     pub fn message_get_commit(&self, cdn_owner: AccountId) -> Vec<(CdnNodeKey, Commit)> {
-        self.committer_store.get_commit(cdn_owner)
+        self.committer.get_commit(cdn_owner)
     }
 
     pub fn message_get_validated_commit(&self, cdn_node_key: CdnNodeKey) -> EraAndTimestamp {
-        self.committer_store.get_validate_commit(cdn_node_key)
+        self.committer.get_validate_commit(cdn_node_key)
     }
 
     pub fn message_set_era(&mut self, era_config: EraConfig) -> Result<()> {
         let caller = Self::env().caller();
         
-        match self.committer_store.set_era(caller, era_config) {
+        match self.committer.set_era(caller, era_config) {
             Err(_e) => panic!("Setting era failed"), 
             Ok(_v) => Ok(()),
         }
@@ -31,10 +32,11 @@ impl DdcBucket {
   
     pub fn message_get_era(&self) -> EraStatus {
         let timestamp = Self::env().block_timestamp();
-        self.committer_store.get_era(timestamp)
+        self.committer.get_era(timestamp)
     }
 
     pub fn message_get_era_settings(&self) -> EraConfig {
-        self.committer_store.get_era_settings()
+        self.committer.get_era_settings()
     }
+    
 }

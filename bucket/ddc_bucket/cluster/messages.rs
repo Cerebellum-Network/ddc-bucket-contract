@@ -33,7 +33,7 @@ impl DdcBucket {
             cluster_params.clone()
         )?;
         
-        self.topology_store.create_topology(cluster_id)?;
+        self.topology.create_topology(cluster_id)?;
 
         Self::env().emit_event(ClusterCreated {
             cluster_id,
@@ -69,7 +69,7 @@ impl DdcBucket {
         }
         self.clusters.update(cluster_id, &cluster)?;
 
-        self.topology_store.add_node(cluster_id, node_key, v_nodes)?;
+        self.topology.add_node(cluster_id, node_key, v_nodes)?;
 
         Self::env().emit_event(ClusterNodeAdded { 
             cluster_id, 
@@ -101,13 +101,13 @@ impl DdcBucket {
         self.nodes.update(node_key, &node)?;
 
         cluster.remove_node(node_key);
-        let v_nodes = self.topology_store.get_v_nodes_by_node(node_key);
+        let v_nodes = self.topology.get_v_nodes_by_node(node_key);
         for _v_node in &v_nodes {
             cluster.total_rent -= node.rent_per_month;
         }
         self.clusters.update(cluster_id, &cluster)?;
 
-        self.topology_store.remove_node(cluster_id, node_key)?;
+        self.topology.remove_node(cluster_id, node_key)?;
 
         Self::env().emit_event(ClusterNodeRemoved { 
             cluster_id, 
@@ -130,7 +130,7 @@ impl DdcBucket {
 
         // Give back resources to the old node for all its v_nodes
         for v_node in &v_nodes {
-            let old_node_key = self.topology_store.get_node_by_v_node(cluster_id, *v_node)?;
+            let old_node_key = self.topology.get_node_by_v_node(cluster_id, *v_node)?;
 
             // Give back resources to the old node
             let mut old_node = self.nodes.get(old_node_key)?;
@@ -146,7 +146,7 @@ impl DdcBucket {
             self.nodes.update(new_node_key, &new_node)?;
         }
 
-        self.topology_store
+        self.topology
             .replace_node(cluster_id, new_node_key, v_nodes)?;
 
         Self::env().emit_event(ClusterNodeReplaced {
@@ -230,7 +230,7 @@ impl DdcBucket {
         cluster.only_without_nodes()?;
         
         self.clusters.remove(cluster_id);
-        self.topology_store.remove_topology(cluster_id)?;
+        self.topology.remove_topology(cluster_id)?;
 
         Self::env().emit_event(ClusterRemoved { 
             cluster_id, 
@@ -355,9 +355,9 @@ impl DdcBucket {
         cluster.put_resource(resource);
         self.clusters.update(cluster_id, &cluster)?;
 
-        let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
+        let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
         for v_node in cluster_v_nodes {
-            let node_key = self.topology_store.get_node_by_v_node(cluster_id, v_node)?;
+            let node_key = self.topology.get_node_by_v_node(cluster_id, v_node)?;
             let mut node = self.nodes.get(node_key)?;
             node.take_resource(resource)?;
             self.nodes.update(node_key, &node)?;
@@ -373,7 +373,7 @@ impl DdcBucket {
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?;
-        let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
+        let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
 
         Ok(ClusterInfo {
             cluster_id,
@@ -402,7 +402,7 @@ impl DdcBucket {
                 }
             }
 
-            let cluster_v_nodes = self.topology_store.get_v_nodes_by_cluster(cluster_id);
+            let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
 
             // Include the complete status of matched items.
             let cluster_info = ClusterInfo {
@@ -495,7 +495,7 @@ impl DdcBucket {
 
         let aggregate_payments_accounts;
         {
-            let conv = &self.accounts.curr_converter;
+            let conv = &self.protocol.curr_converter;
             aggregate_payments_accounts = aggregates_accounts.iter().map(|(client_id, resources_used)| {
                 let account_id = *client_id;
                 let cere_payment: Balance = conv.to_cere(*resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
@@ -513,15 +513,15 @@ impl DdcBucket {
             }
         };
 
-        let conv = &self.accounts.curr_converter;
-        let committer = &mut self.committer_store;
+        let conv = self.protocol.curr_converter.clone();
+        let committer = &mut self.committer;
 
         for &(cdn_node_key, resources_used) in aggregates_nodes.iter() {
             let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-            let protocol_fee = self.protocol_store.get_fee_bp();
-            let protocol = &mut self.protocol_store;
+            let protocol_fee = self.protocol.get_fee_bp();
+            let protocol = &mut self.protocol;
             
-            let payment = conv.to_cere (resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
+            let payment = conv.to_cere(resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
 
             // let protocol_payment = payment * protocol_fee as u128/ 10_000;
             let node_payment = payment * (10_000 - protocol_fee) as u128 / 10_000;

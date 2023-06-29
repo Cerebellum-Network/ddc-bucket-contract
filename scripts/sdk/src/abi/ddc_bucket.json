@@ -3051,7 +3051,7 @@
                 ]
               }
             },
-            "name": "committer_store"
+            "name": "committer"
           },
           {
             "layout": {
@@ -3096,7 +3096,7 @@
                 ]
               }
             },
-            "name": "protocol_store"
+            "name": "protocol"
           },
           {
             "layout": {
@@ -3114,7 +3114,7 @@
                 ]
               }
             },
-            "name": "topology_store"
+            "name": "topology"
           }
         ]
       }

@@ -13,13 +13,13 @@ const BP: BasisPoints = 10_000; // 100%
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
-pub struct NetworkFeeStore(
-    pub FeeConfig,
-);
+pub struct NetworkFeeStore {
+    pub fee_config: FeeConfig,
+}
 
 impl NetworkFeeStore {
     pub fn cluster_management_fee_bp(&self) -> BasisPoints {
-        self.0.cluster_management_fee_bp
+        self.fee_config.cluster_management_fee_bp
     }
 }
 
@@ -31,7 +31,6 @@ pub struct FeeConfig {
     pub network_fee_bp: BasisPoints,
     /// The destination account of network fees. Use the 0 account to burn the fees.
     pub network_fee_destination: AccountId,
-
     /// The fee rate from cluster revenues to the cluster manager. In basis points (1% of 1%).
     pub cluster_management_fee_bp: BasisPoints,
 }
@@ -40,7 +39,7 @@ pub struct FeeConfig {
 impl DdcBucket {
     /// Take a network fee from the given revenues (in place).
     pub fn capture_network_fee(store: &NetworkFeeStore, revenues: &mut Cash) -> Result<()> {
-        let config = &store.0;
+        let config = &store.fee_config;
         Self::capture_fee(config.network_fee_bp, config.network_fee_destination, revenues)
     }
 
@@ -54,7 +53,7 @@ impl DdcBucket {
 
     pub fn message_admin_set_fee_config(&mut self, config: FeeConfig) -> Result<()> {
         self.only_with_permission(Permission::SuperAdmin)?;
-        self.network_fee.0 = config;
+        self.network_fee.fee_config = config;
         Ok(())
     }
 }

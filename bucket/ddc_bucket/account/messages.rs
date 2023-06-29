@@ -36,7 +36,7 @@ impl DdcBucket {
         let account_id = Self::env().caller();
 
         if let Ok(mut account) = self.accounts.get(&account_id) {
-            let conv = &self.accounts.curr_converter;
+            let conv = &self.protocol.curr_converter;
             account.bond(time_ms, conv, bond_amount)?;
             self.accounts.save(&account_id, &account);
             Ok(())
@@ -68,12 +68,12 @@ impl DdcBucket {
     }
 
     pub fn message_account_get_usd_per_cere(&self) -> Balance {
-        self.accounts.curr_converter.to_usd(1 * TOKEN)
+        self.protocol.curr_converter.to_usd(1 * TOKEN)
     }
 
     pub fn message_account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
         self.only_with_permission(Permission::SetExchangeRate).unwrap();
-        self.accounts.curr_converter.set_usd_per_cere(usd_per_cere)
+        self.protocol.curr_converter.set_usd_per_cere(usd_per_cere)
     }
 
     pub fn receive_cash() -> Cash {
@@ -91,7 +91,7 @@ impl DdcBucket {
     fn _account_withdraw(&mut self, from: AccountId, payable: Payable) -> Result<()> {
         if let Ok(mut account) = self.accounts.get(&from) {
             let time_ms = Self::env().block_timestamp();
-            let conv = &self.accounts.curr_converter;
+            let conv = &self.protocol.curr_converter;
             account.withdraw(time_ms, conv, payable)?;
             self.accounts.save(&from, &account);
             Ok(())
@@ -115,7 +115,7 @@ impl DdcBucket {
             None => 0,
             Some(account) => {
                 let time_ms = Self::env().block_timestamp();
-                let conv = &self.accounts.curr_converter;
+                let conv = &self.protocol.curr_converter;
                 account.get_withdrawable(time_ms, conv)
             }
         }

@@ -2,8 +2,9 @@ use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
 
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Error::*, Result, PRECISION};
 use crate::ddc_bucket::cash::{Cash, Payable};
+use crate::ddc_bucket::currency::CurrencyConverter;
 
 #[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo))]
@@ -11,13 +12,15 @@ pub struct ProtocolStore {
   pub admin: AccountId,
   pub fee_bp: u32,
   pub revenues: Cash,
+  pub curr_converter: CurrencyConverter,
 }
 
 impl ProtocolStore {
 
   pub fn init(&mut self, admin: AccountId, fee_bp: u32) {
       self.admin = admin;
-      self.fee_bp = fee_bp
+      self.fee_bp = fee_bp;
+      self.curr_converter = CurrencyConverter::new(PRECISION);
   }
 
   pub fn get_fee_bp(&self) -> u32 {

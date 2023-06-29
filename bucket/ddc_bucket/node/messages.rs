@@ -77,7 +77,7 @@ impl DdcBucket {
 
     pub fn message_node_get(&self, node_key: NodeKey) -> Result<NodeInfo> {
         let node = self.nodes.get(node_key)?;
-        let v_nodes = self.topology_store.get_v_nodes_by_node(node_key);
+        let v_nodes = self.topology.get_v_nodes_by_node(node_key);
 
         Ok(NodeInfo {
             node_key,
@@ -108,7 +108,7 @@ impl DdcBucket {
                 }
             }
             
-            let v_nodes = self.topology_store.get_v_nodes_by_node(node_key);
+            let v_nodes = self.topology.get_v_nodes_by_node(node_key);
 
             // Include the complete status of matched items.
             let node_info = NodeInfo {

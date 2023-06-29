@@ -56,11 +56,11 @@ pub mod ddc_bucket {
         clusters: ClusterStore,
         cdn_nodes: CdnNodeStore,
         nodes: NodeStore,
+        topology: TopologyStore,
         accounts: AccountStore,
         network_fee: NetworkFeeStore,
-        committer_store: CommitterStore,
-        protocol_store: ProtocolStore,
-        topology_store: TopologyStore,
+        committer: CommitterStore,
+        protocol: ProtocolStore,
     }
 
     impl DdcBucket {
@@ -72,9 +72,9 @@ pub mod ddc_bucket {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 let admin = Self::env().caller();
                 // Make the creator of this contract a super-admin.
-                contract.perms.grant_permission(admin, Permission::SuperAdmin);
-                contract.committer_store.init(admin);
-                contract.protocol_store.init(admin, DEFAULT_BASIS_POINTS);
+                contract.perms.grant_permission(admin, Permission::SuperAdmin);                
+                contract.committer.init(admin);
+                contract.protocol.init(admin, DEFAULT_BASIS_POINTS);
             })
         }
     }
@@ -1658,6 +1658,7 @@ pub mod ddc_bucket {
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
     pub const DEFAULT_BASIS_POINTS: u32 = 500;
+    pub const PRECISION: Balance = 10_000_000;
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]

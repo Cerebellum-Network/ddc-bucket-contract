@@ -10,7 +10,6 @@ use ink_prelude::string::String;
 pub type ProviderId = AccountId;
 pub type CdnNodeKey = AccountId;
 pub type CdnNodeParams = String;
-pub type Resource = u32;
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]

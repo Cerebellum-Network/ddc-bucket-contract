@@ -1518,7 +1518,7 @@ fn cluster_distribute_cdn_revenue_ok() {
     let usd_per_kb = rate / KB_PER_GB;
     println!("The current rate per kb {}", usd_per_kb);
 
-    let cere_per_kb = ctx.contract.accounts.curr_converter.to_cere(usd_per_kb);
+    let cere_per_kb = ctx.contract.protocol.curr_converter.to_cere(usd_per_kb);
     println!("The current cere rate per kb {}", cere_per_kb);
 
     set_caller_value(ctx.provider_id0, 10 * TOKEN);

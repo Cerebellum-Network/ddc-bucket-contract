@@ -51,7 +51,7 @@ impl DdcBucket {
         let mut bucket = self.buckets.get(bucket_id)?;
 
         let now_ms = Self::env().block_timestamp();
-        let cash = self.accounts.settle_flow(now_ms, &mut bucket.flow)?;
+        let cash = self.accounts.settle_flow(now_ms, &mut bucket.flow, &self.protocol.curr_converter)?;
 
         let mut cluster = self.clusters.get(bucket.cluster_id)?;
         cluster.revenues.increase(cash);
@@ -118,7 +118,7 @@ impl DdcBucket {
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let mut writer_ids = self.buckets.get_bucket_readers(bucket_id);
         writer_ids.push(bucket.owner_id);
-        let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow)?;
+        let rent_covered_until_ms = self.accounts.flow_covered_until(&bucket.flow, &self.protocol.curr_converter)?;
         let reader_ids = self.buckets.get_bucket_readers(bucket_id);
         let bucket_params = bucket.bucket_params.clone();
 

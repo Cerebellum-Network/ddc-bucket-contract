@@ -38,8 +38,8 @@ impl ink_storage::traits::PackedAllocate for Node {
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub enum NodeStatusInCluster {
-    ACTIVE,
     ADDING,
+    ACTIVE,
     DELETING,
     OFFLINE,
 }

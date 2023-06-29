@@ -2,31 +2,26 @@
 
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
 use scale::{Decode, Encode};
-use crate::ddc_bucket::{Balance, TOKEN};
-
+use crate::ddc_bucket::{Balance, TOKEN, PRECISION};
 
 pub type CERE = Balance;
 pub type USD = Balance;
 
-const PRECISION: Balance = 10_000_000; 
-
-#[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
+#[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, PackedLayout, SpreadLayout)]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo))]
 pub struct CurrencyConverter { 
     /* how many USD for PRECISION CERE */
     rate: Balance
 }
 
-
-impl Default for CurrencyConverter {
-    fn default() -> Self {
+impl CurrencyConverter {
+    
+    pub fn new(rate: Balance) -> Self {
         Self {
-            rate: PRECISION
+            rate
         }
     }
-}
 
-impl CurrencyConverter { // 10_000_000
     pub fn set_usd_per_cere(&mut self, usd_per_cere: USD) {
         self.rate = usd_per_cere * PRECISION / TOKEN;
     }
