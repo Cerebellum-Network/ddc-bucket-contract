@@ -2,6 +2,13 @@
 use crate::ddc_bucket::*;
 use super::env_utils::*;
 
+pub fn admin_id() -> AccountId {
+    get_accounts().alice
+}
+
+pub fn contract_id() -> AccountId {
+    AccountId::from([0x09; 32])
+}
 
 pub fn setup_contract() -> DdcBucket {
     set_caller(admin_id());
@@ -10,7 +17,6 @@ pub fn setup_contract() -> DdcBucket {
     set_balance(contract_id(), 10);
     contract
 }
-
 
 pub struct TestCluster {
     pub contract: DdcBucket,

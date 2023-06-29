@@ -54,14 +54,6 @@ pub fn get_events<Event: Decode>() -> Vec<Event> {
     raw_events.iter().map(decode_event).collect()
 }
 
-pub fn admin_id() -> AccountId {
-    get_accounts().alice
-}
-
-pub fn contract_id() -> AccountId {
-    AccountId::from([0x09; 32])
-}
-
 pub fn print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
