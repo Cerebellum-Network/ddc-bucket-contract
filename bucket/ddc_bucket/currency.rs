@@ -8,35 +8,42 @@ use crate::ddc_bucket::{Balance, TOKEN};
 pub type CERE = Balance;
 pub type USD = Balance;
 
+const PRECISION: Balance = 10_000_000; 
 
 #[derive(SpreadLayout)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
-pub struct CurrencyConverter(Balance /* how many USD for PRECISION CERE */);
+pub struct CurrencyConverter { 
+    /* how many USD for PRECISION CERE */
+    rate: Balance
+}
 
-const PRECISION: Balance = 10_000_000; 
 
 impl SpreadAllocate for CurrencyConverter { 
     fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        Self(PRECISION)
+        Self {
+            rate: PRECISION
+        }
     }
 }
 
 impl Default for CurrencyConverter {
     fn default() -> Self {
-        Self(PRECISION)
+        Self {
+            rate: PRECISION
+        }
     }
 }
 
 impl CurrencyConverter { // 10_000_000
     pub fn set_usd_per_cere(&mut self, usd_per_cere: USD) {
-        self.0 = usd_per_cere * PRECISION / TOKEN;
+        self.rate = usd_per_cere * PRECISION / TOKEN;
     }
 
     pub fn to_cere(&self, usd: USD) -> CERE {
-        usd * PRECISION / self.0
+        usd * PRECISION / self.rate
     }
 
     pub fn to_usd(&self, cere: CERE) -> USD {
-        self.0 * cere / PRECISION
+        self.rate * cere / PRECISION
     }
 }
