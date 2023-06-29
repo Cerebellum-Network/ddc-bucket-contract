@@ -2,7 +2,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(proc_macro_hygiene)] // for tests in a separate file
-// #![deny(unused_must_use, unused_variables)]
+#![deny(unused_must_use, unused_variables)]
 
 use ink_lang as ink;
 

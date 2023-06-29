@@ -30,8 +30,6 @@ fn cdn_node_create_ok() {
 
     let new_cdn_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
     let new_cdn_node_params = CdnNodeParams::from("{\"url\":\"https://ddc-1.cere.network/cdn/new\"}");
-    let new_cdn_node_capacity = 100;
-    let new_cdn_node_rent_per_month: Balance = 10 * TOKEN;
 
     set_caller_value(new_provider_id, CONTRACT_FEE_LIMIT);
     ctx.contract.cdn_node_create(
@@ -50,13 +48,14 @@ fn cdn_node_create_ok() {
     );
 
     let cdn_node_info = ctx.contract.cdn_node_get(new_cdn_node_key)?;
-    assert!(matches!(cdn_node_info.cdn_node, CdnNode {
+    let _expected_cdn_node = CdnNode {
         provider_id: new_provider_id,
         undistributed_payment: 0,
-        cdn_node_params,
+        cdn_node_params: new_cdn_node_params,
         cluster_id: None,
         status_in_cluster: None,
-    }));
+    };
+    assert!(matches!(cdn_node_info.cdn_node, _expected_cdn_node));
 
 }
 
@@ -170,7 +169,6 @@ fn cdn_node_get_err_if_node_does_not_exist() {
 fn node_get_ok() {
     let ctx = setup_cluster();
 
-    let v_nodes1_len : u32 = ctx.v_nodes1.len().try_into().unwrap();
     assert_eq!(
         ctx.contract.cdn_node_get(ctx.cdn_node_key1),
         Ok({
@@ -196,7 +194,6 @@ fn node_list_ok() {
     let cdn_node_info = ctx.contract.cdn_node_get(ctx.cdn_node_key1)?;
     assert_eq!(ctx.provider_id1, cdn_node_info.cdn_node.provider_id.clone());
 
-    let v_nodes1_len : u32 = ctx.v_nodes1.len().try_into().unwrap();
     let cdn_node1 = CdnNodeInfo {
         cdn_node_key: ctx.cdn_node_key1,
         cdn_node: CdnNode {
@@ -208,7 +205,6 @@ fn node_list_ok() {
         },
     };
 
-    let v_nodes2_len : u32 = ctx.v_nodes2.len().try_into().unwrap();
     let cdn_node2 = CdnNodeInfo {
         cdn_node_key: ctx.cdn_node_key2,
         cdn_node: CdnNode {

@@ -52,14 +52,15 @@ fn node_create_ok() {
     );
 
     let node_info = ctx.contract.node_get(new_node_key)?;
-    assert!(matches!(node_info.node, Node {
+    let _expected_node_info = Node {
         provider_id: new_provider_id,
         rent_per_month: new_node_rent_per_month,
         free_resource: new_node_capacity,
         node_params: new_node_params,
         cluster_id: None,
         status_in_cluster: None,
-    }));
+    };
+    assert!(matches!(node_info.node, _expected_node_info));
 
 }
 
