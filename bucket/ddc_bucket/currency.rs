@@ -2,7 +2,9 @@
 
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
 use scale::{Decode, Encode};
-use crate::ddc_bucket::{Balance, TOKEN, PRECISION};
+use crate::ddc_bucket::{Balance, TOKEN};
+
+pub const PRECISION: Balance = 10_000_000;
 
 pub type CERE = Balance;
 pub type USD = Balance;
@@ -15,10 +17,10 @@ pub struct CurrencyConverter {
 }
 
 impl CurrencyConverter {
-    
-    pub fn new(rate: Balance) -> Self {
+
+    pub fn new() -> Self {
         Self {
-            rate
+            rate: PRECISION
         }
     }
 

@@ -22,12 +22,11 @@ pub mod ddc_bucket {
     use topology::store::*;
 
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
-    use crate::ddc_bucket::network_fee::{NetworkFeeStore, FeeConfig};
     use crate::ddc_bucket::perm::entity::Permission;
 
     use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
     use self::account::entity::Account;
-    use self::protocol::store::ProtocolStore;
+    use self::protocol::store::{ProtocolStore, NetworkFeeConfig};
     use self::topology::store::TopologyStore;
 
     pub mod account;
@@ -39,7 +38,6 @@ pub mod ddc_bucket {
     pub mod committer;
     pub mod currency;
     pub mod flow;
-    pub mod network_fee;
     pub mod node;
     pub mod perm;
     pub mod protocol;
@@ -58,7 +56,6 @@ pub mod ddc_bucket {
         nodes: NodeStore,
         topology: TopologyStore,
         accounts: AccountStore,
-        network_fee: NetworkFeeStore,
         committer: CommitterStore,
         protocol: ProtocolStore,
     }
@@ -74,7 +71,7 @@ pub mod ddc_bucket {
                 // Make the creator of this contract a super-admin.
                 contract.perms.grant_permission(admin, Permission::SuperAdmin);                
                 contract.committer.init(admin);
-                contract.protocol.init(admin, DEFAULT_BASIS_POINTS);
+                contract.protocol.init(admin, DEFAULT_PROTOCOL_FEE_BP);
             })
         }
     }
@@ -1272,26 +1269,14 @@ pub mod ddc_bucket {
     impl DdcBucket {
         /// Get the Fee Percentage Basis Points that will be charged by the protocol
         #[ink(message)]
-        pub fn get_fee_bp(&self) -> u32 {
-            self.message_get_fee_bp()
-        }
-
-        /// Return the last commit submitted by CDN node operator
-        #[ink(message)]
-        pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
-            self.message_set_fee_bp(fee_bp).unwrap();
+        pub fn get_protocol_fee_bp(&self) -> u128 {
+            self.message_get_protocol_fee_bp()
         }
 
         /// Return fees accumulated by the protocol
         #[ink(message)]
         pub fn get_protocol_revenues(&self) -> Cash {
             self.message_get_fee_revenues()
-        }
-
-        /// Pay the revenues accumulated by the protocol
-        #[ink(message)]
-        pub fn protocol_withdraw_revenues(&mut self, amount: u128) -> () {
-            self.message_withdraw_revenues(amount).unwrap();
         }
     }
     // ---- End Protocol ----
@@ -1617,9 +1602,21 @@ pub mod ddc_bucket {
 
         /// As SuperAdmin, set the network and cluster fee configuration.
         #[ink(message)]
-        pub fn admin_set_fee_config(&mut self, config: FeeConfig) {
-            self.message_admin_set_fee_config(config).unwrap();
+        pub fn admin_set_network_fee_config(&mut self, config: NetworkFeeConfig) {
+            self.message_admin_set_network_fee_config(config).unwrap();
         }
+
+        /// Pay the revenues accumulated by the protocol
+        #[ink(message)]
+        pub fn admin_withdraw_protocol_revenues(&mut self, amount: u128) -> () {
+            self.message_withdraw_revenues(amount).unwrap();
+        }
+
+        #[ink(message)]
+        pub fn admin_set_protocol_fee_bp(&mut self, protocol_fee_bp: u128) -> () {
+            self.message_set_protocol_fee_bp(protocol_fee_bp).unwrap();
+        }
+
     }
     // ---- End Admin ----
 
@@ -1654,11 +1651,13 @@ pub mod ddc_bucket {
     }
     // ---- End Topology ----
 
-    // ---- Utils ----
+
+    // ---- Constants ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
-    pub const DEFAULT_BASIS_POINTS: u32 = 500;
-    pub const PRECISION: Balance = 10_000_000;
+    pub const BASIS_POINTS: u128 = 10_000; // 100%
+    pub const DEFAULT_PROTOCOL_FEE_BP: u128 = 500; // 5 %
+
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]

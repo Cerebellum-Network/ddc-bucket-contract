@@ -11,9 +11,11 @@ use crate::ddc_bucket::topology::store::{VNodeToken};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::{
+    BASIS_POINTS,
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
     ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, CdnClusterDistributeRevenues, ClusterReserveResource,
-    ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, DdcBucket, NodeStatusInCluster, Result, Error::*
+    ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, 
+    DdcBucket, NodeStatusInCluster, Result, Error::*
 };
 
 use super::entity::{ClusterId, ClusterParams};
@@ -421,11 +423,11 @@ impl DdcBucket {
         let mut cluster = self.clusters.get(cluster_id)?;
 
         // Charge the network fee from the cluster.
-        Self::capture_network_fee(&self.network_fee, &mut cluster.revenues)?;
+        self.capture_network_fee(&mut cluster.revenues)?;
 
         // Charge the cluster management fee.
-        Self::capture_fee(
-            self.network_fee.cluster_management_fee_bp(),
+        self.capture_fee(
+            self.protocol.cluster_management_fee_bp(),
             cluster.manager_id,
             &mut cluster.revenues,
         )?;
@@ -518,13 +520,13 @@ impl DdcBucket {
 
         for &(cdn_node_key, resources_used) in aggregates_nodes.iter() {
             let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-            let protocol_fee = self.protocol.get_fee_bp();
+            let protocol_fee = self.protocol.get_protocol_fee_bp();
             let protocol = &mut self.protocol;
             
             let payment = conv.to_cere(resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
 
-            // let protocol_payment = payment * protocol_fee as u128/ 10_000;
-            let node_payment = payment * (10_000 - protocol_fee) as u128 / 10_000;
+            // let protocol_payment = payment * protocol_fee as u128/ BASIS_POINTS;
+            let node_payment = payment * (BASIS_POINTS - protocol_fee) as u128 / BASIS_POINTS;
             let protocol_payment = payment - node_payment;
             
             cdn_node.put_payment(node_payment);
@@ -559,13 +561,14 @@ impl DdcBucket {
         let mut cluster = self.clusters.get(cluster_id)?;
 
         // Charge the network fee from the cluster.
-        Self::capture_network_fee(&self.network_fee, &mut cluster.cdn_revenues)?;
+        self.capture_network_fee(&mut cluster.cdn_revenues)?;
 
         // Charge the cluster management fee.
-        Self::capture_fee(
-            self.network_fee.cluster_management_fee_bp(),
+        self.capture_fee(
+            self.protocol.cluster_management_fee_bp(),
             cluster.manager_id,
-            &mut cluster.cdn_revenues)?;
+            &mut cluster.cdn_revenues
+        )?;
 
         // First accumulated revenues to distribute.
         let mut distributed_revenue = 0;

@@ -1077,14 +1077,14 @@ fn cluster_distribute_revenue_ok() {
     let network_fee_bp = 100; // 1%
     let cluster_management_fee_bp = 200; // 2%
     set_caller_value(admin_id(), CONTRACT_FEE_LIMIT);
-    ctx.contract.admin_set_fee_config(FeeConfig {
+    ctx.contract.admin_set_network_fee_config(NetworkFeeConfig {
         network_fee_bp,
         network_fee_destination: AccountId::default(),
         cluster_management_fee_bp,
     });
 
-    let burned_fee = to_distribute * network_fee_bp / 10_000;
-    let manager_fee = (to_distribute - burned_fee) * cluster_management_fee_bp / 10_000;
+    let burned_fee = to_distribute * network_fee_bp / BASIS_POINTS;
+    let manager_fee = (to_distribute - burned_fee) * cluster_management_fee_bp / BASIS_POINTS;
     let provider_fee: u128 = (to_distribute - burned_fee - manager_fee) / 3;
 
     // Distribute the revenues of the cluster to providers.
@@ -1527,9 +1527,10 @@ fn cluster_distribute_cdn_revenue_ok() {
     set_caller_value(ctx.provider_id0, 10 * TOKEN);
     ctx.contract.account_bond(5 * TOKEN);
 
-    set_caller(ctx.provider_id0);
-    ctx.contract.set_fee_bp(1_000);
+    set_caller(admin_id());
+    ctx.contract.admin_set_protocol_fee_bp(1_000);
 
+    set_caller(ctx.provider_id0);
     let account0_before_putting = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("Before putting revenue: {:?}", account0_before_putting);
 
@@ -1559,7 +1560,7 @@ fn cluster_distribute_cdn_revenue_ok() {
     let validated_commit_node0 = ctx.contract.get_validated_commit(ctx.cdn_node_key0);
     println!("Validated commit: {:?}", validated_commit_node0);
 
-    let fee = ctx.contract.get_fee_bp();
+    let fee = ctx.contract.get_protocol_fee_bp();
     println!("Protocol fee in basis points: {:?}", fee);
 
     let protocol_revenues = ctx.contract.get_protocol_revenues();
