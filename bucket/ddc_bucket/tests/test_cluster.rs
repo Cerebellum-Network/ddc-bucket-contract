@@ -1309,6 +1309,52 @@ fn cluster_set_cdn_node_status_ok() {
     );
 }
 
+
+#[ink::test]
+fn cluster_get_err_if_cluster_does_not_exist() {
+    let ctx = setup_cluster();
+
+    let bad_cluster_id = 10000;
+    assert_eq!(
+        ctx.contract.cluster_get(bad_cluster_id),
+        Err(ClusterDoesNotExist)
+    );
+}
+
+
+#[ink::test]
+fn cluster_get_ok() {
+    let ctx = setup_cluster();
+
+    let mut cluster_v_nodes1 = Vec::<VNodeToken>::new();
+    cluster_v_nodes1.extend(ctx.v_nodes0.clone());
+    cluster_v_nodes1.extend(ctx.v_nodes1.clone());
+    cluster_v_nodes1.extend(ctx.v_nodes2.clone());
+
+    assert_eq!(
+        ctx.contract.cluster_get(ctx.cluster_id),
+        Ok({
+            ClusterInfo {
+                cluster_id: ctx.cluster_id,
+                cluster: Cluster {
+                    manager_id: ctx.manager_id,
+                    nodes_keys: ctx.nodes_keys,
+                    resource_per_v_node: ctx.reserved_resource,
+                    resource_used: 0,
+                    cluster_params: ctx.cluster_params.clone(),
+                    revenues: Cash(0),
+                    total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
+                    cdn_nodes_keys: ctx.cdn_nodes_keys,
+                    cdn_usd_per_gb: CDN_USD_PER_GB,
+                    cdn_revenues: Cash(0),
+                },
+                cluster_v_nodes: cluster_v_nodes1
+            }
+        })
+    );
+}
+
+
 #[ink::test]
 fn cluster_list_ok() {
     let mut ctx = setup_cluster();
