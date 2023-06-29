@@ -1451,6 +1451,49 @@ fn cluster_list_ok() {
 
 
 #[ink::test]
+fn grant_and_revoke_trusted_manager_permission_ok() {
+    let mut contract = setup_contract();
+
+    let grantor = AccountId::from([0x92, 0xad, 0x47, 0xdf, 0xb9, 0x6b, 0x2b, 0x4a, 0xd5, 0xb0, 0xe3, 0x6d, 0x56, 0x33, 0x27, 0xfd, 0xcf, 0x9d, 0xee, 0x06, 0xf4, 0x0d, 0x41, 0x48, 0xe1, 0x6a, 0x5c, 0xaa, 0x6c, 0x0d, 0x17, 0x4b]);
+    set_balance(grantor, 1000 * TOKEN);
+
+    let grantee = AccountId::from([0x1a, 0xa6, 0x69, 0xb4, 0x23, 0xe4, 0x8b, 0xbd, 0xc4, 0x65, 0xe3, 0xee, 0x17, 0xfd, 0x5b, 0x6d, 0x6f, 0xae, 0x6f, 0xf1, 0x40, 0x52, 0x03, 0x65, 0x02, 0xe4, 0x50, 0xb5, 0x0b, 0x34, 0xe2, 0x7a]);
+    set_balance(grantee, 1000 * TOKEN);
+
+    let permission = Permission::ClusterManagerTrustedBy(grantor);
+
+    assert!(!contract.has_permission(grantee, permission));
+
+    set_caller(grantor);
+    contract.grant_trusted_manager_permission(grantee)?;
+
+    assert!(contract.has_permission(grantee, permission));
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::PermissionGranted(ev) if ev ==
+        PermissionGranted {
+            account_id: grantee,
+            permission
+        })
+    );
+
+    set_caller(grantor);
+    contract.revoke_trusted_manager_permission(grantee)?;
+
+    assert!(!contract.has_permission(grantee, permission));
+
+    assert!(
+        matches!(get_events().pop().unwrap(), Event::PermissionRevoked(ev) if ev ==
+        PermissionRevoked {
+            account_id: grantee,
+            permission
+        })
+    );
+
+}
+
+
+#[ink::test]
 fn cluster_distribute_cdn_revenue_ok() {
     // todo: this test scenario must be revised as it does pure printing without any assertion
     println!("Creating new cdn cluster");
