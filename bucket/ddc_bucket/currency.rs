@@ -1,30 +1,22 @@
 //! The privileged interface for admin tasks.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout};
-use ink_storage::traits::KeyPtr;
-
+use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
+use scale::{Decode, Encode};
 use crate::ddc_bucket::{Balance, TOKEN};
+
 
 pub type CERE = Balance;
 pub type USD = Balance;
 
 const PRECISION: Balance = 10_000_000; 
 
-#[derive(SpreadLayout)]
+#[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct CurrencyConverter { 
     /* how many USD for PRECISION CERE */
     rate: Balance
 }
 
-
-impl SpreadAllocate for CurrencyConverter { 
-    fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        Self {
-            rate: PRECISION
-        }
-    }
-}
 
 impl Default for CurrencyConverter {
     fn default() -> Self {
