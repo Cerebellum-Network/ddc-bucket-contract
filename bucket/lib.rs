@@ -272,7 +272,7 @@ pub mod ddc_bucket {
         #[ink(topic)]
         cluster_id: ClusterId,
         #[ink(topic)]
-        manager: AccountId,
+        manager_id: AccountId,
         cluster_params: ClusterParams,
     }
 
@@ -371,6 +371,15 @@ pub mod ddc_bucket {
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ClusterDistributeRevenues {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        provider_id: AccountId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterDistributeCdnRevenues {
         #[ink(topic)]
         cluster_id: ClusterId,
         #[ink(topic)]
@@ -831,30 +840,6 @@ pub mod ddc_bucket {
 
     }
     // ---- End Cluster ----
-
-    // ---- CDN Cluster ----
-
-    /// A new cluster was created.
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct CdnClusterCreated {
-        #[ink(topic)]
-        cluster_id: ClusterId,
-        #[ink(topic)]
-        manager: AccountId,
-    }
-
-    /// The respective share of revenues of a CDN cluster for a provider was distributed.
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct CdnClusterDistributeRevenues {
-        #[ink(topic)]
-        cluster_id: ClusterId,
-        #[ink(topic)]
-        provider_id: AccountId,
-    }
-
-    // ---- End CDN Cluster ----
 
     // ---- Committer ----
 
@@ -1386,7 +1371,7 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
-        /// * `manager` - cluster manager account.
+        /// * `manager_id` - cluster manager account.
         ///
         /// # Output
         ///
@@ -1402,9 +1387,9 @@ pub mod ddc_bucket {
         #[ink(message, payable)]
         pub fn grant_trusted_manager_permission(
             &mut self, 
-            manager: AccountId
+            manager_id: AccountId
         ) -> Result<()> {
-            self.message_grant_trusted_manager_permission(manager)
+            self.message_grant_trusted_manager_permission(manager_id)
         }
         
         /// Revokes permissions from cluster manager.
@@ -1415,7 +1400,7 @@ pub mod ddc_bucket {
         ///
         /// # Parameters
         ///
-        /// * `manager` - cluster manager account.
+        /// * `manager_id` - cluster manager account.
         ///
         /// # Output
         ///
@@ -1431,9 +1416,9 @@ pub mod ddc_bucket {
         #[ink(message)]
         pub fn revoke_trusted_manager_permission(
             &mut self, 
-            manager: AccountId
+            manager_id: AccountId
         ) -> Result<()> {
-            self.message_revoke_trusted_manager_permission(manager)
+            self.message_revoke_trusted_manager_permission(manager_id)
         }
 
     }

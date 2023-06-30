@@ -188,7 +188,7 @@ fn cluster_create_ok() {
         matches!(events.pop().unwrap(), Event::ClusterCreated(ev) if ev ==
         ClusterCreated { 
             cluster_id: ctx.cluster_id, 
-            manager: ctx.manager_id, 
+            manager_id: ctx.manager_id, 
             cluster_params: ctx.cluster_params.clone()
         })
     );

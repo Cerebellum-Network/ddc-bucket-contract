@@ -21,6 +21,11 @@ function initContracts() {
         config.TESTNET_DDC_BUCKET_ADDR
     );
 
+    registerContract(
+        config.DDC_BUCKET_CONTRACT_NAME, 
+        config.LOCAL_CHAIN_NAME, 
+        config.LOCAL_DDC_BUCKET_ADDR
+    );
 
     registerABI(config.DDC_NFT_REGISTRY_CONTRACT_NAME, ddcNftRegistryAbi);
 

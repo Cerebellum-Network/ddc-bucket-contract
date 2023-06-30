@@ -17,10 +17,9 @@ const TESTNET_DDC_NFT_REGISTRY_ADDR = "6VFZJT9Kox8iZN4DL27GNFCpfTWHXbDst2WC7jpiJ
 const TESTNET_CHAIN_NAME = "Cere Testnet";
 
 const LOCAL_RPC_ENDPOINT = "ws://127.0.0.1:9944/";
-const LOCAL_DDC_BUCKET_ADDR = "";
+const LOCAL_DDC_BUCKET_ADDR = ""; // add your local address
 const LOCAL_DDC_NFT_REGISTRY_ADDR = "";
 const LOCAL_CHAIN_NAME = "Development";
-
 
 module.exports = {
   ACTOR_SEED,

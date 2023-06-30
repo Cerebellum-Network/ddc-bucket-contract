@@ -13,7 +13,7 @@ use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::{
     BASIS_POINTS,
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
-    ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, CdnClusterDistributeRevenues, ClusterReserveResource,
+    ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource, ClusterDistributeCdnRevenues,
     ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, 
     DdcBucket, NodeStatusInCluster, Result, Error::*
 };
@@ -39,7 +39,7 @@ impl DdcBucket {
 
         Self::env().emit_event(ClusterCreated {
             cluster_id,
-            manager: caller,
+            manager_id: caller,
             cluster_params,
         });
 
@@ -297,14 +297,14 @@ impl DdcBucket {
 
     pub fn message_grant_trusted_manager_permission(
         &mut self,
-        manager: AccountId
+        manager_id: AccountId
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ClusterManagerTrustedBy(grantor);
-        self.grant_permission(manager, permission)?;
+        self.grant_permission(manager_id, permission)?;
 
         Self::env().emit_event(PermissionGranted { 
-            account_id: manager,
+            account_id: manager_id,
             permission
         });
         
@@ -314,14 +314,14 @@ impl DdcBucket {
 
     pub fn message_revoke_trusted_manager_permission(
         &mut self,
-        manager: AccountId
+        manager_id: AccountId
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ClusterManagerTrustedBy(grantor);
-        self.revoke_permission(manager, permission)?;
+        self.revoke_permission(manager_id, permission)?;
 
         Self::env().emit_event(PermissionRevoked { 
-            account_id: manager,
+            account_id: manager_id,
             permission
         });
 
@@ -592,7 +592,7 @@ impl DdcBucket {
             cdn_node.take_payment(cdn_node.undistributed_payment)?;
             self.cdn_nodes.update(*cdn_node_key, &cdn_node)?;
 
-            Self::env().emit_event(CdnClusterDistributeRevenues {
+            Self::env().emit_event(ClusterDistributeCdnRevenues {
                 cluster_id, 
                 provider_id: cdn_node.provider_id 
             });
