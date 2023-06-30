@@ -5,7 +5,7 @@ const ddcBucketAbi = require("./abi/ddc_bucket.json");
 const ddcNftRegistryAbi = require("./abi/ddc_nft_registry.json");
 
 
-function initContracts() {
+function initDefaultContracts() {
 
     registerABI(config.DDC_BUCKET_CONTRACT_NAME, ddcBucketAbi);
 
@@ -43,7 +43,16 @@ function initContracts() {
 
 }
 
+function initContract(name, env, address) {
+    registerABI(name, ddcBucketAbi);
+    registerContract(
+        name, 
+        env,
+        address
+    );
+}
 
 module.exports = {
-    initContracts,
+    initDefaultContracts,
+    initContract
 }

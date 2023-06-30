@@ -9,6 +9,7 @@
     "demo-nft-registry": "yarn ensure-deps && node examples/ddcNftRegistryDemo.js",
     "deploy-ddc-bucket": "yarn ensure-deps && node deployment/ddcBucketDeploy.js",
     "deploy-ddc-nft-registry": "yarn ensure-deps && node deployment/ddcNftRegistryDeploy.js",
-    "print-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketPrint.js"
+    "print-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketPrint.js",
+    "ddc-setup": "yarn ensure-deps && node ddc-setup/ddcSetup.js"
   }
 }

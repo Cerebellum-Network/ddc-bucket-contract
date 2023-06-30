@@ -30,7 +30,7 @@ const deployContract = async (
     log("From account", account.address);
 
     if (maybeCodeHash) {
-        deploymentRegistry.initContracts();
+        deploymentRegistry.initDefaultContracts();
     }
 
     await deploy(

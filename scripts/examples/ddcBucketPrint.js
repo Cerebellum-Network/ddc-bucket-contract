@@ -13,7 +13,7 @@ const CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
 const RPC = config.DEVNET_RPC_ENDPOINT;
 const ACCOUNT_FILTER = null; // get data about all accounts.
 
-deploymentRegistry.initContracts();
+deploymentRegistry.initDefaultContracts();
 
 async function main() {
     const {api, chainName} = await connect(RPC);

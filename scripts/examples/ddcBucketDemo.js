@@ -19,7 +19,7 @@ const BUCKET_CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
 const SEED = config.ACTOR_SEED;
 const RPC = config.DEVNET_RPC_ENDPOINT;
 
-deploymentRegistry.initContracts();
+deploymentRegistry.initDefaultContracts();
 
 async function main() {
     const {api, chainName, getExplorerUrl} = await connect(RPC);
