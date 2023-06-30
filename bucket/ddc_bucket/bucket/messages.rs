@@ -74,7 +74,7 @@ impl DdcBucket {
     }
 
     pub fn message_bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
-        let bucket = self.buckets.get(bucket_id)?.clone();
+        let bucket = self.buckets.get(bucket_id)?;
         self.bucket_calculate_status(bucket_id, bucket)
     }
 
@@ -149,9 +149,8 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_get_bucket_writers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
-        let writers = self.buckets.get_bucket_writers(bucket_id);
-        Ok(writers)
+    pub fn message_get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+        self.buckets.get_bucket_writers(bucket_id)
     }
 
     pub fn message_grant_writer_permission(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> {
@@ -174,9 +173,8 @@ impl DdcBucket {
         Ok(())
     }
 
-    pub fn message_get_bucket_readers(&mut self, bucket_id: BucketId) -> Result<Vec<AccountId>> {
-        let readers = self.buckets.get_bucket_readers(bucket_id);
-        Ok(readers)
+    pub fn message_get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
+        self.buckets.get_bucket_readers(bucket_id)
     }
 
     pub fn message_grant_reader_permission(&mut self, bucket_id: BucketId, reader: AccountId) -> Result<()> {

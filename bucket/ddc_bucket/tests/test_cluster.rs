@@ -1129,7 +1129,7 @@ fn cluster_reserve_resource_ok() {
     set_caller(ctx.manager_id);
 
     // Reserve more resources.
-    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5);
+    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5)?;
 
     // Check the last event.
     let ev = get_events().pop().unwrap();
@@ -1168,7 +1168,7 @@ fn cluster_distribute_revenue_ok() {
     advance_block::<DefaultEnvironment>();
     // Pay the due thus far.
     set_caller_value(ctx.manager_id, CONTRACT_FEE_LIMIT);
-    ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
+    ctx.contract.bucket_settle_payment(test_bucket.bucket_id)?;
 
     // Get state before the distribution.
     let to_distribute = ctx
@@ -1193,14 +1193,14 @@ fn cluster_distribute_revenue_ok() {
         network_fee_bp,
         network_fee_destination: AccountId::default(),
         cluster_management_fee_bp,
-    });
+    })?;
 
     let burned_fee = to_distribute * network_fee_bp / BASIS_POINTS;
     let manager_fee = (to_distribute - burned_fee) * cluster_management_fee_bp / BASIS_POINTS;
     let provider_fee: u128 = (to_distribute - burned_fee - manager_fee) / 3;
 
     // Distribute the revenues of the cluster to providers.
-    ctx.contract.cluster_distribute_revenues(ctx.cluster_id);
+    ctx.contract.cluster_distribute_revenues(ctx.cluster_id)?;
 
     // Check the last events.
     let mut events = get_events();
@@ -1619,12 +1619,12 @@ fn cluster_distribute_cdn_revenue_ok() {
 
     let usd_per_cere = TOKEN / 100;
     set_caller(admin_id());
-    ctx.contract.account_set_usd_per_cere(usd_per_cere);
+    ctx.contract.account_set_usd_per_cere(usd_per_cere)?;
 
     let usd_amount = ctx.contract.account_get_usd_per_cere();
     println!("Current usd amount is {}", usd_amount);
 
-    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
+    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id)?;
     println!("The current rate is {}", rate);
 
     let usd_per_kb = rate / KB_PER_GB;
@@ -1634,13 +1634,13 @@ fn cluster_distribute_cdn_revenue_ok() {
     println!("The current cere rate per kb {}", cere_per_kb);
 
     set_caller_value(ctx.provider_id0, 10 * TOKEN);
-    ctx.contract.account_deposit();
+    ctx.contract.account_deposit()?;
 
     set_caller_value(ctx.provider_id0, 10 * TOKEN);
-    ctx.contract.account_bond(5 * TOKEN);
+    ctx.contract.account_bond(5 * TOKEN)?;
 
     set_caller(admin_id());
-    ctx.contract.admin_set_protocol_fee_bp(1_000);
+    ctx.contract.admin_set_protocol_fee_bp(1_000)?;
 
     set_caller(ctx.provider_id0);
     let account0_before_putting = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
@@ -1652,7 +1652,7 @@ fn cluster_distribute_cdn_revenue_ok() {
         vec![(ctx.cdn_node_key0, 1000), (ctx.cdn_node_key1, 541643)],
         vec![],
         5,
-    );
+    )?;
     let account0_after_putting = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("After putting revenue: {:?}", account0_after_putting);
 
@@ -1680,7 +1680,7 @@ fn cluster_distribute_cdn_revenue_ok() {
 
     set_caller(ctx.provider_id0);
 
-    ctx.contract.cluster_distribute_cdn_revenue(ctx.cluster_id);
+    ctx.contract.cluster_distribute_cdn_revenue(ctx.cluster_id)?;
 
     let cdn_node0 = ctx.contract.cdn_nodes.get(ctx.cdn_node_key0).unwrap();
     let cdn_node1 = ctx.contract.cdn_nodes.get(ctx.cdn_node_key1).unwrap();

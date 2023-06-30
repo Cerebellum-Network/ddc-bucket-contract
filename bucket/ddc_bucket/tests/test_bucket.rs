@@ -34,7 +34,7 @@ fn do_bucket_pays_cluster(
     advance_block::<DefaultEnvironment>();
     // Pay the due thus far.
     set_caller_value(ctx.manager_id, CONTRACT_FEE_LIMIT);
-    ctx.contract.bucket_settle_payment(test_bucket.bucket_id);
+    ctx.contract.bucket_settle_payment(test_bucket.bucket_id)?;
     let timestamp_after = block_timestamp::<DefaultEnvironment>();
 
     // Check the last event.
@@ -103,7 +103,7 @@ fn bucket_pays_cluster_at_new_rate_ok() {
     // Change the currency exchange rate.
     let usd_per_cere = 2;
     set_caller(admin_id());
-    ctx.contract.account_set_usd_per_cere(usd_per_cere * TOKEN);
+    ctx.contract.account_set_usd_per_cere(usd_per_cere * TOKEN)?;
 
     do_bucket_pays_cluster(ctx, test_bucket, usd_per_cere).unwrap();
 }
@@ -176,7 +176,7 @@ fn bucket_change_params_ok() {
     // Change params.
     set_caller_value(test_bucket.owner_id, CONTRACT_FEE_LIMIT);
     ctx.contract
-        .bucket_change_params(test_bucket.bucket_id, "new params".to_string());
+        .bucket_change_params(test_bucket.bucket_id, "new params".to_string())?;
 
     // Check the changed params.
     let status = ctx.contract.bucket_get(test_bucket.bucket_id)?;
@@ -192,7 +192,7 @@ fn bucket_change_params_only_owner() {
     // Change params.
     set_caller_value(get_accounts().bob, CONTRACT_FEE_LIMIT);
     ctx.contract
-        .bucket_change_params(test_bucket.bucket_id, "new params".to_string());
+        .bucket_change_params(test_bucket.bucket_id, "new params".to_string())?;
     // Panic.
 }
 
@@ -211,11 +211,11 @@ fn bucket_list_ok() {
     let cluster_id = 0;
 
     set_caller_value(owner_id1, CONTRACT_FEE_LIMIT);
-    let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id, None);
-    let bucket_status1 = ddc_bucket.bucket_get(bucket_id1).unwrap();
+    let bucket_id1 = ddc_bucket.bucket_create("".to_string(), cluster_id, None)?;
+    let bucket_status1 = ddc_bucket.bucket_get(bucket_id1)?;
 
     set_caller_value(owner_id2, CONTRACT_FEE_LIMIT);
-    let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id, None);
+    let bucket_id2 = ddc_bucket.bucket_create("".to_string(), cluster_id, None)?;
     let bucket_status2 = ddc_bucket.bucket_get(bucket_id2)?;
 
     assert_ne!(bucket_id1, bucket_id2);

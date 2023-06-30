@@ -31,7 +31,7 @@ fn admin_withdraw_ok() {
     
     set_caller(admin_id());
 
-    contract.admin_withdraw(9);
+    contract.admin_withdraw(9).unwrap();
 
     assert_eq!(balance_of(contract_id()), 1);
 }
@@ -43,7 +43,7 @@ fn admin_withdraw_err_if_not_admin() {
 
     set_caller(not_admin_id());
     
-    contract.admin_withdraw(9); // panic.
+    contract.admin_withdraw(9).unwrap(); // panic.
 }
 
 
@@ -67,7 +67,7 @@ fn admin_grant_ok() {
 
     set_caller(new_admin_id);
 
-    contract.admin_withdraw(9);
+    contract.admin_withdraw(9).unwrap();
 }
 
 
@@ -107,7 +107,7 @@ fn admin_revoke_ok() {
     // Cannot withdraw because no more permission.
     set_caller(admin_id());
 
-    contract.admin_withdraw(9); // panic.
+    contract.admin_withdraw(9)?;
 }
 
 

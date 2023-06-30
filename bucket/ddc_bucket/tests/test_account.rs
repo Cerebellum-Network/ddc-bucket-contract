@@ -25,7 +25,7 @@ fn account_deposit_ok() {
 
     // Deposit some value.
     set_caller_value(account_id, deposit);
-    contract.account_deposit();
+    contract.account_deposit()?;
 
     let account = contract.account_get(account_id)?;
     assert_eq!(
@@ -43,7 +43,7 @@ fn account_deposit_ok() {
 
     // Deposit more value.
     set_caller_value(account_id, deposit);
-    contract.account_deposit();
+    contract.account_deposit()?;
 
     let account = contract.account_get(account_id)?;
     assert_eq!(

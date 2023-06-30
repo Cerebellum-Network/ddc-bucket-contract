@@ -1,16 +1,15 @@
 use ink_lang::codegen::StaticEnv;
-use ink_env::Error;
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, DdcBucket, CdnNodeKey};
+use crate::ddc_bucket::{AccountId, DdcBucket, CdnNodeKey, Result, Error::*};
 use super::store::{Commit, EraConfig, EraStatus, EraAndTimestamp};
 
-pub type Result<T> = core::result::Result<T, Error>;
 
 impl DdcBucket {
 
-    pub fn message_set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) {
+    pub fn message_set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) -> Result<()> {
         self.committer.set_commit(cdn_owner, cdn_node_key, commit);
+        Ok(())
     }
 
     pub fn message_get_commit(&self, cdn_owner: AccountId) -> Vec<(CdnNodeKey, Commit)> {
@@ -25,7 +24,7 @@ impl DdcBucket {
         let caller = Self::env().caller();
         
         match self.committer.set_era(caller, era_config) {
-            Err(_e) => panic!("Setting era failed"), 
+            Err(_e) => Err(EraSettingFailed), 
             Ok(_v) => Ok(()),
         }
     }  
@@ -38,5 +37,5 @@ impl DdcBucket {
     pub fn message_get_era_settings(&self) -> EraConfig {
         self.committer.get_era_settings()
     }
-    
+
 }

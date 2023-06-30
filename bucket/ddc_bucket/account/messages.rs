@@ -71,9 +71,10 @@ impl DdcBucket {
         self.protocol.curr_converter.to_usd(1 * TOKEN)
     }
 
-    pub fn message_account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
-        self.only_with_permission(Permission::SetExchangeRate).unwrap();
-        self.protocol.curr_converter.set_usd_per_cere(usd_per_cere)
+    pub fn message_account_set_usd_per_cere(&mut self, usd_per_cere: Balance) -> Result<()> {
+        self.only_with_permission(Permission::SetExchangeRate)?;
+        self.protocol.curr_converter.set_usd_per_cere(usd_per_cere);
+        Ok(())
     }
 
     pub fn receive_cash() -> Cash {

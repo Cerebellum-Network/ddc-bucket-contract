@@ -25,7 +25,7 @@ fn currency_conversion_set_rate_ok() {
     println!("{}", usd_per_cere);
 
     set_caller(admin_id());
-    contract.account_set_usd_per_cere(usd_per_cere);
+    contract.account_set_usd_per_cere(usd_per_cere)?;
 
     assert_eq!(
         contract.account_get_usd_per_cere(),
@@ -42,7 +42,7 @@ fn currency_conversion_set_rate_err_if_not_admin() {
     let not_admin = get_accounts().bob;
 
     set_caller(not_admin);
-    contract.account_set_usd_per_cere(9);
+    contract.account_set_usd_per_cere(9)?;
 }
 
 
@@ -56,13 +56,13 @@ fn converter_ok() {
     // The provider stops trusting the manager_id.
     println!("Cdn cluster id is {}", ctx.cluster_id);
     set_caller(ctx.manager_id);
-    ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000);
+    ctx.contract.cdn_set_rate(ctx.cluster_id, 3_750_000_000)?;
     set_caller(ctx.provider_id0);
-    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id);
+    let rate = ctx.contract.cdn_get_rate(ctx.cluster_id)?;
 
     let usd_per_cere = TOKEN / 100;
     set_caller(admin_id());
-    ctx.contract.account_set_usd_per_cere(usd_per_cere);
+    ctx.contract.account_set_usd_per_cere(usd_per_cere)?;
 
     let usd_amount = ctx.contract.account_get_usd_per_cere();
     println!("Current usd amount is {}", usd_amount);

@@ -210,7 +210,7 @@ pub fn setup_cluster() -> TestCluster {
 
 
     set_caller(manager_id);
-    contract.cluster_reserve_resource(cluster_id, reserved_resource);
+    contract.cluster_reserve_resource(cluster_id, reserved_resource).unwrap();
 
 
     let nodes_keys = vec![
@@ -281,16 +281,16 @@ pub fn setup_bucket(ctx: &mut TestCluster) -> TestBucket {
         "{}".to_string(), 
         ctx.cluster_id, 
         None
-    );
+    ).unwrap();
 
     // Reserve some resources for the bucket from the cluster.
     set_caller_value(owner_id, CONTRACT_FEE_LIMIT);
     let resource = 1;
-    ctx.contract.bucket_alloc_into_cluster(bucket_id, resource);
+    ctx.contract.bucket_alloc_into_cluster(bucket_id, resource).unwrap();
 
     // Deposit some value to pay for buckets.
     set_caller_value(owner_id, 10 * TOKEN);
-    ctx.contract.account_deposit();
+    ctx.contract.account_deposit().unwrap();
 
     TestBucket {
         bucket_id,

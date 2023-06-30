@@ -88,13 +88,11 @@ impl BucketStore {
 
     // get accounts with permission for bucket reading
     pub fn get_bucket_readers(&self, key: BucketId) -> Vec<AccountId> {
-        let readers = self.readers.get(&key)
+        self.readers.get(&key)
             .unwrap_or(Vec::new())
             .iter()
             .cloned()
-            .collect();
-
-        return readers;
+            .collect()
     }
 
     // grant permission for bucket reading for some account
