@@ -12,6 +12,11 @@ use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_prelude::vec::Vec;
 use super::entity::Account;
 
+
+// https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
+// There is a buffer with only limited capacity (around 16KB in the default configuration) available.
+pub const MAX_ACCOUNTS_LEN_IN_VEC: usize = 400;
+
 #[derive(Default, SpreadLayout, SpreadAllocate)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct AccountStore {
@@ -23,12 +28,17 @@ pub struct AccountStore {
 impl AccountStore {
     /// Create a record for the given account if it does not exist yet.
     /// Does not return extra contract storage used, due to blockchain changes.
-    pub fn create_if_not_exist(&mut self, account_id: AccountId) {
+    pub fn create_if_not_exist(&mut self, account_id: AccountId) -> Result<()> {
         if !self.accounts.contains(account_id) {
+            if self.accounts_keys.len() + 1 > MAX_ACCOUNTS_LEN_IN_VEC {
+                return Err(AccountsSizeExceedsLimit);
+            }
             let acc = Account::new();
             self.accounts.insert(account_id, &acc);
             self.accounts_keys.push(account_id);
         };
+
+        Ok(())
     }
 
     pub fn balance(&self, account_id: &AccountId) -> Balance {

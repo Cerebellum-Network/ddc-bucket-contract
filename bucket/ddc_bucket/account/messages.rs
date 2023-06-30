@@ -20,7 +20,7 @@ impl DdcBucket {
         let account_id = Self::env().caller();
 
         // Create the account, if necessary.
-        self.accounts.create_if_not_exist(account_id);
+        self.accounts.create_if_not_exist(account_id)?;
 
         Self::env().emit_event(Deposit { account_id, value: cash.peek() });
 
@@ -126,7 +126,7 @@ impl DdcBucket {
         self._account_withdraw(from, payable)?;
 
         // Create the account, if necessary.
-        self.accounts.create_if_not_exist(to);
+        self.accounts.create_if_not_exist(to)?;
 
         let mut account = self.accounts.get(&to)?;
         account.deposit(cash);

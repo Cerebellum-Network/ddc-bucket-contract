@@ -12,7 +12,7 @@ use super::entity::{Bucket, BucketId, BucketParams, BucketStatus};
 impl DdcBucket {
     pub fn message_bucket_create(&mut self, bucket_params: BucketParams, cluster_id: ClusterId, owner_id: Option<AccountId>) -> Result<BucketId> {
         let owner_id = owner_id.unwrap_or(Self::env().caller());
-        self.accounts.create_if_not_exist(owner_id);
+        self.accounts.create_if_not_exist(owner_id)?;
         let bucket_id = self.buckets.create(owner_id, cluster_id, bucket_params);
         Self::env().emit_event(BucketCreated { bucket_id, owner_id });
         Ok(bucket_id)

@@ -14,6 +14,12 @@ use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Result, Error::*};
 pub type ClusterId = u32;
 pub type ClusterParams = String;
 
+// https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
+// There is a buffer with only limited capacity (around 16KB in the default configuration) available.
+pub const MAX_CLUSTER_NODES_LEN_IN_VEC: usize = 200;
+pub const MAX_CLUSTER_CDN_NODES_LEN_IN_VEC: usize = 200;
+
+
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, PackedLayout, SpreadLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Cluster {
@@ -91,8 +97,12 @@ impl Cluster {
         }
     }
 
-    pub fn add_node(&mut self, node_key: NodeKey) {
+    pub fn add_node(&mut self, node_key: NodeKey) -> Result<()> {
+        if self.nodes_keys.len() + 1 > MAX_CLUSTER_NODES_LEN_IN_VEC {
+            return Err(NodesSizeExceedsLimit);
+        }
         self.nodes_keys.push(node_key);
+        Ok(())
     }
 
     pub fn remove_node(&mut self, node_key: NodeKey) {
@@ -101,8 +111,12 @@ impl Cluster {
         }
     }
 
-    pub fn add_cdn_node(&mut self, cdn_node_key: CdnNodeKey) {
+    pub fn add_cdn_node(&mut self, cdn_node_key: CdnNodeKey) -> Result<()> {
+        if self.cdn_nodes_keys.len() + 1 > MAX_CLUSTER_CDN_NODES_LEN_IN_VEC {
+            return Err(CdnNodesSizeExceedsLimit);
+        }
         self.cdn_nodes_keys.push(cdn_node_key);
+        Ok(())
     }
 
     pub fn remove_cdn_node(&mut self, cdn_node_key: CdnNodeKey) {

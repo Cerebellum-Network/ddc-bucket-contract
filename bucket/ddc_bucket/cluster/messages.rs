@@ -65,7 +65,7 @@ impl DdcBucket {
         node.set_cluster(cluster_id, NodeStatusInCluster::ADDING);
         self.nodes.update(node_key, &node)?;
 
-        cluster.add_node(node_key);
+        cluster.add_node(node_key)?;
         for _v_node in &v_nodes {
             cluster.total_rent += node.rent_per_month;
         }
@@ -180,7 +180,7 @@ impl DdcBucket {
         cdn_node.set_cluster(cluster_id, NodeStatusInCluster::ADDING);
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
-        cluster.add_cdn_node(cdn_node_key);
+        cluster.add_cdn_node(cdn_node_key)?;
         self.clusters.update(cluster_id, &cluster)?;
 
         Self::env().emit_event(ClusterCdnNodeAdded { 

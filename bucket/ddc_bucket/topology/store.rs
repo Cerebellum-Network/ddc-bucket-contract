@@ -12,7 +12,7 @@ pub type ClusterVNode = (ClusterId, VNodeToken);
 
 // https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
 // There is a buffer with only limited capacity (around 16KB in the default configuration) available.
-pub const MAX_V_NODE_IN_VECTOR: usize = 1800;
+pub const MAX_V_NODES_LEN_IN_VEC: usize = 1800;
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
@@ -67,13 +67,13 @@ impl TopologyStore {
             return Err(AtLeastOneVNodeHasToBeAssigned(cluster_id, node_key));
         }
 
-        if v_nodes.len() > MAX_V_NODE_IN_VECTOR {
+        if v_nodes.len() > MAX_V_NODES_LEN_IN_VEC {
             return Err(VNodesSizeExceedsLimit);
         }
 
         let mut cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id);
 
-        if cluster_v_nodes.len() + v_nodes.len() > MAX_V_NODE_IN_VECTOR {
+        if cluster_v_nodes.len() + v_nodes.len() > MAX_V_NODES_LEN_IN_VEC {
             return Err(VNodesSizeExceedsLimit);
         }
 
@@ -146,7 +146,7 @@ impl TopologyStore {
             return Err(AtLeastOneVNodeHasToBeAssigned(cluster_id, new_node_key));
         }
 
-        if v_nodes_to_reasign.len() > MAX_V_NODE_IN_VECTOR {
+        if v_nodes_to_reasign.len() > MAX_V_NODES_LEN_IN_VEC {
             return Err(VNodesSizeExceedsLimit);
         }
 
@@ -183,7 +183,7 @@ impl TopologyStore {
         // vnodes that are being reasigned should be among other vnodes assigned to the new physical node
         let mut new_node_v_nodes = self.get_v_nodes_by_node(new_node_key);
 
-        if new_node_v_nodes.len() + v_nodes_to_reasign.len() > MAX_V_NODE_IN_VECTOR {
+        if new_node_v_nodes.len() + v_nodes_to_reasign.len() > MAX_V_NODES_LEN_IN_VEC {
             return Err(VNodesSizeExceedsLimit);
         }
 
