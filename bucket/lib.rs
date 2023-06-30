@@ -443,6 +443,8 @@ pub mod ddc_bucket {
         /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
         /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
         /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
+        /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
+        /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
@@ -513,13 +515,15 @@ pub mod ddc_bucket {
         /// * `NodeDoesNotExist` error if the new Storage node does not exist.
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
         /// * `NodeIsAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
-        /// * `VNodeInNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
+        /// * `VNodeIsNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
         /// * `VNodeIsAlreadyAssignedToNode(NodeKey)` - error if there is some virtual node that is already assigned to other physical node within the same cluster.
+        /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
+        /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
         #[ink(message)]
         pub fn cluster_replace_node(
             &mut self,
             cluster_id: ClusterId,
-            v_nodes: Vec<u64>,
+            v_nodes: Vec<VNodeToken>,
             new_node_key: NodeKey,
         ) -> Result<()> {
             self.message_cluster_replace_node(
@@ -1550,7 +1554,7 @@ pub mod ddc_bucket {
         ///
         /// * `OnlySuperAdmin` error if the caller is not the Super-admin.
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
-        /// * `NodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
+        /// * `NodeProviderIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
         pub fn admin_transfer_node_ownership(
             &mut self, 
@@ -1682,14 +1686,16 @@ pub mod ddc_bucket {
         ClusterIsNotEmpty,
         TopologyIsNotCreated(ClusterId),
         TopologyAlreadyExists,
+        VNodesSizeExceedsLimit,
         NodeIsNotAddedToCluster(ClusterId),
         NodeIsAddedToCluster(ClusterId),
         CdnNodeIsNotAddedToCluster(ClusterId),
         CdnNodeIsAddedToCluster(ClusterId),
         VNodeDoesNotExistsInCluster(ClusterId),
-        VNodeInNotAssignedToNode(ClusterId, VNodeToken),
+        VNodeIsNotAssignedToNode(ClusterId, VNodeToken),
         VNodeIsAlreadyAssignedToNode(NodeKey),
-        NodeOwnerIsNotSuperAdmin,
+        AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey),
+        NodeProviderIsNotSuperAdmin,
         CdnNodeOwnerIsNotSuperAdmin,
         BucketDoesNotExist,
         BondingPeriodNotFinished,

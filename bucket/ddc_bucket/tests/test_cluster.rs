@@ -342,6 +342,56 @@ fn cluster_add_node_err_if_not_cluster_manager() {
 
 
 #[ink::test]
+fn cluster_add_node_err_if_no_v_nodes() {
+    let mut ctx = setup_cluster();
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    set_caller_value(ctx.provider_id0, 10);
+    ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000000000,
+        1
+    )?;
+
+    set_caller_value(ctx.manager_id, 10);
+    assert_eq!(
+        ctx.contract.cluster_add_node(
+            ctx.cluster_id, 
+            new_node_key,
+            vec![], 
+        ),
+        Err(AtLeastOneVNodeHasToBeAssigned(ctx.cluster_id, new_node_key))
+    );
+}
+
+
+#[ink::test]
+fn cluster_add_node_err_if_v_nodes_exceeds_limit() {
+    let mut ctx = setup_cluster();
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    set_caller_value(ctx.provider_id0, 10);
+    ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000000000,
+        1
+    )?;
+
+    set_caller_value(ctx.manager_id, 10);
+    assert_eq!(
+        ctx.contract.cluster_add_node(
+            ctx.cluster_id, 
+            new_node_key,
+            vec![100; 1801], 
+        ),
+        Err(VNodesSizeExceedsLimit)
+    );
+}
+
+
+#[ink::test]
 fn cluster_add_node_ok() {
     let mut ctx = setup_cluster();
 
@@ -947,6 +997,68 @@ fn cluster_replace_node_err_if_node_does_not_exist() {
             bad_node_key
         ),
         Err(NodeDoesNotExist)
+    );
+}
+
+
+#[ink::test]
+fn cluster_replace_node_err_if_no_v_nodes() {
+    let mut ctx = setup_cluster();
+
+    assert_eq!(
+        ctx.contract.cluster_replace_node(
+            ctx.cluster_id, 
+            vec![], 
+            ctx.node_key2
+        ),
+        Err(AtLeastOneVNodeHasToBeAssigned(ctx.cluster_id, ctx.node_key2))
+    );
+}
+
+
+#[ink::test]
+fn cluster_replace_node_err_if_v_nodes_exceeds_limit() {
+    let mut ctx = setup_cluster();
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    set_caller_value(ctx.provider_id0, 10);
+    ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000000000,
+        1
+    )?;
+
+    set_caller_value(ctx.manager_id, 10);
+    ctx.contract.cluster_add_node(
+        ctx.cluster_id,
+        new_node_key, 
+        vec![100],
+    )?;
+
+    let v_nodes: Vec<VNodeToken> = vec![100; 1801];
+    assert_eq!(
+        ctx.contract.cluster_replace_node(
+            ctx.cluster_id, 
+            v_nodes, 
+            new_node_key
+        ),
+        Err(VNodesSizeExceedsLimit)
+    );
+}
+
+
+#[ink::test]
+fn cluster_replace_node_err_if_old_node_stays_without_v_nodes() {
+    let mut ctx = setup_cluster();
+
+    assert_eq!(
+        ctx.contract.cluster_replace_node(
+            ctx.cluster_id, 
+            vec![1, 2, 3], 
+            ctx.node_key2
+        ),
+        Err(AtLeastOneVNodeHasToBeAssigned(ctx.cluster_id, ctx.node_key0))
     );
 }
 

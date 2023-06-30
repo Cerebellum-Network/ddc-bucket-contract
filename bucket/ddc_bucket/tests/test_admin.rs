@@ -190,7 +190,7 @@ fn admin_transfer_node_ownership_err_if_provider_is_not_admin() {
             new_node_key,
             new_owner_id
         ),
-        Err(NodeOwnerIsNotSuperAdmin)
+        Err(NodeProviderIsNotSuperAdmin)
     );
 }
 

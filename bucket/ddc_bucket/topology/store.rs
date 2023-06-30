@@ -10,6 +10,10 @@ use crate::ddc_bucket::{Error::*, Result};
 pub type VNodeToken = u64;
 pub type ClusterVNode = (ClusterId, VNodeToken);
 
+// https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
+// There is a buffer with only limited capacity (around 16KB in the default configuration) available.
+pub const MAX_V_NODE_IN_VECTOR: usize = 1800;
+
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct TopologyStore {
@@ -32,7 +36,7 @@ impl TopologyStore {
     }
 
     pub fn get_node_by_v_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
-        self.nodes_map.get((cluster_id, v_node)).ok_or(VNodeInNotAssignedToNode(cluster_id, v_node))
+        self.nodes_map.get((cluster_id, v_node)).ok_or(VNodeIsNotAssignedToNode(cluster_id, v_node))
     }
 
     pub fn v_node_has_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> bool {
@@ -59,7 +63,19 @@ impl TopologyStore {
         v_nodes: Vec<VNodeToken>,
     ) -> Result<()> {
 
+        if v_nodes.is_empty() {
+            return Err(AtLeastOneVNodeHasToBeAssigned(cluster_id, node_key));
+        }
+
+        if v_nodes.len() > MAX_V_NODE_IN_VECTOR {
+            return Err(VNodesSizeExceedsLimit);
+        }
+
         let mut cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id);
+
+        if cluster_v_nodes.len() + v_nodes.len() > MAX_V_NODE_IN_VECTOR {
+            return Err(VNodesSizeExceedsLimit);
+        }
 
         for v_node in &v_nodes {
 
@@ -97,7 +113,7 @@ impl TopologyStore {
 
             // vnode that is being removed should exist in the cluster topology
             if !self.v_node_has_node(cluster_id, *v_node) {
-                return Err(VNodeInNotAssignedToNode(cluster_id, *v_node));
+                return Err(VNodeIsNotAssignedToNode(cluster_id, *v_node));
             }
             
             // vnode that is being removed should be unusigned from the physical node
@@ -126,6 +142,14 @@ impl TopologyStore {
         v_nodes_to_reasign: Vec<VNodeToken>,
     ) -> Result<()> {
 
+        if v_nodes_to_reasign.is_empty() {
+            return Err(AtLeastOneVNodeHasToBeAssigned(cluster_id, new_node_key));
+        }
+
+        if v_nodes_to_reasign.len() > MAX_V_NODE_IN_VECTOR {
+            return Err(VNodesSizeExceedsLimit);
+        }
+
         let cluster_v_nodes = self.get_v_nodes_by_cluster(cluster_id);
 
         for v_node in &v_nodes_to_reasign {
@@ -145,6 +169,11 @@ impl TopologyStore {
             if let Some(pos) = old_node_v_nodes.iter().position(|x| *x == *v_node) {
                 old_node_v_nodes.remove(pos);
             };
+
+            if old_node_v_nodes.is_empty() {
+                return Err(AtLeastOneVNodeHasToBeAssigned(cluster_id, old_node_key));
+            }
+
             self.v_nodes_map.insert(old_node_key, &old_node_v_nodes);
             
             // vnode that is being reasigned should be assined to the new physical node
@@ -153,6 +182,11 @@ impl TopologyStore {
 
         // vnodes that are being reasigned should be among other vnodes assigned to the new physical node
         let mut new_node_v_nodes = self.get_v_nodes_by_node(new_node_key);
+
+        if new_node_v_nodes.len() + v_nodes_to_reasign.len() > MAX_V_NODE_IN_VECTOR {
+            return Err(VNodesSizeExceedsLimit);
+        }
+
         new_node_v_nodes.extend(v_nodes_to_reasign);
         self.v_nodes_map.insert(new_node_key, &new_node_v_nodes);
 

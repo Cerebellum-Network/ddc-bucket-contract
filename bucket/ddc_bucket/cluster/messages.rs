@@ -148,8 +148,11 @@ impl DdcBucket {
             self.nodes.update(new_node_key, &new_node)?;
         }
 
-        self.topology
-            .replace_node(cluster_id, new_node_key, v_nodes)?;
+        self.topology.replace_node(
+            cluster_id, 
+            new_node_key, 
+            v_nodes
+        )?;
 
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,

@@ -58,7 +58,7 @@ impl DdcBucket {
 
         let mut node = self.nodes.get(node_key)?;
         // allow node ownership transfer only if the current owner is the admin
-        node.only_provider(admin).map_err(|_| NodeOwnerIsNotSuperAdmin)?;
+        node.only_provider(admin).map_err(|_| NodeProviderIsNotSuperAdmin)?;
 
         node.provider_id = new_owner;
         self.nodes.update(node_key, &node)?;
