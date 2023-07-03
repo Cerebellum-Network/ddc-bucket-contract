@@ -456,7 +456,7 @@ pub mod ddc_bucket {
         /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
         /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
-        /// * `InsufficientResources` - error if there is not enough resources in a physical node.
+        /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
@@ -574,7 +574,7 @@ pub mod ddc_bucket {
         /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
         /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
-        /// * `InsufficientResources` - error if there is not enough resources in a physical node.
+        /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
         #[ink(message)]
         pub fn cluster_reset_node(
             &mut self,
@@ -816,7 +816,8 @@ pub mod ddc_bucket {
         /// * `OnlyClusterManager` error if the caller is not the cluster manager.
         /// * `NodeDoesNotExist` error if the new Storage node does not exist.
         /// * `VNodeIsNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
-        /// * `InsufficientResources` - error if there is not enough resources in a physical node.
+        /// * `InsufficientClusterResources` - error if there is not enough resources in the cluster.
+        /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
         #[ink(message)]
         pub fn cluster_set_resource_per_v_node(
             &mut self, 
@@ -1765,7 +1766,8 @@ pub mod ddc_bucket {
         BondingPeriodNotFinished,
         TransferFailed,
         InsufficientBalance,
-        InsufficientResources,
+        InsufficientNodeResources,
+        InsufficientClusterResources,
         EraSettingFailed
     }
 

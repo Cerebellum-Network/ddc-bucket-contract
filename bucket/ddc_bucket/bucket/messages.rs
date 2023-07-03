@@ -3,7 +3,7 @@
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, BucketAllocated, BucketCreated, BucketSettlePayment, BucketAvailabilityUpdated, BucketParamsSet, DdcBucket, Result};
+use crate::ddc_bucket::{AccountId, Balance, BucketAllocated, BucketCreated, BucketSettlePayment, BucketAvailabilityUpdated, BucketParamsSet, DdcBucket, Result, Error::*};
 use crate::ddc_bucket::cluster::entity::{Cluster, ClusterId};
 use crate::ddc_bucket::node::entity::Resource;
 
@@ -31,21 +31,30 @@ impl DdcBucket {
         let mut bucket = self.buckets.get(bucket_id)?;
         let mut cluster = self.clusters.get(bucket.cluster_id)?;
         Self::only_owner_or_cluster_manager(&bucket, &cluster)?;
-        // todo: fix resource allocation
-        cluster.take_resource(resource)?;
+
+        let cluster_v_nodes = self.get_v_nodes_by_cluster(bucket.cluster_id);
+        let cluster_v_nodes_len: u32 = cluster_v_nodes.len().try_into().unwrap();
+        let max_cluster_resource = cluster_v_nodes_len * cluster.resource_per_v_node;
+
+        if cluster.resource_used + resource > max_cluster_resource {
+            return Err(InsufficientClusterResources);
+        }
+
+        cluster.take_resource(resource);
         self.clusters.update(bucket.cluster_id, &cluster)?;
         bucket.put_resource(resource);
 
         // Start the payment flow to the cluster.
-        let rent = cluster.get_rent(resource);
+        let extra_rate = cluster.total_rent * resource as Balance;
         let now_ms = Self::env().block_timestamp();
 
-        self.accounts.increase_flow(now_ms, rent, &mut bucket.flow)?;
+        self.accounts.increase_flow(now_ms, extra_rate, &mut bucket.flow)?;
         self.buckets.update(bucket_id, &bucket)?;
 
         Self::env().emit_event(BucketAllocated { bucket_id, cluster_id: bucket.cluster_id, resource });
         Ok(())
     }
+
 
     pub fn message_bucket_settle_payment(&mut self, bucket_id: BucketId) -> Result<()> {
         let mut bucket = self.buckets.get(bucket_id)?;
@@ -73,10 +82,12 @@ impl DdcBucket {
         Ok(())
     }
 
+
     pub fn message_bucket_get(&self, bucket_id: BucketId) -> Result<BucketStatus> {
         let bucket = self.buckets.get(bucket_id)?;
         self.bucket_calculate_status(bucket_id, bucket)
     }
+
 
     pub fn message_bucket_list(&self, offset: u32, limit: u32, filter_owner_id: Option<AccountId>) -> (Vec<BucketStatus>, u32) {
         let mut bucket_statuses = Vec::with_capacity(limit as usize);
@@ -101,6 +112,7 @@ impl DdcBucket {
         (bucket_statuses, self.buckets.next_bucket_id)
     }
 
+
     pub fn message_bucket_list_for_account(&self, owner_id: AccountId) -> Vec<Bucket> {
         let mut result : Vec<Bucket>  = Vec::new();
 
@@ -114,6 +126,7 @@ impl DdcBucket {
 
         result
     }
+
 
     pub fn bucket_calculate_status(&self, bucket_id: BucketId, bucket: Bucket) -> Result<BucketStatus> {
         let mut writer_ids = self.buckets.get_bucket_readers(bucket_id);

@@ -68,7 +68,7 @@ impl DdcBucket {
         cluster.add_node(node_key)?;
         for _v_node in &v_nodes {
             node.reserve_resource(cluster.resource_per_v_node)?;
-            cluster.total_rent += node.rent_v_node_per_month;
+            cluster.increase_rent(node.rent_v_node_per_month);
         }
         
         self.nodes.update(node_key, &node)?;
@@ -99,7 +99,6 @@ impl DdcBucket {
             && !node.only_provider(caller).is_ok() {
                 return Err(OnlyClusterManagerOrNodeProvider);
         }
-
         node.only_with_cluster(cluster_id)?;
         
         node.unset_cluster();
@@ -107,7 +106,7 @@ impl DdcBucket {
         let v_nodes = self.topology.get_v_nodes_by_node(node_key);
         for _v_node in &v_nodes {
             node.release_resource(cluster.resource_per_v_node);
-            cluster.total_rent -= node.rent_v_node_per_month;
+            cluster.decrease_rent(node.rent_v_node_per_month);
         }
         
         self.nodes.update(node_key, &node)?;
@@ -189,14 +188,14 @@ impl DdcBucket {
             
                 for _i in 0..new_v_nodes.len() - old_v_nodes.len() {
                     node.reserve_resource(cluster.resource_per_v_node)?;
-                    cluster.total_rent += node.rent_v_node_per_month;
+                    cluster.increase_rent(node.rent_v_node_per_month);
                 }
 
             } else if new_v_nodes.len() < old_v_nodes.len() {
     
                 for _i in 0..old_v_nodes.len() - new_v_nodes.len() {
                     node.release_resource(cluster.resource_per_v_node);
-                    cluster.total_rent -= node.rent_v_node_per_month;
+                    cluster.decrease_rent(node.rent_v_node_per_month);
                 }
             }
 
@@ -418,6 +417,13 @@ impl DdcBucket {
         
         cluster.set_resource_per_v_node(new_resource_per_v_node);
         let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
+        let cluster_v_nodes_len: u32 = cluster_v_nodes.len().try_into().unwrap();
+
+        let new_max_cluster_resource = cluster_v_nodes_len * new_resource_per_v_node;
+        if cluster.resource_used > new_max_cluster_resource {
+            return Err(InsufficientClusterResources);
+        }
+
         for v_node in cluster_v_nodes {
             let node_key = self.topology.get_node_by_v_node(cluster_id, v_node)?;
             let mut node = self.nodes.get(node_key)?;

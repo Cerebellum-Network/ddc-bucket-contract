@@ -134,22 +134,20 @@ impl Cluster {
         Ok(())
     }
 
-    pub fn get_rent(&self, resource: Resource) -> Balance {
-        let rent = self.total_rent * resource as Balance;
-        rent
+    pub fn increase_rent(&mut self, amount: Balance) {
+        self.total_rent += amount;
     }
-
+    
+    pub fn decrease_rent(&mut self, amount: Balance) {
+        self.total_rent -= amount;
+    }
+    
     pub fn set_resource_per_v_node(&mut self, resource_per_v_node: Resource) {
         self.resource_per_v_node = resource_per_v_node;
     }
 
-    pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
-        let used = self.resource_used + amount;
-        if used > self.resource_per_v_node {
-            return Err(InsufficientResources);
-        }
-        self.resource_used = used;
-        Ok(())
+    pub fn take_resource(&mut self, amount: Resource) {
+        self.resource_used = self.resource_used + amount;
     }
 
     pub fn cdn_get_revenue_cere(&self) -> Cash {

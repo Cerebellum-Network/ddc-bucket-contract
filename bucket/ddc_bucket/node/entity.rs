@@ -136,7 +136,7 @@ impl Node {
             self.free_resource -= amount;
             Ok(())
         } else {
-            Err(InsufficientResources)
+            Err(InsufficientNodeResources)
         }
     }
 
