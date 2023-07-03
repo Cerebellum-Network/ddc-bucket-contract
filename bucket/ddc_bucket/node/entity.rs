@@ -126,16 +126,12 @@ impl Node {
     pub fn change_status_in_cluster(&mut self, status: NodeStatusInCluster) {
         self.status_in_cluster = Some(status);
     }
-
-    pub fn revenue_account_id(&self) -> AccountId {
-        self.provider_id
-    }
-
-    pub fn put_resource(&mut self, amount: Resource) {
+    
+    pub fn release_resource(&mut self, amount: Resource) {
         self.free_resource += amount;
     }
 
-    pub fn take_resource(&mut self, amount: Resource) -> Result<()> {
+    pub fn reserve_resource(&mut self, amount: Resource) -> Result<()> {
         if self.free_resource >= amount {
             self.free_resource -= amount;
             Ok(())

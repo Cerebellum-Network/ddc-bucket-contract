@@ -67,6 +67,7 @@ impl DdcBucket {
 
         cluster.add_node(node_key)?;
         for _v_node in &v_nodes {
+            node.reserve_resource(cluster.resource_per_v_node)?;
             cluster.total_rent += node.rent_per_month;
         }
         self.clusters.update(cluster_id, &cluster)?;
@@ -105,6 +106,7 @@ impl DdcBucket {
         cluster.remove_node(node_key);
         let v_nodes = self.topology.get_v_nodes_by_node(node_key);
         for _v_node in &v_nodes {
+            node.release_resource(cluster.resource_per_v_node);
             cluster.total_rent -= node.rent_per_month;
         }
         self.clusters.update(cluster_id, &cluster)?;
@@ -139,11 +141,11 @@ impl DdcBucket {
 
             // Give back resources to the old node
             let mut old_node = self.nodes.get(old_node_key)?;
-            old_node.put_resource(cluster.resource_per_v_node);
+            old_node.release_resource(cluster.resource_per_v_node);
             self.nodes.update(old_node_key, &old_node)?;
 
             // Reserve resources on the new node.
-            new_node.take_resource(cluster.resource_per_v_node)?;
+            new_node.reserve_resource(cluster.resource_per_v_node)?;
             self.nodes.update(new_node_key, &new_node)?;
         }
 
@@ -170,7 +172,7 @@ impl DdcBucket {
     ) -> Result<()> {
         let caller = Self::env().caller();
 
-        let cluster = self.clusters.get(cluster_id)?;
+        let mut cluster = self.clusters.get(cluster_id)?;
 
         let mut node = self.nodes.get(node_key)?;
         node.only_with_cluster(cluster_id)?;
@@ -181,17 +183,22 @@ impl DdcBucket {
         if new_v_nodes.len() > old_v_nodes.len() {
             
             for _i in 0..new_v_nodes.len() - old_v_nodes.len() {
-                node.take_resource(cluster.resource_per_v_node)?;
-                self.nodes.update(node_key, &node)?;
+                node.reserve_resource(cluster.resource_per_v_node)?;
+                cluster.total_rent += node.rent_per_month;
             }
+
+            self.nodes.update(node_key, &node)?;
+            self.clusters.update(cluster_id, &cluster)?;
 
         } else if new_v_nodes.len() < old_v_nodes.len() {
 
             for _i in 0..old_v_nodes.len() - new_v_nodes.len() {
-                node.put_resource(cluster.resource_per_v_node);
-                self.nodes.update(node_key, &node)?;
+                node.release_resource(cluster.resource_per_v_node);
+                cluster.total_rent -= node.rent_per_month;
             }
 
+            self.nodes.update(node_key, &node)?;
+            self.clusters.update(cluster_id, &cluster)?;
         }
 
         self.topology.reset_node(
@@ -410,7 +417,7 @@ impl DdcBucket {
         for v_node in cluster_v_nodes {
             let node_key = self.topology.get_node_by_v_node(cluster_id, v_node)?;
             let mut node = self.nodes.get(node_key)?;
-            node.take_resource(resource)?;
+            node.reserve_resource(resource)?;
             self.nodes.update(node_key, &node)?;
         }
 
@@ -418,6 +425,7 @@ impl DdcBucket {
             cluster_id,
             resource,
         });
+        
         Ok(())
     }
 

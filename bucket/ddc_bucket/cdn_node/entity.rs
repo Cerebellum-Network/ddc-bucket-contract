@@ -97,10 +97,6 @@ impl CdnNode {
         self.status_in_cluster = Some(status);
     }
 
-    pub fn cdn_account_id(&self) -> AccountId {
-        self.provider_id
-    }
-
     pub fn put_payment(&mut self, amount: Balance) {
         self.undistributed_payment += amount;
     }
