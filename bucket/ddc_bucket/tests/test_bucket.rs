@@ -1,19 +1,17 @@
 use ink_lang as ink;
 
-use crate::ddc_bucket::*;
-use crate::ddc_bucket::flow::Flow;
-use crate::ddc_bucket::schedule::{Schedule, MS_PER_MONTH};
 use super::env_utils::*;
 use super::setup_utils::*;
-
+use crate::ddc_bucket::flow::Flow;
+use crate::ddc_bucket::schedule::{Schedule, MS_PER_MONTH};
+use crate::ddc_bucket::*;
 
 fn do_bucket_pays_cluster(
     ctx: &mut TestCluster,
     test_bucket: &TestBucket,
     usd_per_cere: Balance,
 ) -> Result<()> {
-    let expected_rent = 
-        ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
+    let expected_rent = ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
         + ctx.rent_v_node_per_month1 * ctx.v_nodes1.len() as Balance
         + ctx.rent_v_node_per_month2 * ctx.v_nodes2.len() as Balance;
 
@@ -43,9 +41,9 @@ fn do_bucket_pays_cluster(
     // Check the last event.
     let ev = get_events().pop().unwrap();
     assert!(matches!(ev, Event::BucketSettlePayment(ev) if ev ==
-        BucketSettlePayment {  
-            bucket_id: test_bucket.bucket_id, 
-            cluster_id: ctx.cluster_id 
+        BucketSettlePayment {
+            bucket_id: test_bucket.bucket_id,
+            cluster_id: ctx.cluster_id
         }
     ));
 
@@ -83,14 +81,12 @@ fn do_bucket_pays_cluster(
     Ok(())
 }
 
-
 #[ink::test]
 fn bucket_pays_cluster_ok() {
     let ctx = &mut setup_cluster();
     let test_bucket = &setup_bucket(ctx);
     do_bucket_pays_cluster(ctx, test_bucket, 1).unwrap();
 }
-
 
 #[ink::test]
 fn bucket_pays_cluster_at_new_rate_ok() {
@@ -100,17 +96,17 @@ fn bucket_pays_cluster_at_new_rate_ok() {
     // Set up an exchange rate manager_id.
     set_caller(admin_id());
     ctx.contract
-        .admin_grant_permission(admin_id(), Permission::SetExchangeRate).unwrap();
-
+        .admin_grant_permission(admin_id(), Permission::SetExchangeRate)
+        .unwrap();
 
     // Change the currency exchange rate.
     let usd_per_cere = 2;
     set_caller(admin_id());
-    ctx.contract.account_set_usd_per_cere(usd_per_cere * TOKEN)?;
+    ctx.contract
+        .account_set_usd_per_cere(usd_per_cere * TOKEN)?;
 
     do_bucket_pays_cluster(ctx, test_bucket, usd_per_cere).unwrap();
 }
-
 
 #[ink::test]
 fn bucket_create_ok() {
@@ -118,8 +114,7 @@ fn bucket_create_ok() {
     let test_bucket = &setup_bucket(ctx);
 
     // Check the structure of the bucket including the payment flow.
-    let total_rent = 
-        ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
+    let total_rent = ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
         + ctx.rent_v_node_per_month1 * ctx.v_nodes1.len() as Balance
         + ctx.rent_v_node_per_month2 * ctx.v_nodes2.len() as Balance;
 
@@ -134,7 +129,7 @@ fn bucket_create_ok() {
         resource_reserved: test_bucket.resource,
         public_availability: false,
         resource_consumption_cap: 0,
-        bucket_params: bucket_params
+        bucket_params: bucket_params,
     };
 
     // Check the status of the bucket.
@@ -174,7 +169,6 @@ fn bucket_create_ok() {
     assert_eq!(events.len(), 0, "all events must be checked");
 }
 
-
 #[ink::test]
 fn bucket_change_params_ok() {
     let ctx = &mut setup_cluster();
@@ -203,16 +197,27 @@ fn bucket_change_params_only_owner() {
     // Panic.
 }
 
-
 #[ink::test]
 fn bucket_list_ok() {
     let mut ddc_bucket = setup_contract();
 
-    let owner_id1 = AccountId::from([0xd8, 0x69, 0x19, 0x54, 0xea, 0xdc, 0x9a, 0xc0, 0x3d, 0x37, 0x56, 0x9f, 0x2a, 0xe8, 0xdf, 0x59, 0x34, 0x3f, 0x32, 0x65, 0xba, 0xd4, 0x16, 0xac, 0x07, 0xdf, 0x06, 0xeb, 0x4d, 0xbc, 0x6a, 0x66]);
+    let owner_id1 = AccountId::from([
+        0xd8, 0x69, 0x19, 0x54, 0xea, 0xdc, 0x9a, 0xc0, 0x3d, 0x37, 0x56, 0x9f, 0x2a, 0xe8, 0xdf,
+        0x59, 0x34, 0x3f, 0x32, 0x65, 0xba, 0xd4, 0x16, 0xac, 0x07, 0xdf, 0x06, 0xeb, 0x4d, 0xbc,
+        0x6a, 0x66,
+    ]);
     set_balance(owner_id1, 1000 * TOKEN);
-    let owner_id2 = AccountId::from([0x2a, 0x5f, 0xbc, 0xcf, 0x71, 0x0b, 0x65, 0x04, 0x88, 0x91, 0x12, 0x7e, 0x5e, 0xe3, 0x78, 0xdb, 0x48, 0x63, 0x09, 0x44, 0xcc, 0xc5, 0x75, 0xbd, 0xa5, 0xaa, 0xa5, 0x0e, 0x77, 0xab, 0x7b, 0x4e]);
+    let owner_id2 = AccountId::from([
+        0x2a, 0x5f, 0xbc, 0xcf, 0x71, 0x0b, 0x65, 0x04, 0x88, 0x91, 0x12, 0x7e, 0x5e, 0xe3, 0x78,
+        0xdb, 0x48, 0x63, 0x09, 0x44, 0xcc, 0xc5, 0x75, 0xbd, 0xa5, 0xaa, 0xa5, 0x0e, 0x77, 0xab,
+        0x7b, 0x4e,
+    ]);
     set_balance(owner_id2, 1000 * TOKEN);
-    let owner_id3 = AccountId::from([0x64, 0xef, 0xd7, 0xb4, 0x41, 0xb2, 0x58, 0xb5, 0x56, 0x6b, 0xfc, 0x4b, 0x19, 0xb8, 0xe5, 0x09, 0x5d, 0x17, 0xb3, 0xc3, 0x44, 0x38, 0x58, 0xa9, 0x7d, 0x20, 0x49, 0x39, 0xbd, 0xbd, 0xb6, 0x48]);
+    let owner_id3 = AccountId::from([
+        0x64, 0xef, 0xd7, 0xb4, 0x41, 0xb2, 0x58, 0xb5, 0x56, 0x6b, 0xfc, 0x4b, 0x19, 0xb8, 0xe5,
+        0x09, 0x5d, 0x17, 0xb3, 0xc3, 0x44, 0x38, 0x58, 0xa9, 0x7d, 0x20, 0x49, 0x39, 0xbd, 0xbd,
+        0xb6, 0x48,
+    ]);
     set_balance(owner_id3, 1000 * TOKEN);
 
     let cluster_id = 0;
@@ -240,17 +245,11 @@ fn bucket_list_ok() {
 
     assert_eq!(
         ddc_bucket.bucket_list(0, 1, None),
-        (
-            vec![bucket_status1.clone()],
-            count
-        )
+        (vec![bucket_status1.clone()], count)
     );
     assert_eq!(
         ddc_bucket.bucket_list(1, 1, None),
-        (
-            vec![bucket_status2.clone()],
-            count
-        )
+        (vec![bucket_status2.clone()], count)
     );
 
     assert_eq!(ddc_bucket.bucket_list(count, 20, None), (vec![], count));
@@ -258,18 +257,12 @@ fn bucket_list_ok() {
     // Filter by owner.
     assert_eq!(
         ddc_bucket.bucket_list(0, 100, Some(owner_id1)),
-        (
-            vec![bucket_status1.clone()],
-            count
-        )
+        (vec![bucket_status1.clone()], count)
     );
 
     assert_eq!(
         ddc_bucket.bucket_list(0, 100, Some(owner_id2)),
-        (
-            vec![bucket_status2.clone()],
-            count
-        )
+        (vec![bucket_status2.clone()], count)
     );
 
     assert_eq!(

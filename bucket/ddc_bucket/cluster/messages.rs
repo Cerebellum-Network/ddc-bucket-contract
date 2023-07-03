@@ -2,28 +2,25 @@
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
+use crate::ddc_bucket::bucket::entity::BucketId;
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::cluster::entity::{ClusterInfo, KB_PER_GB};
-use crate::ddc_bucket::bucket::entity::{BucketId};
-use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
-use crate::ddc_bucket::topology::store::{VNodeToken};
+use crate::ddc_bucket::cluster::entity::{ClusterInfo, KB_PER_GB};
+use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
+use crate::ddc_bucket::topology::store::VNodeToken;
 use crate::ddc_bucket::ClusterNodeReplaced;
 use crate::ddc_bucket::{
-    BASIS_POINTS,
-    AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
-    ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource, ClusterDistributeCdnRevenues,
-    ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, ClusterNodeReset,
-    DdcBucket, NodeStatusInCluster, Result, Error::*
+    AccountId, Balance, ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterCdnNodeStatusSet,
+    ClusterCreated, ClusterDistributeCdnRevenues, ClusterDistributeRevenues, ClusterNodeAdded,
+    ClusterNodeRemoved, ClusterNodeReset, ClusterNodeStatusSet, ClusterParamsSet, ClusterRemoved,
+    ClusterReserveResource, DdcBucket, Error::*, NodeStatusInCluster, PermissionGranted,
+    PermissionRevoked, Result, BASIS_POINTS,
 };
 
 use super::entity::{ClusterId, ClusterParams};
 
-
 impl DdcBucket {
-
-
     pub fn message_cluster_create(
         &mut self,
         cluster_params: ClusterParams,
@@ -31,12 +28,10 @@ impl DdcBucket {
     ) -> Result<ClusterId> {
         let caller = Self::env().caller();
 
-        let cluster_id = self.clusters.create(
-            caller,
-            cluster_params.clone(),
-            resource_per_v_node
-        )?;
-        
+        let cluster_id =
+            self.clusters
+                .create(caller, cluster_params.clone(), resource_per_v_node)?;
+
         self.topology.create_topology(cluster_id)?;
 
         Self::env().emit_event(ClusterCreated {
@@ -47,7 +42,6 @@ impl DdcBucket {
 
         Ok(cluster_id)
     }
-
 
     pub fn message_cluster_add_node(
         &mut self,
@@ -70,21 +64,21 @@ impl DdcBucket {
             node.reserve_resource(cluster.resource_per_v_node)?;
             cluster.increase_rent(node.rent_v_node_per_month);
         }
-        
+
         self.nodes.update(node_key, &node)?;
         self.clusters.update(cluster_id, &cluster)?;
 
-        self.topology.add_node(cluster_id, node_key, v_nodes.clone())?;
+        self.topology
+            .add_node(cluster_id, node_key, v_nodes.clone())?;
 
-        Self::env().emit_event(ClusterNodeAdded { 
-            cluster_id, 
+        Self::env().emit_event(ClusterNodeAdded {
+            cluster_id,
             node_key,
-            v_nodes
+            v_nodes,
         });
 
         Ok(())
     }
-
 
     pub fn message_cluster_remove_node(
         &mut self,
@@ -96,12 +90,11 @@ impl DdcBucket {
         let mut node = self.nodes.get(node_key)?;
         let mut cluster = self.clusters.get(cluster_id)?;
 
-        if !cluster.only_manager(caller).is_ok()
-            && !node.only_provider(caller).is_ok() {
-                return Err(OnlyClusterManagerOrNodeProvider);
+        if !cluster.only_manager(caller).is_ok() && !node.only_provider(caller).is_ok() {
+            return Err(OnlyClusterManagerOrNodeProvider);
         }
         node.only_with_cluster(cluster_id)?;
-        
+
         node.unset_cluster();
         cluster.remove_node(node_key);
         let v_nodes = self.topology.get_v_nodes_by_node(node_key);
@@ -109,20 +102,19 @@ impl DdcBucket {
             node.release_resource(cluster.resource_per_v_node);
             cluster.decrease_rent(node.rent_v_node_per_month);
         }
-        
+
         self.nodes.update(node_key, &node)?;
         self.clusters.update(cluster_id, &cluster)?;
 
         self.topology.remove_node(cluster_id, node_key)?;
 
-        Self::env().emit_event(ClusterNodeRemoved { 
-            cluster_id, 
-            node_key 
+        Self::env().emit_event(ClusterNodeRemoved {
+            cluster_id,
+            node_key,
         });
 
         Ok(())
     }
-
 
     pub fn message_cluster_replace_node(
         &mut self,
@@ -151,11 +143,8 @@ impl DdcBucket {
             self.nodes.update(new_node_key, &new_node)?;
         }
 
-        self.topology.replace_node(
-            cluster_id, 
-            new_node_key, 
-            v_nodes.clone()
-        )?;
+        self.topology
+            .replace_node(cluster_id, new_node_key, v_nodes.clone())?;
 
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,
@@ -165,7 +154,6 @@ impl DdcBucket {
 
         Ok(())
     }
-
 
     pub fn message_cluster_reset_node(
         &mut self,
@@ -184,16 +172,12 @@ impl DdcBucket {
         let old_v_nodes = self.topology.get_v_nodes_by_node(node_key);
 
         if new_v_nodes.len() != old_v_nodes.len() {
-
             if new_v_nodes.len() > old_v_nodes.len() {
-            
                 for _i in 0..new_v_nodes.len() - old_v_nodes.len() {
                     node.reserve_resource(cluster.resource_per_v_node)?;
                     cluster.increase_rent(node.rent_v_node_per_month);
                 }
-
             } else if new_v_nodes.len() < old_v_nodes.len() {
-    
                 for _i in 0..old_v_nodes.len() - new_v_nodes.len() {
                     node.release_resource(cluster.resource_per_v_node);
                     cluster.decrease_rent(node.rent_v_node_per_month);
@@ -204,21 +188,17 @@ impl DdcBucket {
             self.clusters.update(cluster_id, &cluster)?;
         }
 
-        self.topology.reset_node(
-            cluster_id, 
-            node_key, 
-            new_v_nodes.clone()
-        )?;
+        self.topology
+            .reset_node(cluster_id, node_key, new_v_nodes.clone())?;
 
         Self::env().emit_event(ClusterNodeReset {
             cluster_id,
             node_key: node_key,
-            v_nodes: new_v_nodes
+            v_nodes: new_v_nodes,
         });
 
         Ok(())
     }
-
 
     pub fn message_cluster_add_cdn_node(
         &mut self,
@@ -240,14 +220,13 @@ impl DdcBucket {
         cluster.add_cdn_node(cdn_node_key)?;
         self.clusters.update(cluster_id, &cluster)?;
 
-        Self::env().emit_event(ClusterCdnNodeAdded { 
-            cluster_id, 
-            cdn_node_key 
+        Self::env().emit_event(ClusterCdnNodeAdded {
+            cluster_id,
+            cdn_node_key,
         });
 
         Ok(())
     }
-
 
     pub fn message_cluster_remove_cdn_node(
         &mut self,
@@ -259,54 +238,46 @@ impl DdcBucket {
         let mut cdn_node: CdnNode = self.cdn_nodes.get(cdn_node_key)?;
         let mut cluster = self.clusters.get(cluster_id)?;
 
-        if !cluster.only_manager(caller).is_ok()
-            && !cdn_node.only_provider(caller).is_ok() {
-                return Err(OnlyClusterManagerOrCdnNodeProvider);
+        if !cluster.only_manager(caller).is_ok() && !cdn_node.only_provider(caller).is_ok() {
+            return Err(OnlyClusterManagerOrCdnNodeProvider);
         }
 
         cdn_node.only_with_cluster(cluster_id)?;
-        
+
         cdn_node.unset_cluster();
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
         cluster.remove_cdn_node(cdn_node_key);
         self.clusters.update(cluster_id, &cluster)?;
 
-        Self::env().emit_event(ClusterCdnNodeRemoved { 
-            cluster_id, 
-            cdn_node_key 
+        Self::env().emit_event(ClusterCdnNodeRemoved {
+            cluster_id,
+            cdn_node_key,
         });
 
         Ok(())
     }
 
-
-    pub fn message_cluster_remove(
-        &mut self,
-        cluster_id: ClusterId, 
-    ) -> Result<()> {
+    pub fn message_cluster_remove(&mut self, cluster_id: ClusterId) -> Result<()> {
         let caller = Self::env().caller();
 
         let cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
         cluster.only_without_nodes()?;
-        
+
         self.clusters.remove(cluster_id);
         self.topology.remove_topology(cluster_id)?;
 
-        Self::env().emit_event(ClusterRemoved { 
-            cluster_id, 
-        });
+        Self::env().emit_event(ClusterRemoved { cluster_id });
 
         Ok(())
     }
 
-
     pub fn message_cluster_set_node_status(
-        &mut self, 
+        &mut self,
         cluster_id: ClusterId,
-        node_key: NodeKey, 
-        status_in_cluster: NodeStatusInCluster
+        node_key: NodeKey,
+        status_in_cluster: NodeStatusInCluster,
     ) -> Result<()> {
         let caller = Self::env().caller();
 
@@ -317,21 +288,20 @@ impl DdcBucket {
         node.change_status_in_cluster(status_in_cluster.clone());
         self.nodes.update(node_key, &node)?;
 
-        Self::env().emit_event(ClusterNodeStatusSet { 
+        Self::env().emit_event(ClusterNodeStatusSet {
             node_key,
             cluster_id,
-            status: status_in_cluster
+            status: status_in_cluster,
         });
-        
+
         Ok(())
     }
 
-
     pub fn message_cluster_set_cdn_node_status(
-        &mut self, 
+        &mut self,
         cluster_id: ClusterId,
-        cdn_node_key: CdnNodeKey, 
-        status_in_cluster: NodeStatusInCluster
+        cdn_node_key: CdnNodeKey,
+        status_in_cluster: NodeStatusInCluster,
     ) -> Result<()> {
         let caller = Self::env().caller();
 
@@ -342,49 +312,46 @@ impl DdcBucket {
         cdn_node.change_status_in_cluster(status_in_cluster.clone());
         self.cdn_nodes.update(cdn_node_key, &cdn_node)?;
 
-        Self::env().emit_event(ClusterCdnNodeStatusSet { 
+        Self::env().emit_event(ClusterCdnNodeStatusSet {
             cdn_node_key,
             cluster_id,
-            status: status_in_cluster
+            status: status_in_cluster,
         });
-        
+
         Ok(())
     }
 
-
     pub fn message_grant_trusted_manager_permission(
         &mut self,
-        manager_id: AccountId
+        manager_id: AccountId,
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ClusterManagerTrustedBy(grantor);
         self.grant_permission(manager_id, permission)?;
 
-        Self::env().emit_event(PermissionGranted { 
+        Self::env().emit_event(PermissionGranted {
             account_id: manager_id,
-            permission
+            permission,
         });
-        
+
         Ok(())
     }
 
-
     pub fn message_revoke_trusted_manager_permission(
         &mut self,
-        manager_id: AccountId
+        manager_id: AccountId,
     ) -> Result<()> {
         let grantor = Self::env().caller();
         let permission = Permission::ClusterManagerTrustedBy(grantor);
         self.revoke_permission(manager_id, permission)?;
 
-        Self::env().emit_event(PermissionRevoked { 
+        Self::env().emit_event(PermissionRevoked {
             account_id: manager_id,
-            permission
+            permission,
         });
 
         Ok(())
     }
-
 
     pub fn message_cluster_set_params(
         &mut self,
@@ -397,14 +364,13 @@ impl DdcBucket {
         cluster.set_params(cluster_params.clone())?;
         self.clusters.update(cluster_id, &cluster)?;
 
-        Self::env().emit_event(ClusterParamsSet { 
+        Self::env().emit_event(ClusterParamsSet {
             cluster_id,
-            cluster_params
+            cluster_params,
         });
 
         Ok(())
     }
-
 
     pub fn message_cluster_set_resource_per_v_node(
         &mut self,
@@ -416,7 +382,7 @@ impl DdcBucket {
         cluster.only_manager(caller)?;
 
         let old_resource_per_v_node = cluster.resource_per_v_node;
-        
+
         cluster.set_resource_per_v_node(new_resource_per_v_node);
         let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
         let cluster_v_nodes_len: u32 = cluster_v_nodes.len().try_into().unwrap();
@@ -444,7 +410,6 @@ impl DdcBucket {
         Ok(())
     }
 
-
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?;
         let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
@@ -452,10 +417,9 @@ impl DdcBucket {
         Ok(ClusterInfo {
             cluster_id,
             cluster,
-            cluster_v_nodes
+            cluster_v_nodes,
         })
     }
-
 
     pub fn message_cluster_list(
         &self,
@@ -482,14 +446,13 @@ impl DdcBucket {
             let cluster_info = ClusterInfo {
                 cluster_id,
                 cluster,
-                cluster_v_nodes
+                cluster_v_nodes,
             };
 
             clusters.push(cluster_info);
         }
         (clusters, self.clusters.next_cluster_id)
     }
-
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
         let mut cluster = self.clusters.get(cluster_id)?;
@@ -527,12 +490,11 @@ impl DdcBucket {
         Ok(())
     }
 
-
     // Set the price usd per gb
     pub fn message_cdn_set_rate(
-        &mut self, 
-        cluster_id: ClusterId, 
-        cdn_usd_per_gb: Balance
+        &mut self,
+        cluster_id: ClusterId,
+        cdn_usd_per_gb: Balance,
     ) -> Result<()> {
         let caller = Self::env().caller();
 
@@ -544,7 +506,6 @@ impl DdcBucket {
         Ok(())
     }
 
-
     // Get the price usd per gb
     pub fn message_cdn_get_rate(&self, cluster_id: ClusterId) -> Result<Balance> {
         let cluster = self.clusters.get(cluster_id)?;
@@ -552,15 +513,14 @@ impl DdcBucket {
         Ok(rate)
     }
 
-
     // First payment is for aggregate consumption for account, second is the aggregate payment for the node (u32 for ids)
     pub fn message_cluster_put_cdn_revenue(
-        &mut self, 
-        cluster_id: ClusterId, 
-        aggregates_accounts: Vec<(AccountId, u128)>, 
-        aggregates_nodes: Vec<(CdnNodeKey, u128)>, 
-        aggregates_buckets: Vec<(BucketId, Resource)>, 
-        era: u64
+        &mut self,
+        cluster_id: ClusterId,
+        aggregates_accounts: Vec<(AccountId, u128)>,
+        aggregates_nodes: Vec<(CdnNodeKey, u128)>,
+        aggregates_buckets: Vec<(BucketId, Resource)>,
+        era: u64,
     ) -> Result<()> {
         self.only_validator()?;
 
@@ -571,11 +531,15 @@ impl DdcBucket {
         let aggregate_payments_accounts;
         {
             let conv = &self.protocol.curr_converter;
-            aggregate_payments_accounts = aggregates_accounts.iter().map(|(client_id, resources_used)| {
-                let account_id = *client_id;
-                let cere_payment: Balance = conv.to_cere(*resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
-                (account_id, cere_payment)
-            }).collect::<Vec<(AccountId, Balance)>>();
+            aggregate_payments_accounts = aggregates_accounts
+                .iter()
+                .map(|(client_id, resources_used)| {
+                    let account_id = *client_id;
+                    let cere_payment: Balance = conv
+                        .to_cere(*resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB);
+                    (account_id, cere_payment)
+                })
+                .collect::<Vec<(AccountId, Balance)>>();
         }
 
         for &(client_id, payment) in aggregate_payments_accounts.iter() {
@@ -584,9 +548,9 @@ impl DdcBucket {
                 _undistributed_payment_accounts += payment;
                 self.accounts.save(&client_id, &account);
             } else {
-                return Err(InsufficientBalance)
+                return Err(InsufficientBalance);
             }
-        };
+        }
 
         let conv = self.protocol.curr_converter.clone();
         let committer = &mut self.committer;
@@ -595,13 +559,14 @@ impl DdcBucket {
             let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
             let protocol_fee = self.protocol.get_protocol_fee_bp();
             let protocol = &mut self.protocol;
-            
-            let payment = conv.to_cere(resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB );
+
+            let payment =
+                conv.to_cere(resources_used as Balance * cluster.cdn_usd_per_gb / KB_PER_GB);
 
             // let protocol_payment = payment * protocol_fee as u128/ BASIS_POINTS;
             let node_payment = payment * (BASIS_POINTS - protocol_fee) as u128 / BASIS_POINTS;
             let protocol_payment = payment - node_payment;
-            
+
             cdn_node.put_payment(node_payment);
 
             protocol.put_revenues(Cash(protocol_payment));
@@ -629,7 +594,6 @@ impl DdcBucket {
         Ok(())
     }
 
-
     pub fn message_cluster_distribute_cdn_revenue(&mut self, cluster_id: ClusterId) -> Result<()> {
         let mut cluster = self.clusters.get(cluster_id)?;
 
@@ -640,12 +604,12 @@ impl DdcBucket {
         self.capture_fee(
             self.protocol.get_cluster_management_fee_bp(),
             cluster.manager_id,
-            &mut cluster.cdn_revenues
+            &mut cluster.cdn_revenues,
         )?;
 
         // First accumulated revenues to distribute.
         let mut distributed_revenue = 0;
-    
+
         for cdn_node_key in &cluster.cdn_nodes_keys {
             let cdn_node = self.cdn_nodes.get(*cdn_node_key)?;
             distributed_revenue += cdn_node.undistributed_payment;
@@ -663,14 +627,12 @@ impl DdcBucket {
             self.cdn_nodes.update(*cdn_node_key, &cdn_node)?;
 
             Self::env().emit_event(ClusterDistributeCdnRevenues {
-                cluster_id, 
-                provider_id: cdn_node.provider_id 
+                cluster_id,
+                provider_id: cdn_node.provider_id,
             });
         }
         self.clusters.update(cluster_id, &cluster)?;
 
         Ok(())
     }
-
-
 }

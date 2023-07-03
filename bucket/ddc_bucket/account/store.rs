@@ -1,17 +1,14 @@
 //! The store to create and access Accounts.
 
-use ink_storage::Mapping;
-use crate::ddc_bucket::{
-    AccountId, Balance, cash::Cash, Error::*,
-    Result,
-    schedule::Schedule,
-    currency::CurrencyConverter
-};
-use crate::ddc_bucket::flow::Flow;
-use ink_storage::traits::{SpreadAllocate, SpreadLayout};
-use ink_prelude::vec::Vec;
 use super::entity::Account;
-
+use crate::ddc_bucket::flow::Flow;
+use crate::ddc_bucket::{
+    cash::Cash, currency::CurrencyConverter, schedule::Schedule, AccountId, Balance, Error::*,
+    Result,
+};
+use ink_prelude::vec::Vec;
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
+use ink_storage::Mapping;
 
 // https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
 // There is a buffer with only limited capacity (around 16KB in the default configuration) available.
@@ -58,7 +55,12 @@ impl AccountStore {
 
     /// Increase the rate of the given flow starting from the given time.
     /// Lock the payment flow from the deposit of the payer account.
-    pub fn increase_flow(&mut self, start_ms: u64, extra_rate: Balance, flow: &mut Flow) -> Result<()> {
+    pub fn increase_flow(
+        &mut self,
+        start_ms: u64,
+        extra_rate: Balance,
+        flow: &mut Flow,
+    ) -> Result<()> {
         let extra_schedule = Schedule::new(start_ms, extra_rate);
         flow.schedule.add_schedule(extra_schedule.clone());
 
@@ -69,7 +71,12 @@ impl AccountStore {
         Ok(())
     }
 
-    pub fn settle_flow(&mut self, now_ms: u64, flow: &mut Flow, curr_converter: &CurrencyConverter) -> Result<Cash> {
+    pub fn settle_flow(
+        &mut self,
+        now_ms: u64,
+        flow: &mut Flow,
+        curr_converter: &CurrencyConverter,
+    ) -> Result<Cash> {
         let flowed_usd = flow.schedule.take_value_at_time(now_ms);
         let flowed_cere = curr_converter.to_cere(flowed_usd);
         let (payable, cash) = Cash::borrow_payable_cash(flowed_cere);
@@ -81,7 +88,11 @@ impl AccountStore {
         Ok(cash)
     }
 
-    pub fn flow_covered_until(&self, flow: &Flow, curr_converter: &CurrencyConverter) -> Result<u64> {
+    pub fn flow_covered_until(
+        &self,
+        flow: &Flow,
+        curr_converter: &CurrencyConverter,
+    ) -> Result<u64> {
         let account = self.get(&flow.from)?;
         let deposit_cere = account.deposit.peek();
         let deposit_usd = curr_converter.to_usd(deposit_cere);

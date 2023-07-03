@@ -2,19 +2,20 @@
 //!
 //! These data structures facilitate the correctness of money-related calculations using the Rust type system.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
+use ink_storage::traits::{PackedLayout, SpreadAllocate, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{Balance, Result};
 use crate::ddc_bucket::Error::InsufficientBalance;
+use crate::ddc_bucket::{Balance, Result};
 
 // TODO: remove Clone.
 /// Cash represents some value that was taken from someone, and that must be credited to someone.
 #[must_use]
-#[derive(Default, Clone, Copy, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
+#[derive(
+    Default, Clone, Copy, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout,
+)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct Cash(pub Balance);
-
 
 /// Payable represents some value that was credited to someone, and that must be paid by someone.
 /// Payable must be covered by Cash at all times to guarantee the balance of the contract.
@@ -29,9 +30,13 @@ impl Cash {
     }
 
     #[must_use]
-    pub fn consume(self) -> Balance { self.0 }
+    pub fn consume(self) -> Balance {
+        self.0
+    }
 
-    pub fn peek(&self) -> Balance { self.0 }
+    pub fn peek(&self) -> Balance {
+        self.0
+    }
 
     pub fn increase(&mut self, cash: Cash) {
         self.0 += cash.consume();
@@ -57,9 +62,13 @@ impl Payable {
     }
 
     #[must_use]
-    pub fn consume(self) -> Balance { self.0 }
+    pub fn consume(self) -> Balance {
+        self.0
+    }
 
-    pub fn peek(&self) -> Balance { self.0 }
+    pub fn peek(&self) -> Balance {
+        self.0
+    }
 }
 
 // Implement TypeInfo with a field "value" to work with polkadot.js.
@@ -75,7 +84,7 @@ impl ::scale_info::TypeInfo for Cash {
             .type_params([])
             .composite(
                 ::scale_info::build::Fields::named()
-                    .field(|f| f.ty::<Balance>().name("value").type_name("Balance"))
+                    .field(|f| f.ty::<Balance>().name("value").type_name("Balance")),
             )
     }
 }

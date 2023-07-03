@@ -1,15 +1,15 @@
 //! The data structure of Nodes.
 
-use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
-use ink_prelude::vec::Vec;
 use ink_prelude::string::String;
+use ink_prelude::vec::Vec;
+use ink_storage::traits::{PackedAllocate, PackedLayout, SpreadAllocate, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Error::*, Result};
 use crate::ddc_bucket::cluster::entity::ClusterId;
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result, VNodeToken};
 
-use ink_storage::traits::KeyPtr;
 use ink_primitives::Key;
+use ink_storage::traits::KeyPtr;
 
 pub type ProviderId = AccountId;
 pub type NodeKey = AccountId;
@@ -44,15 +44,15 @@ pub enum NodeStatusInCluster {
     OFFLINE,
 }
 
-impl SpreadAllocate for NodeStatusInCluster { 
-    fn allocate_spread(_: &mut KeyPtr) -> Self { 
-        NodeStatusInCluster::ADDING 
+impl SpreadAllocate for NodeStatusInCluster {
+    fn allocate_spread(_: &mut KeyPtr) -> Self {
+        NodeStatusInCluster::ADDING
     }
 }
 
 impl Default for NodeStatusInCluster {
     fn default() -> Self {
-        NodeStatusInCluster::ADDING 
+        NodeStatusInCluster::ADDING
     }
 }
 
@@ -61,13 +61,12 @@ impl Default for NodeStatusInCluster {
 pub struct NodeInfo {
     pub node_key: NodeKey,
     pub node: Node,
-    pub v_nodes: Vec<VNodeToken>
+    pub v_nodes: Vec<VNodeToken>,
 }
 
 pub const NODE_PARAMS_MAX_LEN: usize = 100_000;
 
 impl Node {
-
     pub fn new(
         provider_id: AccountId,
         node_params: NodeParams,
@@ -126,7 +125,7 @@ impl Node {
     pub fn change_status_in_cluster(&mut self, status: NodeStatusInCluster) {
         self.status_in_cluster = Some(status);
     }
-    
+
     pub fn release_resource(&mut self, amount: Resource) {
         self.free_resource += amount;
     }
@@ -139,5 +138,4 @@ impl Node {
             Err(InsufficientNodeResources)
         }
     }
-
 }

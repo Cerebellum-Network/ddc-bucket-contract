@@ -1,14 +1,13 @@
 #![allow(unused_variables, dead_code)]
 
 pub use ink_env::{
-    call, test, block_timestamp,
+    block_timestamp, call, test,
     test::{advance_block, DefaultAccounts},
     DefaultEnvironment,
 };
 
-use scale::Decode;
 use crate::ddc_bucket::*;
-
+use scale::Decode;
 
 pub type Event = <DdcBucket as ::ink_lang::reflect::ContractEventBase>::Type;
 

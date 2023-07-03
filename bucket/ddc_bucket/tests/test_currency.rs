@@ -1,9 +1,8 @@
 use ink_lang as ink;
 
-use crate::ddc_bucket::*;
 use super::env_utils::*;
 use super::setup_utils::*;
-
+use crate::ddc_bucket::*;
 
 #[ink::test]
 fn currency_conversion_init_ok() {
@@ -16,7 +15,6 @@ fn currency_conversion_init_ok() {
         "conversion rate must be 1 initially"
     );
 }
-
 
 #[ink::test]
 fn currency_conversion_set_rate_ok() {
@@ -34,7 +32,6 @@ fn currency_conversion_set_rate_ok() {
     );
 }
 
-
 #[ink::test]
 #[should_panic]
 fn currency_conversion_set_rate_err_if_not_admin() {
@@ -44,7 +41,6 @@ fn currency_conversion_set_rate_err_if_not_admin() {
     set_caller(not_admin);
     contract.account_set_usd_per_cere(9)?;
 }
-
 
 #[ink::test]
 fn converter_ok() {

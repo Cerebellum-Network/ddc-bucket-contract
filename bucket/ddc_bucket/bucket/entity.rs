@@ -1,17 +1,13 @@
 //! The data structure of Buckets.
 
-use ink_prelude::vec::Vec;
-use ink_prelude::string::String;
-use ink_storage::traits::{SpreadAllocate, PackedAllocate, PackedLayout, SpreadLayout};
-use scale::{Decode, Encode};
-use ink_primitives::Key;
-use crate::ddc_bucket::{
-    AccountId, ClusterId,
-    Error::*, Result,
-};
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::node::entity::Resource;
-
+use crate::ddc_bucket::{AccountId, ClusterId, Error::*, Result};
+use ink_prelude::string::String;
+use ink_prelude::vec::Vec;
+use ink_primitives::Key;
+use ink_storage::traits::{PackedAllocate, PackedLayout, SpreadAllocate, SpreadLayout};
+use scale::{Decode, Encode};
 
 pub type BucketId = u32;
 pub type BucketParams = String;
@@ -24,8 +20,8 @@ pub struct Bucket {
     pub flow: Flow,
     pub resource_reserved: Resource,
     pub public_availability: bool,
-    pub resource_consumption_cap: Resource, 
-    pub bucket_params: BucketParams
+    pub resource_consumption_cap: Resource,
+    pub bucket_params: BucketParams,
 }
 
 // https://use.ink/3.x/ink-vs-solidity#nested-mappings--custom--advanced-structures
@@ -46,7 +42,7 @@ pub struct BucketInStatus {
     // TODO: find a fix, then return the entire Bucket structure.
     pub resource_reserved: Resource,
     pub public_availability: bool,
-    pub resource_consumption_cap: Resource, 
+    pub resource_consumption_cap: Resource,
 }
 
 #[derive(Clone, PartialEq, Encode, Decode)]
@@ -64,7 +60,11 @@ pub const BUCKET_PARAMS_MAX_LEN: usize = 100_000;
 
 impl Bucket {
     pub fn only_owner(&self, caller: AccountId) -> Result<()> {
-        if self.owner_id == caller { Ok(()) } else { Err(OnlyOwner) }
+        if self.owner_id == caller {
+            Ok(())
+        } else {
+            Err(OnlyOwner)
+        }
     }
 
     pub fn put_resource(&mut self, amount: Resource) {
@@ -90,7 +90,6 @@ impl Bucket {
         self.bucket_params = bucket_params;
         Ok(())
     }
-
 }
 
 impl From<Bucket> for BucketInStatus {

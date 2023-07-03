@@ -1,13 +1,17 @@
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
-use scale::{Decode, Encode};
-use crate::ddc_bucket::{DdcBucket, AccountId, Error::*, Result, Balance, BasisPoints, BASIS_POINTS};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::currency::CurrencyConverter;
-
+use crate::ddc_bucket::{
+    AccountId, Balance, BasisPoints, DdcBucket, Error::*, Result, BASIS_POINTS,
+};
+use ink_storage::traits::{PackedLayout, SpreadAllocate, SpreadLayout};
+use scale::{Decode, Encode};
 
 /// The configuration of fees.
 #[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo))]
+#[cfg_attr(
+    feature = "std",
+    derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo)
+)]
 pub struct NetworkFeeConfig {
     /// The fee rate from cluster revenues to the overall network. In basis points (1% of 1%).
     pub network_fee_bp: BasisPoints,
@@ -18,24 +22,25 @@ pub struct NetworkFeeConfig {
 }
 
 impl NetworkFeeConfig {
-    
     pub fn new(
         network_fee_bp: BasisPoints,
         network_fee_destination: AccountId,
-        cluster_management_fee_bp: BasisPoints
+        cluster_management_fee_bp: BasisPoints,
     ) -> Self {
         Self {
             network_fee_bp,
             network_fee_destination,
-            cluster_management_fee_bp
+            cluster_management_fee_bp,
         }
     }
-
 }
 
 #[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
-#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo))]
-pub struct ProtocolStore { 
+#[cfg_attr(
+    feature = "std",
+    derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo)
+)]
+pub struct ProtocolStore {
     pub protocol_fee_bp: BasisPoints,
     pub protocol_fee_destination: AccountId,
     pub revenues: Cash,
@@ -44,11 +49,10 @@ pub struct ProtocolStore {
 }
 
 impl ProtocolStore {
-
     pub fn init(
-        &mut self, 
+        &mut self,
         protocol_fee_bp: BasisPoints,
-        protocol_fee_dest: AccountId, 
+        protocol_fee_dest: AccountId,
         network_fee_bp: BasisPoints,
         network_fee_dest: AccountId,
         cluster_fee_bp: BasisPoints,
@@ -56,11 +60,8 @@ impl ProtocolStore {
         self.protocol_fee_bp = protocol_fee_bp;
         self.protocol_fee_destination = protocol_fee_dest;
         self.curr_converter = CurrencyConverter::new();
-        self.network_fee_config = NetworkFeeConfig::new(
-            network_fee_bp, 
-            network_fee_dest, 
-            cluster_fee_bp
-        );
+        self.network_fee_config =
+            NetworkFeeConfig::new(network_fee_bp, network_fee_dest, cluster_fee_bp);
     }
 
     pub fn get_protocol_fee_bp(&self) -> BasisPoints {
@@ -110,25 +111,28 @@ impl ProtocolStore {
     pub fn get_cluster_management_fee_bp(&self) -> BasisPoints {
         self.network_fee_config.cluster_management_fee_bp
     }
-
 }
 
 impl DdcBucket {
     /// Take a network fee from the given revenues (in place).
     pub fn capture_network_fee(&mut self, revenues: &mut Cash) -> Result<()> {
         self.capture_fee(
-            self.protocol.get_network_fee_bp(), 
-            self.protocol.get_network_fee_dest(), 
-            revenues
+            self.protocol.get_network_fee_bp(),
+            self.protocol.get_network_fee_dest(),
+            revenues,
         )
     }
 
     /// Take a fee from the given revenues (in place) and send it to the destination.
-    pub fn capture_fee(&self, rate_bp: Balance, destination: AccountId, revenues: &mut Cash) -> Result<()> {
+    pub fn capture_fee(
+        &self,
+        rate_bp: Balance,
+        destination: AccountId,
+        revenues: &mut Cash,
+    ) -> Result<()> {
         let fee = revenues.peek() * rate_bp / BASIS_POINTS;
         let (payable, cash) = Cash::borrow_payable_cash(fee);
         revenues.pay(payable)?;
         Self::send_cash(destination, cash)
     }
-
 }

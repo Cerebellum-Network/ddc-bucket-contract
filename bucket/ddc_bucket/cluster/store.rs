@@ -1,10 +1,9 @@
 //! The store where to create and access Clusters by ID.
 
+use super::entity::{Cluster, ClusterId, ClusterParams};
+use crate::ddc_bucket::{AccountId, Error::*, Resource, Result};
 use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_storage::Mapping;
-use crate::ddc_bucket::{AccountId, Resource, Error::*, Result};
-use super::entity::{Cluster, ClusterId, ClusterParams};
-
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
@@ -23,11 +22,7 @@ impl ClusterStore {
         let cluster_id = self.next_cluster_id;
         self.next_cluster_id = self.next_cluster_id + 1;
 
-        let cluster = Cluster::new(
-            manager_id, 
-            cluster_params,
-            resource_per_v_node
-        )?;
+        let cluster = Cluster::new(manager_id, cluster_params, resource_per_v_node)?;
 
         self.clusters.insert(&cluster_id, &cluster);
         Ok(cluster_id)
@@ -49,5 +44,4 @@ impl ClusterStore {
     pub fn remove(&mut self, cluster_id: ClusterId) {
         self.clusters.remove(cluster_id);
     }
-
 }

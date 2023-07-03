@@ -1,14 +1,13 @@
 //! The public interface of Accounts and deposits.
 
-use ink_prelude::vec::Vec;
 use ink_lang::codegen::{EmitEvent, StaticEnv};
+use ink_prelude::vec::Vec;
 
-use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Payable, Result, TOKEN};
-use crate::ddc_bucket::Error::InsufficientBalance;
 use crate::ddc_bucket::perm::entity::Permission;
+use crate::ddc_bucket::Error::InsufficientBalance;
+use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, Deposit, Payable, Result, TOKEN};
 
 impl DdcBucket {
-
     // todo: remove this method as we can not support iterable data structures of arbitrary data size
     pub fn message_get_accounts(&self) -> Vec<AccountId> {
         self.accounts.accounts_keys.iter().cloned().collect()
@@ -22,7 +21,10 @@ impl DdcBucket {
         // Create the account, if necessary.
         self.accounts.create_if_not_exist(account_id)?;
 
-        Self::env().emit_event(Deposit { account_id, value: cash.peek() });
+        Self::env().emit_event(Deposit {
+            account_id,
+            value: cash.peek(),
+        });
 
         let mut account = self.accounts.get(&account_id)?;
         account.deposit(cash);
@@ -82,7 +84,9 @@ impl DdcBucket {
     }
 
     pub fn send_cash(destination: AccountId, cash: Cash) -> Result<()> {
-        if cash.peek() == 0 { return Ok(()); }
+        if cash.peek() == 0 {
+            return Ok(());
+        }
         match Self::env().transfer(destination, cash.consume()) {
             Err(_e) => panic!("Transfer failed"), // Err(Error::TransferFailed),
             Ok(_v) => Ok(()),

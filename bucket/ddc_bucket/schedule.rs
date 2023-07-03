@@ -1,6 +1,6 @@
 //! The Schedule data structure implements a value that increases over time.
 
-use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout};
+use ink_storage::traits::{PackedLayout, SpreadAllocate, SpreadLayout};
 use scale::{Decode, Encode};
 
 use crate::ddc_bucket::Balance;
@@ -19,7 +19,9 @@ impl Schedule {
         Schedule { rate, offset }
     }
 
-    pub fn empty() -> Schedule { Schedule::new(0, 0) }
+    pub fn empty() -> Schedule {
+        Schedule::new(0, 0)
+    }
 
     pub fn value_at_time(&self, time_ms: u64) -> Balance {
         let absolute = self.rate * time_ms as Balance / MS_PER_MONTH;
@@ -28,7 +30,9 @@ impl Schedule {
     }
 
     pub fn time_of_value(&self, value: Balance) -> u64 {
-        if self.rate == 0 { return u64::MAX; }
+        if self.rate == 0 {
+            return u64::MAX;
+        }
 
         let absolute = self.offset + value;
         let time = absolute * MS_PER_MONTH / self.rate;

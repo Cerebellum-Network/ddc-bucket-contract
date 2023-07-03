@@ -1,13 +1,13 @@
 //! The public interface to manage Nodes.
 
-use crate::ddc_bucket::node::entity::{NodeInfo, Resource, NodeKey, NodeParams};
-use crate::ddc_bucket::{AccountId, Balance, DdcBucket, NodeCreated, NodeRemoved, NodeParamsSet, Result};
+use crate::ddc_bucket::node::entity::{NodeInfo, NodeKey, NodeParams, Resource};
+use crate::ddc_bucket::{
+    AccountId, Balance, DdcBucket, NodeCreated, NodeParamsSet, NodeRemoved, Result,
+};
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
 
-
 impl DdcBucket {
-
     pub fn message_node_create(
         &mut self,
         node_key: NodeKey,
@@ -15,14 +15,13 @@ impl DdcBucket {
         capacity: Resource,
         rent_v_node_per_month: Balance,
     ) -> Result<NodeKey> {
-
         let caller = Self::env().caller();
         self.nodes.create(
-            node_key, 
-            caller, 
-            node_params.clone(), 
+            node_key,
+            caller,
+            node_params.clone(),
             capacity,
-            rent_v_node_per_month
+            rent_v_node_per_month,
         )?;
 
         Self::env().emit_event(NodeCreated {
@@ -35,23 +34,16 @@ impl DdcBucket {
         Ok(node_key)
     }
 
-    pub fn message_node_remove(
-        &mut self, 
-        node_key: NodeKey
-    ) -> Result<()> {
-
+    pub fn message_node_remove(&mut self, node_key: NodeKey) -> Result<()> {
         let caller = Self::env().caller();
         let node = self.nodes.get(node_key)?;
         node.only_provider(caller)?;
         node.only_without_cluster()?;
         self.nodes.remove(node_key);
 
-        Self::env().emit_event(NodeRemoved {
-            node_key,
-        });
+        Self::env().emit_event(NodeRemoved { node_key });
 
         Ok(())
-        
     }
 
     pub fn message_node_set_params(
@@ -59,7 +51,6 @@ impl DdcBucket {
         node_key: NodeKey,
         node_params: NodeParams,
     ) -> Result<()> {
-
         let caller = Self::env().caller();
         let mut node = self.nodes.get(node_key)?;
         node.only_provider(caller)?;
@@ -72,7 +63,6 @@ impl DdcBucket {
         });
 
         Ok(())
-
     }
 
     pub fn message_node_get(&self, node_key: NodeKey) -> Result<NodeInfo> {
@@ -82,7 +72,7 @@ impl DdcBucket {
         Ok(NodeInfo {
             node_key,
             node,
-            v_nodes
+            v_nodes,
         })
     }
 
@@ -92,7 +82,6 @@ impl DdcBucket {
         limit: u32,
         filter_provider_id: Option<AccountId>,
     ) -> (Vec<NodeInfo>, u32) {
-
         let mut nodes = Vec::with_capacity(limit as usize);
         for idx in offset..offset + limit {
             let node_key = match self.nodes.keys.get(idx as usize) {
@@ -107,21 +96,19 @@ impl DdcBucket {
                     continue; // Skip non-matches.
                 }
             }
-            
+
             let v_nodes = self.topology.get_v_nodes_by_node(node_key);
 
             // Include the complete status of matched items.
             let node_info = NodeInfo {
                 node_key,
                 node,
-                v_nodes
+                v_nodes,
             };
 
             nodes.push(node_info);
         }
 
         (nodes, self.nodes.keys.len().try_into().unwrap())
-        
     }
-
 }

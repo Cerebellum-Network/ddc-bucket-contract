@@ -1,11 +1,10 @@
 //! The data structure of Nodes.
 
-use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout, PackedAllocate};
-use scale::{Decode, Encode};
-use ink_primitives::Key;
-use crate::ddc_bucket::{AccountId, Balance, ClusterId, NodeStatusInCluster, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Balance, ClusterId, Error::*, NodeStatusInCluster, Result};
 use ink_prelude::string::String;
-
+use ink_primitives::Key;
+use ink_storage::traits::{PackedAllocate, PackedLayout, SpreadAllocate, SpreadLayout};
+use scale::{Decode, Encode};
 
 pub type ProviderId = AccountId;
 pub type CdnNodeKey = AccountId;
@@ -39,11 +38,10 @@ pub struct CdnNodeInfo {
 pub const CDN_NODE_PARAMS_MAX_LEN: usize = 100_000;
 
 impl CdnNode {
-
     pub fn new(
         provider_id: AccountId,
         cdn_node_params: CdnNodeParams,
-        undistributed_payment: Balance
+        undistributed_payment: Balance,
     ) -> Result<Self> {
         let mut cdn_node = CdnNode {
             provider_id,
@@ -52,7 +50,7 @@ impl CdnNode {
             cluster_id: None,
             status_in_cluster: None,
         };
-        
+
         cdn_node.set_params(cdn_node_params)?;
         Ok(cdn_node)
     }
@@ -64,8 +62,9 @@ impl CdnNode {
     }
 
     pub fn only_without_cluster(&self) -> Result<()> {
-        self.cluster_id
-            .map_or(Ok(()), |cluster_id| Err(CdnNodeIsAddedToCluster(cluster_id)))
+        self.cluster_id.map_or(Ok(()), |cluster_id| {
+            Err(CdnNodeIsAddedToCluster(cluster_id))
+        })
     }
 
     pub fn only_with_cluster(&self, cluster_id: ClusterId) -> Result<()> {
@@ -109,5 +108,4 @@ impl CdnNode {
             Err(InsufficientBalance)
         }
     }
-    
 }

@@ -1,13 +1,11 @@
-use ink_storage::traits::{SpreadAllocate, SpreadLayout};
-use ink_prelude::vec::Vec;
-use ink_storage::Mapping;
-use crate::ddc_bucket::{AccountId, Error::*, Result};
+use super::entity::{Bucket, BucketId, BucketParams};
 use crate::ddc_bucket::cluster::entity::ClusterId;
 use crate::ddc_bucket::flow::Flow;
 use crate::ddc_bucket::schedule::Schedule;
-use super::entity::{Bucket, BucketId, BucketParams};
-
-
+use crate::ddc_bucket::{AccountId, Error::*, Result};
+use ink_prelude::vec::Vec;
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
+use ink_storage::Mapping;
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
@@ -15,23 +13,31 @@ pub struct BucketStore {
     pub next_bucket_id: u32,
     pub buckets: Mapping<BucketId, Bucket>,
     pub writers: Mapping<BucketId, Vec<AccountId>>,
-    pub readers: Mapping<BucketId, Vec<AccountId>>
+    pub readers: Mapping<BucketId, Vec<AccountId>>,
 }
 
 impl BucketStore {
     #[must_use]
-    pub fn create(&mut self, owner_id: AccountId, cluster_id: ClusterId, bucket_params: BucketParams) -> BucketId {
+    pub fn create(
+        &mut self,
+        owner_id: AccountId,
+        cluster_id: ClusterId,
+        bucket_params: BucketParams,
+    ) -> BucketId {
         let bucket_id = self.next_bucket_id;
         self.next_bucket_id = self.next_bucket_id + 1;
 
         let bucket = Bucket {
             owner_id,
             cluster_id,
-            flow: Flow { from: owner_id, schedule: Schedule::empty() },
+            flow: Flow {
+                from: owner_id,
+                schedule: Schedule::empty(),
+            },
             resource_reserved: 0,
             resource_consumption_cap: 0,
             public_availability: false,
-            bucket_params
+            bucket_params,
         };
 
         self.buckets.insert(&bucket_id, &bucket);
@@ -53,7 +59,9 @@ impl BucketStore {
 
     // get accounts with permission for bucket writing
     pub fn get_bucket_writers(&self, key: BucketId) -> Vec<AccountId> {
-        let writers : Vec<AccountId> = self.writers.get(&key)
+        let writers: Vec<AccountId> = self
+            .writers
+            .get(&key)
             .unwrap_or(Vec::new())
             .iter()
             .cloned()
@@ -88,7 +96,8 @@ impl BucketStore {
 
     // get accounts with permission for bucket reading
     pub fn get_bucket_readers(&self, key: BucketId) -> Vec<AccountId> {
-        self.readers.get(&key)
+        self.readers
+            .get(&key)
             .unwrap_or(Vec::new())
             .iter()
             .cloned()
@@ -120,5 +129,4 @@ impl BucketStore {
 
         Ok(())
     }
-
 }

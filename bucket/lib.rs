@@ -24,9 +24,9 @@ pub mod ddc_bucket {
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
     use crate::ddc_bucket::perm::entity::Permission;
 
-    use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
     use self::account::entity::Account;
-    use self::protocol::store::{ProtocolStore, NetworkFeeConfig};
+    use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
+    use self::protocol::store::{NetworkFeeConfig, ProtocolStore};
     use self::topology::store::TopologyStore;
 
     pub mod account;
@@ -68,14 +68,16 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 let admin = Self::env().caller();
-                contract.perms.grant_permission(admin, Permission::SuperAdmin);                
+                contract
+                    .perms
+                    .grant_permission(admin, Permission::SuperAdmin);
                 contract.committer.init(admin);
                 contract.protocol.init(
-                    DEFAULT_PROTOCOL_FEE_BP, 
+                    DEFAULT_PROTOCOL_FEE_BP,
                     admin,
                     DEFAULT_NETWORK_FEE_BP,
                     admin,
-                    DEFAULT_CLUSTER_FEE_BP
+                    DEFAULT_CLUSTER_FEE_BP,
                 );
             })
         }
@@ -155,7 +157,11 @@ pub mod ddc_bucket {
         ///
         /// Provide the account of new owner
         #[ink(message, payable)]
-        pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> Result<()> {
+        pub fn bucket_change_owner(
+            &mut self,
+            bucket_id: BucketId,
+            owner_id: AccountId,
+        ) -> Result<()> {
             self.message_bucket_change_owner(bucket_id, owner_id)
         }
 
@@ -163,7 +169,11 @@ pub mod ddc_bucket {
         ///
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
         #[ink(message)]
-        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> Result<()> {
+        pub fn bucket_alloc_into_cluster(
+            &mut self,
+            bucket_id: BucketId,
+            resource: Resource,
+        ) -> Result<()> {
             self.message_bucket_alloc_into_cluster(bucket_id, resource)
         }
 
@@ -177,7 +187,11 @@ pub mod ddc_bucket {
         ///
         /// See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) -> Result<()> {
+        pub fn bucket_change_params(
+            &mut self,
+            bucket_id: BucketId,
+            params: BucketParams,
+        ) -> Result<()> {
             self.message_bucket_change_params(bucket_id, params)
         }
 
@@ -217,7 +231,7 @@ pub mod ddc_bucket {
             &mut self,
             bucket_id: BucketId,
             public_availability: bool,
-        ) -> Result<()>  {
+        ) -> Result<()> {
             self.message_bucket_set_availability(bucket_id, public_availability)
         }
 
@@ -239,13 +253,21 @@ pub mod ddc_bucket {
 
         /// Set permission for the writer of the bucket
         #[ink(message)]
-        pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> {
+        pub fn bucket_set_writer_perm(
+            &mut self,
+            bucket_id: BucketId,
+            writer: AccountId,
+        ) -> Result<()> {
             self.message_grant_writer_permission(bucket_id, writer)
         }
 
         /// Revoke permission for the writer of the bucket
         #[ink(message)]
-        pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> {
+        pub fn bucket_revoke_writer_perm(
+            &mut self,
+            bucket_id: BucketId,
+            writer: AccountId,
+        ) -> Result<()> {
             self.message_revoke_writer_permission(bucket_id, writer)
         }
 
@@ -257,13 +279,21 @@ pub mod ddc_bucket {
 
         /// Set permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> Result<()> {
+        pub fn bucket_set_reader_perm(
+            &mut self,
+            bucket_id: BucketId,
+            reader: AccountId,
+        ) -> Result<()> {
             self.message_grant_reader_permission(bucket_id, reader)
         }
 
         /// Revoke permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> Result<()> {
+        pub fn bucket_revoke_reader_perm(
+            &mut self,
+            bucket_id: BucketId,
+            writer: AccountId,
+        ) -> Result<()> {
             self.message_revoke_reader_permission(bucket_id, writer)
         }
     }
@@ -326,7 +356,6 @@ pub mod ddc_bucket {
         cluster_params: ClusterParams,
     }
 
-
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ClusterRemoved {
@@ -341,7 +370,7 @@ pub mod ddc_bucket {
         node_key: NodeKey,
         #[ink(topic)]
         cluster_id: ClusterId,
-        status: NodeStatusInCluster
+        status: NodeStatusInCluster,
     }
 
     #[ink(event)]
@@ -351,7 +380,7 @@ pub mod ddc_bucket {
         cdn_node_key: CdnNodeKey,
         #[ink(topic)]
         cluster_id: ClusterId,
-        status: NodeStatusInCluster
+        status: NodeStatusInCluster,
     }
 
     /// A vnode was re-assigned to new node.
@@ -405,7 +434,6 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-
         /// Creates a cluster of Storage nodes and CDN nodes.
         ///
         /// This endpoint creates a cluster of Storage nodes and CDN nodes with specific parameters.
@@ -426,7 +454,7 @@ pub mod ddc_bucket {
         ///
         /// # Errors
         ///
-        /// * `InvalidClusterParams` error if there is an invalid cluster parameter. 
+        /// * `InvalidClusterParams` error if there is an invalid cluster parameter.
         #[ink(message, payable)]
         pub fn cluster_create(
             &mut self,
@@ -508,7 +536,6 @@ pub mod ddc_bucket {
             self.message_cluster_remove_node(cluster_id, node_key)
         }
 
-
         /// Reasignes existing virtual nodes in the targeting cluster.
         ///
         /// This endpoint reasignes existing virtual nodes to another physical Storage node within the same cluster.
@@ -546,13 +573,8 @@ pub mod ddc_bucket {
             v_nodes: Vec<VNodeToken>,
             new_node_key: NodeKey,
         ) -> Result<()> {
-            self.message_cluster_replace_node(
-                cluster_id, 
-                v_nodes, 
-                new_node_key
-            )
+            self.message_cluster_replace_node(cluster_id, v_nodes, new_node_key)
         }
-
 
         /// Reeset a Storage node in the targeting cluster.
         ///
@@ -590,13 +612,8 @@ pub mod ddc_bucket {
             node_key: NodeKey,
             new_v_nodes: Vec<VNodeToken>,
         ) -> Result<()> {
-            self.message_cluster_reset_node(
-                cluster_id, 
-                node_key, 
-                new_v_nodes
-            )
+            self.message_cluster_reset_node(cluster_id, node_key, new_v_nodes)
         }
-
 
         /// Adds a CDN node to the targeting cluster.
         ///
@@ -663,10 +680,10 @@ pub mod ddc_bucket {
         ) -> Result<()> {
             self.message_cluster_remove_cdn_node(cluster_id, cdn_node_key)
         }
-        
+
         /// Sets parameters for the targeting cluster.
         ///
-        /// This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. 
+        /// This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.
         /// All cluster parameters must be specified as the endpoint works using SET approach.
         ///
         /// # Parameters
@@ -688,9 +705,9 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message, payable)]
         pub fn cluster_set_params(
-            &mut self, 
-            cluster_id: ClusterId, 
-            cluster_params: ClusterParams
+            &mut self,
+            cluster_id: ClusterId,
+            cluster_params: ClusterParams,
         ) -> Result<()> {
             self.message_cluster_set_params(cluster_id, cluster_params)
         }
@@ -718,10 +735,7 @@ pub mod ddc_bucket {
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         /// * `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
         #[ink(message)]
-        pub fn cluster_remove(
-            &mut self, 
-            cluster_id: ClusterId, 
-        ) -> Result<()> {
+        pub fn cluster_remove(&mut self, cluster_id: ClusterId) -> Result<()> {
             self.message_cluster_remove(cluster_id)
         }
 
@@ -750,16 +764,12 @@ pub mod ddc_bucket {
         /// * `NodeIsNotAddedToCluster(ClusterId)` error if the Storage node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_node_status(
-            &mut self, 
+            &mut self,
             cluster_id: ClusterId,
-            node_key: NodeKey, 
-            status_in_cluster: NodeStatusInCluster
+            node_key: NodeKey,
+            status_in_cluster: NodeStatusInCluster,
         ) -> Result<()> {
-            self.message_cluster_set_node_status(
-                cluster_id, 
-                node_key, 
-                status_in_cluster
-            )
+            self.message_cluster_set_node_status(cluster_id, node_key, status_in_cluster)
         }
 
         /// Changes CDN node status.
@@ -787,18 +797,13 @@ pub mod ddc_bucket {
         /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the CDN node is not in this cluster.
         #[ink(message)]
         pub fn cluster_set_cdn_node_status(
-            &mut self, 
+            &mut self,
             cluster_id: ClusterId,
-            cdn_node_key: CdnNodeKey, 
-            status_in_cluster: NodeStatusInCluster
+            cdn_node_key: CdnNodeKey,
+            status_in_cluster: NodeStatusInCluster,
         ) -> Result<()> {
-            self.message_cluster_set_cdn_node_status(
-                cluster_id, 
-                cdn_node_key, 
-                status_in_cluster
-            )
+            self.message_cluster_set_cdn_node_status(cluster_id, cdn_node_key, status_in_cluster)
         }
-
 
         /// Sets the resource used per virual node in cluster.
         ///
@@ -828,16 +833,12 @@ pub mod ddc_bucket {
         /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
         #[ink(message)]
         pub fn cluster_set_resource_per_v_node(
-            &mut self, 
-            cluster_id: ClusterId, 
-            new_resource_per_v_node: Resource
+            &mut self,
+            cluster_id: ClusterId,
+            new_resource_per_v_node: Resource,
         ) -> Result<()> {
-            self.message_cluster_set_resource_per_v_node(
-                cluster_id, 
-                new_resource_per_v_node
-            )
+            self.message_cluster_set_resource_per_v_node(cluster_id, new_resource_per_v_node)
         }
-
 
         /// Gets a cluster.
         ///
@@ -855,13 +856,9 @@ pub mod ddc_bucket {
         ///
         /// * `ClusterDoesNotExist` error if the cluster does not exist.
         #[ink(message)]
-        pub fn cluster_get(
-            &self, 
-            cluster_id: ClusterId
-        ) -> Result<ClusterInfo> {
+        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
             self.message_cluster_get(cluster_id)
         }
-
 
         /// Gets a paginated list of clusters.
         ///
@@ -936,7 +933,6 @@ pub mod ddc_bucket {
         pub fn cluster_distribute_cdn_revenue(&mut self, cluster_id: ClusterId) -> Result<()> {
             self.message_cluster_distribute_cdn_revenue(cluster_id)
         }
-
     }
     // ---- End Cluster ----
 
@@ -945,7 +941,12 @@ pub mod ddc_bucket {
     impl DdcBucket {
         /// CDN node operator sets the commit for current era.
         #[ink(message)]
-        pub fn set_commit(&mut self, cdn_owner: AccountId, cdn_node_key: CdnNodeKey, commit: Commit) -> Result<()> {
+        pub fn set_commit(
+            &mut self,
+            cdn_owner: AccountId,
+            cdn_node_key: CdnNodeKey,
+            commit: Commit,
+        ) -> Result<()> {
             self.message_set_commit(cdn_owner, cdn_node_key, commit)
         }
 
@@ -1011,7 +1012,6 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-
         /// Creates a CDN node
         ///
         /// This endpoint creates a CDN node with specific parameters.
@@ -1036,9 +1036,9 @@ pub mod ddc_bucket {
         /// * `InvalidParams(message)` error if there is some invalid configuration parameter.
         #[ink(message, payable)]
         pub fn cdn_node_create(
-            &mut self, 
-            cdn_node_key: CdnNodeKey, 
-            cdn_node_params: CdnNodeParams
+            &mut self,
+            cdn_node_key: CdnNodeKey,
+            cdn_node_params: CdnNodeParams,
         ) -> Result<CdnNodeKey> {
             self.message_cdn_node_create(cdn_node_key, cdn_node_params)
         }
@@ -1066,16 +1066,13 @@ pub mod ddc_bucket {
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         /// * `CdnNodeIsAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
-        pub fn cdn_node_remove(
-            &mut self, 
-            cdn_node_key: CdnNodeKey
-        ) -> Result<()> {
+        pub fn cdn_node_remove(&mut self, cdn_node_key: CdnNodeKey) -> Result<()> {
             self.message_remove_cdn_node(cdn_node_key)
         }
 
         /// Sets parameters for the targeting CDN node.
         ///
-        /// This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
+        /// This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
         /// All CDN node parameters must be specified as the endpoint works using SET approach.
         ///
         /// # Parameters
@@ -1097,9 +1094,9 @@ pub mod ddc_bucket {
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message, payable)]
         pub fn cdn_node_set_params(
-            &mut self, 
-            cdn_node_key: CdnNodeKey, 
-            cdn_node_params: CdnNodeParams
+            &mut self,
+            cdn_node_key: CdnNodeKey,
+            cdn_node_params: CdnNodeParams,
         ) -> Result<()> {
             self.message_cdn_node_set_params(cdn_node_key, cdn_node_params)
         }
@@ -1120,10 +1117,7 @@ pub mod ddc_bucket {
         ///
         /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message)]
-        pub fn cdn_node_get(
-            &self, 
-            cdn_node_key: CdnNodeKey
-        ) -> Result<CdnNodeInfo> {
+        pub fn cdn_node_get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNodeInfo> {
             self.message_cdn_node_get(cdn_node_key)
         }
 
@@ -1151,7 +1145,6 @@ pub mod ddc_bucket {
         ) -> (Vec<CdnNodeInfo>, u32) {
             self.message_cdn_node_list(offset, limit, filter_provider_id)
         }
-
     }
     // ---- End CDN Node ----
 
@@ -1185,7 +1178,6 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-
         /// Creates a Storage node
         ///
         /// This endpoint creates a Storage node with specific parameters.
@@ -1216,14 +1208,9 @@ pub mod ddc_bucket {
             node_key: NodeKey,
             node_params: NodeParams,
             capacity: Resource,
-            rent_v_node_per_month: Balance
+            rent_v_node_per_month: Balance,
         ) -> Result<NodeKey> {
-            self.message_node_create(
-                node_key, 
-                node_params, 
-                capacity, 
-                rent_v_node_per_month
-            )
+            self.message_node_create(node_key, node_params, capacity, rent_v_node_per_month)
         }
 
         /// Removes a Storage node.
@@ -1249,22 +1236,19 @@ pub mod ddc_bucket {
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         /// * `NodeIsAddedToCluster(ClusterId)` error if the removing Storage node is added to some cluster.
         #[ink(message)]
-        pub fn node_remove(
-            &mut self, 
-            node_key: NodeKey
-        ) -> Result<()> {
+        pub fn node_remove(&mut self, node_key: NodeKey) -> Result<()> {
             self.message_node_remove(node_key)
         }
 
         /// Sets parameters for the targeting Storage node.
         ///
-        /// This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
+        /// This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
         /// All Storage node parameters must be specified as the endpoint works using SET approach.
         ///
         /// # Parameters
         ///
         /// * `node_key` - Public Key associated with the Storage node.
-        /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
+        /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
         ///
         /// # Output
         ///
@@ -1280,9 +1264,9 @@ pub mod ddc_bucket {
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message, payable)]
         pub fn node_set_params(
-            &mut self, 
-            node_key: NodeKey, 
-            node_params: NodeParams
+            &mut self,
+            node_key: NodeKey,
+            node_params: NodeParams,
         ) -> Result<()> {
             self.message_node_set_params(node_key, node_params)
         }
@@ -1303,10 +1287,7 @@ pub mod ddc_bucket {
         ///
         /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message)]
-        pub fn node_get(
-            &self, 
-            node_key: NodeKey
-        ) -> Result<NodeInfo> {
+        pub fn node_get(&self, node_key: NodeKey) -> Result<NodeInfo> {
             self.message_node_get(node_key)
         }
 
@@ -1334,7 +1315,6 @@ pub mod ddc_bucket {
         ) -> (Vec<NodeInfo>, u32) {
             self.message_node_list(offset, limit, filter_provider_id)
         }
-
     }
     // ---- End Node ----
 
@@ -1460,11 +1440,7 @@ pub mod ddc_bucket {
         ///
         /// No errors.
         #[ink(message)]
-        pub fn has_permission(
-            &self, 
-            account_id: AccountId,
-            permission: Permission
-        ) -> bool {
+        pub fn has_permission(&self, account_id: AccountId, permission: Permission) -> bool {
             self.perms.has_permission(account_id, permission)
         }
 
@@ -1490,13 +1466,10 @@ pub mod ddc_bucket {
         ///
         /// No errors. The endpoint is idempotent.
         #[ink(message, payable)]
-        pub fn grant_trusted_manager_permission(
-            &mut self, 
-            manager_id: AccountId
-        ) -> Result<()> {
+        pub fn grant_trusted_manager_permission(&mut self, manager_id: AccountId) -> Result<()> {
             self.message_grant_trusted_manager_permission(manager_id)
         }
-        
+
         /// Revokes permissions from cluster manager.
         ///
         /// This endpoint revokes permissions from a cluster manager to manage Storage or CDN node owner.
@@ -1519,13 +1492,9 @@ pub mod ddc_bucket {
         ///
         /// No errors. The endpoint is idempotent.
         #[ink(message)]
-        pub fn revoke_trusted_manager_permission(
-            &mut self, 
-            manager_id: AccountId
-        ) -> Result<()> {
+        pub fn revoke_trusted_manager_permission(&mut self, manager_id: AccountId) -> Result<()> {
             self.message_revoke_trusted_manager_permission(manager_id)
         }
-
     }
     // ---- End Permissions ----
 
@@ -1549,7 +1518,6 @@ pub mod ddc_bucket {
 
     // ---- Admin ----
     impl DdcBucket {
-
         /// Grants any permission.
         ///
         /// This endpoint grants any permissions for any account by the Super-admin.
@@ -1572,9 +1540,9 @@ pub mod ddc_bucket {
         /// Returns `OnlySuperAdmin` error if the caller is not the Super-admin.
         #[ink(message)]
         pub fn admin_grant_permission(
-            &mut self, 
-            grantee: AccountId, 
-            permission: Permission
+            &mut self,
+            grantee: AccountId,
+            permission: Permission,
         ) -> Result<()> {
             self.message_admin_grant_permission(grantee, permission)
         }
@@ -1601,9 +1569,9 @@ pub mod ddc_bucket {
         /// Returns `OnlySuperAdmin` error if the caller is not the Super-admin.
         #[ink(message)]
         pub fn admin_revoke_permission(
-            &mut self, 
-            grantee: AccountId, 
-            permission: Permission
+            &mut self,
+            grantee: AccountId,
+            permission: Permission,
         ) -> Result<()> {
             self.message_admin_revoke_permission(grantee, permission)
         }
@@ -1633,9 +1601,9 @@ pub mod ddc_bucket {
         /// * `NodeProviderIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
         pub fn admin_transfer_node_ownership(
-            &mut self, 
-            node_key: NodeKey, 
-            new_owner: AccountId
+            &mut self,
+            node_key: NodeKey,
+            new_owner: AccountId,
         ) -> Result<()> {
             self.message_admin_transfer_node_ownership(node_key, new_owner)
         }
@@ -1665,9 +1633,9 @@ pub mod ddc_bucket {
         /// * `CdnNodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
         #[ink(message)]
         pub fn admin_transfer_cdn_node_ownership(
-            &mut self, 
-            cdn_node_key: CdnNodeKey, 
-            new_owner: AccountId
+            &mut self,
+            cdn_node_key: CdnNodeKey,
+            new_owner: AccountId,
         ) -> Result<()> {
             self.message_admin_transfer_cdn_node_ownership(cdn_node_key, new_owner)
         }
@@ -1682,7 +1650,7 @@ pub mod ddc_bucket {
 
         /// Pay the revenues accumulated by the protocol
         #[ink(message)]
-        pub fn admin_withdraw_protocol_revenues(&mut self, amount: Balance) -> Result<()>  {
+        pub fn admin_withdraw_protocol_revenues(&mut self, amount: Balance) -> Result<()> {
             self.message_admin_withdraw_revenues(amount)
         }
 
@@ -1696,7 +1664,6 @@ pub mod ddc_bucket {
         pub fn admin_set_protocol_fee_bp(&mut self, protocol_fee_bp: BasisPoints) -> Result<()> {
             self.message_admin_set_protocol_fee_bp(protocol_fee_bp)
         }
-
     }
     // ---- End Admin ----
 
@@ -1712,25 +1679,26 @@ pub mod ddc_bucket {
 
     // ---- Topology ----
     impl DdcBucket {
-
         #[ink(message)]
         pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Vec<VNodeToken> {
             self.message_get_v_nodes_by_cluster(cluster_id)
         }
-    
+
         #[ink(message)]
         pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Vec<VNodeToken> {
             self.message_get_v_nodes_by_node(node_key)
         }
-    
+
         #[ink(message)]
-        pub fn get_node_by_v_node(&self, cluster_id: ClusterId, v_node: VNodeToken) -> Result<NodeKey> {
+        pub fn get_node_by_v_node(
+            &self,
+            cluster_id: ClusterId,
+            v_node: VNodeToken,
+        ) -> Result<NodeKey> {
             self.message_get_node_by_v_node(cluster_id, v_node)
         }
-
     }
     // ---- End Topology ----
-
 
     // ---- Constants ----
     /// One token with 10 decimals.
@@ -1741,8 +1709,6 @@ pub mod ddc_bucket {
     pub const DEFAULT_PROTOCOL_FEE_BP: BasisPoints = 500; // 5 %
     pub const DEFAULT_NETWORK_FEE_BP: BasisPoints = 0; // 0 %
     pub const DEFAULT_CLUSTER_FEE_BP: BasisPoints = 0; // 0 %
-
-
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
@@ -1788,7 +1754,7 @@ pub mod ddc_bucket {
         InsufficientBalance,
         InsufficientNodeResources,
         InsufficientClusterResources,
-        EraSettingFailed
+        EraSettingFailed,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

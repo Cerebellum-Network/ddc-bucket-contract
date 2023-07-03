@@ -1,26 +1,26 @@
 //! The public interface to manage Nodes.
 
+use crate::ddc_bucket::{
+    AccountId, Balance, CdnNodeCreated, CdnNodeParamsSet, CdnNodeRemoved, DdcBucket, Result,
+};
 use ink_lang::codegen::{EmitEvent, StaticEnv};
 use ink_prelude::vec::Vec;
-use crate::ddc_bucket::{AccountId, DdcBucket, CdnNodeCreated, CdnNodeRemoved, CdnNodeParamsSet, Result, Balance};
 
-use super::entity::{CdnNodeKey, CdnNodeInfo, CdnNodeParams};
+use super::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
 
 impl DdcBucket {
-
     pub fn message_cdn_node_create(
-        &mut self, 
-        cdn_node_key: CdnNodeKey, 
-        cdn_node_params: CdnNodeParams
+        &mut self,
+        cdn_node_key: CdnNodeKey,
+        cdn_node_params: CdnNodeParams,
     ) -> Result<CdnNodeKey> {
-
         let caller = Self::env().caller();
         let undistributed_payment: Balance = 0;
         self.cdn_nodes.create(
-            cdn_node_key, 
-            caller, 
-            cdn_node_params.clone(), 
-            undistributed_payment
+            cdn_node_key,
+            caller,
+            cdn_node_params.clone(),
+            undistributed_payment,
         )?;
 
         Self::env().emit_event(CdnNodeCreated {
@@ -29,36 +29,27 @@ impl DdcBucket {
             cdn_node_params,
             undistributed_payment,
         });
-    
-        Ok(cdn_node_key)
 
+        Ok(cdn_node_key)
     }
 
-    pub fn message_remove_cdn_node(
-        &mut self, 
-        cdn_node_key: CdnNodeKey
-    ) -> Result<()> {
-
+    pub fn message_remove_cdn_node(&mut self, cdn_node_key: CdnNodeKey) -> Result<()> {
         let caller = Self::env().caller();
         let cdn_node = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_provider(caller)?;
         cdn_node.only_without_cluster()?;
         self.cdn_nodes.remove(cdn_node_key);
-        
-        Self::env().emit_event(CdnNodeRemoved {
-            cdn_node_key,
-        });
+
+        Self::env().emit_event(CdnNodeRemoved { cdn_node_key });
 
         Ok(())
-
     }
 
     pub fn message_cdn_node_set_params(
-        &mut self, 
-        cdn_node_key: CdnNodeKey, 
-        cdn_node_params: CdnNodeParams
+        &mut self,
+        cdn_node_key: CdnNodeKey,
+        cdn_node_params: CdnNodeParams,
     ) -> Result<()> {
-
         let caller = Self::env().caller();
         let mut cdn_node = self.cdn_nodes.get(cdn_node_key)?;
         cdn_node.only_provider(caller)?;
@@ -71,21 +62,22 @@ impl DdcBucket {
         });
 
         Ok(())
-
     }
 
     pub fn message_cdn_node_get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNodeInfo> {
-
         let cdn_node = self.cdn_nodes.get(cdn_node_key)?;
-        Ok(CdnNodeInfo { 
-            cdn_node_key, 
-            cdn_node, 
+        Ok(CdnNodeInfo {
+            cdn_node_key,
+            cdn_node,
         })
-
     }
 
-    pub fn message_cdn_node_list(&self, offset: u32, limit: u32, filter_provider_id: Option<AccountId>) -> (Vec<CdnNodeInfo>, u32) {
-
+    pub fn message_cdn_node_list(
+        &self,
+        offset: u32,
+        limit: u32,
+        filter_provider_id: Option<AccountId>,
+    ) -> (Vec<CdnNodeInfo>, u32) {
         let mut cdn_nodes = Vec::with_capacity(limit as usize);
         for idx in offset..offset + limit {
             let cdn_node_key = match self.cdn_nodes.keys.get(idx as usize) {
@@ -106,12 +98,10 @@ impl DdcBucket {
                 cdn_node_key,
                 cdn_node,
             };
-            
+
             cdn_nodes.push(status);
         }
 
         (cdn_nodes, self.cdn_nodes.keys.len().try_into().unwrap())
-
     }
-
 }

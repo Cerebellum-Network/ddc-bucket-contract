@@ -1,15 +1,14 @@
 //! The data structure of Clusters.
-use ink_prelude::vec::Vec;
-use ink_prelude::string::String;
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout, PackedAllocate};
-use scale::{Decode, Encode};
-use ink_primitives::Key;
 use crate::ddc_bucket::cash::{Cash, Payable};
-use crate::ddc_bucket::node::entity::{Resource, NodeKey};
-use crate::ddc_bucket::cdn_node::entity::{CdnNodeKey};
-use crate::ddc_bucket::Error::{OnlyClusterManager, InsufficientBalance};
-use crate::ddc_bucket::{AccountId, Balance, VNodeToken, Result, Error::*};
-
+use crate::ddc_bucket::cdn_node::entity::CdnNodeKey;
+use crate::ddc_bucket::node::entity::{NodeKey, Resource};
+use crate::ddc_bucket::Error::{InsufficientBalance, OnlyClusterManager};
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result, VNodeToken};
+use ink_prelude::string::String;
+use ink_prelude::vec::Vec;
+use ink_primitives::Key;
+use ink_storage::traits::{PackedAllocate, PackedLayout, SpreadAllocate, SpreadLayout};
+use scale::{Decode, Encode};
 
 pub type ClusterId = u32;
 pub type ClusterParams = String;
@@ -18,7 +17,6 @@ pub type ClusterParams = String;
 // There is a buffer with only limited capacity (around 16KB in the default configuration) available.
 pub const MAX_CLUSTER_NODES_LEN_IN_VEC: usize = 200;
 pub const MAX_CLUSTER_CDN_NODES_LEN_IN_VEC: usize = 200;
-
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, PackedLayout, SpreadLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -56,17 +54,15 @@ pub struct ClusterInfo {
 }
 
 pub const CLUSTER_PARAMS_MAX_LEN: usize = 100_000;
-pub const CDN_USD_PER_GB : Balance = 104_857_600;
+pub const CDN_USD_PER_GB: Balance = 104_857_600;
 pub const KB_PER_GB: Balance = 1_000_000;
 
 impl Cluster {
-
     pub fn new(
         manager_id: AccountId,
         cluster_params: ClusterParams,
         resource_per_v_node: Resource,
     ) -> Result<Self> {
-
         let mut cluster = Cluster {
             manager_id,
             cluster_params: ClusterParams::default(),
@@ -79,7 +75,7 @@ impl Cluster {
             cdn_usd_per_gb: CDN_USD_PER_GB, // setting initially to 1 cent per GB
             cdn_revenues: Cash(0),
         };
-        
+
         cluster.set_params(cluster_params)?;
         Ok(cluster)
     }
@@ -123,7 +119,7 @@ impl Cluster {
     pub fn remove_cdn_node(&mut self, cdn_node_key: CdnNodeKey) {
         if let Some(pos) = self.cdn_nodes_keys.iter().position(|x| *x == cdn_node_key) {
             self.cdn_nodes_keys.remove(pos);
-        }    
+        }
     }
 
     pub fn set_params(&mut self, cluster_params: ClusterParams) -> Result<()> {
@@ -137,11 +133,11 @@ impl Cluster {
     pub fn increase_rent(&mut self, amount: Balance) {
         self.total_rent += amount;
     }
-    
+
     pub fn decrease_rent(&mut self, amount: Balance) {
         self.total_rent -= amount;
     }
-    
+
     pub fn set_resource_per_v_node(&mut self, resource_per_v_node: Resource) {
         self.resource_per_v_node = resource_per_v_node;
     }
@@ -173,5 +169,4 @@ impl Cluster {
         self.cdn_revenues.pay_unchecked(amount);
         Ok(())
     }
-
 }

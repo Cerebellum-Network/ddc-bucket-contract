@@ -1,4 +1,4 @@
-// Committer Management 
+// Committer Management
 
-pub mod store;
 pub mod messages;
+pub mod store;
