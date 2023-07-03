@@ -15,20 +15,25 @@ const ddcConfig = require('./ddcConfig.js');
 const log = console.log;
 
 const DDC_BUCKET_CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
-const INIT_ENV = process.env.INIT_ENV;
+const ENV = process.env.ENV;
 const SUPERADMIN_MNEMONIC = process.env.SUPERADMIN;
 
 
-const ddcEnvConfig = ddcConfig[INIT_ENV];
-if (ddcEnvConfig === undefined) {
-  console.error("Please provide INIT_ENV as one of ", Object.keys(ddcConfig));
+const ddcEnvConfig = ddcConfig[ENV];
+if (!ddcEnvConfig) {
+  console.error("Please provide ENV as one of ", Object.keys(ddcConfig));
   process.exit(-1);
 }
 console.log(ddcEnvConfig);
 
+if (!SUPERADMIN_MNEMONIC) {
+    console.error("Please provide SUPERADMIN seed");
+    process.exit(-1);
+}
+
 deploymentRegistry.initContract(
   DDC_BUCKET_CONTRACT_NAME, 
-  INIT_ENV, 
+  ENV, 
   ddcEnvConfig.contract_address
 );
 
@@ -40,7 +45,7 @@ async function main() {
     const sadmin = accountFromUri(SUPERADMIN_MNEMONIC);
     console.log(`Superadmin: ${sadmin.address}`);
 
-    const bucketContract = getContract(DDC_BUCKET_CONTRACT_NAME, INIT_ENV, api);
+    const bucketContract = getContract(DDC_BUCKET_CONTRACT_NAME, ENV, api);
     log("Using bucket contract", DDC_BUCKET_CONTRACT_NAME, "at", bucketContract.address.toString());
 
     const txOptions = {
@@ -94,7 +99,7 @@ async function main() {
             const param = JSON.stringify(ddcEnvConfig.storage_node_params[i]);
             const user = randomAccount();
 
-            fs.appendFileSync('secrets.txt', `${user.address}: ${user.mnemonic} -- ${INIT_ENV} storage ${i}\n`);
+            fs.appendFileSync('secrets.txt', `${user.address}: ${user.mnemonic} -- ${ENV} storage ${i}\n`);
             console.log(`  node ${i}: address ${user.address}, param ${param}`);
 
             const storageNodeKey = user.address;
@@ -120,21 +125,14 @@ async function main() {
 
             const tx1 = bucketContract.tx.clusterCreate(
                 txOptions,
-                JSON.stringify(ddcEnvConfig.cluster[key].param)
+                JSON.stringify(ddcEnvConfig.cluster[key].param),
+                100000n
             );
             
             const result1 = await sendTx(sadmin, tx1);
             log(getExplorerUrl(result1), "\n");
-            const { clusterId } = ddcBucket.findClusterCreatedEvent(result1.contractEvents);
+            let { clusterId } = ddcBucket.findClusterCreatedEvent(result1.contractEvents || []);
             clustersIds.push(clusterId);
-
-            const tx2 = bucketContract.tx.clusterReserveResource(
-                txOptions, 
-                clusterId, 
-                100000n
-            );
-            const result2 = await sendTx(sadmin, tx2);
-            log(getExplorerUrl(result2), "\n");
         }
     }
 

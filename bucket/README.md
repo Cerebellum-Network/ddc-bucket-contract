@@ -67,10 +67,9 @@ A cluster may be managed by a trusted party using an external account, or by a s
 - Providers registers Nodes.
     node_create
 - Providers signal trust to a Manager.
-    node_trust_manager
+    grant_trusted_manager_permission
 - Manager creates a Cluster and reserve some capacity from Nodes.
     cluster_create
-    cluster_reserve_resource
 - Owner creates a Bucket in a Cluster.
     bucket_create
 - Owner deposits some funds.

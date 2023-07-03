@@ -10,7 +10,12 @@ const log = console.log;
 
 
 const CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
-const RPC = config.DEVNET_RPC_ENDPOINT;
+const RPC = process.env.ENV == 'devnet' 
+    ? config.DEVNET_RPC_ENDPOINT 
+    : process.env.ENV == 'testnet' 
+        ? config.TESTNET_RPC_ENDPOINT 
+        : config.LOCAL_RPC_ENDPOINT;
+        
 const ACCOUNT_FILTER = null; // get data about all accounts.
 
 deploymentRegistry.initDefaultContracts();

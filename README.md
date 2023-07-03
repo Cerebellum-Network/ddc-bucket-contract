@@ -25,19 +25,14 @@ cargo install cargo-contract --version 1.5.0 --force --locked
 brew install binaryen 
 # For Debian\Ubuntu:
 # apt-get install binaryen
-
-# Install the documentation generator
-git clone https://github.com/Cerebellum-Network/ink-doc-gen.git
-cd ink-doc-gen && git checkout v0.1.0 && yarn
 ```
 
 ## Building
 
 ```bash
-# Build DDC Bucket and DDC NFT Registry contracts
+# Build DDC Bucket contract
 cargo +nightly-2023-02-07 test &&
-cargo +nightly-2023-02-07 contract build --release --manifest-path bucket/Cargo.toml &&
-cargo +nightly-2023-02-07 contract build --release --manifest-path ddc_nft_registry/Cargo.toml
+cargo +nightly-2023-02-07 contract build --release --manifest-path bucket/Cargo.toml
 ```
 
 Note: if you are encountering errors during build process, they may be related to your specific processor's architecture. If this is the case, try out the *Instalation using Docker image* option, [described in the official docs](https://github.com/paritytech/cargo-contract#installation-using-docker-image)

@@ -17,7 +17,11 @@ const log = console.log;
 
 const BUCKET_CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
 const SEED = config.ACTOR_SEED;
-const RPC = config.DEVNET_RPC_ENDPOINT;
+const RPC = process.env.ENV == 'devnet' 
+    ? config.DEVNET_RPC_ENDPOINT 
+    : process.env.ENV == 'testnet' 
+        ? config.TESTNET_RPC_ENDPOINT 
+        : config.LOCAL_RPC_ENDPOINT;
 
 deploymentRegistry.initDefaultContracts();
 
@@ -97,9 +101,11 @@ async function main() {
     {
         log("Setup a cluster...");
         let clusterParams = "{}";
+        const resourcePerVNode = 10;
         const tx = bucketContract.tx.clusterCreate(
             txOptionsPay,
-            clusterParams
+            clusterParams,
+            resourcePerVNode
         );
         
         const result = await sendTx(account, tx);
@@ -160,23 +166,6 @@ async function main() {
         let event = ddcBucket.findClusterCdnNodeAddedEvent(events);
         cdnNodeKey = event.cdnNodeKey;
         log("ClusterCdnNodeAdded", event, "\n");
-    }
-
-    {
-        log("Reserve some resources for the cluster...");
-        const clusterResource = 10;
-        const tx = bucketContract.tx.clusterReserveResource(
-            txOptions, 
-            clusterId, 
-            clusterResource
-        );
-
-        const result = await sendTx(account, tx);
-        printGas(result);
-        log(getExplorerUrl(result));
-        const events = printEvents(result);
-        let event = ddcBucket.findClusterReserveResourceEvent(events);
-        log("ClusterReserveResource", event, "\n");
     }
 
     {

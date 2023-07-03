@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xcc988ca917fa8ca03d34e33ee0ce905a8e494ac4d412367588c110ceeb5cd1b3",
+    "hash": "0x1caf5ce3e145731b738594770e25507ba8c09066f63328d913f96cb72ad1ba5d",
     "language": "ink! 3.4.0",
     "compiler": "rustc 1.69.0-nightly"
   },
@@ -205,7 +205,7 @@
             {
               "docs": [],
               "indexed": true,
-              "label": "manager",
+              "label": "manager_id",
               "type": {
                 "displayName": [
                   "AccountId"
@@ -250,6 +250,17 @@
                   "NodeKey"
                 ],
                 "type": 9
+              }
+            },
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "v_nodes",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 27
               }
             }
           ],
@@ -486,12 +497,64 @@
                 ],
                 "type": 9
               }
+            },
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "v_nodes",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 27
+              }
             }
           ],
           "docs": [
             " A vnode was re-assigned to new node."
           ],
           "label": "ClusterNodeReplaced"
+        },
+        {
+          "args": [
+            {
+              "docs": [],
+              "indexed": true,
+              "label": "cluster_id",
+              "type": {
+                "displayName": [
+                  "ClusterId"
+                ],
+                "type": 6
+              }
+            },
+            {
+              "docs": [],
+              "indexed": true,
+              "label": "node_key",
+              "type": {
+                "displayName": [
+                  "NodeKey"
+                ],
+                "type": 9
+              }
+            },
+            {
+              "docs": [],
+              "indexed": false,
+              "label": "v_nodes",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 27
+              }
+            }
+          ],
+          "docs": [
+            " A vnode was re-assigned to new node."
+          ],
+          "label": "ClusterNodeReset"
         },
         {
           "args": [
@@ -569,36 +632,6 @@
             {
               "docs": [],
               "indexed": true,
-              "label": "manager",
-              "type": {
-                "displayName": [
-                  "AccountId"
-                ],
-                "type": 9
-              }
-            }
-          ],
-          "docs": [
-            " A new cluster was created."
-          ],
-          "label": "CdnClusterCreated"
-        },
-        {
-          "args": [
-            {
-              "docs": [],
-              "indexed": true,
-              "label": "cluster_id",
-              "type": {
-                "displayName": [
-                  "ClusterId"
-                ],
-                "type": 6
-              }
-            },
-            {
-              "docs": [],
-              "indexed": true,
               "label": "provider_id",
               "type": {
                 "displayName": [
@@ -608,10 +641,8 @@
               }
             }
           ],
-          "docs": [
-            " The respective share of revenues of a CDN cluster for a provider was distributed."
-          ],
-          "label": "CdnClusterDistributeRevenues"
+          "docs": [],
+          "label": "ClusterDistributeCdnRevenues"
         },
         {
           "args": [
@@ -858,7 +889,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 74
+                "type": 75
               }
             }
           ],
@@ -888,7 +919,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 74
+                "type": 75
               }
             }
           ],
@@ -1515,6 +1546,15 @@
                 ],
                 "type": 13
               }
+            },
+            {
+              "label": "resource_per_v_node",
+              "type": {
+                "displayName": [
+                  "Resource"
+                ],
+                "type": 6
+              }
             }
           ],
           "docs": [
@@ -1526,6 +1566,7 @@
             " # Parameters",
             "",
             " * `cluster_params` - [Cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.",
+            " * `resource_per_v_node` - Resource value that will be allocated for every virtual node in the cluster.",
             "",
             " # Output",
             "",
@@ -1608,7 +1649,8 @@
             " * `NodeDoesNotExist` error if the adding Storage node does not exist.",
             " * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.",
             " * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.",
-            " * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity."
+            " * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.",
+            " * `InsufficientNodeResources` - error if there is not enough resources in a physical node."
           ],
           "label": "cluster_add_node",
           "mutates": true,
@@ -1764,6 +1806,78 @@
               }
             },
             {
+              "label": "node_key",
+              "type": {
+                "displayName": [
+                  "NodeKey"
+                ],
+                "type": 9
+              }
+            },
+            {
+              "label": "new_v_nodes",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 27
+              }
+            }
+          ],
+          "docs": [
+            " Reeset a Storage node in the targeting cluster.",
+            "",
+            " This endpoint resets virtual nodes on a physical Storage node in the targeting cluster.",
+            " Virtual nodes determines a token (position) on the ring in terms of Consistent Hashing.",
+            " The Storage node can be reset in the cluster by cluster manager only.",
+            "",
+            " # Parameters",
+            "",
+            " * `cluster_id` - ID of the targeting cluster.",
+            " * `node_key` - Public Key associated with the Storage node.",
+            " * `new_v_nodes` - List of tokens (positions) related to the Storage node to reset.",
+            "",
+            " # Output",
+            "",
+            " Returns nothing.",
+            "",
+            " # Events",
+            "",
+            " * `ClusterNodeAdded` event on successful Storage node addition.",
+            "",
+            " # Errors",
+            "",
+            " * `ClusterDoesNotExist` error if the cluster does not exist.",
+            " * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.",
+            " * `NodeDoesNotExist` error if the adding Storage node does not exist.",
+            " * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.",
+            " * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.",
+            " * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.",
+            " * `InsufficientNodeResources` - error if there is not enough resources in a physical node."
+          ],
+          "label": "cluster_reset_node",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 44
+          },
+          "selector": "0xa78b2e19"
+        },
+        {
+          "args": [
+            {
+              "label": "cluster_id",
+              "type": {
+                "displayName": [
+                  "ClusterId"
+                ],
+                "type": 6
+              }
+            },
+            {
               "label": "cdn_node_key",
               "type": {
                 "displayName": [
@@ -1892,7 +2006,7 @@
           "docs": [
             " Sets parameters for the targeting cluster.",
             "",
-            " This enpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. ",
+            " This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. ",
             " All cluster parameters must be specified as the endpoint works using SET approach.",
             "",
             " # Parameters",
@@ -1939,7 +2053,7 @@
           "docs": [
             " Removes a cluster.",
             "",
-            " This enpoint removes the cluster if it does not contain any nodes.",
+            " This endpoint removes the cluster if it does not contain any nodes.",
             " Only an empty cluster can be removed.",
             "",
             " # Parameters",
@@ -2004,7 +2118,7 @@
           "docs": [
             " Changes Storage node status.",
             "",
-            " This enpoint changes Storage node status in a cluster.",
+            " This endpoint changes Storage node status in a cluster.",
             "",
             " # Parameters",
             "",
@@ -2070,7 +2184,7 @@
           "docs": [
             " Changes CDN node status.",
             "",
-            " This enpoint changes CDN node status in a cluster.",
+            " This endpoint changes CDN node status in a cluster.",
             "",
             " # Parameters",
             "",
@@ -2113,12 +2227,72 @@
                 ],
                 "type": 6
               }
+            },
+            {
+              "label": "new_resource_per_v_node",
+              "type": {
+                "displayName": [
+                  "Resource"
+                ],
+                "type": 6
+              }
+            }
+          ],
+          "docs": [
+            " Sets the resource used per virual node in cluster.",
+            "",
+            " This endpoint sets the resource value that is being used by each virtual node in the cluster.",
+            " If there are existing virtual nodes in the cluster the resource for its physical nodes will be recalculated.",
+            "",
+            " # Parameters",
+            "",
+            " * `cluster_id` - ID of the targeting cluster.",
+            " * `new_resource_per_v_node` - Resource value that will be allocated for every virtual node in the cluster.",
+            "",
+            " # Output",
+            "",
+            " Returns nothing.",
+            "",
+            " # Events",
+            "",
+            " * `ClusterNodeReplaced` event on successful virtual node reassignment.",
+            "",
+            " # Errors",
+            "",
+            " * `ClusterDoesNotExist` error if the cluster does not exist.",
+            " * `OnlyClusterManager` error if the caller is not the cluster manager.",
+            " * `NodeDoesNotExist` error if the new Storage node does not exist.",
+            " * `VNodeIsNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.",
+            " * `InsufficientClusterResources` - error if there is not enough resources in the cluster.",
+            " * `InsufficientNodeResources` - error if there is not enough resources in a physical node."
+          ],
+          "label": "cluster_set_resource_per_v_node",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 44
+          },
+          "selector": "0xbca5ef71"
+        },
+        {
+          "args": [
+            {
+              "label": "cluster_id",
+              "type": {
+                "displayName": [
+                  "ClusterId"
+                ],
+                "type": 6
+              }
             }
           ],
           "docs": [
             " Gets a cluster.",
             "",
-            " This enpoint gets the targeting cluster along with its parameters, Storage and CDN nodes.",
+            " This endpoint gets the targeting cluster along with its parameters, Storage and CDN nodes.",
             "",
             " # Parameters",
             "",
@@ -2176,7 +2350,7 @@
           "docs": [
             " Gets a paginated list of clusters.",
             "",
-            " This enpoint gets a paginated list of clusters along with their parameters, Storage and CDN nodes.",
+            " This endpoint gets a paginated list of clusters along with their parameters, Storage and CDN nodes.",
             " The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.",
             " The optimal `limit` depends on the size of params.",
             "",
@@ -2198,43 +2372,6 @@
             "type": 54
           },
           "selector": "0xd9db9d44"
-        },
-        {
-          "args": [
-            {
-              "label": "cluster_id",
-              "type": {
-                "displayName": [
-                  "ClusterId"
-                ],
-                "type": 6
-              }
-            },
-            {
-              "label": "amount",
-              "type": {
-                "displayName": [
-                  "Resource"
-                ],
-                "type": 6
-              }
-            }
-          ],
-          "docs": [
-            " As manager, reserve more resources for the cluster from the free capacity of nodes.",
-            "",
-            " The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes)."
-          ],
-          "label": "cluster_reserve_resource",
-          "mutates": true,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "Result"
-            ],
-            "type": 44
-          },
-          "selector": "0xb5e38125"
         },
         {
           "args": [
@@ -2642,7 +2779,7 @@
           "docs": [
             " Removes a CDN node.",
             "",
-            " This enpoint removes the targeting CDN Node if it is not added to some cluster.",
+            " This endpoint removes the targeting CDN Node if it is not added to some cluster.",
             " Only a node that is not a member of some cluster can be removed.",
             "",
             " # Parameters",
@@ -2698,7 +2835,7 @@
           "docs": [
             " Sets parameters for the targeting CDN node.",
             "",
-            " This enpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
+            " This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
             " All CDN node parameters must be specified as the endpoint works using SET approach.",
             "",
             " # Parameters",
@@ -2745,7 +2882,7 @@
           "docs": [
             " Gets a CDN node.",
             "",
-            " This enpoint gets the targeting CDN node along with its parameters.",
+            " This endpoint gets the targeting CDN node along with its parameters.",
             "",
             " # Parameters",
             "",
@@ -2803,7 +2940,7 @@
           "docs": [
             " Gets a paginated list of CDN nodes.",
             "",
-            " This enpoint gets a paginated list of CDN nodes along with their parameters.",
+            " This endpoint gets a paginated list of CDN nodes along with their parameters.",
             " The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.",
             " The optimal `limit` depends on the size of params.",
             "",
@@ -2917,7 +3054,7 @@
           "docs": [
             " Removes a Storage node.",
             "",
-            " This enpoint removes the targeting Storage Node if it is not added to some cluster.",
+            " This endpoint removes the targeting Storage Node if it is not added to some cluster.",
             " Only a node that is not a member of some cluster can be removed.",
             "",
             " # Parameters",
@@ -2973,7 +3110,7 @@
           "docs": [
             " Sets parameters for the targeting Storage node.",
             "",
-            " This enpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
+            " This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
             " All Storage node parameters must be specified as the endpoint works using SET approach.",
             "",
             " # Parameters",
@@ -3020,7 +3157,7 @@
           "docs": [
             " Gets a Storage node.",
             "",
-            " This enpoint gets the targeting Storage node along with its parameters.",
+            " This endpoint gets the targeting Storage node along with its parameters.",
             "",
             " # Parameters",
             "",
@@ -3078,7 +3215,7 @@
           "docs": [
             " Gets a paginated list of Storage nodes.",
             "",
-            " This enpoint gets a paginated list of Storage nodes along with their parameters.",
+            " This endpoint gets a paginated list of Storage nodes along with their parameters.",
             " The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.",
             " The optimal `limit` depends on the size of params.",
             "",
@@ -3132,6 +3269,22 @@
             "type": 18
           },
           "selector": "0x07c63885"
+        },
+        {
+          "args": [],
+          "docs": [
+            " Get the Fee Percentage Basis Points that will be charged by the protocol"
+          ],
+          "label": "get_network_fee_config",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "NetworkFeeConfig"
+            ],
+            "type": 73
+          },
+          "selector": "0xd1503f07"
         },
         {
           "args": [],
@@ -3242,7 +3395,7 @@
             "displayName": [
               "Result"
             ],
-            "type": 73
+            "type": 74
           },
           "selector": "0x1d4220fa"
         },
@@ -3307,14 +3460,14 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 74
+                "type": 75
               }
             }
           ],
           "docs": [
             " Checks for permission existence.",
             "",
-            " This enpoint checks whether the given account has the given permission.",
+            " This endpoint checks whether the given account has the given permission.",
             " Super-admin will always have all permissions.",
             "",
             " # Parameters",
@@ -3344,7 +3497,7 @@
         {
           "args": [
             {
-              "label": "manager",
+              "label": "manager_id",
               "type": {
                 "displayName": [
                   "AccountId"
@@ -3362,7 +3515,7 @@
             "",
             " # Parameters",
             "",
-            " * `manager` - cluster manager account.",
+            " * `manager_id` - cluster manager account.",
             "",
             " # Output",
             "",
@@ -3390,7 +3543,7 @@
         {
           "args": [
             {
-              "label": "manager",
+              "label": "manager_id",
               "type": {
                 "displayName": [
                   "AccountId"
@@ -3408,7 +3561,7 @@
             "",
             " # Parameters",
             "",
-            " * `manager` - cluster manager account.",
+            " * `manager_id` - cluster manager account.",
             "",
             " # Output",
             "",
@@ -3450,7 +3603,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 74
+                "type": 75
               }
             }
           ],
@@ -3504,7 +3657,7 @@
                 "displayName": [
                   "Permission"
                 ],
-                "type": 74
+                "type": 75
               }
             }
           ],
@@ -3686,36 +3839,10 @@
         {
           "args": [
             {
-              "label": "config",
-              "type": {
-                "displayName": [
-                  "NetworkFeeConfig"
-                ],
-                "type": 75
-              }
-            }
-          ],
-          "docs": [
-            " As SuperAdmin, set the network and cluster fee configuration."
-          ],
-          "label": "admin_set_network_fee_config",
-          "mutates": true,
-          "payable": false,
-          "returnType": {
-            "displayName": [
-              "Result"
-            ],
-            "type": 44
-          },
-          "selector": "0x14649395"
-        },
-        {
-          "args": [
-            {
               "label": "amount",
               "type": {
                 "displayName": [
-                  "u128"
+                  "Balance"
                 ],
                 "type": 12
               }
@@ -3738,10 +3865,36 @@
         {
           "args": [
             {
+              "label": "config",
+              "type": {
+                "displayName": [
+                  "NetworkFeeConfig"
+                ],
+                "type": 73
+              }
+            }
+          ],
+          "docs": [
+            " As SuperAdmin, set the network and cluster fee configuration."
+          ],
+          "label": "admin_set_network_fee_config",
+          "mutates": true,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 44
+          },
+          "selector": "0x14649395"
+        },
+        {
+          "args": [
+            {
               "label": "protocol_fee_bp",
               "type": {
                 "displayName": [
-                  "u128"
+                  "BasisPoints"
                 ],
                 "type": 12
               }
@@ -5432,26 +5585,30 @@
                 },
                 {
                   "index": 12,
-                  "name": "OnlySuperAdmin"
+                  "name": "OnlyValidator"
                 },
                 {
                   "index": 13,
-                  "name": "OnlyClusterManagerOrNodeProvider"
+                  "name": "OnlySuperAdmin"
                 },
                 {
                   "index": 14,
-                  "name": "OnlyClusterManagerOrCdnNodeProvider"
+                  "name": "OnlyClusterManagerOrNodeProvider"
                 },
                 {
                   "index": 15,
-                  "name": "Unauthorized"
+                  "name": "OnlyClusterManagerOrCdnNodeProvider"
                 },
                 {
                   "index": 16,
-                  "name": "ClusterDoesNotExist"
+                  "name": "Unauthorized"
                 },
                 {
                   "index": 17,
+                  "name": "ClusterDoesNotExist"
+                },
+                {
+                  "index": 18,
                   "name": "ClusterIsNotEmpty"
                 },
                 {
@@ -5461,27 +5618,27 @@
                       "typeName": "ClusterId"
                     }
                   ],
-                  "index": 18,
+                  "index": 19,
                   "name": "TopologyIsNotCreated"
                 },
                 {
-                  "index": 19,
+                  "index": 20,
                   "name": "TopologyAlreadyExists"
                 },
                 {
-                  "index": 20,
+                  "index": 21,
                   "name": "NodesSizeExceedsLimit"
                 },
                 {
-                  "index": 21,
+                  "index": 22,
                   "name": "CdnNodesSizeExceedsLimit"
                 },
                 {
-                  "index": 22,
+                  "index": 23,
                   "name": "VNodesSizeExceedsLimit"
                 },
                 {
-                  "index": 23,
+                  "index": 24,
                   "name": "AccountsSizeExceedsLimit"
                 },
                 {
@@ -5491,7 +5648,7 @@
                       "typeName": "ClusterId"
                     }
                   ],
-                  "index": 24,
+                  "index": 25,
                   "name": "NodeIsNotAddedToCluster"
                 },
                 {
@@ -5501,7 +5658,7 @@
                       "typeName": "ClusterId"
                     }
                   ],
-                  "index": 25,
+                  "index": 26,
                   "name": "NodeIsAddedToCluster"
                 },
                 {
@@ -5511,7 +5668,7 @@
                       "typeName": "ClusterId"
                     }
                   ],
-                  "index": 26,
+                  "index": 27,
                   "name": "CdnNodeIsNotAddedToCluster"
                 },
                 {
@@ -5521,7 +5678,7 @@
                       "typeName": "ClusterId"
                     }
                   ],
-                  "index": 27,
+                  "index": 28,
                   "name": "CdnNodeIsAddedToCluster"
                 },
                 {
@@ -5531,7 +5688,7 @@
                       "typeName": "ClusterId"
                     }
                   ],
-                  "index": 28,
+                  "index": 29,
                   "name": "VNodeDoesNotExistsInCluster"
                 },
                 {
@@ -5545,7 +5702,7 @@
                       "typeName": "VNodeToken"
                     }
                   ],
-                  "index": 29,
+                  "index": 30,
                   "name": "VNodeIsNotAssignedToNode"
                 },
                 {
@@ -5555,7 +5712,7 @@
                       "typeName": "NodeKey"
                     }
                   ],
-                  "index": 30,
+                  "index": 31,
                   "name": "VNodeIsAlreadyAssignedToNode"
                 },
                 {
@@ -5569,39 +5726,43 @@
                       "typeName": "NodeKey"
                     }
                   ],
-                  "index": 31,
+                  "index": 32,
                   "name": "AtLeastOneVNodeHasToBeAssigned"
                 },
                 {
-                  "index": 32,
+                  "index": 33,
                   "name": "NodeProviderIsNotSuperAdmin"
                 },
                 {
-                  "index": 33,
+                  "index": 34,
                   "name": "CdnNodeOwnerIsNotSuperAdmin"
                 },
                 {
-                  "index": 34,
+                  "index": 35,
                   "name": "BucketDoesNotExist"
                 },
                 {
-                  "index": 35,
+                  "index": 36,
                   "name": "BondingPeriodNotFinished"
                 },
                 {
-                  "index": 36,
+                  "index": 37,
                   "name": "TransferFailed"
                 },
                 {
-                  "index": 37,
+                  "index": 38,
                   "name": "InsufficientBalance"
                 },
                 {
-                  "index": 38,
-                  "name": "InsufficientResources"
+                  "index": 39,
+                  "name": "InsufficientNodeResources"
                 },
                 {
-                  "index": 39,
+                  "index": 40,
+                  "name": "InsufficientClusterResources"
+                },
+                {
+                  "index": 41,
                   "name": "EraSettingFailed"
                 }
               ]
@@ -6352,6 +6513,39 @@
         "id": 73,
         "type": {
           "def": {
+            "composite": {
+              "fields": [
+                {
+                  "name": "network_fee_bp",
+                  "type": 12,
+                  "typeName": "BasisPoints"
+                },
+                {
+                  "name": "network_fee_destination",
+                  "type": 9,
+                  "typeName": "AccountId"
+                },
+                {
+                  "name": "cluster_management_fee_bp",
+                  "type": 12,
+                  "typeName": "BasisPoints"
+                }
+              ]
+            }
+          },
+          "path": [
+            "ddc_bucket",
+            "ddc_bucket",
+            "protocol",
+            "store",
+            "NetworkFeeConfig"
+          ]
+        }
+      },
+      {
+        "id": 74,
+        "type": {
+          "def": {
             "variant": {
               "variants": [
                 {
@@ -6391,7 +6585,7 @@
         }
       },
       {
-        "id": 74,
+        "id": 75,
         "type": {
           "def": {
             "variant": {
@@ -6413,6 +6607,10 @@
                 {
                   "index": 2,
                   "name": "SuperAdmin"
+                },
+                {
+                  "index": 3,
+                  "name": "Validator"
                 }
               ]
             }
@@ -6423,39 +6621,6 @@
             "perm",
             "entity",
             "Permission"
-          ]
-        }
-      },
-      {
-        "id": 75,
-        "type": {
-          "def": {
-            "composite": {
-              "fields": [
-                {
-                  "name": "network_fee_bp",
-                  "type": 12,
-                  "typeName": "BasisPoints"
-                },
-                {
-                  "name": "network_fee_destination",
-                  "type": 9,
-                  "typeName": "AccountId"
-                },
-                {
-                  "name": "cluster_management_fee_bp",
-                  "type": 12,
-                  "typeName": "BasisPoints"
-                }
-              ]
-            }
-          },
-          "path": [
-            "ddc_bucket",
-            "ddc_bucket",
-            "protocol",
-            "store",
-            "NetworkFeeConfig"
           ]
         }
       }

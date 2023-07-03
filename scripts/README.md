@@ -6,25 +6,15 @@ Also, check the [config file](./sdk/src/config/index.js), to ensure that you are
 
 ## Examples
 
-The [examples](./examples/) folder contains scripts that demonstrate how to properly send transacrions to DDC Bucket and DDC NFT Registry contracts using the [@polkadot/api](https://polkadot.js.org/docs/api/) library. These simple scenarious should help other team members to clarify the business logic flow, and quickly detect issues related to various business constraints and infrastructue constraints (i.e. gas price, attached tokens, method signature, etc.). Scripts should be updated while the contract is evolving to reflect the actual logic.
+The [examples](./examples/) folder contains scripts that demonstrate how to properly send transacrions to DDC Bucket contracts using the [@polkadot/api](https://polkadot.js.org/docs/api/) library. These simple scenarious should help other team members to clarify the business logic flow, and quickly detect issues related to various business constraints and infrastructue constraints (i.e. gas price, attached tokens, method signature, etc.). Scripts should be updated while the contract is evolving to reflect the actual logic.
 
 
 #### DDC Bucket scenario
 
 Run the script as:
 ```
-yarn run demo-ddc-bucket
+ENV=devnet yarn run demo-ddc-bucket
 ```
-The execution progress will be displayed in the console along with links to explorer that will help you to investigate the details of each transaction
-
-
-#### DDC NFT Registry scenario
-
-Run the script as:
-```
-yarn run demo-nft-registry
-```
-
 The execution progress will be displayed in the console along with links to explorer that will help you to investigate the details of each transaction
 
 
@@ -32,7 +22,7 @@ The execution progress will be displayed in the console along with links to expl
 
 Run the script as:
 ```
-yarn run print-ddc-bucket
+ENV=devnet yarn run print-ddc-bucket
 ```
 
 
@@ -48,15 +38,6 @@ For Testnet and Mainnet environments, it is recomended to upload the contract co
 Run the script as:
 ```
 yarn run deploy-ddc-bucket
-```
-Optionally, the command can accept a code hash as the first parameter, and constructor name as the second parameter. In order to use these options, your contract artifacts [must be registered](./sdk/src/deploymentRegistry.js) to retrieve the required metadata from artifacts.
-
-
-#### DDC NFT Registry deployment
-
-Run the script as:
-```
-yarn run deploy-ddc-nft-registry
 ```
 Optionally, the command can accept a code hash as the first parameter, and constructor name as the second parameter. In order to use these options, your contract artifacts [must be registered](./sdk/src/deploymentRegistry.js) to retrieve the required metadata from artifacts.
 
