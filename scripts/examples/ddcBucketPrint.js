@@ -10,10 +10,15 @@ const log = console.log;
 
 
 const CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
-const RPC = config.DEVNET_RPC_ENDPOINT;
+const RPC = process.env.ENV == 'devnet' 
+    ? config.DEVNET_RPC_ENDPOINT 
+    : process.env.ENV == 'testnet' 
+        ? config.TESTNET_RPC_ENDPOINT 
+        : config.LOCAL_RPC_ENDPOINT;
+        
 const ACCOUNT_FILTER = null; // get data about all accounts.
 
-deploymentRegistry.initContracts();
+deploymentRegistry.initDefaultContracts();
 
 async function main() {
     const {api, chainName} = await connect(RPC);
@@ -108,17 +113,17 @@ function printGraph(clusters, nodes, buckets) {
     log();
 
     for (status of nodes) {
-        let {nodeId, node} = status;
+        let {nodeKey, node} = status;
         // Define
-        log(`Node_${nodeId}[(Node ${nodeId})]`);
+        log(`Node_${nodeKey}[(Node ${nodeKey})]`);
 
         // Node to Provider.
-        log(`Node_${nodeId} -. owned by .-> Account_${node.providerId.substr(0, 8)}`);
+        log(`Node_${nodeKey} -. owned by .-> Account_${node.providerId.substr(0, 8)}`);
         log();
     }
 
     for (status of clusters) {
-        let {clusterId, cluster} = status;
+        let {clusterId, cluster, clusterVNodes} = status;
         // Define
         log(`Cluster_${clusterId}((Cluster ${clusterId}))`);
 
@@ -126,8 +131,8 @@ function printGraph(clusters, nodes, buckets) {
         log(`Cluster_${clusterId} -. managed by ..-> Account_${cluster.managerId.substr(0, 8)}`);
 
         // Cluster to Node.
-        for (i = 0; i < cluster.vNodes.length; i++) {
-            let vNodeId = cluster.vNodes[i];
+        for (i = 0; i < clusterVNodes.length; i++) {
+            let vNodeId = clusterVNodes[i];
             log(`Cluster_${clusterId} -- P${i} --> Node_${vNodeId}`);
         }
         log();

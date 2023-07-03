@@ -15,7 +15,11 @@ const log = console.log;
 
 
 const SEED = config.ACTOR_SEED;
-const RPC = config.DEVNET_RPC_ENDPOINT;
+const RPC = process.env.ENV == 'devnet' 
+    ? config.DEVNET_RPC_ENDPOINT 
+    : process.env.ENV == 'testnet' 
+        ? config.TESTNET_RPC_ENDPOINT 
+        : config.LOCAL_RPC_ENDPOINT;
 
 const deployContract = async (
     contractName, 
@@ -30,7 +34,7 @@ const deployContract = async (
     log("From account", account.address);
 
     if (maybeCodeHash) {
-        deploymentRegistry.initContracts();
+        deploymentRegistry.initDefaultContracts();
     }
 
     await deploy(

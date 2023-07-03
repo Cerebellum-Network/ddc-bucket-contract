@@ -8,7 +8,6 @@ use ink_lang as ink;
 
 #[ink::contract]
 pub mod ddc_bucket {
-    use ink_prelude::string::ToString;
     use ink_prelude::vec::Vec;
     use scale::{Decode, Encode};
 
@@ -19,36 +18,27 @@ pub mod ddc_bucket {
     use committer::store::*;
     use ink_storage::traits::SpreadAllocate;
     use node::{entity::*, store::*};
-    use params::store::*;
     use perm::store::*;
+    use topology::store::*;
 
-    use crate::ddc_bucket::account::entity::Account;
-    use crate::ddc_bucket::cdn_cluster::entity::CdnClusterStatus;
     use crate::ddc_bucket::cdn_node::store::CdnNodeStore;
-    use crate::ddc_bucket::committer::store::EraConfig;
-    use crate::ddc_bucket::network_fee::{FeeConfig, NetworkFeeStore};
     use crate::ddc_bucket::perm::entity::Permission;
 
-    use self::buckets_perms::store::BucketsPermsStore;
-    use self::cdn_cluster::store::CdnClusterStore;
-    use self::cdn_node::entity::CdnNodeStatus;
-    use self::protocol::store::ProtocolStore;
+    use self::account::entity::Account;
+    use self::cdn_node::entity::{CdnNodeInfo, CdnNodeKey, CdnNodeParams};
+    use self::protocol::store::{NetworkFeeConfig, ProtocolStore};
     use self::topology::store::TopologyStore;
 
     pub mod account;
     pub mod admin;
     pub mod bucket;
-    pub mod buckets_perms;
     pub mod cash;
-    pub mod cdn_cluster;
     pub mod cdn_node;
     pub mod cluster;
     pub mod committer;
     pub mod currency;
     pub mod flow;
-    pub mod network_fee;
     pub mod node;
-    pub mod params;
     pub mod perm;
     pub mod protocol;
     pub mod schedule;
@@ -61,20 +51,13 @@ pub mod ddc_bucket {
     pub struct DdcBucket {
         perms: PermStore,
         buckets: BucketStore,
-        buckets_perms: BucketsPermsStore,
-        bucket_params: ParamsStore,
         clusters: ClusterStore,
-        cdn_clusters: CdnClusterStore,
-        cluster_params: ParamsStore,
         cdn_nodes: CdnNodeStore,
-        cdn_node_params: ParamsStore,
         nodes: NodeStore,
-        node_params: ParamsStore,
+        topology: TopologyStore,
         accounts: AccountStore,
-        network_fee: NetworkFeeStore,
-        committer_store: CommitterStore,
-        protocol_store: ProtocolStore,
-        topology_store: TopologyStore,
+        committer: CommitterStore,
+        protocol: ProtocolStore,
     }
 
     impl DdcBucket {
@@ -84,39 +67,18 @@ pub mod ddc_bucket {
         #[ink(constructor)]
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
-                let admin_id = Self::env().caller();
-                // Make the creator of this contract a super-admin.
-                contract.perms.grant_permission(admin_id, &Permission::SuperAdmin);
-
-                contract.committer_store.init(admin_id);
-                contract.protocol_store.init(admin_id, DEFAULT_BASIS_POINTS);
-
-                // Reserve IDs 0.
-                let _ = contract.accounts.create_if_not_exist(AccountId::default());
-                let _ = contract.cdn_nodes.create(AccountId::default(), 0, AccountId::default());
-                let _ = contract.cdn_node_params.create("".to_string()).unwrap();
-                let _ = contract
-                    .nodes
-                    .create(
-                        AccountId::default(),
-                        0,
-                        0,
-                        NodeTag::ACTIVE,
-                        AccountId::default(),
-                    )
-                    .unwrap();
-                let _ = contract.node_params.create("".to_string()).unwrap();
-                let _ = contract
-                    .clusters
-                    .create(
-                        AccountId::default(),
-                        &Vec::<Vec<u64>>::new(),
-                        &Vec::<NodeId>::new(),
-                    )
-                    .unwrap();
-                let _ = contract.cluster_params.create("".to_string()).unwrap();
-                let _ = contract.buckets.create(AccountId::default(), 0);
-                let _ = contract.bucket_params.create("".to_string()).unwrap();
+                let admin = Self::env().caller();
+                contract
+                    .perms
+                    .grant_permission(admin, Permission::SuperAdmin);
+                contract.committer.init(admin);
+                contract.protocol.init(
+                    DEFAULT_PROTOCOL_FEE_BP,
+                    admin,
+                    DEFAULT_NETWORK_FEE_BP,
+                    admin,
+                    DEFAULT_CLUSTER_FEE_BP,
+                );
             })
         }
     }
@@ -165,6 +127,14 @@ pub mod ddc_bucket {
         public_availability: bool,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct BucketParamsSet {
+        #[ink(topic)]
+        bucket_id: BucketId,
+        bucket_params: BucketParams,
+    }
+
     impl DdcBucket {
         /// Create a new bucket and return its `bucket_id`.
         ///
@@ -179,42 +149,50 @@ pub mod ddc_bucket {
             bucket_params: BucketParams,
             cluster_id: ClusterId,
             owner_id: Option<AccountId>,
-        ) -> BucketId {
+        ) -> Result<BucketId> {
             self.message_bucket_create(bucket_params, cluster_id, owner_id)
-                .unwrap()
         }
 
         /// Change owner of the bucket
         ///
         /// Provide the account of new owner
         #[ink(message, payable)]
-        pub fn bucket_change_owner(&mut self, bucket_id: BucketId, owner_id: AccountId) -> () {
+        pub fn bucket_change_owner(
+            &mut self,
+            bucket_id: BucketId,
+            owner_id: AccountId,
+        ) -> Result<()> {
             self.message_bucket_change_owner(bucket_id, owner_id)
-                .unwrap()
         }
 
         /// Allocate some resources of a cluster to a bucket.
         ///
         /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
         #[ink(message)]
-        pub fn bucket_alloc_into_cluster(&mut self, bucket_id: BucketId, resource: Resource) -> () {
+        pub fn bucket_alloc_into_cluster(
+            &mut self,
+            bucket_id: BucketId,
+            resource: Resource,
+        ) -> Result<()> {
             self.message_bucket_alloc_into_cluster(bucket_id, resource)
-                .unwrap()
         }
 
         /// Settle the due costs of a bucket from its payer account to the cluster account.
         #[ink(message)]
-        pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) {
-            self.message_bucket_settle_payment(bucket_id).unwrap()
+        pub fn bucket_settle_payment(&mut self, bucket_id: BucketId) -> Result<()> {
+            self.message_bucket_settle_payment(bucket_id)
         }
 
         /// Change the `bucket_params`, which is configuration used by clients and nodes.
         ///
         /// See the [data structure of BucketParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
         #[ink(message, payable)]
-        pub fn bucket_change_params(&mut self, bucket_id: BucketId, params: BucketParams) {
+        pub fn bucket_change_params(
+            &mut self,
+            bucket_id: BucketId,
+            params: BucketParams,
+        ) -> Result<()> {
             self.message_bucket_change_params(bucket_id, params)
-                .unwrap();
         }
 
         /// Get the current status of a bucket.
@@ -253,9 +231,8 @@ pub mod ddc_bucket {
             &mut self,
             bucket_id: BucketId,
             public_availability: bool,
-        ) -> () {
+        ) -> Result<()> {
             self.message_bucket_set_availability(bucket_id, public_availability)
-                .unwrap()
         }
 
         /// Set max resource cap to be charged by CDN for public bucket
@@ -264,64 +241,146 @@ pub mod ddc_bucket {
             &mut self,
             bucket_id: BucketId,
             new_resource_cap: Resource,
-        ) -> () {
+        ) -> Result<()> {
             self.message_bucket_set_resource_cap(bucket_id, new_resource_cap)
-                .unwrap()
         }
 
         /// Set permission for the reader of the bucket
         #[ink(message)]
         pub fn get_bucket_writers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
-            self.message_get_bucket_writers(bucket_id).unwrap()
+            self.message_get_bucket_writers(bucket_id)
         }
 
         /// Set permission for the writer of the bucket
         #[ink(message)]
-        pub fn bucket_set_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+        pub fn bucket_set_writer_perm(
+            &mut self,
+            bucket_id: BucketId,
+            writer: AccountId,
+        ) -> Result<()> {
             self.message_grant_writer_permission(bucket_id, writer)
-                .unwrap()
         }
 
         /// Revoke permission for the writer of the bucket
         #[ink(message)]
-        pub fn bucket_revoke_writer_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+        pub fn bucket_revoke_writer_perm(
+            &mut self,
+            bucket_id: BucketId,
+            writer: AccountId,
+        ) -> Result<()> {
             self.message_revoke_writer_permission(bucket_id, writer)
-                .unwrap()
         }
 
         /// Set permission for the reader of the bucket
         #[ink(message)]
         pub fn get_bucket_readers(&mut self, bucket_id: BucketId) -> Vec<AccountId> {
-            self.message_get_bucket_readers(bucket_id).unwrap()
+            self.message_get_bucket_readers(bucket_id)
         }
 
         /// Set permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_set_reader_perm(&mut self, bucket_id: BucketId, reader: AccountId) -> () {
+        pub fn bucket_set_reader_perm(
+            &mut self,
+            bucket_id: BucketId,
+            reader: AccountId,
+        ) -> Result<()> {
             self.message_grant_reader_permission(bucket_id, reader)
-                .unwrap()
         }
 
         /// Revoke permission for the reader of the bucket
         #[ink(message)]
-        pub fn bucket_revoke_reader_perm(&mut self, bucket_id: BucketId, writer: AccountId) -> () {
+        pub fn bucket_revoke_reader_perm(
+            &mut self,
+            bucket_id: BucketId,
+            writer: AccountId,
+        ) -> Result<()> {
             self.message_revoke_reader_permission(bucket_id, writer)
-                .unwrap()
         }
     }
     // ---- End Bucket ----
 
     // ---- Cluster ----
 
-    /// A new cluster was created.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct ClusterCreated {
         #[ink(topic)]
         cluster_id: ClusterId,
         #[ink(topic)]
-        manager: AccountId,
+        manager_id: AccountId,
         cluster_params: ClusterParams,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeAdded {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_key: NodeKey,
+        v_nodes: Vec<VNodeToken>,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeRemoved {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCdnNodeAdded {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCdnNodeRemoved {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterParamsSet {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        cluster_params: ClusterParams,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterRemoved {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeStatusSet {
+        #[ink(topic)]
+        node_key: NodeKey,
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        status: NodeStatusInCluster,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterCdnNodeStatusSet {
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        status: NodeStatusInCluster,
     }
 
     /// A vnode was re-assigned to new node.
@@ -331,7 +390,19 @@ pub mod ddc_bucket {
         #[ink(topic)]
         cluster_id: ClusterId,
         #[ink(topic)]
-        node_id: NodeId,
+        node_key: NodeKey,
+        v_nodes: Vec<VNodeToken>,
+    }
+
+    /// A vnode was re-assigned to new node.
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeReset {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_key: NodeKey,
+        v_nodes: Vec<VNodeToken>,
     }
 
     /// Some resources were reserved for the cluster from the nodes.
@@ -353,139 +424,9 @@ pub mod ddc_bucket {
         provider_id: AccountId,
     }
 
-    impl DdcBucket {
-        /// Removes a node to an existing cluster
-        ///
-        /// The caller will be its first manager.
-        #[ink(message, payable)]
-        pub fn cluster_remove_node(
-            &mut self,
-            cluster_id: ClusterId,
-            node_ids: Vec<NodeId>,
-            v_nodes: Vec<Vec<u64>>,
-        ) {
-            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
-                .unwrap()
-        }
-
-        /// Adds node to an existing cluster
-        ///
-        /// The caller will be its first manager.
-        #[ink(message, payable)]
-        pub fn cluster_add_node(
-            &mut self,
-            cluster_id: ClusterId,
-            node_ids: Vec<NodeId>,
-            v_nodes: Vec<Vec<u64>>,
-        ) {
-            self.message_cluster_add_node(cluster_id, node_ids, v_nodes)
-                .unwrap()
-        }
-
-        /// Create a new cluster and return its `cluster_id`.
-        ///
-        /// The caller will be its first manager.
-        ///
-        /// The cluster is split in a number of vnodes. The vnodes are assigned to the given physical nodes in a round-robin. Only nodes of providers that trust the cluster manager can be used (see `node_trust_manager`). The assignment can be changed with the function `cluster_replace_node`.
-        ///
-        /// `cluster_params` is configuration used by clients and nodes. In particular, this describes the semantics of vnodes. See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
-        #[ink(message, payable)]
-        pub fn cluster_create(
-            &mut self,
-            _unused: AccountId,
-            v_nodes: Vec<Vec<u64>>,
-            node_ids: Vec<NodeId>,
-            cluster_params: ClusterParams,
-        ) -> ClusterId {
-            self.message_cluster_create(v_nodes, node_ids, cluster_params)
-                .unwrap()
-        }
-
-        /// As manager, reserve more resources for the cluster from the free capacity of nodes.
-        ///
-        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
-        #[ink(message)]
-        pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> () {
-            self.message_cluster_reserve_resource(cluster_id, amount)
-                .unwrap()
-        }
-
-        /// As manager, change a node tag
-        #[ink(message)]
-        pub fn cluster_change_node_tag(&mut self, node_id: NodeId, new_tag: NodeTag) -> () {
-            self.message_node_change_tag(node_id, new_tag).unwrap()
-        }
-
-        /// As manager, re-assign a vnode to another physical node.
-        ///
-        /// The cluster manager can only use nodes of providers that trust him (see `node_trust_manager`), or any nodes if he is also SuperAdmin.
-        #[ink(message)]
-        pub fn cluster_replace_node(
-            &mut self,
-            cluster_id: ClusterId,
-            v_nodes: Vec<u64>,
-            new_node_id: NodeId,
-        ) -> () {
-            self.message_cluster_replace_node(cluster_id, v_nodes, new_node_id)
-                .unwrap()
-        }
-
-        /// Trigger the distribution of revenues from the cluster to the providers.
-        #[ink(message)]
-        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-            self.message_cluster_distribute_revenues(cluster_id)
-                .unwrap()
-        }
-
-        /// Change the `cluster_params`, which is configuration used by clients and nodes.
-        ///
-        /// See the [data structure of ClusterParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
-        #[ink(message, payable)]
-        pub fn cluster_change_params(&mut self, cluster_id: ClusterId, params: ClusterParams) {
-            self.message_cluster_change_params(cluster_id, params)
-                .unwrap();
-        }
-
-        /// Get the current status of a cluster.
-        #[ink(message)]
-        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterStatus> {
-            self.message_cluster_get(cluster_id)
-        }
-
-        /// Iterate through all clusters.
-        ///
-        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        /// The optimal `limit` depends on the size of params.
-        ///
-        /// The results can be filtered by manager. Note that paging must still be completed fully.
-        #[ink(message)]
-        pub fn cluster_list(
-            &self,
-            offset: u32,
-            limit: u32,
-            filter_manager_id: Option<AccountId>,
-        ) -> (Vec<ClusterStatus>, u32) {
-            self.message_cluster_list(offset, limit, filter_manager_id)
-        }
-    }
-    // ---- End Cluster ----
-
-    // ---- CDN Cluster ----
-
-    /// A new cluster was created.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct CdnClusterCreated {
-        #[ink(topic)]
-        cluster_id: ClusterId,
-        #[ink(topic)]
-        manager: AccountId,
-    }
-
-    /// The respective share of revenues of a CDN cluster for a provider was distributed.
-    #[ink(event)]
-    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct CdnClusterDistributeRevenues {
+    pub struct ClusterDistributeCdnRevenues {
         #[ink(topic)]
         cluster_id: ClusterId,
         #[ink(topic)]
@@ -493,48 +434,494 @@ pub mod ddc_bucket {
     }
 
     impl DdcBucket {
-        /// Create a new cluster and return its `cluster_id`.
+        /// Creates a cluster of Storage nodes and CDN nodes.
         ///
-        /// The caller will be its first manager.
+        /// This endpoint creates a cluster of Storage nodes and CDN nodes with specific parameters.
+        /// The caller will be the cluster manager (cluster owner). In order to add a Storage or CDN node, the manager must be authorized by the node owner using the `trust_manager` endpoint or be the node owner.
         ///
-        /// The CDN node ids are provided, which will form a cluster.
+        /// # Parameters
+        ///
+        /// * `cluster_params` - [Cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.
+        /// * `resource_per_v_node` - Resource value that will be allocated for every virtual node in the cluster.
+        ///
+        /// # Output
+        ///
+        /// Returns ID of the created cluster.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterCreated` event on successful cluster creation.
+        ///
+        /// # Errors
+        ///
+        /// * `InvalidClusterParams` error if there is an invalid cluster parameter.
         #[ink(message, payable)]
-        pub fn cdn_cluster_create(&mut self, cdn_node_ids: Vec<NodeId>) -> ClusterId {
-            self.message_cdn_cluster_create(cdn_node_ids).unwrap()
+        pub fn cluster_create(
+            &mut self,
+            cluster_params: ClusterParams,
+            resource_per_v_node: Resource,
+        ) -> Result<ClusterId> {
+            self.message_cluster_create(cluster_params, resource_per_v_node)
+        }
+
+        /// Adds a Storage node to the targeting cluster.
+        ///
+        /// This endpoint adds a physical Storage node along with its virtual nodes to the targeting cluster.
+        /// Virtual nodes determines a token (position) on the ring in terms of Consistent Hashing.
+        /// The Storage node can be added to the cluster by cluster manager only.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `node_key` - Public Key associated with the Storage node.
+        /// * `v_nodes` - List of tokens (positions) related to the Storage node.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeAdded` event on successful Storage node addition.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
+        /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
+        /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
+        /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
+        /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
+        #[ink(message, payable)]
+        pub fn cluster_add_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+            v_nodes: Vec<VNodeToken>,
+        ) -> Result<()> {
+            self.message_cluster_add_node(cluster_id, node_key, v_nodes)
+        }
+
+        /// Removes a Storage node from the targeting cluster.
+        ///
+        /// This endpoint removes a physical Storage node along with its virtual nodes from the targeting cluster.
+        /// The Storage node can be removed from the cluster either by cluster manager or by the node owner.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `node_key` - Public Key associated with the Storage node.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeRemoved` event on successful Storage node removal.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyClusterManagerOrNodeProvider` error if the caller is not the cluster manager or node owner.
+        /// * `NodeDoesNotExist` error if the removing Storage node does not exist.
+        /// * `NodeIsNotAddedToCluster(ClusterId)` error if the removing Storage node is not in this cluster.
+        #[ink(message)]
+        pub fn cluster_remove_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+        ) -> Result<()> {
+            self.message_cluster_remove_node(cluster_id, node_key)
+        }
+
+        /// Reasignes existing virtual nodes in the targeting cluster.
+        ///
+        /// This endpoint reasignes existing virtual nodes to another physical Storage node within the same cluster.
+        /// All specifying virtual nodes must pre-exist in the cluster and the new physical Storage node must be added to the cluster preliminary.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `v_nodes` - List of tokens (positions) to reasign for the new physical Storage node.
+        /// * `new_node_key` - Public Key associated with the Storage node that is being reasigned to the specified virtual nodes.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeReplaced` event on successful virtual node reassignment.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `NodeDoesNotExist` error if the new Storage node does not exist.
+        /// * `NodeIsNotAddedToCluster(ClusterId)` error if the new Storage node is not added to this cluster.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the new Storage node is in another cluster.
+        /// * `VNodeIsNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
+        /// * `VNodeIsAlreadyAssignedToNode(NodeKey)` - error if there is some virtual node that is already assigned to other physical node within the same cluster.
+        /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
+        /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
+        #[ink(message)]
+        pub fn cluster_replace_node(
+            &mut self,
+            cluster_id: ClusterId,
+            v_nodes: Vec<VNodeToken>,
+            new_node_key: NodeKey,
+        ) -> Result<()> {
+            self.message_cluster_replace_node(cluster_id, v_nodes, new_node_key)
+        }
+
+        /// Reeset a Storage node in the targeting cluster.
+        ///
+        /// This endpoint resets virtual nodes on a physical Storage node in the targeting cluster.
+        /// Virtual nodes determines a token (position) on the ring in terms of Consistent Hashing.
+        /// The Storage node can be reset in the cluster by cluster manager only.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `node_key` - Public Key associated with the Storage node.
+        /// * `new_v_nodes` - List of tokens (positions) related to the Storage node to reset.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeAdded` event on successful Storage node addition.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
+        /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
+        /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
+        /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
+        /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
+        #[ink(message)]
+        pub fn cluster_reset_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+            new_v_nodes: Vec<VNodeToken>,
+        ) -> Result<()> {
+            self.message_cluster_reset_node(cluster_id, node_key, new_v_nodes)
+        }
+
+        /// Adds a CDN node to the targeting cluster.
+        ///
+        /// This endpoint adds a CDN node to the targeting cluster.
+        /// The CDN node can be added to the cluster by cluster manager only.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterCdnNodeAdded` event on successful CDN node addition.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
+        /// * `CdnNodeDoesNotExist` error if the adding CDN node does not exist.
+        /// * `CdnNodeIsAddedToCluster(ClusterId)` error if the adding CDN node is already added to this or another cluster.
+        #[ink(message, payable)]
+        pub fn cluster_add_cdn_node(
+            &mut self,
+            cluster_id: ClusterId,
+            cdn_node_key: CdnNodeKey,
+        ) -> Result<()> {
+            self.message_cluster_add_cdn_node(cluster_id, cdn_node_key)
+        }
+
+        /// Removes a CDN node from the targeting cluster.
+        ///
+        /// This endpoint removes a CDN node the targeting cluster.
+        /// The CDN node can be removed from the cluster either by cluster manager or by the node owner.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterCdnNodeRemoved` event on successful CDN node removal.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyClusterManagerOrCdnNodeProvider` error if the caller is not the cluster manager or node owner.
+        /// * `CdnNodeDoesNotExist` error if the removing CDN node does not exist.
+        /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the removing CDN node is not in this cluster.
+        #[ink(message)]
+        pub fn cluster_remove_cdn_node(
+            &mut self,
+            cluster_id: ClusterId,
+            cdn_node_key: CdnNodeKey,
+        ) -> Result<()> {
+            self.message_cluster_remove_cdn_node(cluster_id, cdn_node_key)
+        }
+
+        /// Sets parameters for the targeting cluster.
+        ///
+        /// This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.
+        /// All cluster parameters must be specified as the endpoint works using SET approach.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `cluster_params` - [Cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterParamsSet` event on successful cluster params setting.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        #[ink(message, payable)]
+        pub fn cluster_set_params(
+            &mut self,
+            cluster_id: ClusterId,
+            cluster_params: ClusterParams,
+        ) -> Result<()> {
+            self.message_cluster_set_params(cluster_id, cluster_params)
+        }
+
+        /// Removes a cluster.
+        ///
+        /// This endpoint removes the cluster if it does not contain any nodes.
+        /// Only an empty cluster can be removed.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterRemoved` event on successful cluster removal.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `ClusterIsNotEmpty` error if the removing cluster contains some Storage or CDN nodes.
+        #[ink(message)]
+        pub fn cluster_remove(&mut self, cluster_id: ClusterId) -> Result<()> {
+            self.message_cluster_remove(cluster_id)
+        }
+
+        /// Changes Storage node status.
+        ///
+        /// This endpoint changes Storage node status in a cluster.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `node_key` - Public Key associated with the Storage node.
+        /// * `status` - Status for the targeting Storage node, can be one of the following: ACTIVE, ADDING, DELETING, OFFLINE.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeStatusSet` event on successful Storage status change.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `NodeIsNotAddedToCluster(ClusterId)` error if the Storage node is not in this cluster.
+        #[ink(message)]
+        pub fn cluster_set_node_status(
+            &mut self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+            status_in_cluster: NodeStatusInCluster,
+        ) -> Result<()> {
+            self.message_cluster_set_node_status(cluster_id, node_key, status_in_cluster)
+        }
+
+        /// Changes CDN node status.
+        ///
+        /// This endpoint changes CDN node status in a cluster.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        /// * `status` - Status for the targeting CDN node, can be one of the following: ACTIVE, ADDING, DELETING, OFFLINE.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterCdnNodeStatusSet` event on successful CDN status change.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `CdnNodeIsNotAddedToCluster(ClusterId)` error if the CDN node is not in this cluster.
+        #[ink(message)]
+        pub fn cluster_set_cdn_node_status(
+            &mut self,
+            cluster_id: ClusterId,
+            cdn_node_key: CdnNodeKey,
+            status_in_cluster: NodeStatusInCluster,
+        ) -> Result<()> {
+            self.message_cluster_set_cdn_node_status(cluster_id, cdn_node_key, status_in_cluster)
+        }
+
+        /// Sets the resource used per virual node in cluster.
+        ///
+        /// This endpoint sets the resource value that is being used by each virtual node in the cluster.
+        /// If there are existing virtual nodes in the cluster the resource for its physical nodes will be recalculated.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `new_resource_per_v_node` - Resource value that will be allocated for every virtual node in the cluster.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeReplaced` event on successful virtual node reassignment.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `NodeDoesNotExist` error if the new Storage node does not exist.
+        /// * `VNodeIsNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
+        /// * `InsufficientClusterResources` - error if there is not enough resources in the cluster.
+        /// * `InsufficientNodeResources` - error if there is not enough resources in a physical node.
+        #[ink(message)]
+        pub fn cluster_set_resource_per_v_node(
+            &mut self,
+            cluster_id: ClusterId,
+            new_resource_per_v_node: Resource,
+        ) -> Result<()> {
+            self.message_cluster_set_resource_per_v_node(cluster_id, new_resource_per_v_node)
+        }
+
+        /// Gets a cluster.
+        ///
+        /// This endpoint gets the targeting cluster along with its parameters, Storage and CDN nodes.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        ///
+        /// # Output
+        ///
+        /// Returns `ClusterInfo` data transfer object.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        #[ink(message)]
+        pub fn cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
+            self.message_cluster_get(cluster_id)
+        }
+
+        /// Gets a paginated list of clusters.
+        ///
+        /// This endpoint gets a paginated list of clusters along with their parameters, Storage and CDN nodes.
+        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
+        /// The optimal `limit` depends on the size of params.
+        ///
+        /// # Parameters
+        ///
+        /// * `offset` - starting offset.
+        /// * `limit` - page limit.
+        /// * `filter_manager_id` - optional filter by cluster manager.
+        ///
+        /// # Errors
+        ///
+        /// No errors. In case a pagination param is out of bounds, an empty list will be returned.
+        #[ink(message)]
+        pub fn cluster_list(
+            &self,
+            offset: u32,
+            limit: u32,
+            filter_manager_id: Option<AccountId>,
+        ) -> (Vec<ClusterInfo>, u32) {
+            self.message_cluster_list(offset, limit, filter_manager_id)
+        }
+
+        /// Trigger the distribution of revenues from the cluster to the providers.
+        #[ink(message)]
+        pub fn cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
+            self.message_cluster_distribute_revenues(cluster_id)
         }
 
         /// Set rate for streaming (price per gb)
         #[ink(message, payable)]
-        pub fn cdn_set_rate(&mut self, cluster_id: ClusterId, usd_per_gb: Balance) -> () {
-            self.message_cdn_set_rate(cluster_id, usd_per_gb).unwrap()
+        pub fn cdn_set_rate(&mut self, cluster_id: ClusterId, usd_per_gb: Balance) -> Result<()> {
+            self.message_cdn_set_rate(cluster_id, usd_per_gb)
         }
 
         /// Get rate for streaming (price per gb)
         #[ink(message, payable)]
-        pub fn cdn_get_rate(&self, cluster_id: ClusterId) -> Balance {
-            self.message_cdn_get_rate(cluster_id).unwrap()
+        pub fn cdn_get_rate(&self, cluster_id: ClusterId) -> Result<Balance> {
+            self.message_cdn_get_rate(cluster_id)
         }
 
         /// As validator, charge payments from users and allocate undistributed payments to CDN nodes.
         ///
         /// As a result CDN cluster revenue increases, which can be distributed between CDN node providers via method cdn_cluster_distribute_revenues.
         #[ink(message)]
-        pub fn cdn_cluster_put_revenue(
+        pub fn cluster_put_cdn_revenue(
             &mut self,
             cluster_id: ClusterId,
             aggregates_accounts: Vec<(AccountId, u128)>,
-            aggregates_nodes: Vec<(u32, u128)>,
+            aggregates_nodes: Vec<(CdnNodeKey, u128)>,
             aggregates_buckets: Vec<(BucketId, Resource)>,
             era: u64,
-        ) -> () {
-            self.message_cdn_cluster_put_revenue(
+        ) -> Result<()> {
+            self.message_cluster_put_cdn_revenue(
                 cluster_id,
                 aggregates_accounts,
                 aggregates_nodes,
                 aggregates_buckets,
                 era,
             )
-            .unwrap()
         }
 
         /// Trigger the distribution of revenues from the cluster to the CDN node providers.
@@ -543,60 +930,42 @@ pub mod ddc_bucket {
         ///
         /// Undistributed payments will be trasnferred, CDN cluster revenue will decrease.
         #[ink(message)]
-        pub fn cdn_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) {
-            self.message_cdn_cluster_distribute_revenues(cluster_id)
-                .unwrap()
-        }
-
-        /// Get the current status of a cluster.
-        #[ink(message)]
-        pub fn cdn_cluster_get(&self, cluster_id: ClusterId) -> Result<CdnClusterStatus> {
-            self.message_cdn_cluster_get(cluster_id)
-        }
-
-        /// Iterate through all clusters.
-        ///
-        /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
-        /// The optimal `limit` depends on the size of params.
-        ///
-        /// The results can be filtered by manager. Note that paging must still be completed fully.
-        #[ink(message)]
-        pub fn cdn_cluster_list(
-            &self,
-            offset: u32,
-            limit: u32,
-            filter_manager_id: Option<AccountId>,
-        ) -> (Vec<CdnClusterStatus>, u32) {
-            self.message_cdn_cluster_list(offset, limit, filter_manager_id)
+        pub fn cluster_distribute_cdn_revenue(&mut self, cluster_id: ClusterId) -> Result<()> {
+            self.message_cluster_distribute_cdn_revenue(cluster_id)
         }
     }
-    // ---- End CDN Cluster ----
+    // ---- End Cluster ----
 
     // ---- Committer ----
 
     impl DdcBucket {
         /// CDN node operator sets the commit for current era.
         #[ink(message)]
-        pub fn set_commit(&mut self, cdn_owner: AccountId, node_id: NodeId, commit: Commit) {
-            self.message_set_commit(cdn_owner, node_id, commit);
+        pub fn set_commit(
+            &mut self,
+            cdn_owner: AccountId,
+            cdn_node_key: CdnNodeKey,
+            commit: Commit,
+        ) -> Result<()> {
+            self.message_set_commit(cdn_owner, cdn_node_key, commit)
         }
 
         /// Return the last commit submitted by CDN node operator
         #[ink(message)]
-        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(NodeId, Commit)> {
+        pub fn get_commit(&self, cdn_owner: AccountId) -> Vec<(CdnNodeKey, Commit)> {
             self.message_get_commit(cdn_owner)
         }
 
         /// Return last era validated per CDN node
         #[ink(message)]
-        pub fn get_validated_commit(&self, node: NodeId) -> EraAndTimestamp {
-            self.message_get_validated_commit(node)
+        pub fn get_validated_commit(&self, cdn_node_key: CdnNodeKey) -> EraAndTimestamp {
+            self.message_get_validated_commit(cdn_node_key)
         }
 
         /// Set the new configs for era
         #[ink(message)]
-        pub fn set_era(&mut self, era_config: EraConfig) -> () {
-            self.message_set_era(era_config).unwrap();
+        pub fn set_era(&mut self, era_config: EraConfig) -> Result<()> {
+            self.message_set_era(era_config)
         }
 
         /// Return current status of an era
@@ -620,80 +989,161 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct CdnNodeCreated {
         #[ink(topic)]
-        node_id: NodeId,
+        cdn_node_key: CdnNodeKey,
         #[ink(topic)]
         provider_id: AccountId,
+        cdn_node_params: CdnNodeParams,
         undistributed_payment: Balance,
     }
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeRemoved {
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeParamsSet {
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+        cdn_node_params: CdnNodeParams,
+    }
+
     impl DdcBucket {
-        /// As node provider, authorize a cluster manager to use his nodes.
+        /// Creates a CDN node
+        ///
+        /// This endpoint creates a CDN node with specific parameters.
+        /// The caller will be the node owner (node provider).
+        ///
+        /// # Parameters
+        ///
+        /// * `cdn_node_key` - Public Keys of the CDN node that should be treated as node identifier.
+        /// * `cdn_node_params` - [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
+        ///
+        /// # Output
+        ///
+        /// Returns Public Key of the created CDN node.
+        ///
+        /// # Events
+        ///
+        /// * `CdnNodeCreated` event on successful CDN node creation.
+        ///
+        /// # Errors
+        ///
+        /// * `CdnNodeAlreadyExists` error if a CDN node with the same Public Key is already created.
+        /// * `InvalidParams(message)` error if there is some invalid configuration parameter.
         #[ink(message, payable)]
-        pub fn cdn_node_trust_manager(&mut self, manager: AccountId) {
-            self.message_cdn_node_trust_manager(manager, true).unwrap();
+        pub fn cdn_node_create(
+            &mut self,
+            cdn_node_key: CdnNodeKey,
+            cdn_node_params: CdnNodeParams,
+        ) -> Result<CdnNodeKey> {
+            self.message_cdn_node_create(cdn_node_key, cdn_node_params)
         }
 
-        /// As node provider, revoke the authorization of a cluster manager to use his nodes.
+        /// Removes a CDN node.
+        ///
+        /// This endpoint removes the targeting CDN Node if it is not added to some cluster.
+        /// Only a node that is not a member of some cluster can be removed.
+        ///
+        /// # Parameters
+        ///
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `CdnNodeRemoved` event on successful CDN node removal.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyCdnNodeProvider` error if the caller is not the CDN node owner.
+        /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
+        /// * `CdnNodeIsAddedToCluster(ClusterId)` error if the removing CDN node is added to some cluster.
         #[ink(message)]
-        pub fn cdn_node_distrust_manager(&mut self, manager: AccountId) {
-            self.message_cdn_node_trust_manager(manager, false).unwrap();
+        pub fn cdn_node_remove(&mut self, cdn_node_key: CdnNodeKey) -> Result<()> {
+            self.message_remove_cdn_node(cdn_node_key)
         }
 
-        /// Create a new node and return its `node_id`.
+        /// Sets parameters for the targeting CDN node.
         ///
-        /// The caller will be its owner.
+        /// This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
+        /// All CDN node parameters must be specified as the endpoint works using SET approach.
         ///
-        /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// # Parameters
+        ///
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        /// * `cdn_node_params` - [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `CdnNodeParamsSet` event on successful CDN node params setting.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyCdnNodeProvider` error if the caller is not the CDN node owner.
+        /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
         #[ink(message, payable)]
-        pub fn cdn_node_create(&mut self, node_params: Params, pubkey: AccountId) -> NodeId {
-            self.message_cdn_node_create(node_params, pubkey).unwrap()
+        pub fn cdn_node_set_params(
+            &mut self,
+            cdn_node_key: CdnNodeKey,
+            cdn_node_params: CdnNodeParams,
+        ) -> Result<()> {
+            self.message_cdn_node_set_params(cdn_node_key, cdn_node_params)
         }
 
-        /// Change the `node_params`, which is configuration used by clients and nodes.
+        /// Gets a CDN node.
         ///
-        /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
-        #[ink(message, payable)]
-        pub fn cdn_node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
-            self.message_cdn_node_change_params(node_id, params)
-                .unwrap();
-        }
-
-        /// Get the current state of the cdn node
-        #[ink(message)]
-        pub fn cdn_node_get(&self, node_id: NodeId) -> Result<CdnNodeStatus> {
-            self.message_cdn_node_get(node_id)
-        }
-
-        /// Get the current state of a cdn node by a public key.
-        #[ink(message)]
-        pub fn cdn_node_get_by_pubkey(&self, pubkey: AccountId) -> Result<CdnNodeStatus> {
-            self.message_cdn_node_get_by_pub_key(pubkey)
-        }
-
-        /// Iterate through all nodes.
+        /// This endpoint gets the targeting CDN node along with its parameters.
         ///
+        /// # Parameters
+        ///
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        ///
+        /// # Output
+        ///
+        /// Returns `CdnNodeInfo` data transfer object.
+        ///
+        /// # Errors
+        ///
+        /// * `CdnNodeDoesNotExist` error if the CDN node does not exist.
+        #[ink(message)]
+        pub fn cdn_node_get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNodeInfo> {
+            self.message_cdn_node_get(cdn_node_key)
+        }
+
+        /// Gets a paginated list of CDN nodes.
+        ///
+        /// This endpoint gets a paginated list of CDN nodes along with their parameters.
         /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
-        /// The results can be filtered by owner. Note that paging must still be completed fully.
+        /// # Parameters
+        ///
+        /// * `offset` - starting offset.
+        /// * `limit` - page limit.
+        /// * `filter_provider_id` - optional filter by CDN node owner.
+        ///
+        /// # Errors
+        ///
+        /// No errors. In case a pagination param is out of bounds, an empty list will be returned.
         #[ink(message)]
         pub fn cdn_node_list(
             &self,
             offset: u32,
             limit: u32,
             filter_provider_id: Option<AccountId>,
-        ) -> (Vec<CdnNodeStatus>, u32) {
+        ) -> (Vec<CdnNodeInfo>, u32) {
             self.message_cdn_node_list(offset, limit, filter_provider_id)
-        }
-
-        /// Remove cdn node by id 
-        /// 
-        /// Only the provider of the node can remove the node (not related to the public key)
-        /// 
-        /// The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated
-        #[ink(message)]
-        pub fn cdn_node_remove(&mut self, node_id: NodeId) -> Result<()> {
-            self.message_remove_cdn_node(node_id)
         }
     }
     // ---- End CDN Node ----
@@ -705,88 +1155,165 @@ pub mod ddc_bucket {
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
     pub struct NodeCreated {
         #[ink(topic)]
-        node_id: NodeId,
+        node_key: NodeKey,
         #[ink(topic)]
         provider_id: AccountId,
-        rent_per_month: Balance,
+        rent_v_node_per_month: Balance,
+        node_params: NodeParams,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct NodeRemoved {
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct NodeParamsSet {
+        #[ink(topic)]
+        node_key: NodeKey,
         node_params: NodeParams,
     }
 
     impl DdcBucket {
-        /// As node provider, authorize a cluster manager to use his nodes.
-        #[ink(message, payable)]
-        pub fn node_trust_manager(&mut self, manager: AccountId) {
-            self.message_node_trust_manager(manager, true).unwrap();
-        }
-
-        /// As node provider, revoke the authorization of a cluster manager to use his nodes.
-        #[ink(message)]
-        pub fn node_distrust_manager(&mut self, manager: AccountId) {
-            self.message_node_trust_manager(manager, false).unwrap();
-        }
-
-        /// Create a new node and return its `node_id`.
+        /// Creates a Storage node
         ///
-        /// The caller will be its owner.
+        /// This endpoint creates a Storage node with specific parameters.
+        /// The caller will be the node owner (node provider).
         ///
-        /// `node_params` is configuration used by clients and nodes. In particular, this contains the URL to the service. See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// # Parameters
+        ///
+        /// * `node_key` - Public Keys of the Storage node that should be treated as node identifier.
+        /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
+        /// * `capacity` - Measure used to evaluate physical node hardware resources.
+        /// * `rent_v_node_per_month` - Renting per month.
+        ///
+        /// # Output
+        ///
+        /// Returns Public Key of the created Storage node.
+        ///
+        /// # Events
+        ///
+        /// * `NodeCreated` event on successful Storage node creation.
+        ///
+        /// # Errors
+        ///
+        /// * `NodeAlreadyExists` error if a Storage node with the same Public Key is already created.
+        /// * `InvalidParams(message)` error if there is some invalid configuration parameter.
         #[ink(message, payable)]
         pub fn node_create(
             &mut self,
-            rent_per_month: Balance,
+            node_key: NodeKey,
             node_params: NodeParams,
             capacity: Resource,
-            node_tag: NodeTag,
-            pubkey: AccountId,
-        ) -> NodeId {
-            self.message_node_create(rent_per_month, node_params, capacity, node_tag, pubkey)
-                .unwrap()
+            rent_v_node_per_month: Balance,
+        ) -> Result<NodeKey> {
+            self.message_node_create(node_key, node_params, capacity, rent_v_node_per_month)
         }
 
-        /// Change the `node_params`, which is configuration used by clients and nodes.
+        /// Removes a Storage node.
         ///
-        /// See the [data structure of NodeParams](https://docs.cere.network/ddc/protocols/contract-params-schema)
+        /// This endpoint removes the targeting Storage Node if it is not added to some cluster.
+        /// Only a node that is not a member of some cluster can be removed.
+        ///
+        /// # Parameters
+        ///
+        /// * `node_key` - Public Key associated with the Storage node.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `NodeRemoved` event on successful Storage node removal.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyNodeProvider` error if the caller is not the Storage node owner.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the removing Storage node is added to some cluster.
+        #[ink(message)]
+        pub fn node_remove(&mut self, node_key: NodeKey) -> Result<()> {
+            self.message_node_remove(node_key)
+        }
+
+        /// Sets parameters for the targeting Storage node.
+        ///
+        /// This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
+        /// All Storage node parameters must be specified as the endpoint works using SET approach.
+        ///
+        /// # Parameters
+        ///
+        /// * `node_key` - Public Key associated with the Storage node.
+        /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `NodeParamsSet` event on successful Storage node params setting.
+        ///
+        /// # Errors
+        ///
+        /// * `OnlyNodeProvider` error if the caller is not the Storage node owner.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
         #[ink(message, payable)]
-        pub fn node_change_params(&mut self, node_id: NodeId, params: NodeParams) {
-            self.message_node_change_params(node_id, params).unwrap();
+        pub fn node_set_params(
+            &mut self,
+            node_key: NodeKey,
+            node_params: NodeParams,
+        ) -> Result<()> {
+            self.message_node_set_params(node_key, node_params)
         }
 
-        /// Get the current status of a node.
-        #[ink(message)]
-        pub fn node_get(&self, node_id: NodeId) -> Result<NodeStatus> {
-            self.message_node_get(node_id)
-        }
-
-        /// Get the current status of a node by a public key.
-        #[ink(message)]
-        pub fn node_get_by_pubkey(&self, pubkey: AccountId) -> Result<NodeStatus> {
-            self.message_node_get_by_pub_key(pubkey)
-        }
-
-        /// Iterate through all nodes.
+        /// Gets a Storage node.
         ///
+        /// This endpoint gets the targeting Storage node along with its parameters.
+        ///
+        /// # Parameters
+        ///
+        /// * `node_key` - Public Key associated with the Storage node.
+        ///
+        /// # Output
+        ///
+        /// Returns `NodeInfo` data transfer object.
+        ///
+        /// # Errors
+        ///
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
+        #[ink(message)]
+        pub fn node_get(&self, node_key: NodeKey) -> Result<NodeInfo> {
+            self.message_node_get(node_key)
+        }
+
+        /// Gets a paginated list of Storage nodes.
+        ///
+        /// This endpoint gets a paginated list of Storage nodes along with their parameters.
         /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
-        /// The results can be filtered by owner. Note that paging must still be completed fully.
+        /// # Parameters
+        ///
+        /// * `offset` - starting offset.
+        /// * `limit` - page limit.
+        /// * `filter_provider_id` - optional filter by Storage node owner.
+        ///
+        /// # Errors
+        ///
+        /// No errors. In case a pagination param is out of bounds, an empty list will be returned.
         #[ink(message)]
         pub fn node_list(
             &self,
             offset: u32,
             limit: u32,
             filter_provider_id: Option<AccountId>,
-        ) -> (Vec<NodeStatus>, u32) {
+        ) -> (Vec<NodeInfo>, u32) {
             self.message_node_list(offset, limit, filter_provider_id)
-        }
-
-        /// Remove node by id 
-        /// 
-        /// Only the provider of the node can remove the node (not related to the public key)
-        /// 
-        /// The underlying algorithm swaps the moved to be removed with the last one added, hence the id of the last one added will be updated
-        #[ink(message)]
-        pub fn node_remove(&mut self, node_id: NodeId) -> Result<()> {
-            self.message_remove_node(node_id)
         }
     }
     // ---- End Node ----
@@ -796,26 +1323,20 @@ pub mod ddc_bucket {
     impl DdcBucket {
         /// Get the Fee Percentage Basis Points that will be charged by the protocol
         #[ink(message)]
-        pub fn get_fee_bp(&self) -> u32 {
-            self.message_get_fee_bp()
-        }
-
-        /// Return the last commit submitted by CDN node operator
-        #[ink(message)]
-        pub fn set_fee_bp(&mut self, fee_bp: u32) -> () {
-            self.message_set_fee_bp(fee_bp).unwrap();
+        pub fn get_protocol_fee_bp(&self) -> u128 {
+            self.message_get_protocol_fee_bp()
         }
 
         /// Return fees accumulated by the protocol
         #[ink(message)]
         pub fn get_protocol_revenues(&self) -> Cash {
-            self.message_get_fee_revenues()
+            self.message_get_protocol_revenues()
         }
 
-        /// Pay the revenues accumulated by the protocol
+        /// Get the Fee Percentage Basis Points that will be charged by the protocol
         #[ink(message)]
-        pub fn protocol_withdraw_revenues(&mut self, amount: u128) -> () {
-            self.message_withdraw_revenues(amount).unwrap();
+        pub fn get_network_fee_config(&self) -> NetworkFeeConfig {
+            self.message_get_network_fee_config()
         }
     }
     // ---- End Protocol ----
@@ -835,34 +1356,34 @@ pub mod ddc_bucket {
         /// As user, deposit tokens on the account of the caller from the transaction value. This deposit
         /// can be used to pay for the services to buckets of the account.
         #[ink(message, payable)]
-        pub fn account_deposit(&mut self) -> () {
-            self.message_account_deposit().unwrap()
+        pub fn account_deposit(&mut self) -> Result<()> {
+            self.message_account_deposit()
         }
 
         /// As user, bond some amount of tokens from the withdrawable balance. These funds will be used to pay for CDN node service.
         #[ink(message, payable)]
-        pub fn account_bond(&mut self, bond_amount: Balance) -> () {
-            self.message_account_bond(bond_amount).unwrap()
+        pub fn account_bond(&mut self, bond_amount: Balance) -> Result<()> {
+            self.message_account_bond(bond_amount)
         }
 
         /// As user, unbond a specified amount of tokens. The tokens will be locked for some time, as defined by contract owner.
         #[ink(message, payable)]
-        pub fn account_unbond(&mut self, amount_to_unbond: Cash) -> () {
-            self.message_account_unbond(amount_to_unbond).unwrap()
+        pub fn account_unbond(&mut self, amount_to_unbond: Cash) -> Result<()> {
+            self.message_account_unbond(amount_to_unbond)
         }
 
         /// As user, move the unbonded tokens back to withdrawable balance state.
         ///
         /// This can be triggered after unbonded_timestamp
         #[ink(message, payable)]
-        pub fn account_withdraw_unbonded(&mut self) -> () {
-            self.message_account_withdraw_unbonded().unwrap()
+        pub fn account_withdraw_unbonded(&mut self) -> Result<()> {
+            self.message_account_withdraw_unbonded()
         }
 
         /// Get the current status of an account.
         #[ink(message)]
         pub fn account_get(&self, account_id: AccountId) -> Result<Account> {
-            Ok(self.accounts.get(&account_id)?.clone())
+            self.accounts.get(&account_id)
         }
 
         /// Get the current conversion rate between the native currency and an external currency (USD).
@@ -875,8 +1396,8 @@ pub mod ddc_bucket {
         ///
         /// This requires the permission SetExchangeRate or SuperAdmin.
         #[ink(message)]
-        pub fn account_set_usd_per_cere(&mut self, usd_per_cere: Balance) {
-            self.message_account_set_usd_per_cere(usd_per_cere);
+        pub fn account_set_usd_per_cere(&mut self, usd_per_cere: Balance) -> Result<()> {
+            self.message_account_set_usd_per_cere(usd_per_cere)
         }
     }
     // ---- End Billing ----
@@ -885,7 +1406,7 @@ pub mod ddc_bucket {
     /// A permission was granted to the account.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct GrantPermission {
+    pub struct PermissionGranted {
         #[ink(topic)]
         account_id: AccountId,
         permission: Permission,
@@ -894,50 +1415,254 @@ pub mod ddc_bucket {
     /// A permission was revoked from the account.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
-    pub struct RevokePermission {
+    pub struct PermissionRevoked {
         #[ink(topic)]
         account_id: AccountId,
         permission: Permission,
     }
 
     impl DdcBucket {
-        /// Check whether the given account has the given permission currently,
-        /// or the SuperAdmin permission.
+        /// Checks for permission existence.
+        ///
+        /// This endpoint checks whether the given account has the given permission.
+        /// Super-admin will always have all permissions.
+        ///
+        /// # Parameters
+        ///
+        /// * `account_id` - account to check permissions.
+        /// * `permission` - permission to check.
+        ///
+        /// # Output
+        ///
+        /// Returns true if the account has permissions, false otherwise.
+        ///
+        /// # Errors
+        ///
+        /// No errors.
         #[ink(message)]
-        pub fn has_permission(&self, grantee: AccountId, permission: Permission) -> bool {
-            self.perms.has_permission(grantee, permission)
+        pub fn has_permission(&self, account_id: AccountId, permission: Permission) -> bool {
+            self.perms.has_permission(account_id, permission)
+        }
+
+        /// Grants permissions for a cluster manager.
+        ///
+        /// This endpoint grants permissions for a cluster manager ro manage Storage or CDN node owner.
+        /// After the permission is granted, the cluster manager can add nodes to the cluster.
+        /// Permissions can be granted by Storage or CDN node owner.
+        ///
+        /// # Parameters
+        ///
+        /// * `manager_id` - cluster manager account.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionGranted` event on successful manager permissions granting
+        ///
+        /// # Errors
+        ///
+        /// No errors. The endpoint is idempotent.
+        #[ink(message, payable)]
+        pub fn grant_trusted_manager_permission(&mut self, manager_id: AccountId) -> Result<()> {
+            self.message_grant_trusted_manager_permission(manager_id)
+        }
+
+        /// Revokes permissions from cluster manager.
+        ///
+        /// This endpoint revokes permissions from a cluster manager to manage Storage or CDN node owner.
+        /// After the permission is revoked, the cluster manager can add nodes to the cluster.
+        /// Permissions can be revoked by Storage or CDN node owner.
+        ///
+        /// # Parameters
+        ///
+        /// * `manager_id` - cluster manager account.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionRevoked` event on successful manager permissions revoking
+        ///
+        /// # Errors
+        ///
+        /// No errors. The endpoint is idempotent.
+        #[ink(message)]
+        pub fn revoke_trusted_manager_permission(&mut self, manager_id: AccountId) -> Result<()> {
+            self.message_revoke_trusted_manager_permission(manager_id)
         }
     }
     // ---- End Permissions ----
 
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct NodeOwnershipTransferred {
+        #[ink(topic)]
+        account_id: AccountId,
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct CdnNodeOwnershipTransferred {
+        #[ink(topic)]
+        account_id: AccountId,
+        #[ink(topic)]
+        cdn_node_key: CdnNodeKey,
+    }
+
     // ---- Admin ----
     impl DdcBucket {
-        /// As SuperAdmin, grant any permission to any account.
-        #[ink(message, payable)]
-        pub fn admin_grant_permission(&mut self, grantee: AccountId, permission: Permission) {
-            self.message_admin_grant_permission(grantee, permission, true)
-                .unwrap();
+        /// Grants any permission.
+        ///
+        /// This endpoint grants any permissions for any account by the Super-admin.
+        ///
+        /// # Parameters
+        ///
+        /// * `grantee` - account to grant permission.
+        /// * `permission` - permission type.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionGranted` event on successful permissions granting
+        ///
+        /// # Errors
+        ///
+        /// Returns `OnlySuperAdmin` error if the caller is not the Super-admin.
+        #[ink(message)]
+        pub fn admin_grant_permission(
+            &mut self,
+            grantee: AccountId,
+            permission: Permission,
+        ) -> Result<()> {
+            self.message_admin_grant_permission(grantee, permission)
         }
 
-        /// As SuperAdmin, revoke any permission to any account.
+        /// Revokes any permission.
+        ///
+        /// This endpoint revokes any permissions from any account by the Super-admin.
+        ///
+        /// # Parameters
+        ///
+        /// * `grantee` - account to revoke permission.
+        /// * `permission` - permission type.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `PermissionRevoked` event on successful permissions revoking
+        ///
+        /// # Errors
+        ///
+        /// Returns `OnlySuperAdmin` error if the caller is not the Super-admin.
         #[ink(message)]
-        pub fn admin_revoke_permission(&mut self, grantee: AccountId, permission: Permission) {
-            self.message_admin_grant_permission(grantee, permission, false)
-                .unwrap();
+        pub fn admin_revoke_permission(
+            &mut self,
+            grantee: AccountId,
+            permission: Permission,
+        ) -> Result<()> {
+            self.message_admin_revoke_permission(grantee, permission)
+        }
+
+        /// Transfers Storage node ownership.
+        ///
+        /// This endpoint transfers Storage node ownership from Super-admin account to the targeting account forever.
+        /// This action is usually required only once after the Storage node certification process.
+        ///
+        /// # Parameters
+        ///
+        /// * `node_key` - Public Key associated with the Storage node.
+        /// * `new_owner` - New Storage node owner
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `NodeOwnershipTransferred` event on successful Storage node ownership transfer
+        ///
+        /// # Errors
+        ///
+        /// * `OnlySuperAdmin` error if the caller is not the Super-admin.
+        /// * `NodeDoesNotExist` error if the Storage node does not exist.
+        /// * `NodeProviderIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
+        #[ink(message)]
+        pub fn admin_transfer_node_ownership(
+            &mut self,
+            node_key: NodeKey,
+            new_owner: AccountId,
+        ) -> Result<()> {
+            self.message_admin_transfer_node_ownership(node_key, new_owner)
+        }
+
+        /// Transfers CDN node ownership.
+        ///
+        /// This endpoint transfers CDN node ownership from Super-admin account to the targeting account forever.
+        /// This action is usually required only once after the CDN node certification process.
+        ///
+        /// # Parameters
+        ///
+        /// * `cdn_node_key` - Public Key associated with the CDN node.
+        /// * `new_owner` - CDN node owner
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `CdnNodeOwnershipTransferred` event on successful CDN node ownership transfer
+        ///
+        /// # Errors
+        ///
+        /// * `OnlySuperAdmin` error if the caller is not the Super-admin.
+        /// * `CdnNodeDoesNotExist` error if the Storage node does not exist.
+        /// * `CdnNodeOwnerIsNotSuperAdmin` error if the owner of the targeting node is not the Super-admin.
+        #[ink(message)]
+        pub fn admin_transfer_cdn_node_ownership(
+            &mut self,
+            cdn_node_key: CdnNodeKey,
+            new_owner: AccountId,
+        ) -> Result<()> {
+            self.message_admin_transfer_cdn_node_ownership(cdn_node_key, new_owner)
         }
 
         /// As SuperAdmin, withdraw the funds held in custody in this contract.
         ///
         /// This is a temporary measure to allow migrating the funds to a new version of the contract.
         #[ink(message)]
-        pub fn admin_withdraw(&mut self, amount: Balance) {
-            self.message_admin_withdraw(amount).unwrap();
+        pub fn admin_withdraw(&mut self, amount: Balance) -> Result<()> {
+            self.message_admin_withdraw(amount)
+        }
+
+        /// Pay the revenues accumulated by the protocol
+        #[ink(message)]
+        pub fn admin_withdraw_protocol_revenues(&mut self, amount: Balance) -> Result<()> {
+            self.message_admin_withdraw_revenues(amount)
         }
 
         /// As SuperAdmin, set the network and cluster fee configuration.
         #[ink(message)]
-        pub fn admin_set_fee_config(&mut self, config: FeeConfig) {
-            self.message_admin_set_fee_config(config).unwrap();
+        pub fn admin_set_network_fee_config(&mut self, config: NetworkFeeConfig) -> Result<()> {
+            self.message_admin_set_network_fee_config(config)
+        }
+
+        #[ink(message)]
+        pub fn admin_set_protocol_fee_bp(&mut self, protocol_fee_bp: BasisPoints) -> Result<()> {
+            self.message_admin_set_protocol_fee_bp(protocol_fee_bp)
         }
     }
     // ---- End Admin ----
@@ -952,35 +1677,84 @@ pub mod ddc_bucket {
     }
     // ---- End Accounts ----
 
-    // ---- Utils ----
+    // ---- Topology ----
+    impl DdcBucket {
+        #[ink(message)]
+        pub fn get_v_nodes_by_cluster(&self, cluster_id: ClusterId) -> Vec<VNodeToken> {
+            self.message_get_v_nodes_by_cluster(cluster_id)
+        }
+
+        #[ink(message)]
+        pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Vec<VNodeToken> {
+            self.message_get_v_nodes_by_node(node_key)
+        }
+
+        #[ink(message)]
+        pub fn get_node_by_v_node(
+            &self,
+            cluster_id: ClusterId,
+            v_node: VNodeToken,
+        ) -> Result<NodeKey> {
+            self.message_get_node_by_v_node(cluster_id, v_node)
+        }
+    }
+    // ---- End Topology ----
+
+    // ---- Constants ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
-    pub const DEFAULT_BASIS_POINTS: u32 = 500;
+
+    pub type BasisPoints = u128;
+    pub const BASIS_POINTS: BasisPoints = 10_000; // 100%
+    pub const DEFAULT_PROTOCOL_FEE_BP: BasisPoints = 500; // 5 %
+    pub const DEFAULT_NETWORK_FEE_BP: BasisPoints = 0; // 0 %
+    pub const DEFAULT_CLUSTER_FEE_BP: BasisPoints = 0; // 0 %
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
-        BucketDoesNotExist,
-        ClusterDoesNotExist,
-        ParamsTooBig,
-        VNodeDoesNotExist,
-        BondingPeriodNotFinished,
-        BucketClusterAlreadyConnected,
-        BucketClusterNotSetup,
         NodeDoesNotExist,
+        CdnNodeDoesNotExist,
         NodeAlreadyExists,
-        FlowDoesNotExist,
+        CdnNodeAlreadyExists,
         AccountDoesNotExist,
         ParamsDoesNotExist,
-        UnauthorizedProvider,
-        UnauthorizedOwner,
-        UnauthorizedClusterManager,
-        ClusterManagerIsNotTrusted,
+        ParamsSizeExceedsLimit,
+        OnlyOwner,
+        OnlyNodeProvider,
+        OnlyCdnNodeProvider,
+        OnlyClusterManager,
+        OnlyTrustedClusterManager,
+        OnlyValidator,
+        OnlySuperAdmin,
+        OnlyClusterManagerOrNodeProvider,
+        OnlyClusterManagerOrCdnNodeProvider,
+        Unauthorized,
+        ClusterDoesNotExist,
+        ClusterIsNotEmpty,
+        TopologyIsNotCreated(ClusterId),
+        TopologyAlreadyExists,
+        NodesSizeExceedsLimit,
+        CdnNodesSizeExceedsLimit,
+        VNodesSizeExceedsLimit,
+        AccountsSizeExceedsLimit,
+        NodeIsNotAddedToCluster(ClusterId),
+        NodeIsAddedToCluster(ClusterId),
+        CdnNodeIsNotAddedToCluster(ClusterId),
+        CdnNodeIsAddedToCluster(ClusterId),
+        VNodeDoesNotExistsInCluster(ClusterId),
+        VNodeIsNotAssignedToNode(ClusterId, VNodeToken),
+        VNodeIsAlreadyAssignedToNode(NodeKey),
+        AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey),
+        NodeProviderIsNotSuperAdmin,
+        CdnNodeOwnerIsNotSuperAdmin,
+        BucketDoesNotExist,
+        BondingPeriodNotFinished,
         TransferFailed,
         InsufficientBalance,
-        InsufficientResources,
-        Unauthorized,
-        UnknownNode,
+        InsufficientNodeResources,
+        InsufficientClusterResources,
+        EraSettingFailed,
     }
 
     pub type Result<T> = core::result::Result<T, Error>;

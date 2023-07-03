@@ -7,7 +7,8 @@ use crate::ddc_bucket::AccountId;
 #[derive(Copy, Clone, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
 pub enum Permission {
-    ManagerTrustedBy(AccountId),
+    ClusterManagerTrustedBy(AccountId),
     SetExchangeRate,
     SuperAdmin,
+    Validator,
 }

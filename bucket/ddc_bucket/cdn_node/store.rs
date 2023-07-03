@@ -1,59 +1,62 @@
 //! The store where to create and access Nodes.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
-use ink_prelude::vec::Vec as InkVec;
+use super::entity::{CdnNode, CdnNodeKey, CdnNodeParams};
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
+use ink_prelude::vec::Vec;
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_storage::Mapping;
 
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-
-use super::entity::{CdnNode, NodeId};
-
-pub type NodePublicKey = AccountId;
+// https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
+// There is a buffer with only limited capacity (around 16KB in the default configuration) available.
+pub const MAX_CDN_NODES_LEN_IN_VEC: usize = 400;
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct CdnNodeStore {
-    pub pub_key_to_node: Mapping<AccountId, NodeId>,
-    pub cdn_nodes: InkVec<CdnNode>
+    pub cdn_nodes: Mapping<CdnNodeKey, CdnNode>,
+    // todo: remove this vector as it can store an arbitrary number of elements and easily exceed 16KB limit
+    pub keys: Vec<CdnNodeKey>,
 }
 
 impl CdnNodeStore {
-  pub fn create(
-    &mut self,
-    provider_id: AccountId,
-    undistributed_payment: Balance,
-    pubkey: AccountId,
-  ) -> Result<NodeId> {
-      let node_id: NodeId = self.cdn_nodes.len().try_into().unwrap();
-      let node = CdnNode { provider_id, undistributed_payment, node_pub_key: pubkey };
+    pub fn create(
+        &mut self,
+        cdn_node_key: CdnNodeKey,
+        provider_id: AccountId,
+        cdn_node_params: CdnNodeParams,
+        undistributed_payment: Balance,
+    ) -> Result<CdnNodeKey> {
+        if self.cdn_nodes.contains(&cdn_node_key) {
+            return Err(CdnNodeAlreadyExists);
+        }
 
-      let exists = self.pub_key_to_node.contains(&pubkey);
-      if exists {
-          return Err(NodeAlreadyExists);
-      }
+        if self.keys.len() + 1 > MAX_CDN_NODES_LEN_IN_VEC {
+            return Err(CdnNodesSizeExceedsLimit);
+        }
 
-      self.cdn_nodes.push(node);
-      self.pub_key_to_node.insert(&pubkey, &node_id);
-      Ok(node_id)
-  }
+        let cdn_node = CdnNode::new(provider_id, cdn_node_params, undistributed_payment)?;
+        self.cdn_nodes.insert(&cdn_node_key, &cdn_node);
+        self.keys.push(cdn_node_key);
+        Ok(cdn_node_key)
+    }
 
-  pub fn get_by_pub_key(&self, pubkey: AccountId) -> Result<NodeId> {
-    self.pub_key_to_node.get(&pubkey).ok_or(NodeDoesNotExist)
-}
+    pub fn get(&self, cdn_node_key: CdnNodeKey) -> Result<CdnNode> {
+        self.cdn_nodes.get(cdn_node_key).ok_or(CdnNodeDoesNotExist)
+    }
 
-  pub fn get(&self, node_id: NodeId) -> Result<&CdnNode> {
-      self.cdn_nodes.get(node_id as usize).ok_or(NodeDoesNotExist)
-  }
+    pub fn update(&mut self, cdn_node_key: CdnNodeKey, cdn_node: &CdnNode) -> Result<()> {
+        if !self.cdn_nodes.contains(&cdn_node_key) {
+            Err(CdnNodeDoesNotExist)
+        } else {
+            self.cdn_nodes.insert(cdn_node_key, cdn_node);
+            Ok(())
+        }
+    }
 
-  pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut CdnNode> {
-      self.cdn_nodes.get_mut(node_id as usize).ok_or(NodeDoesNotExist)
-  }
-
-  pub fn remove_node(&mut self, node_id: NodeId) -> Result<()> {
-    let total_nodes = self.cdn_nodes.len();
-    let last_node = self.cdn_nodes.get(total_nodes - 1).ok_or(NodeDoesNotExist).unwrap();
-    self.pub_key_to_node.insert(&last_node.node_pub_key, &node_id);
-    self.cdn_nodes.swap_remove(node_id.try_into().unwrap());
-    Ok(())
-}
+    pub fn remove(&mut self, cdn_node_key: CdnNodeKey) {
+        self.cdn_nodes.remove(cdn_node_key);
+        if let Some(pos) = self.keys.iter().position(|x| *x == cdn_node_key) {
+            self.keys.remove(pos);
+        };
+    }
 }

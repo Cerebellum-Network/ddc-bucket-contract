@@ -1,12 +1,9 @@
 //! The Flow data structure represents an outgoing stream of payments from an account.
 
-use ink_storage::traits::{SpreadAllocate, PackedLayout, SpreadLayout};
+use ink_storage::traits::{PackedLayout, SpreadAllocate, SpreadLayout};
 use scale::{Decode, Encode};
 
-use crate::ddc_bucket::{
-    AccountId,
-    schedule::Schedule,
-};
+use crate::ddc_bucket::{schedule::Schedule, AccountId};
 
 // TODO: remove Clone.
 #[derive(Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]

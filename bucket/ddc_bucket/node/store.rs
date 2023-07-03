@@ -1,67 +1,64 @@
 //! The store where to create and access Nodes.
 
-use ink_storage::traits::{SpreadAllocate, SpreadLayout, StorageLayout};
+use super::entity::{Node, NodeKey, NodeParams, Resource};
+use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
 use ink_prelude::vec::Vec;
+use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_storage::Mapping;
 
-use crate::ddc_bucket::node::entity::Resource;
-use crate::ddc_bucket::{AccountId, Balance, Error::*, Result};
-
-use super::entity::{Node, NodeId, NodeTag};
+// https://use.ink/datastructures/storage-layout#packed-vs-non-packed-layout
+// There is a buffer with only limited capacity (around 16KB in the default configuration) available.
+pub const MAX_NODES_LEN_IN_VEC: usize = 400;
 
 #[derive(SpreadAllocate, SpreadLayout, Default)]
-#[cfg_attr(feature = "std", derive(StorageLayout, Debug))]
+#[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug))]
 pub struct NodeStore {
-    pub account_node: Mapping<AccountId, NodeId>,
-    pub nodes: Vec<Node>,
+    pub nodes: Mapping<NodeKey, Node>,
+    // todo: remove this vector as it can store an arbitrary number of elements and easily exceed 16KB limit
+    pub keys: Vec<NodeKey>,
 }
 
 impl NodeStore {
     pub fn create(
         &mut self,
+        node_key: AccountId,
         provider_id: AccountId,
-        rent_per_month: Balance,
+        node_params: NodeParams,
         capacity: Resource,
-        node_tag: NodeTag,
-        pubkey: AccountId,
-    ) -> Result<NodeId> {
-        let node_id: NodeId = self.nodes.len().try_into().unwrap();
-        let node = Node {
-            provider_id,
-            rent_per_month,
-            free_resource: capacity,
-            node_tag,
-            node_pub_key: pubkey,
-        };
-
-        let exists = self.account_node.contains(&pubkey);
-        if exists {
+        rent_v_node_per_month: Balance,
+    ) -> Result<NodeKey> {
+        if self.nodes.contains(&node_key) {
             return Err(NodeAlreadyExists);
         }
 
-        self.nodes.push(node);
-        self.account_node.insert(&pubkey, &node_id);
+        if self.keys.len() + 1 > MAX_NODES_LEN_IN_VEC {
+            return Err(NodesSizeExceedsLimit);
+        }
 
-        Ok(node_id)
+        let node = Node::new(provider_id, node_params, capacity, rent_v_node_per_month)?;
+
+        self.nodes.insert(node_key, &node);
+        self.keys.push(node_key);
+        Ok(node_key)
     }
 
-    pub fn get_by_pub_key(&self, pubkey: AccountId) -> Result<NodeId> {
-        self.account_node.get(&pubkey).ok_or(NodeDoesNotExist)
+    pub fn get(&self, node_key: NodeKey) -> Result<Node> {
+        self.nodes.get(node_key).ok_or(NodeDoesNotExist)
     }
 
-    pub fn get(&self, node_id: NodeId) -> Result<&Node> {
-        self.nodes.get(node_id as usize).ok_or(NodeDoesNotExist)
+    pub fn update(&mut self, node_key: NodeKey, node: &Node) -> Result<()> {
+        if !self.nodes.contains(&node_key) {
+            Err(NodeDoesNotExist)
+        } else {
+            self.nodes.insert(node_key, node);
+            Ok(())
+        }
     }
 
-    pub fn get_mut(&mut self, node_id: NodeId) -> Result<&mut Node> {
-        self.nodes.get_mut(node_id as usize).ok_or(NodeDoesNotExist)
-    }
-
-    pub fn remove_node(&mut self, node_id: NodeId) -> Result<()> {
-        let total_nodes = self.nodes.len();
-        let last_node = self.nodes.get(total_nodes - 1).ok_or(NodeDoesNotExist).unwrap();
-        self.account_node.insert(&last_node.node_pub_key, &node_id);
-        self.nodes.swap_remove(node_id.try_into().unwrap());
-        Ok(())
+    pub fn remove(&mut self, node_key: NodeKey) {
+        self.nodes.remove(node_key);
+        if let Some(pos) = self.keys.iter().position(|x| *x == node_key) {
+            self.keys.remove(pos);
+        };
     }
 }

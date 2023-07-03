@@ -1,17 +1,15 @@
 #![allow(unused_variables, dead_code)]
 
 pub use ink_env::{
-    call, test, block_timestamp,
+    block_timestamp, call, test,
     test::{advance_block, DefaultAccounts},
     DefaultEnvironment,
 };
 
-use scale::Decode;
 use crate::ddc_bucket::*;
-
+use scale::Decode;
 
 pub type Event = <DdcBucket as ::ink_lang::reflect::ContractEventBase>::Type;
-
 
 /// Recommended contract fee for all operations with reasonable data amounts.
 pub const CONTRACT_FEE_LIMIT: Balance = 10 * TOKEN;
@@ -55,19 +53,12 @@ pub fn get_events<Event: Decode>() -> Vec<Event> {
     raw_events.iter().map(decode_event).collect()
 }
 
-pub fn admin_id() -> AccountId {
-    get_accounts().alice
-}
-
-pub fn contract_id() -> AccountId {
-    AccountId::from([0x09; 32])
-}
-
 pub fn print_events(events: &[Event]) {
     for ev in events.iter() {
         match ev {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
             Event::ClusterNodeReplaced(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeReset(ev) => println!("EVENT {:?}", ev),
             Event::ClusterReserveResource(ev) => println!("EVENT {:?}", ev),
             Event::ClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
             Event::NodeCreated(ev) => println!("EVENT {:?}", ev),
@@ -76,11 +67,25 @@ pub fn print_events(events: &[Event]) {
             Event::BucketSettlePayment(ev) => println!("EVENT {:?}", ev),
             Event::BucketAvailabilityUpdated(ev) => println!("EVENT {:?}", ev),
             Event::Deposit(ev) => println!("EVENT {:?}", ev),
-            Event::GrantPermission(ev) => println!("EVENT {:?}", ev),
-            Event::RevokePermission(ev) => println!("EVENT {:?}", ev),
-            Event::CdnClusterCreated(ev) => println!("EVENT {:?}", ev),
-            Event::CdnClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
+            Event::PermissionGranted(ev) => println!("EVENT {:?}", ev),
+            Event::PermissionRevoked(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterDistributeCdnRevenues(ev) => println!("EVENT {:?}", ev),
             Event::CdnNodeCreated(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeAdded(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeAdded(ev) => println!("{:?}", ev),
+            Event::ClusterNodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterParamsSet(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeStatusSet(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterCdnNodeStatusSet(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeParamsSet(ev) => println!("EVENT {:?}", ev),
+            Event::NodeRemoved(ev) => println!("EVENT {:?}", ev),
+            Event::NodeParamsSet(ev) => println!("EVENT {:?}", ev),
+            Event::NodeOwnershipTransferred(ev) => println!("EVENT {:?}", ev),
+            Event::CdnNodeOwnershipTransferred(ev) => println!("EVENT {:?}", ev),
+            Event::BucketParamsSet(ev) => println!("EVENT {:?}", ev),
         }
     }
 }

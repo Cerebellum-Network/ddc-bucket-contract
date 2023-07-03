@@ -3,12 +3,14 @@
 use ink_storage::traits::{PackedLayout, SpreadLayout};
 use scale::{Decode, Encode};
 
+use crate::ddc_bucket::currency::{CurrencyConverter, USD};
 use crate::ddc_bucket::{
-    Balance, cash::{Cash, Payable},
-    Error::*, Result,
+    cash::{Cash, Payable},
     schedule::Schedule,
+    Balance,
+    Error::*,
+    Result,
 };
-use crate::ddc_bucket::currency::{USD, CurrencyConverter};
 
 #[derive(Clone, PartialEq, Encode, Decode, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
@@ -37,16 +39,21 @@ impl Account {
         self.deposit.increase(cash);
     }
 
-    pub fn bond(&mut self, time_ms: u64, conv: &CurrencyConverter, bond_amount: Balance) -> Result<()> {
+    pub fn bond(
+        &mut self,
+        time_ms: u64,
+        conv: &CurrencyConverter,
+        bond_amount: Balance,
+    ) -> Result<()> {
         let payable = Payable(bond_amount);
         if self.get_withdrawable(time_ms, conv) >= payable.peek() {
             let parsed_payable: u128;
-            if self.negative.peek() > 0  && payable.peek() >= self.negative.peek() {
+            if self.negative.peek() > 0 && payable.peek() >= self.negative.peek() {
                 parsed_payable = payable.peek() - self.negative.peek();
                 self.deposit.pay_unchecked(payable);
                 self.bonded.increase(Cash(parsed_payable));
                 Ok(())
-            } else if self.negative.peek() > 0 && payable.peek() < self.negative.peek(){
+            } else if self.negative.peek() > 0 && payable.peek() < self.negative.peek() {
                 Err(InsufficientBalance)
             } else {
                 let bonded_amount = Cash(payable.peek());
@@ -71,7 +78,12 @@ impl Account {
         }
     }
 
-    pub fn withdraw(&mut self, time_ms: u64, conv: &CurrencyConverter, payable: Payable) -> Result<()> {
+    pub fn withdraw(
+        &mut self,
+        time_ms: u64,
+        conv: &CurrencyConverter,
+        payable: Payable,
+    ) -> Result<()> {
         if self.get_withdrawable(time_ms, conv) >= payable.peek() {
             self.deposit.pay_unchecked(payable);
             Ok(())
@@ -80,7 +92,7 @@ impl Account {
         }
     }
 
-    // Add logics when balance is below requested 
+    // Add logics when balance is below requested
     pub fn withdraw_bonded(&mut self, payable: Payable) -> Result<()> {
         let remaining_bonded = self.bonded.peek() - self.unbonded_amount.peek();
         if remaining_bonded >= payable.peek() {

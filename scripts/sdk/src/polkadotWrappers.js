@@ -22,10 +22,15 @@ async function connect(rpcUrl) {
 }
 
 function randomAccount() {
-    const mnemonic = mnemonicGenerate(12);
     const keyring = new Keyring({type: 'sr25519'});
-    const account =keyring.addFromMnemonic(mnemonic);
-    return account;
+    const mnemonic = mnemonicGenerate(12);
+    const account = keyring.addFromMnemonic(mnemonic);
+  
+    return {
+        account,
+        mnemonic,
+        address: account.address,
+    };
 }
 
 function accountFromUri(uri) {

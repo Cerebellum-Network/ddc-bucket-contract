@@ -2,13 +2,10 @@ const { deployContract } = require("./deploy");
 const { config } = require("./../sdk");
 const log = console.log;
 
+const CODE_HASH = process.env.CODE_HASH || null;
 
 async function main() {
-    const args = process.argv.slice(2);
-    const codeHash =  args.length > 0 ? args[0] : null;
-    const constructorName = args.length > 1 ? args[1] : "new";
-
-    await deployContract(config.DDC_BUCKET_CONTRACT_NAME, codeHash, constructorName);
+    await deployContract(config.DDC_BUCKET_CONTRACT_NAME, CODE_HASH);
     process.exit(0);
 }
 

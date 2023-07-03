@@ -1,6 +1,6 @@
 const GEN = 0x10000000000000000n; // UINT64_MAX
 
-export const config = {
+module.exports = {
   devnet: {
     ws_provider: "wss://archive.devnet.cere.network/ws",
     contract_address: "6SfBsKbfPUTN35GCcqAHSMY4MemedK2A73VeJ34Z2FV6PB4r",
