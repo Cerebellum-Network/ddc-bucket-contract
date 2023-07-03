@@ -1017,6 +1017,31 @@ fn cluster_replace_node_err_if_no_v_nodes() {
 
 
 #[ink::test]
+fn cluster_replace_node_err_if_node_is_not_in_cluster() {
+    let mut ctx = setup_cluster();
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    set_caller_value(ctx.provider_id0, 10);
+    ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000000000,
+        1
+    )?;
+
+    set_caller_value(ctx.manager_id, 10);
+    assert_eq!(
+        ctx.contract.cluster_replace_node(
+            ctx.cluster_id, 
+            vec![1, 3], 
+            new_node_key
+        ),
+        Err(NodeIsNotAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
 fn cluster_replace_node_err_if_v_nodes_exceeds_limit() {
     let mut ctx = setup_cluster();
 
@@ -1120,6 +1145,159 @@ fn cluster_replace_node_ok() {
             "resources must have shifted between nodes"
         );
     }
+}
+
+
+#[ink::test]
+fn cluster_reset_node_err_if_not_cluster_manager() {
+    let mut ctx = setup_cluster();
+
+    let not_manager_id = AccountId::from([0xee, 0x0a, 0xc9, 0x58, 0xa2, 0x0d, 0xe8, 0xda, 0x73, 0xb2, 0x05, 0xe9, 0xc6, 0x34, 0xa6, 0xb2, 0x23, 0xcc, 0x54, 0x30, 0x24, 0x5d, 0x89, 0xb6, 0x4d, 0x83, 0x9b, 0x6d, 0xca, 0xc4, 0xf8, 0x6d]);
+    set_caller_value(not_manager_id, 0);
+
+    // Reassign a vnode from node1 to node2.
+    assert_eq!(
+        ctx.contract.cluster_reset_node(
+            ctx.cluster_id, 
+            ctx.node_key2,
+            vec![10, 11, 12],
+        ),
+        Err(OnlyClusterManager)
+    );
+}
+
+
+#[ink::test]
+fn cluster_reset_node_err_if_node_does_not_exist() {
+    let mut ctx = setup_cluster();
+
+    let bad_node_key = AccountId::from([0xf6, 0x8f, 0x06, 0xa8, 0x26, 0xba, 0xaf, 0x7f, 0xbd, 0x9b, 0xff, 0x3d, 0x1e, 0xec, 0xae, 0xef, 0xc7, 0x7a, 0x01, 0x6d, 0x0b, 0xaf, 0x4c, 0x90, 0x55, 0x6e, 0x7b, 0x15, 0x73, 0x46, 0x9c, 0x76]);
+    set_caller(ctx.manager_id);
+    assert_eq!(
+        ctx.contract.cluster_reset_node(
+            ctx.cluster_id, 
+            bad_node_key,
+            vec![10, 11, 12],
+        ),
+        Err(NodeDoesNotExist)
+    );
+}
+
+
+#[ink::test]
+fn cluster_reset_node_err_if_no_v_nodes() {
+    let mut ctx = setup_cluster();
+
+    assert_eq!(
+        ctx.contract.cluster_reset_node(
+            ctx.cluster_id, 
+            ctx.node_key2,
+            vec![], 
+        ),
+        Err(AtLeastOneVNodeHasToBeAssigned(ctx.cluster_id, ctx.node_key2))
+    );
+}
+
+
+#[ink::test]
+fn cluster_reset_node_err_if_v_nodes_exceeds_limit() {
+    let mut ctx = setup_cluster();
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    set_caller_value(ctx.provider_id0, 10);
+    ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000000000,
+        1
+    )?;
+
+    set_caller_value(ctx.manager_id, 10);
+    ctx.contract.cluster_add_node(
+        ctx.cluster_id,
+        new_node_key, 
+        vec![100],
+    )?;
+
+    let v_nodes: Vec<VNodeToken> = vec![100; 1801];
+    assert_eq!(
+        ctx.contract.cluster_reset_node(
+            ctx.cluster_id, 
+            new_node_key,
+            v_nodes,
+        ),
+        Err(VNodesSizeExceedsLimit)
+    );
+}
+
+
+#[ink::test]
+fn cluster_reset_node_err_if_node_is_not_in_cluster() {
+    let mut ctx = setup_cluster();
+
+    let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
+    set_caller_value(ctx.provider_id0, 10);
+    ctx.contract.node_create(
+        new_node_key,
+        NodeParams::from("new_node"),
+        1000000000,
+        1
+    )?;
+
+    set_caller_value(ctx.manager_id, 10);
+    assert_eq!(
+        ctx.contract.cluster_reset_node(
+            ctx.cluster_id, 
+            new_node_key,
+            vec![10, 11, 12], 
+        ),
+        Err(NodeIsNotAddedToCluster(ctx.cluster_id))
+    );
+}
+
+
+#[ink::test]
+fn cluster_reset_node_ok() {
+    let mut ctx = setup_cluster();
+
+    set_caller(ctx.manager_id);
+    // Reset vnode for node1
+    ctx.contract.cluster_reset_node(
+        ctx.cluster_id, 
+        ctx.node_key1,
+        vec![10, 11, 12],
+    )?;
+
+    // Check the last event
+    let ev = get_events().pop().unwrap();
+    assert!(matches!(ev, Event::ClusterNodeReset(ev) if ev ==
+        ClusterNodeReset {
+            cluster_id: ctx.cluster_id, 
+            node_key: ctx.node_key1
+        }
+    ));
+
+    let mut cluster_v_nodes = Vec::<VNodeToken>::new();
+    cluster_v_nodes.extend(ctx.v_nodes0.clone());
+    cluster_v_nodes.extend(vec![10, 11, 12]);
+    cluster_v_nodes.extend(ctx.v_nodes2.clone());
+    cluster_v_nodes.sort();
+
+    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
+    cluster_info.cluster_v_nodes.sort();
+    assert_eq!(&cluster_info.cluster_v_nodes, &cluster_v_nodes, "a v_node must be replaced");
+
+    let mut v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0.clone());
+    v_nodes0.sort();
+    let mut v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1.clone());
+    v_nodes1.sort();
+    let mut v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2.clone());
+    v_nodes2.sort();
+
+    assert_eq!(&v_nodes0, &vec![1, 2, 3], "v_nodes must not be reset for the 1st node");
+    assert_eq!(&v_nodes1, &vec![10, 11, 12], "v_nodes must not be reset for the 2nd node");
+    assert_eq!(&v_nodes2, &vec![7, 8, 9], "v_nodes must not be reset to the 3rd node");
+
 }
 
 

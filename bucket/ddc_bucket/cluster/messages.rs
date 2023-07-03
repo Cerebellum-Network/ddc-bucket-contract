@@ -14,7 +14,7 @@ use crate::ddc_bucket::{
     BASIS_POINTS,
     AccountId, Balance, ClusterCreated, ClusterNodeAdded, ClusterNodeRemoved,
     ClusterCdnNodeAdded, ClusterCdnNodeRemoved, ClusterDistributeRevenues, ClusterReserveResource, ClusterDistributeCdnRevenues,
-    ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, 
+    ClusterRemoved, ClusterParamsSet, ClusterNodeStatusSet, ClusterCdnNodeStatusSet, PermissionGranted, PermissionRevoked, ClusterNodeReset,
     DdcBucket, NodeStatusInCluster, Result, Error::*
 };
 
@@ -123,12 +123,15 @@ impl DdcBucket {
     pub fn message_cluster_replace_node(
         &mut self,
         cluster_id: ClusterId,
-        v_nodes: Vec<u64>,
+        v_nodes: Vec<VNodeToken>,
         new_node_key: NodeKey,
     ) -> Result<()> {
         let caller = Self::env().caller();
 
         let cluster = self.clusters.get(cluster_id)?;
+        let mut new_node = self.nodes.get(new_node_key)?;
+        new_node.only_with_cluster(cluster_id)?;
+        cluster.only_manager(caller)?;
 
         // Give back resources to the old node for all its v_nodes
         for v_node in &v_nodes {
@@ -138,10 +141,6 @@ impl DdcBucket {
             let mut old_node = self.nodes.get(old_node_key)?;
             old_node.put_resource(cluster.resource_per_v_node);
             self.nodes.update(old_node_key, &old_node)?;
-
-            let mut new_node = self.nodes.get(new_node_key)?;
-            new_node.only_with_cluster(cluster_id)?;
-            cluster.only_manager(caller)?;
 
             // Reserve resources on the new node.
             new_node.take_resource(cluster.resource_per_v_node)?;
@@ -157,6 +156,53 @@ impl DdcBucket {
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,
             node_key: new_node_key,
+        });
+
+        Ok(())
+    }
+
+
+    pub fn message_cluster_reset_node(
+        &mut self,
+        cluster_id: ClusterId,
+        node_key: NodeKey,
+        new_v_nodes: Vec<VNodeToken>,
+    ) -> Result<()> {
+        let caller = Self::env().caller();
+
+        let cluster = self.clusters.get(cluster_id)?;
+
+        let mut node = self.nodes.get(node_key)?;
+        node.only_with_cluster(cluster_id)?;
+        cluster.only_manager(caller)?;
+
+        let old_v_nodes = self.topology.get_v_nodes_by_node(node_key);
+
+        if new_v_nodes.len() > old_v_nodes.len() {
+            
+            for _i in 0..new_v_nodes.len() - old_v_nodes.len() {
+                node.take_resource(cluster.resource_per_v_node)?;
+                self.nodes.update(node_key, &node)?;
+            }
+
+        } else if new_v_nodes.len() < old_v_nodes.len() {
+
+            for _i in 0..old_v_nodes.len() - new_v_nodes.len() {
+                node.put_resource(cluster.resource_per_v_node);
+                self.nodes.update(node_key, &node)?;
+            }
+
+        }
+
+        self.topology.reset_node(
+            cluster_id, 
+            node_key, 
+            new_v_nodes
+        )?;
+
+        Self::env().emit_event(ClusterNodeReset {
+            cluster_id,
+            node_key: node_key,
         });
 
         Ok(())

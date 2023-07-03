@@ -194,6 +194,18 @@ impl TopologyStore {
     }
 
 
+    pub fn reset_node(
+        &mut self,
+        cluster_id: ClusterId,
+        node_key: NodeKey,
+        new_v_nodes: Vec<VNodeToken>,
+    ) -> Result<()> {
+
+        self.remove_node(cluster_id, node_key)?;
+        self.add_node(cluster_id, node_key, new_v_nodes)
+        
+    }
+
     pub fn remove_topology(
         &mut self,
         cluster_id: ClusterId,

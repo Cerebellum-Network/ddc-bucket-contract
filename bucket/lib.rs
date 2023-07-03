@@ -358,6 +358,16 @@ pub mod ddc_bucket {
         node_key: NodeKey,
     }
 
+    /// A vnode was re-assigned to new node.
+    #[ink(event)]
+    #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
+    pub struct ClusterNodeReset {
+        #[ink(topic)]
+        cluster_id: ClusterId,
+        #[ink(topic)]
+        node_key: NodeKey,
+    }
+
     /// Some resources were reserved for the cluster from the nodes.
     #[ink(event)]
     #[cfg_attr(feature = "std", derive(PartialEq, Debug, scale_info::TypeInfo))]
@@ -531,6 +541,50 @@ pub mod ddc_bucket {
                 new_node_key
             )
         }
+
+
+        /// Reeset a Storage node in the targeting cluster.
+        ///
+        /// This endpoint resets virtual nodes on a physical Storage node in the targeting cluster.
+        /// Virtual nodes determines a token (position) on the ring in terms of Consistent Hashing.
+        /// The Storage node can be reset in the cluster by cluster manager only.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `node_key` - Public Key associated with the Storage node.
+        /// * `new_v_nodes` - List of tokens (positions) related to the Storage node to reset.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeAdded` event on successful Storage node addition.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyTrustedClusterManager` error if the caller is not a trusted cluster manager.
+        /// * `NodeDoesNotExist` error if the adding Storage node does not exist.
+        /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
+        /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
+        /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
+        #[ink(message)]
+        pub fn cluster_reset_node(
+            &mut self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+            new_v_nodes: Vec<VNodeToken>,
+        ) -> Result<()> {
+            self.message_cluster_reset_node(
+                cluster_id, 
+                node_key, 
+                new_v_nodes
+            )
+        }
+
 
         /// Adds a CDN node to the targeting cluster.
         ///

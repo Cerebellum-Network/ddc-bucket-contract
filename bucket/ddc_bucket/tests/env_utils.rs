@@ -59,6 +59,7 @@ pub fn print_events(events: &[Event]) {
         match ev {
             Event::ClusterCreated(ev) => println!("EVENT {:?}", ev),
             Event::ClusterNodeReplaced(ev) => println!("EVENT {:?}", ev),
+            Event::ClusterNodeReset(ev) => println!("EVENT {:?}", ev),
             Event::ClusterReserveResource(ev) => println!("EVENT {:?}", ev),
             Event::ClusterDistributeRevenues(ev) => println!("EVENT {:?}", ev),
             Event::NodeCreated(ev) => println!("EVENT {:?}", ev),
