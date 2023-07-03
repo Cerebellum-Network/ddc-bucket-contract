@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x1caf5ce3e145731b738594770e25507ba8c09066f63328d913f96cb72ad1ba5d",
+    "hash": "0x3fb93f4d51fa512d9873fb945365bc5e5a3d168a9e745ffc19e0cd4e25ecbb68",
     "language": "ink! 3.4.0",
     "compiler": "rustc 1.69.0-nightly"
   },
@@ -1578,7 +1578,7 @@
             "",
             " # Errors",
             "",
-            " * `InvalidClusterParams` error if there is an invalid cluster parameter. "
+            " * `InvalidClusterParams` error if there is an invalid cluster parameter."
           ],
           "label": "cluster_create",
           "mutates": true,
@@ -2006,7 +2006,7 @@
           "docs": [
             " Sets parameters for the targeting cluster.",
             "",
-            " This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. ",
+            " This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.",
             " All cluster parameters must be specified as the endpoint works using SET approach.",
             "",
             " # Parameters",
@@ -2835,7 +2835,7 @@
           "docs": [
             " Sets parameters for the targeting CDN node.",
             "",
-            " This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
+            " This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.",
             " All CDN node parameters must be specified as the endpoint works using SET approach.",
             "",
             " # Parameters",
@@ -3110,13 +3110,13 @@
           "docs": [
             " Sets parameters for the targeting Storage node.",
             "",
-            " This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
+            " This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.",
             " All Storage node parameters must be specified as the endpoint works using SET approach.",
             "",
             " # Parameters",
             "",
             " * `node_key` - Public Key associated with the Storage node.",
-            " * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. ",
+            " * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.",
             "",
             " # Output",
             "",
