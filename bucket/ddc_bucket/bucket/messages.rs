@@ -31,7 +31,7 @@ impl DdcBucket {
         let mut bucket = self.buckets.get(bucket_id)?;
         let mut cluster = self.clusters.get(bucket.cluster_id)?;
         Self::only_owner_or_cluster_manager(&bucket, &cluster)?;
-
+        // todo: fix resource allocation
         cluster.take_resource(resource)?;
         self.clusters.update(bucket.cluster_id, &cluster)?;
         bucket.put_resource(resource);

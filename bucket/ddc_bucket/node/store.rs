@@ -25,7 +25,7 @@ impl NodeStore {
         provider_id: AccountId,
         node_params: NodeParams,
         capacity: Resource,
-        rent_per_month: Balance,
+        rent_v_node_per_month: Balance,
     ) -> Result<NodeKey> {
 
         if self.nodes.contains(&node_key) {
@@ -40,7 +40,7 @@ impl NodeStore {
             provider_id,
             node_params,
             capacity,
-            rent_per_month
+            rent_v_node_per_month
         )?;
 
         self.nodes.insert(node_key, &node);

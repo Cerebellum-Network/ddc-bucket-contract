@@ -64,13 +64,14 @@ impl Cluster {
     pub fn new(
         manager_id: AccountId,
         cluster_params: ClusterParams,
+        resource_per_v_node: Resource,
     ) -> Result<Self> {
 
         let mut cluster = Cluster {
             manager_id,
             cluster_params: ClusterParams::default(),
             nodes_keys: Vec::new(),
-            resource_per_v_node: 0,
+            resource_per_v_node,
             resource_used: 0,
             revenues: Cash(0),
             total_rent: 0,
@@ -138,12 +139,8 @@ impl Cluster {
         rent
     }
 
-    pub fn set_rent(&mut self, rent: Balance) {
-        self.total_rent = rent;
-    }
-
-    pub fn put_resource(&mut self, amount: Resource) {
-        self.resource_per_v_node += amount;
+    pub fn set_resource_per_v_node(&mut self, resource_per_v_node: Resource) {
+        self.resource_per_v_node = resource_per_v_node;
     }
 
     pub fn take_resource(&mut self, amount: Resource) -> Result<()> {

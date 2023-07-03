@@ -20,7 +20,7 @@ pub type Resource = u32;
 #[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
 pub struct Node {
     pub provider_id: ProviderId,
-    pub rent_per_month: Balance,
+    pub rent_v_node_per_month: Balance,
     pub free_resource: Resource,
     pub node_params: NodeParams,
     pub cluster_id: Option<ClusterId>,
@@ -72,13 +72,13 @@ impl Node {
         provider_id: AccountId,
         node_params: NodeParams,
         capacity: Resource,
-        rent_per_month: Balance,
+        rent_v_node_per_month: Balance,
     ) -> Result<Self> {
         let mut node = Node {
             provider_id,
             node_params: NodeParams::default(),
             free_resource: capacity,
-            rent_per_month,
+            rent_v_node_per_month,
             cluster_id: None,
             status_in_cluster: None,
         };

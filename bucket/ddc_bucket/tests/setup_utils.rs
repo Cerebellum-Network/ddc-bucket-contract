@@ -34,6 +34,12 @@ pub struct TestCluster {
     pub v_nodes0: Vec<VNodeToken>,
     pub v_nodes1: Vec<VNodeToken>,
     pub v_nodes2: Vec<VNodeToken>,
+    pub node_capacity0: u32,
+    pub node_capacity1: u32,
+    pub node_capacity2: u32,
+    pub rent_v_node_per_month0: Balance,
+    pub rent_v_node_per_month1: Balance,
+    pub rent_v_node_per_month2: Balance,
 
     pub cdn_node_key0: CdnNodeKey,
     pub cdn_node_key1: CdnNodeKey,
@@ -48,9 +54,9 @@ pub struct TestCluster {
     pub cluster_v_nodes: Vec<VNodeToken>,
     pub nodes_keys: Vec<NodeKey>,
     pub cdn_nodes_keys: Vec<CdnNodeKey>,
-    pub rent_per_month: Balance,
-    pub capacity: u32,
-    pub reserved_resource: u32,
+    pub resource_per_v_node: Resource,
+    // pub rent_v_node_per_month: Balance,
+    // pub reserved_resource: u32,
 }
 
 pub fn setup_cluster() -> TestCluster {
@@ -67,44 +73,48 @@ pub fn setup_cluster() -> TestCluster {
     set_balance(provider_id2, 1000 * TOKEN);
     set_balance(manager_id, 1000 * TOKEN);
 
-    let rent_per_month: Balance = 10 * TOKEN;
-    let reserved_resource = 10;
-    let capacity = 100;
-
+    // let rent_v_node_per_month: Balance = 10 * TOKEN;
+    // let reserved_resource = 10;
 
     // Create the 1st storage node
     let node_key0 = AccountId::from([0x0a; 32]);
     let node_params0 = NodeParams::from("{\"url\":\"https://ddc.cere.network/storage/0\"}");
+    let node_capacity0 = 100;
+    let rent_v_node_per_month0 = 10 * TOKEN;
     set_caller_value(provider_id0, CONTRACT_FEE_LIMIT);
     contract.node_create(
         node_key0,
         node_params0.clone(),
-        capacity,
-        rent_per_month
+        node_capacity0,
+        rent_v_node_per_month0,
     ).unwrap();
 
 
     // Create the 2nd storage node
     let node_key1 = AccountId::from([0x0b; 32]);
     let node_params1 = NodeParams::from("{\"url\":\"https://ddc-1.cere.network/storage/1\"}");
+    let node_capacity1 = 100;
+    let rent_v_node_per_month1 = 10 * TOKEN;
     set_caller_value(provider_id1, CONTRACT_FEE_LIMIT);
     contract.node_create(
         node_key1,
         node_params1.clone(),
-        capacity,
-        rent_per_month
+        node_capacity1,
+        rent_v_node_per_month1
     ).unwrap();
 
 
     // Create the 3rd storage node
     let node_key2 = AccountId::from([0x0c; 32]);
     let node_params2 = NodeParams::from("{\"url\":\"https://ddc-2.cere.network/storage/2\"}");
+    let node_capacity2 = 100;
+    let rent_v_node_per_month2 = 10 * TOKEN;
     set_caller_value(provider_id2, CONTRACT_FEE_LIMIT);
     let node_key2 = contract.node_create(
         node_key2,
         node_params2.clone(),
-        capacity,
-        rent_per_month,
+        node_capacity2,
+        rent_v_node_per_month2,
     ).unwrap();
 
 
@@ -140,9 +150,11 @@ pub fn setup_cluster() -> TestCluster {
 
     // Create a Cluster
     let cluster_params = ClusterParams::from("{}");
+    let resource_per_v_node = 10;
     set_caller_value(manager_id, CONTRACT_FEE_LIMIT);
     let cluster_id = contract.cluster_create(
         cluster_params.clone(),
+        resource_per_v_node
     ).unwrap();
 
 
@@ -208,11 +220,6 @@ pub fn setup_cluster() -> TestCluster {
         cdn_node_key2, 
     ).unwrap();
 
-
-    set_caller(manager_id);
-    contract.cluster_reserve_resource(cluster_id, reserved_resource).unwrap();
-
-
     let nodes_keys = vec![
         node_key0,
         node_key1,
@@ -246,6 +253,9 @@ pub fn setup_cluster() -> TestCluster {
         v_nodes0,
         v_nodes1,
         v_nodes2,
+        rent_v_node_per_month0,
+        rent_v_node_per_month1,
+        rent_v_node_per_month2,
 
         cdn_node_key0,
         cdn_node_key1,
@@ -253,16 +263,17 @@ pub fn setup_cluster() -> TestCluster {
         cdn_node_params0,
         cdn_node_params1,
         cdn_node_params2,
+        node_capacity0,
+        node_capacity1,
+        node_capacity2,
 
         manager_id,
         cluster_id,
         cluster_params,
-        cluster_v_nodes,
-        rent_per_month,
         nodes_keys,
         cdn_nodes_keys,
-        capacity,
-        reserved_resource,
+        cluster_v_nodes,
+        resource_per_v_node,
     }
 }
 

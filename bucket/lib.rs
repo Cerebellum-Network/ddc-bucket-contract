@@ -406,6 +406,7 @@ pub mod ddc_bucket {
         /// # Parameters
         ///
         /// * `cluster_params` - [Cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format.
+        /// * `resource_per_v_node` - Resource value that will be allocated for every virtual node in the cluster.
         ///
         /// # Output
         ///
@@ -422,8 +423,9 @@ pub mod ddc_bucket {
         pub fn cluster_create(
             &mut self,
             cluster_params: ClusterParams,
+            resource_per_v_node: Resource,
         ) -> Result<ClusterId> {
-            self.message_cluster_create(cluster_params)
+            self.message_cluster_create(cluster_params, resource_per_v_node)
         }
 
         /// Adds a Storage node to the targeting cluster.
@@ -454,6 +456,7 @@ pub mod ddc_bucket {
         /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
         /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
+        /// * `InsufficientResources` - error if there is not enough resources in a physical node.
         #[ink(message, payable)]
         pub fn cluster_add_node(
             &mut self,
@@ -571,6 +574,7 @@ pub mod ddc_bucket {
         /// * `NodeIsAddedToCluster(ClusterId)` error if the adding Storage node is already added to this or another cluster.
         /// * `AtLeastOneVNodeHasToBeAssigned(ClusterId, NodeKey)` error if there is a Storage node without any virtual nodes in the cluster.
         /// * `VNodesSizeExceedsLimit` error if virtual nodes length exceeds storage capacity.
+        /// * `InsufficientResources` - error if there is not enough resources in a physical node.
         #[ink(message)]
         pub fn cluster_reset_node(
             &mut self,
@@ -654,7 +658,7 @@ pub mod ddc_bucket {
         
         /// Sets parameters for the targeting cluster.
         ///
-        /// This enpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. 
+        /// This endpoint updates [cluster parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#cluster-parameters) in protobuf format. 
         /// All cluster parameters must be specified as the endpoint works using SET approach.
         ///
         /// # Parameters
@@ -685,7 +689,7 @@ pub mod ddc_bucket {
 
         /// Removes a cluster.
         ///
-        /// This enpoint removes the cluster if it does not contain any nodes.
+        /// This endpoint removes the cluster if it does not contain any nodes.
         /// Only an empty cluster can be removed.
         ///
         /// # Parameters
@@ -715,7 +719,7 @@ pub mod ddc_bucket {
 
         /// Changes Storage node status.
         ///
-        /// This enpoint changes Storage node status in a cluster.
+        /// This endpoint changes Storage node status in a cluster.
         ///
         /// # Parameters
         ///
@@ -752,7 +756,7 @@ pub mod ddc_bucket {
 
         /// Changes CDN node status.
         ///
-        /// This enpoint changes CDN node status in a cluster.
+        /// This endpoint changes CDN node status in a cluster.
         ///
         /// # Parameters
         ///
@@ -787,9 +791,48 @@ pub mod ddc_bucket {
             )
         }
 
+
+        /// Sets the resource used per virual node in cluster.
+        ///
+        /// This endpoint sets the resource value that is being used by each virtual node in the cluster.
+        /// If there are existing virtual nodes in the cluster the resource for its physical nodes will be recalculated.
+        ///
+        /// # Parameters
+        ///
+        /// * `cluster_id` - ID of the targeting cluster.
+        /// * `new_resource_per_v_node` - Resource value that will be allocated for every virtual node in the cluster.
+        ///
+        /// # Output
+        ///
+        /// Returns nothing.
+        ///
+        /// # Events
+        ///
+        /// * `ClusterNodeReplaced` event on successful virtual node reassignment.
+        ///
+        /// # Errors
+        ///
+        /// * `ClusterDoesNotExist` error if the cluster does not exist.
+        /// * `OnlyClusterManager` error if the caller is not the cluster manager.
+        /// * `NodeDoesNotExist` error if the new Storage node does not exist.
+        /// * `VNodeIsNotAssignedToNode(ClusterId, VNodeToken)` error if the there is some virtual node that is being reasigned, but this virtual node is not assigned to any physical node.
+        /// * `InsufficientResources` - error if there is not enough resources in a physical node.
+        #[ink(message)]
+        pub fn cluster_set_resource_per_v_node(
+            &mut self, 
+            cluster_id: ClusterId, 
+            new_resource_per_v_node: Resource
+        ) -> Result<()> {
+            self.message_cluster_set_resource_per_v_node(
+                cluster_id, 
+                new_resource_per_v_node
+            )
+        }
+
+
         /// Gets a cluster.
         ///
-        /// This enpoint gets the targeting cluster along with its parameters, Storage and CDN nodes.
+        /// This endpoint gets the targeting cluster along with its parameters, Storage and CDN nodes.
         ///
         /// # Parameters
         ///
@@ -810,9 +853,10 @@ pub mod ddc_bucket {
             self.message_cluster_get(cluster_id)
         }
 
+
         /// Gets a paginated list of clusters.
         ///
-        /// This enpoint gets a paginated list of clusters along with their parameters, Storage and CDN nodes.
+        /// This endpoint gets a paginated list of clusters along with their parameters, Storage and CDN nodes.
         /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
@@ -833,14 +877,6 @@ pub mod ddc_bucket {
             filter_manager_id: Option<AccountId>,
         ) -> (Vec<ClusterInfo>, u32) {
             self.message_cluster_list(offset, limit, filter_manager_id)
-        }
-
-        /// As manager, reserve more resources for the cluster from the free capacity of nodes.
-        ///
-        /// The amount of resources is given per vnode (total resources will be `resource` times the number of vnodes).
-        #[ink(message)]
-        pub fn cluster_reserve_resource(&mut self, cluster_id: ClusterId, amount: Resource) -> Result<()> {
-            self.message_cluster_reserve_resource(cluster_id, amount)
         }
 
         /// Trigger the distribution of revenues from the cluster to the providers.
@@ -1000,7 +1036,7 @@ pub mod ddc_bucket {
 
         /// Removes a CDN node.
         ///
-        /// This enpoint removes the targeting CDN Node if it is not added to some cluster.
+        /// This endpoint removes the targeting CDN Node if it is not added to some cluster.
         /// Only a node that is not a member of some cluster can be removed.
         ///
         /// # Parameters
@@ -1030,7 +1066,7 @@ pub mod ddc_bucket {
 
         /// Sets parameters for the targeting CDN node.
         ///
-        /// This enpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
+        /// This endpoint updates [CDN node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
         /// All CDN node parameters must be specified as the endpoint works using SET approach.
         ///
         /// # Parameters
@@ -1061,7 +1097,7 @@ pub mod ddc_bucket {
 
         /// Gets a CDN node.
         ///
-        /// This enpoint gets the targeting CDN node along with its parameters.
+        /// This endpoint gets the targeting CDN node along with its parameters.
         ///
         /// # Parameters
         ///
@@ -1084,7 +1120,7 @@ pub mod ddc_bucket {
 
         /// Gets a paginated list of CDN nodes.
         ///
-        /// This enpoint gets a paginated list of CDN nodes along with their parameters.
+        /// This endpoint gets a paginated list of CDN nodes along with their parameters.
         /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
@@ -1120,7 +1156,7 @@ pub mod ddc_bucket {
         node_key: NodeKey,
         #[ink(topic)]
         provider_id: AccountId,
-        rent_per_month: Balance,
+        rent_v_node_per_month: Balance,
         node_params: NodeParams,
     }
 
@@ -1151,7 +1187,7 @@ pub mod ddc_bucket {
         /// * `node_key` - Public Keys of the Storage node that should be treated as node identifier.
         /// * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.
         /// * `capacity` - Measure used to evaluate physical node hardware resources.
-        /// * `rent_per_month` - Renting per month.
+        /// * `rent_v_node_per_month` - Renting per month.
         ///
         /// # Output
         ///
@@ -1171,19 +1207,19 @@ pub mod ddc_bucket {
             node_key: NodeKey,
             node_params: NodeParams,
             capacity: Resource,
-            rent_per_month: Balance
+            rent_v_node_per_month: Balance
         ) -> Result<NodeKey> {
             self.message_node_create(
                 node_key, 
                 node_params, 
                 capacity, 
-                rent_per_month
+                rent_v_node_per_month
             )
         }
 
         /// Removes a Storage node.
         ///
-        /// This enpoint removes the targeting Storage Node if it is not added to some cluster.
+        /// This endpoint removes the targeting Storage Node if it is not added to some cluster.
         /// Only a node that is not a member of some cluster can be removed.
         ///
         /// # Parameters
@@ -1213,7 +1249,7 @@ pub mod ddc_bucket {
 
         /// Sets parameters for the targeting Storage node.
         ///
-        /// This enpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
+        /// This endpoint updates [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format. 
         /// All Storage node parameters must be specified as the endpoint works using SET approach.
         ///
         /// # Parameters
@@ -1244,7 +1280,7 @@ pub mod ddc_bucket {
 
         /// Gets a Storage node.
         ///
-        /// This enpoint gets the targeting Storage node along with its parameters.
+        /// This endpoint gets the targeting Storage node along with its parameters.
         ///
         /// # Parameters
         ///
@@ -1267,7 +1303,7 @@ pub mod ddc_bucket {
 
         /// Gets a paginated list of Storage nodes.
         ///
-        /// This enpoint gets a paginated list of Storage nodes along with their parameters.
+        /// This endpoint gets a paginated list of Storage nodes along with their parameters.
         /// The algorithm for paging is: start with `offset = 1` and `limit = 20`. The function returns a `(results, max_id)`. Call again with `offset += limit`, until `offset >= max_id`.
         /// The optimal `limit` depends on the size of params.
         ///
@@ -1393,7 +1429,7 @@ pub mod ddc_bucket {
     impl DdcBucket {
         /// Checks for permission existence.
         ///
-        /// This enpoint checks whether the given account has the given permission.
+        /// This endpoint checks whether the given account has the given permission.
         /// Super-admin will always have all permissions.
         ///
         /// # Parameters

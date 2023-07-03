@@ -737,7 +737,7 @@
             {
               "docs": [],
               "indexed": false,
-              "label": "rent_per_month",
+              "label": "rent_v_node_per_month",
               "type": {
                 "displayName": [
                   "Balance"
@@ -2856,7 +2856,7 @@
               }
             },
             {
-              "label": "rent_per_month",
+              "label": "rent_v_node_per_month",
               "type": {
                 "displayName": [
                   "Balance"
@@ -2876,7 +2876,7 @@
             " * `node_key` - Public Keys of the Storage node that should be treated as node identifier.",
             " * `node_params` - [Storage node parameters](https://docs.cere.network/ddc/protocols/contract-params-schema#node-params.proto) in protobuf format.",
             " * `capacity` - Measure used to evaluate physical node hardware resources.",
-            " * `rent_per_month` - Renting per month.",
+            " * `rent_v_node_per_month` - Renting per month.",
             "",
             " # Output",
             "",
@@ -4906,7 +4906,7 @@
                   "typeName": "ProviderId"
                 },
                 {
-                  "name": "rent_per_month",
+                  "name": "rent_v_node_per_month",
                   "type": 12,
                   "typeName": "Balance"
                 },

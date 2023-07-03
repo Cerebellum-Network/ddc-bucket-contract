@@ -15,145 +15,153 @@ fn cluster_create_ok() {
     let cdn_node_keys = &[ctx.cdn_node_key0, ctx.cdn_node_key1, ctx.cdn_node_key2];
     let node_params = &[ctx.node_params0.clone(), ctx.node_params1.clone(), ctx.node_params2.clone()];
     let cdn_node_params = &[ctx.cdn_node_params0.clone(), ctx.cdn_node_params1.clone(), ctx.cdn_node_params2.clone()];
-
+    let rent_v_node_per_month = &[ctx.rent_v_node_per_month0.clone(), ctx.rent_v_node_per_month1.clone(), ctx.rent_v_node_per_month2.clone()];
+    
     assert_eq!(ctx.cluster_id, 0, "cluster_id must start at 0");
 
     // Check cluster Storage nodes
-    {
-        let node0 = ctx.contract.node_get(ctx.node_key0)?;
-        let v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0);
+    
+    let node0 = ctx.contract.node_get(ctx.node_key0)?;
+    let v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0);
+    let v_nodes0_len : u32 = v_nodes0.len().try_into().unwrap();
 
-        assert_eq!(
-            node0,
-            NodeInfo {
-                node_key: ctx.node_key0,
-                node: Node {
-                    provider_id: ctx.provider_id0,
-                    rent_per_month: ctx.rent_per_month,
-                    free_resource: ctx.capacity - ctx.reserved_resource * 3,
-                    node_params: ctx.node_params0.clone(),
-                    cluster_id: Some(ctx.cluster_id),
-                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
-                },
-                v_nodes: v_nodes0
-            }
-        );
+    assert_eq!(
+        node0,
+        NodeInfo {
+            node_key: ctx.node_key0,
+            node: Node {
+                provider_id: ctx.provider_id0,
+                rent_v_node_per_month: ctx.rent_v_node_per_month0,
+                free_resource: ctx.node_capacity0 - ctx.resource_per_v_node * v_nodes0_len,
+                node_params: ctx.node_params0.clone(),
+                cluster_id: Some(ctx.cluster_id),
+                status_in_cluster: Some(NodeStatusInCluster::ADDING),
+            },
+            v_nodes: v_nodes0
+        }
+    );
 
-        let node1 = ctx.contract.node_get(ctx.node_key1)?;
-        let v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1);
+    let node1 = ctx.contract.node_get(ctx.node_key1)?;
+    let v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1);
+    let v_nodes1_len : u32 = v_nodes1.len().try_into().unwrap();
 
-        assert_eq!(
-            node1,
-            NodeInfo {
-                node_key: ctx.node_key1,
-                node: Node {
-                    provider_id: ctx.provider_id1,
-                    rent_per_month: ctx.rent_per_month,
-                    free_resource: ctx.capacity - ctx.reserved_resource * 3,
-                    node_params: ctx.node_params1.clone(),
-                    cluster_id: Some(ctx.cluster_id),
-                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
-                },
-                v_nodes: v_nodes1
-            }
-        );
+    assert_eq!(
+        node1,
+        NodeInfo {
+            node_key: ctx.node_key1,
+            node: Node {
+                provider_id: ctx.provider_id1,
+                rent_v_node_per_month: ctx.rent_v_node_per_month1,
+                free_resource: ctx.node_capacity1 - ctx.resource_per_v_node * v_nodes1_len,
+                node_params: ctx.node_params1.clone(),
+                cluster_id: Some(ctx.cluster_id),
+                status_in_cluster: Some(NodeStatusInCluster::ADDING),
+            },
+            v_nodes: v_nodes1
+        }
+    );
 
-        let node2 = ctx.contract.node_get(ctx.node_key2)?;
-        let v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2);
+    let node2 = ctx.contract.node_get(ctx.node_key2)?;
+    let v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2);
+    let v_nodes2_len : u32 = v_nodes2.len().try_into().unwrap();
 
-        assert_eq!(
-            node2,
-            NodeInfo {
-                node_key: ctx.node_key2,
-                node: Node {
-                    provider_id: ctx.provider_id2,
-                    rent_per_month: ctx.rent_per_month,
-                    free_resource: ctx.capacity - ctx.reserved_resource * 3,
-                    node_params: ctx.node_params2.clone(),
-                    cluster_id: Some(ctx.cluster_id),
-                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
-                },
-                v_nodes: v_nodes2
-            }
-        );
-    }
+    assert_eq!(
+        node2,
+        NodeInfo {
+            node_key: ctx.node_key2,
+            node: Node {
+                provider_id: ctx.provider_id2,
+                rent_v_node_per_month: ctx.rent_v_node_per_month2,
+                free_resource: ctx.node_capacity2 - ctx.resource_per_v_node * v_nodes2_len,
+                node_params: ctx.node_params2.clone(),
+                cluster_id: Some(ctx.cluster_id),
+                status_in_cluster: Some(NodeStatusInCluster::ADDING),
+            },
+            v_nodes: v_nodes2
+        }
+    );
 
     // Check cluster CDN nodes
-    {
-        let cdn_node0 = ctx.contract.cdn_node_get(ctx.cdn_node_key0)?;
+    
+    let cdn_node0 = ctx.contract.cdn_node_get(ctx.cdn_node_key0)?;
 
-        assert_eq!(
+    assert_eq!(
 
-            cdn_node0,
-            CdnNodeInfo {
-                cdn_node_key: ctx.cdn_node_key0,
-                cdn_node: CdnNode {
-                    provider_id: ctx.provider_id0,
-                    undistributed_payment: 0,
-                    cdn_node_params: ctx.cdn_node_params0.clone(),
-                    cluster_id: Some(ctx.cluster_id),
-                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
-                },
-            }
-        );
+        cdn_node0,
+        CdnNodeInfo {
+            cdn_node_key: ctx.cdn_node_key0,
+            cdn_node: CdnNode {
+                provider_id: ctx.provider_id0,
+                undistributed_payment: 0,
+                cdn_node_params: ctx.cdn_node_params0.clone(),
+                cluster_id: Some(ctx.cluster_id),
+                status_in_cluster: Some(NodeStatusInCluster::ADDING),
+            },
+        }
+    );
 
-        let cdn_node1 = ctx.contract.cdn_node_get(ctx.cdn_node_key1)?;
+    let cdn_node1 = ctx.contract.cdn_node_get(ctx.cdn_node_key1)?;
 
-        assert_eq!(
-            cdn_node1,
-            CdnNodeInfo {
-                cdn_node_key: ctx.cdn_node_key1,
-                cdn_node: CdnNode {
-                    provider_id: ctx.provider_id1,
-                    undistributed_payment: 0,
-                    cdn_node_params: ctx.cdn_node_params1.clone(),
-                    cluster_id: Some(ctx.cluster_id),
-                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
-                },
-            }
-        );
+    assert_eq!(
+        cdn_node1,
+        CdnNodeInfo {
+            cdn_node_key: ctx.cdn_node_key1,
+            cdn_node: CdnNode {
+                provider_id: ctx.provider_id1,
+                undistributed_payment: 0,
+                cdn_node_params: ctx.cdn_node_params1.clone(),
+                cluster_id: Some(ctx.cluster_id),
+                status_in_cluster: Some(NodeStatusInCluster::ADDING),
+            },
+        }
+    );
 
-        let cdn_node2 = ctx.contract.cdn_node_get(ctx.cdn_node_key2)?;
+    let cdn_node2 = ctx.contract.cdn_node_get(ctx.cdn_node_key2)?;
 
-        assert_eq!(
-            cdn_node2,
-            CdnNodeInfo {
-                cdn_node_key: ctx.cdn_node_key2,
-                cdn_node: CdnNode {
-                    provider_id: ctx.provider_id2,
-                    undistributed_payment: 0,
-                    cdn_node_params: ctx.cdn_node_params2.clone(),
-                    cluster_id: Some(ctx.cluster_id),
-                    status_in_cluster: Some(NodeStatusInCluster::ADDING),
-                },
-            }
-        );
-    }
+    assert_eq!(
+        cdn_node2,
+        CdnNodeInfo {
+            cdn_node_key: ctx.cdn_node_key2,
+            cdn_node: CdnNode {
+                provider_id: ctx.provider_id2,
+                undistributed_payment: 0,
+                cdn_node_params: ctx.cdn_node_params2.clone(),
+                cluster_id: Some(ctx.cluster_id),
+                status_in_cluster: Some(NodeStatusInCluster::ADDING),
+            },
+        }
+    );
+    
 
     // Check the cluster
-    {
-        let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
-        let cluster_v_nodes = ctx.contract.get_v_nodes_by_cluster(ctx.cluster_id);
-        assert_eq!(
-            cluster,
-            ClusterInfo {
-                cluster_id: ctx.cluster_id,
-                cluster: Cluster {
-                    manager_id: ctx.manager_id,
-                    nodes_keys: ctx.nodes_keys,
-                    resource_per_v_node: ctx.reserved_resource,
-                    resource_used: 0,
-                    cluster_params: ctx.cluster_params.clone(),
-                    revenues: Cash(0),
-                    total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
-                    cdn_nodes_keys: ctx.cdn_nodes_keys,
-                    cdn_usd_per_gb: CDN_USD_PER_GB,
-                    cdn_revenues: Cash(0),
-                },
-                cluster_v_nodes
-            }
-        );
-    }
+    
+    let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
+    let cluster_v_nodes = ctx.contract.get_v_nodes_by_cluster(ctx.cluster_id);
+    let total_rent = 
+        ctx.rent_v_node_per_month0 * v_nodes0_len as Balance
+        + ctx.rent_v_node_per_month1 * v_nodes1_len as Balance
+        + ctx.rent_v_node_per_month2 * v_nodes2_len as Balance;
+
+    assert_eq!(
+        cluster,
+        ClusterInfo {
+            cluster_id: ctx.cluster_id,
+            cluster: Cluster {
+                manager_id: ctx.manager_id,
+                nodes_keys: ctx.nodes_keys,
+                resource_per_v_node: ctx.resource_per_v_node,
+                resource_used: 0,
+                cluster_params: ctx.cluster_params.clone(),
+                revenues: Cash(0),
+                total_rent,
+                cdn_nodes_keys: ctx.cdn_nodes_keys,
+                cdn_usd_per_gb: CDN_USD_PER_GB,
+                cdn_revenues: Cash(0),
+            },
+            cluster_v_nodes
+        }
+    );
+
 
     // Check emitted events
     let mut events = get_events();
@@ -165,7 +173,7 @@ fn cluster_create_ok() {
             NodeCreated {
                 node_key: node_keys[i],
                 provider_id: providers_ids[i],
-                rent_per_month: ctx.rent_per_month,
+                rent_v_node_per_month: rent_v_node_per_month[i],
                 node_params: node_params[i].clone()
             })
         );
@@ -223,16 +231,7 @@ fn cluster_create_ok() {
             })
         );
     }
-
-    // Cluster resource reserved event
-    assert!(
-        matches!(events.pop().unwrap(), Event::ClusterReserveResource(ev) if ev ==
-        ClusterReserveResource { 
-            cluster_id: ctx.cluster_id, 
-            resource: ctx.reserved_resource 
-        })
-    );
-
+    
     assert_eq!(events.len(), 0, "All events must be checked");
 
 }
@@ -246,7 +245,10 @@ fn cluster_add_node_err_if_node_is_in_cluster() {
     set_balance(another_manager_id, 1000 * TOKEN);
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
-    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}"),
+        10
+    )?;
 
     assert_eq!(
         ctx.contract.cluster_add_node(
@@ -268,7 +270,8 @@ fn cluster_add_node_err_if_not_trusted_manager() {
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
     let another_cluster_id = ctx.contract.cluster_create(
-        ClusterParams::from("{}")
+        ClusterParams::from("{}"),
+        10
     )?;
 
     let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
@@ -306,7 +309,8 @@ fn cluster_add_node_err_if_not_cluster_manager() {
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
     let another_cluster_id = ctx.contract.cluster_create(
-        ClusterParams::from("{}")
+        ClusterParams::from("{}"),
+        10
     )?;
 
     let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
@@ -399,7 +403,7 @@ fn cluster_add_node_ok() {
     set_balance(new_provider_id, 1000 * TOKEN);
 
     let new_node_key = AccountId::from([0xc4, 0xcd, 0xaa, 0xfa, 0xf1, 0x30, 0x7d, 0x23, 0xf4, 0x99, 0x84, 0x71, 0xdf, 0x78, 0x59, 0xce, 0x06, 0x3d, 0xce, 0x78, 0x59, 0xc4, 0x3a, 0xe8, 0xef, 0x12, 0x0a, 0xbc, 0x43, 0xc4, 0x84, 0x31]);
-    let new_node_rent_per_month = 100;
+    let new_node_rent_v_node_per_month = 100;
     let new_node_params = NodeParams::from("new_node");
     let new_node_capacity = 1000;
 
@@ -408,7 +412,7 @@ fn cluster_add_node_ok() {
         new_node_key,
         new_node_params.clone(),
         new_node_capacity,
-        new_node_rent_per_month
+        new_node_rent_v_node_per_month
     )?;
 
     assert!(
@@ -416,7 +420,7 @@ fn cluster_add_node_ok() {
             NodeCreated {
                 node_key: new_node_key,
                 provider_id: new_provider_id,
-                rent_per_month: new_node_rent_per_month,
+                rent_v_node_per_month: new_node_rent_v_node_per_month,
                 node_params: new_node_params.clone(),
             })
     );
@@ -474,7 +478,7 @@ fn cluster_add_node_ok() {
         node_key: new_node_key,
         node: Node {
             provider_id: new_provider_id,
-            rent_per_month: new_node_rent_per_month,
+            rent_v_node_per_month: new_node_rent_v_node_per_month,
             free_resource: new_node_capacity,
             node_params: new_node_params,
             cluster_id: Some(ctx.cluster_id),
@@ -556,7 +560,7 @@ fn cluster_remove_node_ok_if_node_provider() {
     ];
 
     let _cluster_v_nodes = vec![
-        ctx.v_nodes0,
+        ctx.v_nodes0.clone(),
         ctx.v_nodes2,
     ];
 
@@ -566,12 +570,13 @@ fn cluster_remove_node_ok_if_node_provider() {
     assert!(matches!(cluster_info.cluster_v_nodes, _cluster_v_nodes));
 
     let node_info = ctx.contract.node_get(ctx.node_key1)?;
+    let v_nodes0_len : u32 = ctx.v_nodes0.len().try_into().unwrap();
     let _expected_node_info = NodeInfo {
         node_key: ctx.node_key1,
         node: Node {
             provider_id: ctx.provider_id1,
-            rent_per_month: ctx.rent_per_month,
-            free_resource: ctx.capacity - ctx.reserved_resource * 3,
+            rent_v_node_per_month: ctx.rent_v_node_per_month1,
+            free_resource: ctx.node_capacity1 - ctx.resource_per_v_node * v_nodes0_len,
             node_params: ctx.node_params1,
             cluster_id: None,
             status_in_cluster: None
@@ -618,12 +623,14 @@ fn cluster_remove_node_ok_if_cluster_manager() {
     ));
 
     let node_info = ctx.contract.node_get(ctx.node_key2)?;
+    let v_nodes2_len : u32 = ctx.v_nodes2.len().try_into().unwrap();
+
     let _expected_node_info = NodeInfo {
         node_key: ctx.node_key2,
         node: Node {
             provider_id: ctx.provider_id2,
-            rent_per_month: ctx.rent_per_month,
-            free_resource: ctx.capacity - ctx.reserved_resource * 3,
+            rent_v_node_per_month: ctx.rent_v_node_per_month2,
+            free_resource: ctx.node_capacity2 - ctx.resource_per_v_node * v_nodes2_len,
             node_params: ctx.node_params2,
             cluster_id: None,
             status_in_cluster: None
@@ -643,7 +650,10 @@ fn cluster_add_cdn_node_err_if_cdn_node_is_in_cluster() {
     set_balance(another_manager_id, 1000 * TOKEN);
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
-    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}"),
+        10
+    )?;
 
     assert_eq!(
         ctx.contract.cluster_add_cdn_node(
@@ -663,7 +673,10 @@ fn cluster_add_cdn_node_err_if_not_trusted_manager() {
     set_balance(another_manager_id, 1000 * TOKEN);
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
-    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}"),
+        10
+    )?;
 
     let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
     set_balance(new_provider_id, 1000 * TOKEN);
@@ -695,7 +708,10 @@ fn cluster_add_cdn_node_err_if_not_cluster_manager() {
     set_balance(another_manager_id, 1000 * TOKEN);
 
     set_caller_value(another_manager_id, CONTRACT_FEE_LIMIT);
-    let another_cluster_id = ctx.contract.cluster_create(ClusterParams::from("{}"))?;
+    let another_cluster_id = ctx.contract.cluster_create(
+        ClusterParams::from("{}"),
+        10
+    )?;
 
     let new_provider_id = AccountId::from([0x3c, 0x08, 0xea, 0xa6, 0x89, 0xdf, 0x45, 0x2b, 0x77, 0xa1, 0xa5, 0x6b, 0x83, 0x10, 0x1e, 0x31, 0x06, 0xc9, 0xc7, 0xaf, 0xb3, 0xe9, 0xfd, 0x6f, 0xa6, 0x2b, 0x50, 0x00, 0xf6, 0xeb, 0xcb, 0x5a]);
     set_balance(new_provider_id, 1000 * TOKEN);
@@ -1131,11 +1147,15 @@ fn cluster_replace_node_ok() {
     assert_eq!(&v_nodes1, &vec![4, 5, 6], "v_nodes must not be replaced for the 2nd node");
     assert_eq!(&v_nodes2, &vec![1, 3, 7, 8, 9], "v_nodes must be assigned to the 3rd node");
 
+    let v_nodes0_len : u32 = v_nodes0.len().try_into().unwrap();
+    let v_nodes1_len : u32 = v_nodes1.len().try_into().unwrap();
+    let v_nodes2_len : u32 = v_nodes2.len().try_into().unwrap();
+
     // Check the changed state of the nodes.
     let expected_resources = [
-        (ctx.node_key0, 100 - 10),
-        (ctx.node_key1, 100 - 10 - 10 - 10),
-        (ctx.node_key2, 100 - 10 - 10 - 10 - 10 - 10),
+        (ctx.node_key0, ctx.node_capacity0 - ctx.resource_per_v_node * v_nodes0_len),
+        (ctx.node_key1, ctx.node_capacity1 - ctx.resource_per_v_node * v_nodes1_len),
+        (ctx.node_key2, ctx.node_capacity2 - ctx.resource_per_v_node * v_nodes2_len),
     ];
 
     for (node_key, available) in expected_resources {
@@ -1306,27 +1326,33 @@ fn cluster_reserve_resource_ok() {
     let mut ctx = setup_cluster();
     set_caller(ctx.manager_id);
 
+    let new_resource_per_v_node = 15;
+
     // Reserve more resources.
-    ctx.contract.cluster_reserve_resource(ctx.cluster_id, 5)?;
+    ctx.contract.cluster_set_resource_per_v_node(ctx.cluster_id, new_resource_per_v_node)?;
 
     // Check the last event.
     let ev = get_events().pop().unwrap();
     assert!(matches!(ev, Event::ClusterReserveResource(ev) if ev ==
         ClusterReserveResource { 
             cluster_id: ctx.cluster_id, 
-            resource: 5 
+            resource: new_resource_per_v_node
         }
     ));
 
     // Check the changed state of the cluster.
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?.cluster;
-    assert_eq!(cluster.resource_per_v_node, 10 + 5);
+    assert_eq!(cluster.resource_per_v_node, new_resource_per_v_node);
+
+    let v_nodes0_len : u32 = ctx.v_nodes0.len().try_into().unwrap();
+    let v_nodes1_len : u32 = ctx.v_nodes1.len().try_into().unwrap();
+    let v_nodes2_len : u32 = ctx.v_nodes2.len().try_into().unwrap();
 
     // Check the changed state of the nodes.
     let expected_resources = [
-        (ctx.node_key0, 100 - 40 - 5),
-        (ctx.node_key1, 100 - 40 - 5),
-        (ctx.node_key2, 100 - 40 - 5),
+        (ctx.node_key0, ctx.node_capacity0 - new_resource_per_v_node * v_nodes0_len),
+        (ctx.node_key1, ctx.node_capacity1 - new_resource_per_v_node * v_nodes1_len),
+        (ctx.node_key2, ctx.node_capacity2 - new_resource_per_v_node * v_nodes2_len),
     ];
     for (node_id, available) in expected_resources {
         assert_eq!(
@@ -1622,6 +1648,11 @@ fn cluster_get_ok() {
     cluster_v_nodes1.extend(ctx.v_nodes1.clone());
     cluster_v_nodes1.extend(ctx.v_nodes2.clone());
 
+    let total_rent = 
+        ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
+        + ctx.rent_v_node_per_month1 * ctx.v_nodes1.len() as Balance
+        + ctx.rent_v_node_per_month2 * ctx.v_nodes2.len() as Balance;
+
     assert_eq!(
         ctx.contract.cluster_get(ctx.cluster_id),
         Ok({
@@ -1630,11 +1661,11 @@ fn cluster_get_ok() {
                 cluster: Cluster {
                     manager_id: ctx.manager_id,
                     nodes_keys: ctx.nodes_keys,
-                    resource_per_v_node: ctx.reserved_resource,
+                    resource_per_v_node: ctx.resource_per_v_node,
                     resource_used: 0,
                     cluster_params: ctx.cluster_params.clone(),
                     revenues: Cash(0),
-                    total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
+                    total_rent,
                     cdn_nodes_keys: ctx.cdn_nodes_keys,
                     cdn_usd_per_gb: CDN_USD_PER_GB,
                     cdn_revenues: Cash(0),
@@ -1655,16 +1686,21 @@ fn cluster_list_ok() {
     cluster_v_nodes1.extend(ctx.v_nodes1.clone());
     cluster_v_nodes1.extend(ctx.v_nodes2.clone());
 
+    let total_rent = 
+        ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
+        + ctx.rent_v_node_per_month1 * ctx.v_nodes1.len() as Balance
+        + ctx.rent_v_node_per_month2 * ctx.v_nodes2.len() as Balance;
+
     let cluster1 = ClusterInfo {
         cluster_id: ctx.cluster_id,
         cluster: Cluster {
             manager_id: ctx.manager_id,
             nodes_keys: ctx.nodes_keys,
-            resource_per_v_node: ctx.reserved_resource,
+            resource_per_v_node: ctx.resource_per_v_node,
             resource_used: 0,
             cluster_params: ctx.cluster_params.clone(),
             revenues: Cash(0),
-            total_rent: ctx.rent_per_month * ctx.cluster_v_nodes.len() as Balance,
+            total_rent,
             cdn_nodes_keys: ctx.cdn_nodes_keys,
             cdn_usd_per_gb: CDN_USD_PER_GB,
             cdn_revenues: Cash(0),
@@ -1673,18 +1709,23 @@ fn cluster_list_ok() {
     };
 
     let cluster_params2 = ClusterParams::from("{}");
+    let resource_per_v_node2 = 10;
     let manager_id2 = AccountId::from([0x82, 0x61, 0x19, 0xd5, 0xcf, 0x47, 0xdc, 0xb9, 0xc6, 0xff, 0x1a, 0x3e, 0x46, 0x03, 0x6d, 0xad, 0x1f, 0xea, 0x66, 0x18, 0x96, 0x2e, 0x4a, 0x5e, 0x89, 0xe0, 0x96, 0x74, 0xcf, 0x80, 0xf1, 0x30]);
+
     set_balance(manager_id2, 1000 * TOKEN);
 
     set_caller(manager_id2);
-    let cluster_id2 = ctx.contract.cluster_create(cluster_params2.clone())?;
+    let cluster_id2 = ctx.contract.cluster_create(
+        cluster_params2.clone(),
+        resource_per_v_node2
+    )?;
 
     let cluster2 = ClusterInfo {
         cluster_id: cluster_id2,
         cluster: Cluster {
             manager_id: manager_id2,
             nodes_keys: Vec::new(),
-            resource_per_v_node: 0,
+            resource_per_v_node: resource_per_v_node2,
             resource_used: 0,
             cluster_params: cluster_params2,
             revenues: Cash(0),

@@ -13,7 +13,7 @@ impl DdcBucket {
         node_key: NodeKey,
         node_params: NodeParams,
         capacity: Resource,
-        rent_per_month: Balance,
+        rent_v_node_per_month: Balance,
     ) -> Result<NodeKey> {
 
         let caller = Self::env().caller();
@@ -22,13 +22,13 @@ impl DdcBucket {
             caller, 
             node_params.clone(), 
             capacity,
-            rent_per_month
+            rent_v_node_per_month
         )?;
 
         Self::env().emit_event(NodeCreated {
             node_key,
             provider_id: caller,
-            rent_per_month,
+            rent_v_node_per_month,
             node_params,
         });
 

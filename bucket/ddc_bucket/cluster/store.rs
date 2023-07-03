@@ -2,7 +2,7 @@
 
 use ink_storage::traits::{SpreadAllocate, SpreadLayout};
 use ink_storage::Mapping;
-use crate::ddc_bucket::{AccountId, Error::*, Result};
+use crate::ddc_bucket::{AccountId, Resource, Error::*, Result};
 use super::entity::{Cluster, ClusterId, ClusterParams};
 
 
@@ -18,13 +18,15 @@ impl ClusterStore {
         &mut self,
         manager_id: AccountId,
         cluster_params: ClusterParams,
+        resource_per_v_node: Resource,
     ) -> Result<ClusterId> {
         let cluster_id = self.next_cluster_id;
         self.next_cluster_id = self.next_cluster_id + 1;
 
         let cluster = Cluster::new(
             manager_id, 
-            cluster_params
+            cluster_params,
+            resource_per_v_node
         )?;
 
         self.clusters.insert(&cluster_id, &cluster);

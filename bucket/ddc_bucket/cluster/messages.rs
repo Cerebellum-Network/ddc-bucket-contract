@@ -27,12 +27,14 @@ impl DdcBucket {
     pub fn message_cluster_create(
         &mut self,
         cluster_params: ClusterParams,
+        resource_per_v_node: Resource,
     ) -> Result<ClusterId> {
         let caller = Self::env().caller();
 
         let cluster_id = self.clusters.create(
             caller,
-            cluster_params.clone()
+            cluster_params.clone(),
+            resource_per_v_node
         )?;
         
         self.topology.create_topology(cluster_id)?;
@@ -63,13 +65,13 @@ impl DdcBucket {
         cluster.only_manager(caller)?;
 
         node.set_cluster(cluster_id, NodeStatusInCluster::ADDING);
-        self.nodes.update(node_key, &node)?;
-
         cluster.add_node(node_key)?;
         for _v_node in &v_nodes {
             node.reserve_resource(cluster.resource_per_v_node)?;
-            cluster.total_rent += node.rent_per_month;
+            cluster.total_rent += node.rent_v_node_per_month;
         }
+        
+        self.nodes.update(node_key, &node)?;
         self.clusters.update(cluster_id, &cluster)?;
 
         self.topology.add_node(cluster_id, node_key, v_nodes)?;
@@ -101,14 +103,14 @@ impl DdcBucket {
         node.only_with_cluster(cluster_id)?;
         
         node.unset_cluster();
-        self.nodes.update(node_key, &node)?;
-
         cluster.remove_node(node_key);
         let v_nodes = self.topology.get_v_nodes_by_node(node_key);
         for _v_node in &v_nodes {
             node.release_resource(cluster.resource_per_v_node);
-            cluster.total_rent -= node.rent_per_month;
+            cluster.total_rent -= node.rent_v_node_per_month;
         }
+        
+        self.nodes.update(node_key, &node)?;
         self.clusters.update(cluster_id, &cluster)?;
 
         self.topology.remove_node(cluster_id, node_key)?;
@@ -180,21 +182,22 @@ impl DdcBucket {
 
         let old_v_nodes = self.topology.get_v_nodes_by_node(node_key);
 
-        if new_v_nodes.len() > old_v_nodes.len() {
+
+        if new_v_nodes.len() != old_v_nodes.len() {
+
+            if new_v_nodes.len() > old_v_nodes.len() {
             
-            for _i in 0..new_v_nodes.len() - old_v_nodes.len() {
-                node.reserve_resource(cluster.resource_per_v_node)?;
-                cluster.total_rent += node.rent_per_month;
-            }
+                for _i in 0..new_v_nodes.len() - old_v_nodes.len() {
+                    node.reserve_resource(cluster.resource_per_v_node)?;
+                    cluster.total_rent += node.rent_v_node_per_month;
+                }
 
-            self.nodes.update(node_key, &node)?;
-            self.clusters.update(cluster_id, &cluster)?;
-
-        } else if new_v_nodes.len() < old_v_nodes.len() {
-
-            for _i in 0..old_v_nodes.len() - new_v_nodes.len() {
-                node.release_resource(cluster.resource_per_v_node);
-                cluster.total_rent -= node.rent_per_month;
+            } else if new_v_nodes.len() < old_v_nodes.len() {
+    
+                for _i in 0..old_v_nodes.len() - new_v_nodes.len() {
+                    node.release_resource(cluster.resource_per_v_node);
+                    cluster.total_rent -= node.rent_v_node_per_month;
+                }
             }
 
             self.nodes.update(node_key, &node)?;
@@ -402,30 +405,34 @@ impl DdcBucket {
     }
 
 
-    pub fn message_cluster_reserve_resource(
+    pub fn message_cluster_set_resource_per_v_node(
         &mut self,
         cluster_id: ClusterId,
-        resource: Resource,
+        new_resource_per_v_node: Resource,
     ) -> Result<()> {
         let caller = Self::env().caller();
         let mut cluster = self.clusters.get(cluster_id)?;
         cluster.only_manager(caller)?;
-        cluster.put_resource(resource);
-        self.clusters.update(cluster_id, &cluster)?;
 
+        let old_resource_per_v_node = cluster.resource_per_v_node;
+        
+        cluster.set_resource_per_v_node(new_resource_per_v_node);
         let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
         for v_node in cluster_v_nodes {
             let node_key = self.topology.get_node_by_v_node(cluster_id, v_node)?;
             let mut node = self.nodes.get(node_key)?;
-            node.reserve_resource(resource)?;
+            node.release_resource(old_resource_per_v_node);
+            node.reserve_resource(new_resource_per_v_node)?;
             self.nodes.update(node_key, &node)?;
         }
 
+        self.clusters.update(cluster_id, &cluster)?;
+
         Self::env().emit_event(ClusterReserveResource {
             cluster_id,
-            resource,
+            resource: new_resource_per_v_node,
         });
-        
+
         Ok(())
     }
 
