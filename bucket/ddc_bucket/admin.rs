@@ -1,11 +1,11 @@
 //! The privileged interface for admin tasks.
-
+use ink_lang::codegen::{EmitEvent, StaticEnv};
 use crate::ddc_bucket::perm::entity::Permission;
-use crate::ddc_bucket::{AccountId, Balance, Cash, DdcBucket, NodeKey, 
+use crate::ddc_bucket::{AccountId, Balance, Cash, Payable, DdcBucket, NodeKey, NetworkFeeConfig,
     NodeOwnershipTransferred, CdnNodeOwnershipTransferred, PermissionGranted, PermissionRevoked, Result,
+    BasisPoints,
     Error::*
 };
-use ink_lang::codegen::{EmitEvent, StaticEnv};
 
 impl DdcBucket {
 
@@ -102,5 +102,27 @@ impl DdcBucket {
 
         Self::send_cash(admin, Cash(amount))
     }
+
+    pub fn message_admin_set_protocol_fee_bp(&mut self, protocol_fee_bp: BasisPoints) -> Result<()> {
+        self.only_with_permission(Permission::SuperAdmin)?;
+        self.protocol.set_protocol_fee_bp(protocol_fee_bp);
+        Ok(())
+    }
+
+
+    pub fn message_admin_set_network_fee_config(&mut self, config: NetworkFeeConfig) -> Result<()> {
+        self.only_with_permission(Permission::SuperAdmin)?;
+        self.protocol.set_network_fee_config(config);
+        Ok(())
+    }
+
+
+    pub fn message_admin_withdraw_revenues(&mut self, amount: u128) -> Result<()> {
+        self.only_with_permission(Permission::SuperAdmin)?;
+        self.protocol.withdraw_revenues(Payable(amount))?;
+        Self::send_cash(self.protocol.get_protocol_fee_dest(), Cash(amount))?;
+        Ok(())
+    }
+
 
 }

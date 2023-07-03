@@ -497,7 +497,7 @@ impl DdcBucket {
 
         // Charge the cluster management fee.
         self.capture_fee(
-            self.protocol.cluster_management_fee_bp(),
+            self.protocol.get_cluster_management_fee_bp(),
             cluster.manager_id,
             &mut cluster.revenues,
         )?;
@@ -635,7 +635,7 @@ impl DdcBucket {
 
         // Charge the cluster management fee.
         self.capture_fee(
-            self.protocol.cluster_management_fee_bp(),
+            self.protocol.get_cluster_management_fee_bp(),
             cluster.manager_id,
             &mut cluster.cdn_revenues
         )?;

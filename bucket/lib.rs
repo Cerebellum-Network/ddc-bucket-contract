@@ -68,10 +68,15 @@ pub mod ddc_bucket {
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 let admin = Self::env().caller();
-                // Make the creator of this contract a super-admin.
                 contract.perms.grant_permission(admin, Permission::SuperAdmin);                
                 contract.committer.init(admin);
-                contract.protocol.init(admin, DEFAULT_PROTOCOL_FEE_BP);
+                contract.protocol.init(
+                    DEFAULT_PROTOCOL_FEE_BP, 
+                    admin,
+                    DEFAULT_NETWORK_FEE_BP,
+                    admin,
+                    DEFAULT_CLUSTER_FEE_BP
+                );
             })
         }
     }
@@ -1342,7 +1347,13 @@ pub mod ddc_bucket {
         /// Return fees accumulated by the protocol
         #[ink(message)]
         pub fn get_protocol_revenues(&self) -> Cash {
-            self.message_get_fee_revenues()
+            self.message_get_protocol_revenues()
+        }
+
+        /// Get the Fee Percentage Basis Points that will be charged by the protocol
+        #[ink(message)]
+        pub fn get_network_fee_config(&self) -> NetworkFeeConfig {
+            self.message_get_network_fee_config()
         }
     }
     // ---- End Protocol ----
@@ -1666,21 +1677,21 @@ pub mod ddc_bucket {
             self.message_admin_withdraw(amount)
         }
 
+        /// Pay the revenues accumulated by the protocol
+        #[ink(message)]
+        pub fn admin_withdraw_protocol_revenues(&mut self, amount: Balance) -> Result<()>  {
+            self.message_admin_withdraw_revenues(amount)
+        }
+
         /// As SuperAdmin, set the network and cluster fee configuration.
         #[ink(message)]
         pub fn admin_set_network_fee_config(&mut self, config: NetworkFeeConfig) -> Result<()> {
             self.message_admin_set_network_fee_config(config)
         }
 
-        /// Pay the revenues accumulated by the protocol
         #[ink(message)]
-        pub fn admin_withdraw_protocol_revenues(&mut self, amount: u128) -> Result<()>  {
-            self.message_withdraw_revenues(amount)
-        }
-
-        #[ink(message)]
-        pub fn admin_set_protocol_fee_bp(&mut self, protocol_fee_bp: u128) -> Result<()> {
-            self.message_set_protocol_fee_bp(protocol_fee_bp)
+        pub fn admin_set_protocol_fee_bp(&mut self, protocol_fee_bp: BasisPoints) -> Result<()> {
+            self.message_admin_set_protocol_fee_bp(protocol_fee_bp)
         }
 
     }
@@ -1721,8 +1732,13 @@ pub mod ddc_bucket {
     // ---- Constants ----
     /// One token with 10 decimals.
     pub const TOKEN: Balance = 10_000_000_000;
-    pub const BASIS_POINTS: u128 = 10_000; // 100%
-    pub const DEFAULT_PROTOCOL_FEE_BP: u128 = 500; // 5 %
+
+    pub type BasisPoints = u128;
+    pub const BASIS_POINTS: BasisPoints = 10_000; // 100%
+    pub const DEFAULT_PROTOCOL_FEE_BP: BasisPoints = 500; // 5 %
+    pub const DEFAULT_NETWORK_FEE_BP: BasisPoints = 0; // 0 %
+    pub const DEFAULT_CLUSTER_FEE_BP: BasisPoints = 0; // 0 %
+
 
 
     #[derive(Debug, PartialEq, Eq, Encode, Decode)]

@@ -1,14 +1,9 @@
 use ink_storage::traits::{SpreadAllocate, SpreadLayout, PackedLayout};
-
 use scale::{Decode, Encode};
-
-use crate::ddc_bucket::{DdcBucket, AccountId, Error::*, Result, Balance, BASIS_POINTS};
+use crate::ddc_bucket::{DdcBucket, AccountId, Error::*, Result, Balance, BasisPoints, BASIS_POINTS};
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::currency::CurrencyConverter;
-use crate::ddc_bucket::perm::entity::Permission;
 
-
-pub type BasisPoints = u128;
 
 /// The configuration of fees.
 #[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
@@ -22,10 +17,26 @@ pub struct NetworkFeeConfig {
     pub cluster_management_fee_bp: BasisPoints,
 }
 
+impl NetworkFeeConfig {
+    
+    pub fn new(
+        network_fee_bp: BasisPoints,
+        network_fee_destination: AccountId,
+        cluster_management_fee_bp: BasisPoints
+    ) -> Self {
+        Self {
+            network_fee_bp,
+            network_fee_destination,
+            cluster_management_fee_bp
+        }
+    }
+
+}
+
 #[derive(Default, Clone, PartialEq, Encode, Decode, SpreadAllocate, SpreadLayout, PackedLayout)]
 #[cfg_attr(feature = "std", derive(ink_storage::traits::StorageLayout, Debug, scale_info::TypeInfo))]
 pub struct ProtocolStore { 
-    pub protocol_fee_bp: u128,
+    pub protocol_fee_bp: BasisPoints,
     pub protocol_fee_destination: AccountId,
     pub revenues: Cash,
     pub curr_converter: CurrencyConverter,
@@ -34,21 +45,37 @@ pub struct ProtocolStore {
 
 impl ProtocolStore {
 
-    pub fn init(&mut self, protocol_fee_destination: AccountId, protocol_fee_bp: u128) {
+    pub fn init(
+        &mut self, 
+        protocol_fee_bp: BasisPoints,
+        protocol_fee_dest: AccountId, 
+        network_fee_bp: BasisPoints,
+        network_fee_dest: AccountId,
+        cluster_fee_bp: BasisPoints,
+    ) {
         self.protocol_fee_bp = protocol_fee_bp;
-        self.protocol_fee_destination = protocol_fee_destination;
+        self.protocol_fee_destination = protocol_fee_dest;
         self.curr_converter = CurrencyConverter::new();
+        self.network_fee_config = NetworkFeeConfig::new(
+            network_fee_bp, 
+            network_fee_dest, 
+            cluster_fee_bp
+        );
     }
 
-    pub fn get_protocol_fee_bp(&self) -> u128 {
+    pub fn get_protocol_fee_bp(&self) -> BasisPoints {
         self.protocol_fee_bp
     }
 
-    pub fn set_protocol_fee_bp(&mut self, protocol_fee_bp: u128) {
+    pub fn set_protocol_fee_bp(&mut self, protocol_fee_bp: BasisPoints) {
         self.protocol_fee_bp = protocol_fee_bp;
     }
 
-    pub fn get_fee_revenues(&self) -> Cash {
+    pub fn get_protocol_fee_dest(&self) -> AccountId {
+        self.protocol_fee_destination
+    }
+
+    pub fn get_revenues(&self) -> Cash {
         self.revenues
     }
 
@@ -64,7 +91,23 @@ impl ProtocolStore {
         Ok(())
     }
 
-    pub fn cluster_management_fee_bp(&self) -> BasisPoints {
+    pub fn get_network_fee_config(&self) -> NetworkFeeConfig {
+        self.network_fee_config.clone()
+    }
+
+    pub fn set_network_fee_config(&mut self, config: NetworkFeeConfig) {
+        self.network_fee_config = config;
+    }
+
+    pub fn get_network_fee_bp(&self) -> BasisPoints {
+        self.network_fee_config.network_fee_bp
+    }
+
+    pub fn get_network_fee_dest(&self) -> AccountId {
+        self.network_fee_config.network_fee_destination
+    }
+
+    pub fn get_cluster_management_fee_bp(&self) -> BasisPoints {
         self.network_fee_config.cluster_management_fee_bp
     }
 
@@ -74,8 +117,8 @@ impl DdcBucket {
     /// Take a network fee from the given revenues (in place).
     pub fn capture_network_fee(&mut self, revenues: &mut Cash) -> Result<()> {
         self.capture_fee(
-            self.protocol.network_fee_config.network_fee_bp, 
-            self.protocol.network_fee_config.network_fee_destination, 
+            self.protocol.get_network_fee_bp(), 
+            self.protocol.get_network_fee_dest(), 
             revenues
         )
     }
@@ -88,9 +131,4 @@ impl DdcBucket {
         Self::send_cash(destination, cash)
     }
 
-    pub fn message_admin_set_network_fee_config(&mut self, config: NetworkFeeConfig) -> Result<()> {
-        self.only_with_permission(Permission::SuperAdmin)?;
-        self.protocol.network_fee_config = config;
-        Ok(())
-    }
 }
