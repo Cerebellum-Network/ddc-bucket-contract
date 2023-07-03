@@ -75,7 +75,8 @@ function findClusterNodeAddedEvent(events) {
     const event = findEvent(events, "ClusterNodeAdded");
     const clusterId = _.get(event, "args[0]").toNumber();
     const nodeKey = _.get(event, "args[1]").toString();
-    return { nodeKey, clusterId };
+    const vNodes = _.get(event, "args[2]").toString();
+    return { nodeKey, clusterId, vNodes };
 }
 
 function findClusterCdnNodeAddedEvent(events) {

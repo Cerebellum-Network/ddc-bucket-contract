@@ -12,6 +12,8 @@ fn cluster_create_ok() {
     let ctx = setup_cluster();
     let providers_ids = &[ctx.provider_id0, ctx.provider_id1, ctx.provider_id2];
     let node_keys = &[ctx.node_key0, ctx.node_key1, ctx.node_key2];
+    let v_nodes = &[ctx.v_nodes0.clone(), ctx.v_nodes1.clone(), ctx.v_nodes2.clone()];
+
     let cdn_node_keys = &[ctx.cdn_node_key0, ctx.cdn_node_key1, ctx.cdn_node_key2];
     let node_params = &[ctx.node_params0.clone(), ctx.node_params1.clone(), ctx.node_params2.clone()];
     let cdn_node_params = &[ctx.cdn_node_params0.clone(), ctx.cdn_node_params1.clone(), ctx.cdn_node_params2.clone()];
@@ -217,10 +219,12 @@ fn cluster_create_ok() {
         assert!(matches!(events.pop().unwrap(), Event::ClusterNodeAdded(ev) if ev ==
             ClusterNodeAdded {
                 cluster_id: ctx.cluster_id,
-                node_key: node_keys[i]
+                node_key: node_keys[i],
+                v_nodes: v_nodes[i].clone()
             })
         );
     }
+
 
     // Cluster cdn node added event
     for i in 0..3 {
@@ -450,7 +454,8 @@ fn cluster_add_node_ok() {
         matches!(get_events().pop().unwrap(), Event::ClusterNodeAdded(ev) if ev ==
         ClusterNodeAdded {
             cluster_id: ctx.cluster_id,
-            node_key: new_node_key
+            node_key: new_node_key,
+            v_nodes: new_v_nodes.clone()
         })
     );
 
@@ -1109,10 +1114,11 @@ fn cluster_replace_node_ok() {
     let mut ctx = setup_cluster();
 
     set_caller(ctx.manager_id);
-    // Reassign a vnode from node0 to node2.
+    // Reassign a vnode from node0 to node2
+    let v_nodes_to_reasign: Vec::<VNodeToken> = vec![1, 3];
     ctx.contract.cluster_replace_node(
         ctx.cluster_id, 
-        vec![1, 3], 
+        v_nodes_to_reasign.clone(), 
         ctx.node_key2
     )?;
 
@@ -1121,7 +1127,8 @@ fn cluster_replace_node_ok() {
     assert!(matches!(ev, Event::ClusterNodeReplaced(ev) if ev ==
         ClusterNodeReplaced { 
             cluster_id: ctx.cluster_id, 
-            node_key: ctx.node_key2
+            node_key: ctx.node_key2,
+            v_nodes: v_nodes_to_reasign.clone(),
         }
     ));
 
@@ -1129,7 +1136,7 @@ fn cluster_replace_node_ok() {
     cluster_v_nodes.extend(vec![2]);
     cluster_v_nodes.extend(ctx.v_nodes1.clone());
     cluster_v_nodes.extend(ctx.v_nodes2.clone());
-    cluster_v_nodes.extend(vec![1, 3]);
+    cluster_v_nodes.extend(v_nodes_to_reasign.clone());
     cluster_v_nodes.sort();
 
     let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
@@ -1282,10 +1289,11 @@ fn cluster_reset_node_ok() {
 
     set_caller(ctx.manager_id);
     // Reset vnode for node1
+    let new_v_nodes: Vec::<VNodeToken> = vec![10, 11, 12];
     ctx.contract.cluster_reset_node(
         ctx.cluster_id, 
         ctx.node_key1,
-        vec![10, 11, 12],
+        new_v_nodes.clone(),
     )?;
 
     // Check the last event
@@ -1293,7 +1301,8 @@ fn cluster_reset_node_ok() {
     assert!(matches!(ev, Event::ClusterNodeReset(ev) if ev ==
         ClusterNodeReset {
             cluster_id: ctx.cluster_id, 
-            node_key: ctx.node_key1
+            node_key: ctx.node_key1,
+            v_nodes: new_v_nodes
         }
     ));
 

@@ -288,6 +288,7 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
         #[ink(topic)]
         node_key: NodeKey,
+        v_nodes: Vec<VNodeToken>,
     }
 
     #[ink(event)]
@@ -361,6 +362,7 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
         #[ink(topic)]
         node_key: NodeKey,
+        v_nodes: Vec<VNodeToken>,
     }
 
     /// A vnode was re-assigned to new node.
@@ -371,6 +373,7 @@ pub mod ddc_bucket {
         cluster_id: ClusterId,
         #[ink(topic)]
         node_key: NodeKey,
+        v_nodes: Vec<VNodeToken>,
     }
 
     /// Some resources were reserved for the cluster from the nodes.

@@ -74,11 +74,12 @@ impl DdcBucket {
         self.nodes.update(node_key, &node)?;
         self.clusters.update(cluster_id, &cluster)?;
 
-        self.topology.add_node(cluster_id, node_key, v_nodes)?;
+        self.topology.add_node(cluster_id, node_key, v_nodes.clone())?;
 
         Self::env().emit_event(ClusterNodeAdded { 
             cluster_id, 
-            node_key 
+            node_key,
+            v_nodes
         });
 
         Ok(())
@@ -153,12 +154,13 @@ impl DdcBucket {
         self.topology.replace_node(
             cluster_id, 
             new_node_key, 
-            v_nodes
+            v_nodes.clone()
         )?;
 
         Self::env().emit_event(ClusterNodeReplaced {
             cluster_id,
             node_key: new_node_key,
+            v_nodes,
         });
 
         Ok(())
@@ -180,7 +182,6 @@ impl DdcBucket {
         cluster.only_manager(caller)?;
 
         let old_v_nodes = self.topology.get_v_nodes_by_node(node_key);
-
 
         if new_v_nodes.len() != old_v_nodes.len() {
 
@@ -206,12 +207,13 @@ impl DdcBucket {
         self.topology.reset_node(
             cluster_id, 
             node_key, 
-            new_v_nodes
+            new_v_nodes.clone()
         )?;
 
         Self::env().emit_event(ClusterNodeReset {
             cluster_id,
             node_key: node_key,
+            v_nodes: new_v_nodes
         });
 
         Ok(())
