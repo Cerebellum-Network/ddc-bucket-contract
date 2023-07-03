@@ -72,9 +72,9 @@ impl Cluster {
             cluster_params: ClusterParams::default(),
             nodes_keys: Vec::new(),
             resource_per_v_node,
-            resource_used: 0,
+            resource_used: Resource::from(0u32),
             revenues: Cash(0),
-            total_rent: 0,
+            total_rent: Balance::from(0u128),
             cdn_nodes_keys: Vec::new(),
             cdn_usd_per_gb: CDN_USD_PER_GB, // setting initially to 1 cent per GB
             cdn_revenues: Cash(0),

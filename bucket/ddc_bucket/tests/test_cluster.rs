@@ -1874,6 +1874,10 @@ fn cluster_distribute_cdn_revenue_ok() {
     let account0_before_putting = ctx.contract.accounts.get(&ctx.provider_id0).unwrap();
     println!("Before putting revenue: {:?}", account0_before_putting);
 
+    let permission = Permission::Validator;
+    set_caller(admin_id());
+    ctx.contract.admin_grant_permission(admin_id(), permission)?;
+
     ctx.contract.cluster_put_cdn_revenue(
         ctx.cluster_id,
         vec![(ctx.provider_id0, 1000), (ctx.provider_id0, 541643)],

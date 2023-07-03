@@ -1759,6 +1759,7 @@ pub mod ddc_bucket {
         OnlyCdnNodeProvider,
         OnlyClusterManager,
         OnlyTrustedClusterManager,
+        OnlyValidator,
         OnlySuperAdmin,
         OnlyClusterManagerOrNodeProvider,
         OnlyClusterManagerOrCdnNodeProvider,

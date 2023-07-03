@@ -31,5 +31,13 @@ impl DdcBucket {
             .then(|| caller)
             .ok_or(OnlyTrustedClusterManager)
     }
-    
+
+    pub fn only_validator(&self) -> Result<AccountId>  {
+        let caller = Self::env().caller();
+        let perm = Permission::Validator;
+        self.perms.has_permission(caller, perm)
+            .then(|| caller)
+            .ok_or(OnlyValidator)
+    }
+
 }

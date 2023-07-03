@@ -562,8 +562,9 @@ impl DdcBucket {
         aggregates_buckets: Vec<(BucketId, Resource)>, 
         era: u64
     ) -> Result<()> {
-        let mut cluster = self.clusters.get(cluster_id)?;
+        self.only_validator()?;
 
+        let mut cluster = self.clusters.get(cluster_id)?;
         let mut cluster_payment = 0;
         let mut _undistributed_payment_accounts = 0;
 

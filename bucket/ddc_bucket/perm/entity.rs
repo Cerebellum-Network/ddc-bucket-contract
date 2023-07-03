@@ -10,4 +10,5 @@ pub enum Permission {
     ClusterManagerTrustedBy(AccountId),
     SetExchangeRate,
     SuperAdmin,
+    Validator
 }
