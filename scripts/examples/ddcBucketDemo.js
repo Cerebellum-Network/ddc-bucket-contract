@@ -16,7 +16,7 @@ const assert = require("assert");
 const log = console.log;
 
 const BUCKET_CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
-const SEED = config.ACTOR_SEED;
+const SEED = process.env.SUPERADMIN || config.ACTOR_SEED;
 const RPC = process.env.ENV == 'devnet' 
     ? config.DEVNET_RPC_ENDPOINT 
     : process.env.ENV == 'testnet' 
