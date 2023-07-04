@@ -14,7 +14,7 @@ const fs = require("fs/promises");
 const log = console.log;
 
 
-const SEED = config.ACTOR_SEED;
+const SEED = process.env.SUPERADMIN || config.ACTOR_SEED;
 const RPC = process.env.ENV == 'devnet' 
     ? config.DEVNET_RPC_ENDPOINT 
     : process.env.ENV == 'testnet' 
