@@ -281,6 +281,34 @@ async function main() {
         log("ClusterDistributeRevenues", event, "\n");
     }
 
+    {
+        log("Batch Transaction example");
+
+        const updatedVNodes = [7,8,9];
+        const tx1 = bucketContract.tx.clusterResetNode(
+            txOptions, 
+            clusterId,
+            nodeKey,
+            updatedVNodes
+        );
+
+        const updatedNodeParams = "{\"url\":\"https://ddc-456.cere.network/storage/1\"}";
+        const tx2 = bucketContract.tx.nodeSetParams(
+            txOptions, 
+            nodeKey,
+            updatedNodeParams
+        );
+
+        const batchTx = api.tx.utility.batchAll([
+            tx1,
+            tx2
+        ]);
+        
+        const result = await sendTx(account, batchTx);
+        printGas(result);
+        log(getExplorerUrl(result));
+    }
+
     log("    ----    \n");
 
     {

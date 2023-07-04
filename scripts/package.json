@@ -5,9 +5,9 @@
   "license": "Apache-2.0",
   "scripts": {
     "ensure-deps": "yarn --cwd sdk",
-    "setup-ddc-bucket": "yarn ensure-deps && node ddc-setup/ddcSetup.js",
     "deploy-ddc-bucket": "yarn ensure-deps && node deployment/ddcBucketDeploy.js",
     "demo-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketDemo.js",
-    "print-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketPrint.js"
+    "print-ddc-bucket": "yarn ensure-deps && node examples/ddcBucketPrint.js",
+    "setup-ddc-bucket": "yarn ensure-deps && node ddc-setup/ddcBucketSetup.js"
   }
 }
