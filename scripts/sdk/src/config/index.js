@@ -1,4 +1,4 @@
-// todo: introduce Dotenv
+// todo: introduce DOTENV and allow reading variables from environment
 
 const ACTOR_SEED = "//Alice";
 
@@ -6,11 +6,11 @@ const EXPLORER_URL = "https://explorer.cere.network";
 const DDC_BUCKET_CONTRACT_NAME = "ddc_bucket";
 
 const DEVNET_RPC_ENDPOINT = "wss://archive.devnet.cere.network/ws/";
-const DEVNET_DDC_BUCKET_ADDR = "6TCrAcm51jYJwNbEc7zYFBvuBaPru9B1cAkU4PpgoTpTy9VZ";
+const DEVNET_DDC_BUCKET_ADDR = "";
 const DEVNET_CHAIN_NAME = "Cere Devnet";
 
 const TESTNET_RPC_ENDPOINT = "wss://archive.testnet.cere.network/ws/";
-const TESTNET_DDC_BUCKET_ADDR = "6TyNotWczZXMaXkF6mJ2cBMS6e1hgu5hFYuTpfg9vtH35gu3";
+const TESTNET_DDC_BUCKET_ADDR = "";
 const TESTNET_CHAIN_NAME = "Cere Testnet";
 
 const LOCAL_RPC_ENDPOINT = "ws://127.0.0.1:9944/";
