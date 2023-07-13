@@ -20,8 +20,10 @@ const SEED = process.env.SUPERADMIN || config.ACTOR_SEED;
 const RPC = process.env.ENV == 'devnet' 
     ? config.DEVNET_RPC_ENDPOINT 
     : process.env.ENV == 'testnet' 
-        ? config.TESTNET_RPC_ENDPOINT 
-        : config.LOCAL_RPC_ENDPOINT;
+        ? config.TESTNET_RPC_ENDPOINT
+            : process.env.ENV == 'qanet' 
+            ? config.QANET_RPC_ENDPOINT
+                : config.LOCAL_RPC_ENDPOINT;
 
 deploymentRegistry.initDefaultContracts();
 

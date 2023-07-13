@@ -9,6 +9,10 @@ const DEVNET_RPC_ENDPOINT = "wss://archive.devnet.cere.network/ws/";
 const DEVNET_DDC_BUCKET_ADDR = "";
 const DEVNET_CHAIN_NAME = "Cere Devnet";
 
+const QANET_RPC_ENDPOINT = "wss://archive.qanet.cere.network/ws/";
+const QANET_DDC_BUCKET_ADDR = "";
+const QANET_CHAIN_NAME = "Cere QAnet";
+
 const TESTNET_RPC_ENDPOINT = "wss://archive.testnet.cere.network/ws/";
 const TESTNET_DDC_BUCKET_ADDR = "";
 const TESTNET_CHAIN_NAME = "Cere Testnet";
@@ -27,6 +31,10 @@ module.exports = {
   DEVNET_DDC_BUCKET_ADDR,
   DEVNET_CHAIN_NAME,
 
+  QANET_RPC_ENDPOINT,
+  QANET_DDC_BUCKET_ADDR,
+  QANET_CHAIN_NAME,
+  
   TESTNET_RPC_ENDPOINT,
   TESTNET_DDC_BUCKET_ADDR,
   TESTNET_CHAIN_NAME,
