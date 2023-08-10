@@ -39,7 +39,10 @@ fn cluster_create_ok() {
     // Check cluster Storage nodes
 
     let node0 = ctx.contract.node_get(ctx.node_key0)?;
-    let v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0);
+    let v_nodes0 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key0)
+        .unwrap();
     let v_nodes0_len: u32 = v_nodes0.len().try_into().unwrap();
 
     assert_eq!(
@@ -59,7 +62,10 @@ fn cluster_create_ok() {
     );
 
     let node1 = ctx.contract.node_get(ctx.node_key1)?;
-    let v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1);
+    let v_nodes1 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key1)
+        .unwrap();
     let v_nodes1_len: u32 = v_nodes1.len().try_into().unwrap();
 
     assert_eq!(
@@ -79,7 +85,10 @@ fn cluster_create_ok() {
     );
 
     let node2 = ctx.contract.node_get(ctx.node_key2)?;
-    let v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2);
+    let v_nodes2 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key2)
+        .unwrap();
     let v_nodes2_len: u32 = v_nodes2.len().try_into().unwrap();
 
     assert_eq!(
@@ -1132,11 +1141,20 @@ fn cluster_replace_node_ok() {
         "a v_node must be replaced"
     );
 
-    let mut v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0.clone());
+    let mut v_nodes0 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key0.clone())
+        .unwrap();
     v_nodes0.sort();
-    let mut v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1.clone());
+    let mut v_nodes1 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key1.clone())
+        .unwrap();
     v_nodes1.sort();
-    let mut v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2.clone());
+    let mut v_nodes2 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key2.clone())
+        .unwrap();
     v_nodes2.sort();
 
     assert_eq!(
@@ -1313,11 +1331,20 @@ fn cluster_reset_node_ok() {
         "a v_node must be replaced"
     );
 
-    let mut v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0.clone());
+    let mut v_nodes0 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key0.clone())
+        .unwrap();
     v_nodes0.sort();
-    let mut v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1.clone());
+    let mut v_nodes1 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key1.clone())
+        .unwrap();
     v_nodes1.sort();
-    let mut v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2.clone());
+    let mut v_nodes2 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key2.clone())
+        .unwrap();
     v_nodes2.sort();
 
     assert_eq!(
