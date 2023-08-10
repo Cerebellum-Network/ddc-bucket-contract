@@ -434,11 +434,14 @@ impl DdcBucket {
         filter_manager_id: Option<AccountId>,
     ) -> (Vec<ClusterInfo>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
-        for cluster_id in offset..offset + limit {
-            let cluster = match self.clusters.clusters.get(cluster_id) {
+        for idx in offset..offset + limit {
+            let cluster_id = match self.clusters.clusters_ids.get(idx as usize) {
                 None => break, // No more items, stop.
-                Some(cluster) => cluster,
+                Some(cluster_id) => *cluster_id,
             };
+
+            let cluster = self.clusters.clusters.get(cluster_id).unwrap();
+
             // Apply the filter if given.
             if let Some(manager_id) = filter_manager_id {
                 if manager_id != cluster.manager_id {
@@ -462,7 +465,10 @@ impl DdcBucket {
 
             clusters.push(cluster_info);
         }
-        (clusters, self.clusters.next_cluster_id)
+        (
+            clusters,
+            self.clusters.clusters_ids.len().try_into().unwrap(),
+        )
     }
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {
