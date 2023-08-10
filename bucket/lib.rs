@@ -2,7 +2,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(proc_macro_hygiene)] // for tests in a separate file
-#![feature(once_cell)] // to suppress ci warning
 #![deny(unused_must_use, unused_variables)]
 
 use ink_lang as ink;
