@@ -5,7 +5,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::bucket::entity::BucketId;
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
-use crate::ddc_bucket::cluster::entity::{ClusterInfo, KB_PER_GB};
+use crate::ddc_bucket::cluster::entity::{ClusterInfo, NodeVNodesInfo, KB_PER_GB};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::topology::store::VNodeToken;
@@ -412,7 +412,13 @@ impl DdcBucket {
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?;
-        let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
+
+        let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+        for node_key in cluster.nodes_keys.clone() {
+            let v_nodes = self.topology.get_v_nodes_by_node(node_key.clone());
+            let v_nodes_info = NodeVNodesInfo { node_key, v_nodes };
+            cluster_v_nodes.push(v_nodes_info)
+        }
 
         Ok(ClusterInfo {
             cluster_id,
@@ -440,7 +446,12 @@ impl DdcBucket {
                 }
             }
 
-            let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
+            let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+            for node_key in cluster.nodes_keys.clone() {
+                let v_nodes = self.topology.get_v_nodes_by_node(node_key.clone());
+                let v_nodes_info = NodeVNodesInfo { node_key, v_nodes };
+                cluster_v_nodes.push(v_nodes_info)
+            }
 
             // Include the complete status of matched items.
             let cluster_info = ClusterInfo {

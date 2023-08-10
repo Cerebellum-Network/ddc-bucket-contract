@@ -50,7 +50,14 @@ impl ink_storage::traits::PackedAllocate for Cluster {
 pub struct ClusterInfo {
     pub cluster_id: ClusterId,
     pub cluster: Cluster,
-    pub cluster_v_nodes: Vec<VNodeToken>,
+    pub cluster_v_nodes: Vec<NodeVNodesInfo>,
+}
+
+#[derive(Clone, PartialEq, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Debug, scale_info::TypeInfo))]
+pub struct NodeVNodesInfo {
+    pub node_key: NodeKey,
+    pub v_nodes: Vec<VNodeToken>,
 }
 
 pub const CLUSTER_PARAMS_MAX_LEN: usize = 100_000;
