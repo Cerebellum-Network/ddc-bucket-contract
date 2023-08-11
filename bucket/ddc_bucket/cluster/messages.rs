@@ -5,7 +5,7 @@ use ink_prelude::vec::Vec;
 use crate::ddc_bucket::bucket::entity::BucketId;
 use crate::ddc_bucket::cash::{Cash, Payable};
 use crate::ddc_bucket::cdn_node::entity::{CdnNode, CdnNodeKey};
-use crate::ddc_bucket::cluster::entity::{ClusterInfo, KB_PER_GB};
+use crate::ddc_bucket::cluster::entity::{ClusterInfo, NodeVNodesInfo, KB_PER_GB};
 use crate::ddc_bucket::node::entity::{Node, NodeKey, Resource};
 use crate::ddc_bucket::perm::entity::Permission;
 use crate::ddc_bucket::topology::store::VNodeToken;
@@ -412,7 +412,13 @@ impl DdcBucket {
 
     pub fn message_cluster_get(&self, cluster_id: ClusterId) -> Result<ClusterInfo> {
         let cluster = self.clusters.get(cluster_id)?;
-        let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
+
+        let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+        for node_key in cluster.nodes_keys.clone() {
+            let v_nodes = self.topology.get_v_nodes_by_node(node_key.clone());
+            let v_nodes_info = NodeVNodesInfo { node_key, v_nodes };
+            cluster_v_nodes.push(v_nodes_info)
+        }
 
         Ok(ClusterInfo {
             cluster_id,
@@ -428,11 +434,14 @@ impl DdcBucket {
         filter_manager_id: Option<AccountId>,
     ) -> (Vec<ClusterInfo>, u32) {
         let mut clusters = Vec::with_capacity(limit as usize);
-        for cluster_id in offset..offset + limit {
-            let cluster = match self.clusters.clusters.get(cluster_id) {
+        for idx in offset..offset + limit {
+            let cluster_id = match self.clusters.clusters_ids.get(idx as usize) {
                 None => break, // No more items, stop.
-                Some(cluster) => cluster,
+                Some(cluster_id) => *cluster_id,
             };
+
+            let cluster = self.clusters.clusters.get(cluster_id).unwrap();
+
             // Apply the filter if given.
             if let Some(manager_id) = filter_manager_id {
                 if manager_id != cluster.manager_id {
@@ -440,7 +449,12 @@ impl DdcBucket {
                 }
             }
 
-            let cluster_v_nodes = self.topology.get_v_nodes_by_cluster(cluster_id);
+            let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+            for node_key in cluster.nodes_keys.clone() {
+                let v_nodes = self.topology.get_v_nodes_by_node(node_key.clone());
+                let v_nodes_info = NodeVNodesInfo { node_key, v_nodes };
+                cluster_v_nodes.push(v_nodes_info)
+            }
 
             // Include the complete status of matched items.
             let cluster_info = ClusterInfo {
@@ -451,7 +465,10 @@ impl DdcBucket {
 
             clusters.push(cluster_info);
         }
-        (clusters, self.clusters.next_cluster_id)
+        (
+            clusters,
+            self.clusters.clusters_ids.len().try_into().unwrap(),
+        )
     }
 
     pub fn message_cluster_distribute_revenues(&mut self, cluster_id: ClusterId) -> Result<()> {

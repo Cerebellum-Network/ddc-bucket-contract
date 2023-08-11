@@ -1685,8 +1685,12 @@ pub mod ddc_bucket {
         }
 
         #[ink(message)]
-        pub fn get_v_nodes_by_node(&self, node_key: NodeKey) -> Vec<VNodeToken> {
-            self.message_get_v_nodes_by_node(node_key)
+        pub fn get_v_nodes_by_node(
+            &self,
+            cluster_id: ClusterId,
+            node_key: NodeKey,
+        ) -> Result<Vec<VNodeToken>> {
+            self.message_get_v_nodes_by_node(cluster_id, node_key)
         }
 
         #[ink(message)]

@@ -39,7 +39,10 @@ fn cluster_create_ok() {
     // Check cluster Storage nodes
 
     let node0 = ctx.contract.node_get(ctx.node_key0)?;
-    let v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0);
+    let v_nodes0 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key0)
+        .unwrap();
     let v_nodes0_len: u32 = v_nodes0.len().try_into().unwrap();
 
     assert_eq!(
@@ -54,12 +57,15 @@ fn cluster_create_ok() {
                 cluster_id: Some(ctx.cluster_id),
                 status_in_cluster: Some(NodeStatusInCluster::ADDING),
             },
-            v_nodes: v_nodes0
+            v_nodes: v_nodes0.clone()
         }
     );
 
     let node1 = ctx.contract.node_get(ctx.node_key1)?;
-    let v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1);
+    let v_nodes1 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key1)
+        .unwrap();
     let v_nodes1_len: u32 = v_nodes1.len().try_into().unwrap();
 
     assert_eq!(
@@ -74,12 +80,15 @@ fn cluster_create_ok() {
                 cluster_id: Some(ctx.cluster_id),
                 status_in_cluster: Some(NodeStatusInCluster::ADDING),
             },
-            v_nodes: v_nodes1
+            v_nodes: v_nodes1.clone()
         }
     );
 
     let node2 = ctx.contract.node_get(ctx.node_key2)?;
-    let v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2);
+    let v_nodes2 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key2)
+        .unwrap();
     let v_nodes2_len: u32 = v_nodes2.len().try_into().unwrap();
 
     assert_eq!(
@@ -94,7 +103,7 @@ fn cluster_create_ok() {
                 cluster_id: Some(ctx.cluster_id),
                 status_in_cluster: Some(NodeStatusInCluster::ADDING),
             },
-            v_nodes: v_nodes2
+            v_nodes: v_nodes2.clone()
         }
     );
 
@@ -151,7 +160,26 @@ fn cluster_create_ok() {
     // Check the cluster
 
     let cluster = ctx.contract.cluster_get(ctx.cluster_id)?;
-    let cluster_v_nodes = ctx.contract.get_v_nodes_by_cluster(ctx.cluster_id);
+    let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+
+    let node_v_nodes_0 = NodeVNodesInfo {
+        node_key: ctx.node_key0,
+        v_nodes: v_nodes0,
+    };
+    cluster_v_nodes.push(node_v_nodes_0);
+
+    let node_v_nodes_1 = NodeVNodesInfo {
+        node_key: ctx.node_key1,
+        v_nodes: v_nodes1,
+    };
+    cluster_v_nodes.push(node_v_nodes_1);
+
+    let node_v_nodes_2 = NodeVNodesInfo {
+        node_key: ctx.node_key2,
+        v_nodes: v_nodes2,
+    };
+    cluster_v_nodes.push(node_v_nodes_2);
+
     let total_rent = ctx.rent_v_node_per_month0 * v_nodes0_len as Balance
         + ctx.rent_v_node_per_month1 * v_nodes1_len as Balance
         + ctx.rent_v_node_per_month2 * v_nodes2_len as Balance;
@@ -481,8 +509,7 @@ fn cluster_add_node_ok() {
         new_v_nodes.clone(),
     ];
 
-    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
-    cluster_info.cluster_v_nodes.sort();
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert!(matches!(cluster_info.cluster.nodes_keys, _nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, _cluster_v_nodes));
 
@@ -570,8 +597,7 @@ fn cluster_remove_node_ok_if_node_provider() {
 
     let _cluster_v_nodes = vec![ctx.v_nodes0.clone(), ctx.v_nodes2];
 
-    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
-    cluster_info.cluster_v_nodes.sort();
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert!(matches!(cluster_info.cluster.nodes_keys, _nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, _cluster_v_nodes));
 
@@ -612,8 +638,7 @@ fn cluster_remove_node_ok_if_cluster_manager() {
 
     let _cluster_v_nodes = vec![ctx.v_nodes0, ctx.v_nodes1];
 
-    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
-    cluster_info.cluster_v_nodes.sort();
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert!(matches!(cluster_info.cluster.nodes_keys, _nodes_keys));
     assert!(matches!(cluster_info.cluster_v_nodes, _cluster_v_nodes));
 
@@ -1118,25 +1143,46 @@ fn cluster_replace_node_ok() {
         }
     ));
 
-    let mut cluster_v_nodes = Vec::<VNodeToken>::new();
-    cluster_v_nodes.extend(vec![2]);
-    cluster_v_nodes.extend(ctx.v_nodes1.clone());
-    cluster_v_nodes.extend(ctx.v_nodes2.clone());
-    cluster_v_nodes.extend(v_nodes_to_reasign.clone());
-    cluster_v_nodes.sort();
+    let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+    let node_v_nodes_0 = NodeVNodesInfo {
+        node_key: ctx.node_key0,
+        v_nodes: vec![2],
+    };
+    cluster_v_nodes.push(node_v_nodes_0);
 
-    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
-    cluster_info.cluster_v_nodes.sort();
+    let node_v_nodes_1 = NodeVNodesInfo {
+        node_key: ctx.node_key1,
+        v_nodes: ctx.v_nodes1.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_1);
+
+    let mut node_v_nodes_2 = NodeVNodesInfo {
+        node_key: ctx.node_key2,
+        v_nodes: ctx.v_nodes2.clone(),
+    };
+    node_v_nodes_2.v_nodes.extend(v_nodes_to_reasign.clone());
+    cluster_v_nodes.push(node_v_nodes_2);
+
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert_eq!(
         &cluster_info.cluster_v_nodes, &cluster_v_nodes,
         "a v_node must be replaced"
     );
 
-    let mut v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0.clone());
+    let mut v_nodes0 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key0.clone())
+        .unwrap();
     v_nodes0.sort();
-    let mut v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1.clone());
+    let mut v_nodes1 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key1.clone())
+        .unwrap();
     v_nodes1.sort();
-    let mut v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2.clone());
+    let mut v_nodes2 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key2.clone())
+        .unwrap();
     v_nodes2.sort();
 
     assert_eq!(
@@ -1300,24 +1346,45 @@ fn cluster_reset_node_ok() {
         }
     ));
 
-    let mut cluster_v_nodes = Vec::<VNodeToken>::new();
-    cluster_v_nodes.extend(ctx.v_nodes0.clone());
-    cluster_v_nodes.extend(vec![10, 11, 12]);
-    cluster_v_nodes.extend(ctx.v_nodes2.clone());
-    cluster_v_nodes.sort();
+    let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+    let node_v_nodes_0 = NodeVNodesInfo {
+        node_key: ctx.node_key0,
+        v_nodes: ctx.v_nodes0.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_0);
 
-    let mut cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
-    cluster_info.cluster_v_nodes.sort();
+    let node_v_nodes_1 = NodeVNodesInfo {
+        node_key: ctx.node_key1,
+        v_nodes: vec![10, 11, 12],
+    };
+    cluster_v_nodes.push(node_v_nodes_1);
+
+    let node_v_nodes_2 = NodeVNodesInfo {
+        node_key: ctx.node_key2,
+        v_nodes: ctx.v_nodes2.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_2);
+
+    let cluster_info = ctx.contract.cluster_get(ctx.cluster_id)?;
     assert_eq!(
         &cluster_info.cluster_v_nodes, &cluster_v_nodes,
         "a v_node must be replaced"
     );
 
-    let mut v_nodes0 = ctx.contract.get_v_nodes_by_node(ctx.node_key0.clone());
+    let mut v_nodes0 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key0.clone())
+        .unwrap();
     v_nodes0.sort();
-    let mut v_nodes1 = ctx.contract.get_v_nodes_by_node(ctx.node_key1.clone());
+    let mut v_nodes1 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key1.clone())
+        .unwrap();
     v_nodes1.sort();
-    let mut v_nodes2 = ctx.contract.get_v_nodes_by_node(ctx.node_key2.clone());
+    let mut v_nodes2 = ctx
+        .contract
+        .get_v_nodes_by_node(ctx.cluster_id, ctx.node_key2.clone())
+        .unwrap();
     v_nodes2.sort();
 
     assert_eq!(
@@ -1659,10 +1726,24 @@ fn cluster_get_err_if_cluster_does_not_exist() {
 fn cluster_get_ok() {
     let ctx = setup_cluster();
 
-    let mut cluster_v_nodes1 = Vec::<VNodeToken>::new();
-    cluster_v_nodes1.extend(ctx.v_nodes0.clone());
-    cluster_v_nodes1.extend(ctx.v_nodes1.clone());
-    cluster_v_nodes1.extend(ctx.v_nodes2.clone());
+    let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+    let node_v_nodes_0 = NodeVNodesInfo {
+        node_key: ctx.node_key0,
+        v_nodes: ctx.v_nodes0.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_0);
+
+    let node_v_nodes_1 = NodeVNodesInfo {
+        node_key: ctx.node_key1,
+        v_nodes: ctx.v_nodes1.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_1);
+
+    let node_v_nodes_2 = NodeVNodesInfo {
+        node_key: ctx.node_key2,
+        v_nodes: ctx.v_nodes2.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_2);
 
     let total_rent = ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
         + ctx.rent_v_node_per_month1 * ctx.v_nodes1.len() as Balance
@@ -1685,7 +1766,7 @@ fn cluster_get_ok() {
                     cdn_usd_per_gb: CDN_USD_PER_GB,
                     cdn_revenues: Cash(0),
                 },
-                cluster_v_nodes: cluster_v_nodes1,
+                cluster_v_nodes,
             }
         })
     );
@@ -1695,10 +1776,24 @@ fn cluster_get_ok() {
 fn cluster_list_ok() {
     let mut ctx = setup_cluster();
 
-    let mut cluster_v_nodes1 = Vec::<VNodeToken>::new();
-    cluster_v_nodes1.extend(ctx.v_nodes0.clone());
-    cluster_v_nodes1.extend(ctx.v_nodes1.clone());
-    cluster_v_nodes1.extend(ctx.v_nodes2.clone());
+    let mut cluster_v_nodes: Vec<NodeVNodesInfo> = Vec::new();
+    let node_v_nodes_0 = NodeVNodesInfo {
+        node_key: ctx.node_key0,
+        v_nodes: ctx.v_nodes0.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_0);
+
+    let node_v_nodes_1 = NodeVNodesInfo {
+        node_key: ctx.node_key1,
+        v_nodes: ctx.v_nodes1.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_1);
+
+    let node_v_nodes_2 = NodeVNodesInfo {
+        node_key: ctx.node_key2,
+        v_nodes: ctx.v_nodes2.clone(),
+    };
+    cluster_v_nodes.push(node_v_nodes_2);
 
     let total_rent = ctx.rent_v_node_per_month0 * ctx.v_nodes0.len() as Balance
         + ctx.rent_v_node_per_month1 * ctx.v_nodes1.len() as Balance
@@ -1718,7 +1813,7 @@ fn cluster_list_ok() {
             cdn_usd_per_gb: CDN_USD_PER_GB,
             cdn_revenues: Cash(0),
         },
-        cluster_v_nodes: cluster_v_nodes1,
+        cluster_v_nodes,
     };
 
     let cluster_params2 = ClusterParams::from("{}");
