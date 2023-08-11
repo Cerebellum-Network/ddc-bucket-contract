@@ -1,6 +1,7 @@
 [package]
 name = "ddc_bucket"
 version = "1.0.1"
+authors = ["Yahor Tsaryk <yahor.tsaryk@cere.io>"]
 edition = "2021"
 description = "DDC v2 Smart Contracts -- Orchestrate the network around clusters and buckets"
 license = "Apache-2.0"
