@@ -7,22 +7,20 @@ const {
   CERE,
   MGAS,
   ddcBucket,
-  randomAccount,
   deploymentRegistry,
   config
 } = require("../sdk/src");
-const ddcConfig = require('./ddcConfig.js');
+const ddcConfig = require('./ddcConfigNew.js');
 const log = console.log;
 
-const DDC_BUCKET_CONTRACT_NAME = config.DDC_BUCKET_CONTRACT_NAME;
 const ENV = process.env.ENV;
-const SUPERADMIN_MNEMONIC = process.env.SUPERADMIN;
-
-
 const ddcEnvConfig = ddcConfig[ENV];
+const SUPERADMIN_MNEMONIC = process.env.SUPERADMIN;
+const DDC_CONTRACT_ADDRESS = process.env.DDC_CONTRACT;
+
 if (!ddcEnvConfig) {
-  console.error("Please provide ENV as one of ", Object.keys(ddcConfig));
-  process.exit(-1);
+    console.error("Please provide ENV as one of ", Object.keys(ddcConfig));
+    process.exit(-1);
 }
 console.log(ddcEnvConfig);
 
@@ -31,41 +29,42 @@ if (!SUPERADMIN_MNEMONIC) {
     process.exit(-1);
 }
 
-deploymentRegistry.initContract(
-  DDC_BUCKET_CONTRACT_NAME, 
-  ENV, 
-  ddcEnvConfig.contract_address
-);
+if (!DDC_CONTRACT_ADDRESS) {
+    console.error("Please provide DDC_CONTRACT address");
+    process.exit(-1);
+}
 
+deploymentRegistry.initContract(config.DDC_BUCKET_CONTRACT_NAME, ENV, DDC_CONTRACT_ADDRESS);
 
 async function main() {
-    const {api, chainName, getExplorerUrl} = await connect(ddcEnvConfig.ws_provider);
+    const {api, chainName, getExplorerUrl} = await connect(ddcEnvConfig.blockchainUrl);
     log("Connected to blockchain:", chainName);
 
     const sadmin = accountFromUri(SUPERADMIN_MNEMONIC);
     console.log(`Superadmin: ${sadmin.address}`);
 
-    const bucketContract = getContract(DDC_BUCKET_CONTRACT_NAME, ENV, api);
-    log("Using bucket contract", DDC_BUCKET_CONTRACT_NAME, "at", bucketContract.address.toString());
+    const bucketContract = getContract(config.DDC_BUCKET_CONTRACT_NAME, ENV, api);
+    log("Using bucket contract", config.DDC_BUCKET_CONTRACT_NAME, "at", bucketContract.address.toString());
 
     const txOptions = {
       storageDepositLimit: null,
       gasLimit: 100_000_000_000n,
     };
     
+    console.log(`Setup Started`);
+
     {
-        log("1. accountSetUsdPerCere");
+        log(`Setting USD per CERE rate ...`);
         const tx = bucketContract.tx.accountSetUsdPerCere(
             txOptions, 
             1000n * CERE
         );
-
         const result = await sendTx(sadmin, tx);
         log(getExplorerUrl(result), "\n");
     }
 
     {
-        log("2. grantTrustedManagerPermission");
+        log(`Granting trusted managers permissions ...`);
         const tx = bucketContract.tx.grantTrustedManagerPermission(
             txOptions, 
             sadmin.address
@@ -74,70 +73,74 @@ async function main() {
         log(getExplorerUrl(result), "\n");
     }
 
-    const cdnNodesKeys = []
-    {
-        console.log("3. cdnNodeCreate");
-        for (let i = 0; i < ddcEnvConfig.cdn_node_params.length; i++) {
-            const cdnNodeKey = ddcEnvConfig.cdn_node_params[i].publicKey;
-            cdnNodesKeys.push(cdnNodeKey);
+    for (let i = 0; i < ddcEnvConfig.clusters.length; i++) {
+        const cluster = ddcEnvConfig.clusters[i];
 
-            const tx = bucketContract.tx.cdnNodeCreate(
-                txOptions,
-                cdnNodeKey, 
-                JSON.stringify(ddcEnvConfig.cdn_node_params[i])
-            );
+        console.log(`Creating Cluster ${i} ...`);
+        const clusterCreateTx = bucketContract.tx.clusterCreate(
+            txOptions,
+            JSON.stringify(cluster.params),
+            100000n
+        );
+        const result = await sendTx(sadmin, clusterCreateTx);
+        log(getExplorerUrl(result), "\n");
+        let { clusterId } = ddcBucket.findClusterCreatedEvent(result.contractEvents || []);
+        console.log(`Cluster ${clusterId} created`);
 
-            const result = await sendTx(sadmin, tx);
-            log(getExplorerUrl(result), "\n");
-        }
-    }
+        for (let j = 0; j < cluster.storageNodes.length; j++) {
+            const storageNode = cluster.storageNodes[j];
+            const storageNodeKey = storageNode.pubKey;
+            const vNodes = storageNode.vNodes;
+            const params = JSON.stringify(storageNode.params);
 
-    const storageNodesKeys = []
-    {
-        console.log("4. nodeCreate");
-        for (let i = 0; i < ddcEnvConfig.storage_node_params.length; i++) {
-            const param = JSON.stringify(ddcEnvConfig.storage_node_params[i]);
-            const user = randomAccount();
-
-            fs.appendFileSync('secrets.txt', `${user.address}: ${user.mnemonic} -- ${ENV} storage ${i}\n`);
-            console.log(`  node ${i}: address ${user.address}, param ${param}`);
-
-            const storageNodeKey = user.address;
-            storageNodesKeys.push(storageNodeKey);
-
-            const tx = bucketContract.tx.nodeCreate(
+            console.log(`Creating Storage node ${storageNodeKey} ...`);
+            const nodeCreateTx = bucketContract.tx.nodeCreate(
                 txOptions, 
                 storageNodeKey,
-                param,
+                params,
                 100000n,
                 1n * CERE
             );
-
-            const result = await sendTx(sadmin, tx);
-            log(getExplorerUrl(result), "\n");
-        }
-    }
-
-    const clustersIds = [];
-    {
-        for (let key in ddcEnvConfig.cluster) {
-            console.log("5. clusterCreate ");
-
-            const tx1 = bucketContract.tx.clusterCreate(
-                txOptions,
-                JSON.stringify(ddcEnvConfig.cluster[key].param),
-                100000n
-            );
-            
-            const result1 = await sendTx(sadmin, tx1);
+            const result1 = await sendTx(sadmin, nodeCreateTx);
             log(getExplorerUrl(result1), "\n");
-            let { clusterId } = ddcBucket.findClusterCreatedEvent(result1.contractEvents || []);
-            clustersIds.push(clusterId);
+
+            console.log(`Adding Storage node ${storageNodeKey} to Cluster ${clusterId} ...`);
+            const clusterAddNodeTx = bucketContract.tx.clusterAddNode(
+                txOptions,
+                clusterId,
+                storageNodeKey,
+                vNodes
+            )
+            const result2 = await sendTx(sadmin, clusterAddNodeTx);
+            log(getExplorerUrl(result2), "\n");
+        }
+
+        for (let j = 0; j < cluster.cdnNodes.length; j++) {
+            const cdnNode = cluster.cdnNodes[j];
+            const cdnNodeKey = cdnNode.pubKey;
+            const params = JSON.stringify(cdnNode.params);
+            
+            console.log(`Creating CDN node ${cdnNodeKey} ...`);
+            const cdnNodeCreateTx = bucketContract.tx.cdnNodeCreate(
+                txOptions, 
+                cdnNodeKey,
+                params
+            );
+            const result1 = await sendTx(sadmin, cdnNodeCreateTx);
+            log(getExplorerUrl(result1), "\n");
+
+            console.log(`Adding CDN node ${cdnNodeKey} to Cluster ${clusterId} ...`);
+            const clusterAddCdnNodeTx = bucketContract.tx.clusterAddCdnNode(
+                txOptions,
+                clusterId,
+                cdnNodeKey,
+            )
+            const result2 = await sendTx(sadmin, clusterAddCdnNodeTx);
+            log(getExplorerUrl(result2), "\n");
         }
     }
 
-    // TODO: Add Storage nodes and CDN nodes to clusters 
-
+    console.log(`Setup Finished`);
     process.exit(0);
 }
 

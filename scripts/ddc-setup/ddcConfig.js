@@ -2,46 +2,55 @@ const GEN = 0x10000000000000000n; // UINT64_MAX
 
 module.exports = {
   devnet: {
-    ws_provider: "wss://archive.devnet.cere.network/ws",
-    contract_address: "6SfBsKbfPUTN35GCcqAHSMY4MemedK2A73VeJ34Z2FV6PB4r",
-    cluster: {
-      1n: {
-        param: { replicationFactor: 3 },
-        vnodes: [ [0n], [GEN / 4n], [GEN * 2n / 4n], [GEN * 3n / 4n] ],
-        storage_nodes: [1n, 2n, 3n, 4n],
-      },
-    },
-    storage_node_params: [
-      { url: `https://node-0.v2.storage.devnet.cere.network` },
-      { url: `https://node-1.v2.storage.devnet.cere.network` },
-      { url: `https://node-2.v2.storage.devnet.cere.network` },
-      { url: `https://node-3.v2.storage.devnet.cere.network` },
-    ],
-    cdn_cluster: {
-      0n: {
-        cdn_nodes: [1n, 2n, 3n, 4n],
-      },
-    },
-    cdn_node_params: [
+    // blockchainUrl: "wss://archive.devnet.cere.network/ws",
+    blockchainUrl: "ws://127.0.0.1:9944",
+    ddcContractAddress: "6TYVo3hhwUqmB32Q2bSUp94KC6JnVkXCrJuYRqmY8qdF2XYC",
+    clusters: [
       {
-        url: `https://node-0.v2.cdn.devnet.cere.network`,
-        publicKey: "0x1c4a1b081af8dd09096ebb6e7ad61dd549ac2931cdb2b1216589094ad71ca90b",
+        params: { replicationFactor: 3 },
+        storageNodes: [
+          {
+            pubKey: "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+            vNodes: [0n],
+            params: { url: `https://node-0.v2.storage.devnet.cere.network` },
+          },
+          {
+            pubKey: "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+            vNodes: [GEN / 4n],
+            params: { url: `https://node-1.v2.storage.devnet.cere.network` },
+          },
+          {
+            pubKey: "0x90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22",
+            vNodes: [GEN * 2n / 4n],
+            params: { url: `https://node-2.v2.storage.devnet.cere.network` },
+          },
+          {
+            pubKey: "0x306721211d5404bd9da88e0204360a1a9ab8b87c66c1bc2fcdd37f3c2222cc20",
+            vNodes: [GEN * 3n / 4n],
+            params: { url: `https://node-3.v2.storage.devnet.cere.network` },
+          }
+        ],
+        cdnNodes: [
+          {
+            pubKey: "0xfe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e",
+            params: { url: `https://node-0.v2.cdn.devnet.cere.network` },
+          },
+          {
+            pubKey: "0x1e07379407fecc4b89eb7dbd287c2c781cfb1907a96947a3eb18e4f8e7198625",
+            params: { url: `https://node-1.v2.cdn.devnet.cere.network` },
+          },
+          {
+            pubKey: "0xe860f1b1c7227f7c22602f53f15af80747814dffd839719731ee3bba6edc126c",
+            params: { url: `https://node-2.v2.cdn.devnet.cere.network` },
+          },
+          {
+            pubKey: "0x8ac59e11963af19174d0b94d5d78041c233f55d2e19324665bafdfb62925af2d",
+            params: { url: `https://node-3.v2.cdn.devnet.cere.network` },
+          }
+        ]
       },
-      {
-        url: `https://node-1.v2.cdn.devnet.cere.network`,
-        publicKey: "0x3ec2ec407053acdfe8137d7105e90294f2e0e5f5fe5420fd3172142671dbc25f",
-      },
-      {
-        url: `https://node-2.v2.cdn.devnet.cere.network`,
-        publicKey: "0x20e448c403d3f009ec309394d3aab828c3dbf0d2cc8047f01dded984ec992b41",
-      },
-      {
-        url: `https://node-3.v2.cdn.devnet.cere.network`,
-        publicKey: "0xd2f93cea79e37cfc9e5f78cd3e51b989afb1e257adcbbae00b8cd081539e9f13",
-      }
     ],
   },
-
   testnet: {
     ws_provider: "wss://archive.devnet.cere.network/ws",
     // contract_address: "6R2PF5gzKYbNkNLymTr8YNeQgWqNkE6azspwaMLZF2UHc1sg",
