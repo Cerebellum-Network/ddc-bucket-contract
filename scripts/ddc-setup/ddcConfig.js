@@ -2,9 +2,7 @@ const GEN = 0x10000000000000000n; // UINT64_MAX
 
 module.exports = {
   devnet: {
-    // blockchainUrl: "wss://archive.devnet.cere.network/ws",
-    blockchainUrl: "ws://127.0.0.1:9944",
-    ddcContractAddress: "6TYVo3hhwUqmB32Q2bSUp94KC6JnVkXCrJuYRqmY8qdF2XYC",
+    blockchainUrl: "wss://archive.devnet.cere.network/ws",
     clusters: [
       {
         params: { replicationFactor: 3 },

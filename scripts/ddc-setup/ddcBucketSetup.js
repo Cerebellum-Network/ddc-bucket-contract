@@ -10,7 +10,7 @@ const {
   deploymentRegistry,
   config
 } = require("../sdk/src");
-const ddcConfig = require('./ddcConfigNew.js');
+const ddcConfig = require('./ddcConfig.js');
 const log = console.log;
 
 const ENV = process.env.ENV;
@@ -51,7 +51,7 @@ async function main() {
       gasLimit: 100_000_000_000n,
     };
     
-    console.log(`Setup Started`);
+    console.log(`Setup Started`, "\n");
 
     {
         log(`Setting USD per CERE rate ...`);
@@ -75,12 +75,14 @@ async function main() {
 
     for (let i = 0; i < ddcEnvConfig.clusters.length; i++) {
         const cluster = ddcEnvConfig.clusters[i];
+        const clusterParams = JSON.stringify(cluster.params);
+        const resourcePerVNode = 100000n;
 
         console.log(`Creating Cluster ${i} ...`);
         const clusterCreateTx = bucketContract.tx.clusterCreate(
             txOptions,
-            JSON.stringify(cluster.params),
-            100000n
+            clusterParams,
+            resourcePerVNode
         );
         const result = await sendTx(sadmin, clusterCreateTx);
         log(getExplorerUrl(result), "\n");
@@ -90,16 +92,18 @@ async function main() {
         for (let j = 0; j < cluster.storageNodes.length; j++) {
             const storageNode = cluster.storageNodes[j];
             const storageNodeKey = storageNode.pubKey;
+            const storageNodeParams = JSON.stringify(storageNode.params);
             const vNodes = storageNode.vNodes;
-            const params = JSON.stringify(storageNode.params);
+            const storageNodeCapacity = 100000n;
+            const rentVNodePerMonth = 1n * CERE;
 
             console.log(`Creating Storage node ${storageNodeKey} ...`);
             const nodeCreateTx = bucketContract.tx.nodeCreate(
                 txOptions, 
                 storageNodeKey,
-                params,
-                100000n,
-                1n * CERE
+                storageNodeParams,
+                storageNodeCapacity,
+                rentVNodePerMonth,
             );
             const result1 = await sendTx(sadmin, nodeCreateTx);
             log(getExplorerUrl(result1), "\n");
@@ -113,18 +117,29 @@ async function main() {
             )
             const result2 = await sendTx(sadmin, clusterAddNodeTx);
             log(getExplorerUrl(result2), "\n");
+
+            const storageNodeStatus = 'ACTIVE';
+            console.log(`Setting '${storageNodeStatus}' status ${storageNodeKey} in Cluster ${clusterId} ...`);
+            const clusterSetNodeStatusTx = bucketContract.tx.clusterSetNodeStatus(
+                txOptions,
+                clusterId,
+                storageNodeKey,
+                storageNodeStatus,
+            )
+            const result3 = await sendTx(sadmin, clusterSetNodeStatusTx);
+            log(getExplorerUrl(result3), "\n");
         }
 
         for (let j = 0; j < cluster.cdnNodes.length; j++) {
             const cdnNode = cluster.cdnNodes[j];
             const cdnNodeKey = cdnNode.pubKey;
-            const params = JSON.stringify(cdnNode.params);
+            const cdnNodeParams = JSON.stringify(cdnNode.params);
             
             console.log(`Creating CDN node ${cdnNodeKey} ...`);
             const cdnNodeCreateTx = bucketContract.tx.cdnNodeCreate(
                 txOptions, 
                 cdnNodeKey,
-                params
+                cdnNodeParams
             );
             const result1 = await sendTx(sadmin, cdnNodeCreateTx);
             log(getExplorerUrl(result1), "\n");
@@ -137,10 +152,21 @@ async function main() {
             )
             const result2 = await sendTx(sadmin, clusterAddCdnNodeTx);
             log(getExplorerUrl(result2), "\n");
+
+            const cdnNodeStatus = 'ACTIVE';
+            console.log(`Setting '${cdnNodeStatus}' status ${cdnNodeKey} in Cluster ${clusterId} ...`);
+            const clusterSetCdnNodeStatusTx = bucketContract.tx.clusterSetCdnNodeStatus(
+                txOptions,
+                clusterId,
+                cdnNodeKey,
+                cdnNodeStatus,
+            )
+            const result3 = await sendTx(sadmin, clusterSetCdnNodeStatusTx);
+            log(getExplorerUrl(result3), "\n");
         }
     }
 
-    console.log(`Setup Finished`);
+    console.log(`Setup Finished`, "\n");
     process.exit(0);
 }
 
