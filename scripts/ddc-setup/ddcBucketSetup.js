@@ -51,7 +51,7 @@ async function main() {
       gasLimit: 100_000_000_000n,
     };
     
-    console.log(`Setup Started`, "\n");
+    console.log( "\n", `Setup Started`, "\n");
 
     {
         log(`Setting USD per CERE rate ...`);
@@ -166,7 +166,7 @@ async function main() {
         }
     }
 
-    console.log(`Setup Finished`, "\n");
+    console.log( "\n", `Setup Finished`, "\n");
     process.exit(0);
 }
 

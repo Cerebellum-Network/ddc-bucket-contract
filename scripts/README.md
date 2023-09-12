@@ -9,7 +9,7 @@ Also, check the [config file](./sdk/src/config/index.js), to ensure that you are
 The [examples](./examples/) folder contains scripts that demonstrate how to properly send transacrions to DDC Bucket contracts using the [@polkadot/api](https://polkadot.js.org/docs/api/) library. These simple scenarious should help other team members to clarify the business logic flow, and quickly detect issues related to various business constraints and infrastructue constraints (i.e. gas price, attached tokens, method signature, etc.). Scripts should be updated while the contract is evolving to reflect the actual logic.
 
 
-#### DDC Bucket scenario
+#### DDC Contract demo scenario
 
 Run the script as:
 ```
@@ -18,7 +18,7 @@ ENV=devnet yarn run demo-ddc-bucket
 The execution progress will be displayed in the console along with links to explorer that will help you to investigate the details of each transaction
 
 
-#### Display DDC Bucket state
+#### Display DDC Contract state
 
 Run the script as:
 ```
@@ -26,20 +26,29 @@ ENV=devnet yarn run print-ddc-bucket
 ```
 
 
-## Deployment using script
+## Deployment DDC Contract using script
 
 The [deployment](./deployment/) folder contains scripts that allow you to deploy artifacts to a local or remote network. 
 Typically, these scripts are used for EDC, Devnet and QAnet environments during development. 
 For Testnet and Mainnet environments, it is recomended to upload the contract code manually and assert all the required keys, attached tokens, gas limits, etc. during deployment and contract instantianating.
 
 
-#### DDC Bucket deployment
+#### DDC Contract deployment
 
 Run the script as:
 ```
 yarn run deploy-ddc-bucket
 ```
 Optionally, the command can accept a code hash as the first parameter, and constructor name as the second parameter. In order to use these options, your contract artifacts [must be registered](./sdk/src/deploymentRegistry.js) to retrieve the required metadata from artifacts.
+
+
+#### DDC Contract setup
+
+Run the script as:
+```
+DDC_CONTRACT='6PZ6ndAdULxsnzLjyNmPuWonS9jSxTRgXN1EtVMnbi41VZZg' SUPERADMIN='//Alice' ENV='devnet' yarn run setup-ddc-bucket
+```
+Use the DDC Contract address in place of the `DDC_CONTRACT` variable that you want to configure, the admin of DDC Contract from the deployment step in place of `SUPERADMIN` variable, and DDC environment that you are targeting in place of the `ENV` variable
 
 
 #### Build and Deploy all contracts

@@ -1,6 +1,7 @@
 const GEN = 0x10000000000000000n; // UINT64_MAX
 
 module.exports = {
+
   devnet: {
     blockchainUrl: "wss://archive.devnet.cere.network/ws",
     clusters: [
@@ -49,6 +50,7 @@ module.exports = {
       },
     ],
   },
+
   testnet: {
     blockchainUrl: "wss://archive.testnet.cere.network/ws",
     clusters: [
@@ -115,37 +117,40 @@ module.exports = {
     ],
   },
 
-  // mainnet: {
-  //   ws_provider: "wss://archive.testnet.cere.network/ws",
-  //   contract_address: "6So8eqxMyWAxJ4ZZ2wCcJym7Cy6BYkc4V8GZZD9wgdCqWMQB",
-  //   cluster: {
-  //     1n: {
-  //       param: { replicationFactor: 3 },
-  //       vnodes: [ [0n], [GEN / 3n], [GEN * 2n / 3n] ],
-  //       storage_nodes: [1n, 2n, 3n],
-  //     },
-  //   },
-  //   storage_node_params: [
-  //     { url: `https://node-0.v2.us.storage.mainnet.cere.network` },
-  //     { url: `https://node-1.v2.us.storage.mainnet.cere.network` },
-  //     { url: `https://node-2.v2.us.storage.mainnet.cere.network` },
-  //   ],
-  //   cdn_cluster: {
-  //     0n: {
-  //       cdn_nodes: [1n, 2n],
-  //     },
-  //   },
-  //   cdn_node_params: [
-  //     {
-  //       url: `https://node-0.v2.us.cdn.mainnet.cere.network`,
-  //       publicKey: "0x86af4db1e433ad221b6fa3c1a9fc4de694ab59408ca57584e50d8fd420e7b45b",
-  //     },
-  //     {
-  //       url: `https://node-1.v2.us.cdn.mainnet.cere.network`,
-  //       publicKey: "0x9a9fb6c479ef7c8f3af54dc0720f08a73d532815d525aa8d69d965e56512440e",
-  //     },
-  //   ],
-  // },
-
+  mainnet: {
+    blockchainUrl: "wss://archive.qanet.cere.network/ws",
+    clusters: [
+      {
+        params: { replicationFactor: 3 },
+        storageNodes: [
+          {
+            pubKey: "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+            vNodes: [0n],
+            params: { url: `https://node-0.v2.us.storage.mainnet.cere.network` },
+          },
+          {
+            pubKey: "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+            vNodes: [GEN / 3n],
+            params: { url: `https://node-1.v2.us.storage.mainnet.cere.network` }
+          },
+          {
+            pubKey: "0x90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22",
+            vNodes: [GEN * 2n / 3n],
+            params:  { url: `https://node-2.v2.us.storage.mainnet.cere.network` }
+          }
+        ],
+        cdnNodes: [
+          {
+            pubKey: "0xfe65717dad0447d715f660a0a58411de509b42e6efb8375f562f58a554d5860e",
+            params: { url: `https://node-0.v2.us.cdn.mainnet.cere.network` },
+          },
+          {
+            pubKey: "0x1e07379407fecc4b89eb7dbd287c2c781cfb1907a96947a3eb18e4f8e7198625",
+            params: { url: `https://node-1.v2.us.cdn.mainnet.cere.network` },
+          }
+        ]
+      }
+    ],
+  },
 
 };
