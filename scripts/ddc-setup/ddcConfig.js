@@ -3,7 +3,7 @@ const GEN = 0x10000000000000000n; // UINT64_MAX
 module.exports = {
 
   devnet: {
-    blockchainUrl: "wss://archive.devnet.cere.network/ws",
+    blockchainUrl: "wss://archive.testnet.cere.network/ws",
     clusters: [
       {
         params: { replicationFactor: 3 },
@@ -118,7 +118,7 @@ module.exports = {
   },
 
   mainnet: {
-    blockchainUrl: "wss://archive.qanet.cere.network/ws",
+    blockchainUrl: "wss://archive.testnet.cere.network/ws",
     clusters: [
       {
         params: { replicationFactor: 3 },
